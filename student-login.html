@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل دخول الطالب - ProVance</title>
+    <link rel="stylesheet" href="student-login-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .social-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .social-btn.google {
+            background: white;
+            color: #757575;
+            border: 2px solid #dadce0;
+        }
+        
+        .social-btn.google:hover {
+            background: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* ستايل نافذة اختيار الحسابات */
+        .account-selection-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .account-modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #e8eaed;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #202124;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .modal-header p {
+            margin: 4px 0 0 0;
+            color: #5f6368;
+            font-size: 14px;
+        }
+
+        .accounts-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .account-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s ease;
+        }
+
+        .account-item:hover {
+            background: #f8f9fa;
+        }
+
+        .account-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .account-info {
+            flex: 1;
+            text-align: right;
+        }
+
+        .account-name {
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 2px;
+        }
+
+        .account-email {
+            color: #5f6368;
+            font-size: 13px;
+        }
+
+        .modal-footer {
+            padding: 16px;
+            border-top: 1px solid #e8eaed;
+        }
+
+        .add-account-btn {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            color: #1a73e8;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .add-account-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .error-notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 50px rgba(255, 107, 107, 0.5);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 600;
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <!-- Login Container -->
+    <div class="login-container">
+        <!-- Left Side - Branding -->
+        <div class="login-left">
+            <div class="branding-content">
+                <div class="logo-circle">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h1 class="brand-name">مرحباً بك في ProVance</h1>
+                <p class="brand-tagline">ابدأ رحلتك المهنية الآن</p>
+                
+                <div class="benefits-list">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div class="benefit-text">
+                            <h4>فرص تدريب حقيقية</h4>
+                            <p>آلاف الفرص التدريبية في شركات معتمدة</p>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="benefit-text">
+                            <h4>تقييم احترافي</h4>
+                            <p>نظام تقييم شامل يوثق تطورك المهني</p>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        <div class="benefit-text">
+                            <h4>شهادات معتمدة</h4>
+                            <p>احصل على شهادات خبرة موثقة</p>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <div class="benefit-text">
+                            <h4>ترشيح للوظائف</h4>
+                            <p>نظام ذكي يرشحك لأفضل الوظائف</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-bar">
+                    <div class="stat">
+                        <span class="stat-number">10K+</span>
+                        <span class="stat-label">طالب نشط</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">500+</span>
+                        <span class="stat-label">شركة</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">2.5K+</span>
+                        <span class="stat-label">فرصة تدريب</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Login Form -->
+        <div class="login-right">
+            <div class="form-container">
+                <!-- Back Button -->
+                <a href="index.html" class="back-btn">
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+
+                <!-- User Type Badge -->
+                <div class="user-type-badge">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>حساب الطالب</span>
+                </div>
+
+                <!-- Form Header -->
+                <div class="form-header">
+                    <h2>تسجيل الدخول</h2>
+                    <p>أدخل بياناتك للوصول إلى حسابك</p>
+                </div>
+
+                <!-- Login Form -->
+                <form class="login-form" id="studentLoginForm">
+                    <!-- Email Input -->
+                    <div class="input-group">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i>
+                            البريد الإلكتروني
+                        </label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="example@student.com"
+                            required
+                        >
+                        <span class="error-message" id="emailError"></span>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="input-group">
+                        <label for="password">
+                            <i class="fas fa-lock"></i>
+                            كلمة المرور
+                        </label>
+                        <div class="password-wrapper">
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                placeholder="أدخل كلمة المرور"
+                                required
+                            >
+                            <button type="button" class="toggle-password" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <span class="error-message" id="passwordError"></span>
+                    </div>
+
+                    <!-- Remember & Forgot -->
+                    <div class="form-options">
+                        <label class="remember-me">
+                            <input type="checkbox" id="rememberMe">
+                            <span class="checkmark"></span>
+                            <span>تذكرني</span>
+                        </label>
+                        <a href="student-forgot.html" class="forgot-link">
+                            نسيت كلمة المرور؟
+                        </a>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="submit-btn">
+                        <span class="btn-text">تسجيل الدخول</span>
+                        <span class="btn-icon"><i class="fas fa-arrow-left"></i></span>
+                        <span class="btn-loader">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    </button>
+
+                    <!-- Divider -->
+                    <div class="divider">
+                        <span>أو سجل الدخول بواسطة</span>
+                    </div>
+
+                    <!-- Social Login -->
+                    <div class="social-login">
+                        <button type="button" class="social-btn google" id="googleBtn">
+                            <i class="fab fa-google"></i>
+                            <span>Google</span>
+                        </button>
+                    </div>
+
+                    <!-- Register Link -->
+                    <div class="register-link">
+                        <p>ليس لديك حساب؟ <a href="student-register.html">سجل الآن مجاناً</a></p>
+                    </div>
+
+                    <!-- Company Login Link -->
+                    <div class="switch-user">
+                        <p>هل أنت شركة؟ <a href="company-login.html">تسجيل دخول الشركات</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // Elements Selection
+        // ============================================
+        const loginForm = document.getElementById('studentLoginForm');
+        const submitBtn = document.querySelector('.submit-btn');
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const googleBtn = document.getElementById('googleBtn');
+
+        // ============================================
+        // بيانات المستخدمين المسجلين
+        // ============================================
+        const registeredUsers = [
+            { email: 'student1@example.com', password: 'password123', name: 'أحمد محمد' },
+            { email: 'student2@example.com', password: 'password123', name: 'فاطمة أحمد' },
+            { email: 'admin@example.com', password: 'admin123', name: 'محمد علي' }
+        ];
+
+        // ============================================
+        // Toggle Password Visibility
+        // ============================================
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type');
+            
+            if (type === 'password') {
+                passwordInput.setAttribute('type', 'text');
+                this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            } else {
+                passwordInput.setAttribute('type', 'password');
+                this.innerHTML = '<i class="fas fa-eye"></i>';
+            }
+        });
+
+        // ============================================
+        // Form Validation
+        // ============================================
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function showError(inputId, message) {
+            const errorElement = document.getElementById(inputId + 'Error');
+            const inputElement = document.getElementById(inputId);
+            
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+            inputElement.style.borderColor = 'var(--error-color)';
+        }
+
+        function hideError(inputId) {
+            const errorElement = document.getElementById(inputId + 'Error');
+            const inputElement = document.getElementById(inputId);
+            
+            errorElement.classList.remove('show');
+            inputElement.style.borderColor = 'var(--border-color)';
+        }
+
+        // ============================================
+        // Form Submit
+        // ============================================
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            
+            // Reset errors
+            hideError('email');
+            hideError('password');
+            
+            // Validate
+            let isValid = true;
+            
+            if (!email) {
+                showError('email', 'البريد الإلكتروني مطلوب');
+                isValid = false;
+            } else if (!validateEmail(email)) {
+                showError('email', 'البريد الإلكتروني غير صحيح');
+                isValid = false;
+            }
+            
+            if (!password) {
+                showError('password', 'كلمة المرور مطلوبة');
+                isValid = false;
+            } else if (password.length < 6) {
+                showError('password', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+            
+            // Show loading
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            // التحقق من صحة بيانات الدخول
+            const user = registeredUsers.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                // تخزين بيانات المستخدم
+                localStorage.setItem('userType', 'student');
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userName', user.name);
+                localStorage.setItem('isLoggedIn', 'true');
+                if (rememberMe) {
+                    localStorage.setItem('rememberMe', 'true');
+                }
+                
+                // إعادة التوجيه
+                setTimeout(() => {
+                    window.location.href = 'student-internship.html';
+                }, 1000);
+            } else {
+                // إظهار خطأ في بيانات الدخول
+                showError('email', 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+                showError('password', 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+                
+                // إعادة تعيين الزر
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }
+        });
+
+        // ============================================
+        // Google Account Selection
+        // ============================================
+        function showGoogleAccountSelection() {
+            const modal = document.createElement('div');
+            modal.className = 'account-selection-modal';
+            modal.innerHTML = `
+                <div class="account-modal-content">
+                    <div class="modal-header">
+                        <h3>اختر حساب</h3>
+                        <p>لتسجيل الدخول إلى ProVance</p>
+                    </div>
+                    
+                    <div class="accounts-list">
+                        <div class="account-item" data-email="ahmedalhousen64@gmail.com" data-name="Ahmed Alhousen">
+                            <div class="account-avatar" style="background: #1a73e8;">A</div>
+                            <div class="account-info">
+                                <div class="account-name">Ahmed Alhousen</div>
+                                <div class="account-email">ahmedalhousen64@gmail.com</div>
+                            </div>
+                        </div>
+                        
+                        <div class="account-item" data-email="ahmedalhousen51@gmail.com" data-name="Ahmed alhousen">
+                            <div class="account-avatar" style="background: #ea4335;">A</div>
+                            <div class="account-info">
+                                <div class="account-name">Ahmed alhousen</div>
+                                <div class="account-email">ahmedalhousen51@gmail.com</div>
+                            </div>
+                        </div>
+                        
+                        <div class="account-item" data-email="saraalaa7608@gmail.com" data-name="Sara Allaa">
+                            <div class="account-avatar" style="background: #fbbc04;">S</div>
+                            <div class="account-info">
+                                <div class="account-name">Sara Allaa</div>
+                                <div class="account-email">saraalaa7608@gmail.com</div>
+                            </div>
+                        </div>
+
+                        <div class="account-item" data-email="student1@example.com" data-name="أحمد محمد">
+                            <div class="account-avatar" style="background: #34a853;">أ</div>
+                            <div class="account-info">
+                                <div class="account-name">أحمد محمد</div>
+                                <div class="account-email">student1@example.com</div>
+                            </div>
+                        </div>
+
+                        <div class="account-item" data-email="student2@example.com" data-name="فاطمة أحمد">
+                            <div class="account-avatar" style="background: #9c27b0;">ف</div>
+                            <div class="account-info">
+                                <div class="account-name">فاطمة أحمد</div>
+                                <div class="account-email">student2@example.com</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="add-account-btn" id="addGoogleAccount">
+                            استخدام حساب آخر
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // إضافة مستمعي الأحداث
+            modal.querySelectorAll('.account-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const email = this.getAttribute('data-email');
+                    const name = this.getAttribute('data-name');
+                    
+                    // التحقق مما إذا كان الحساب مسجل في النظام
+                    const userExists = registeredUsers.some(user => user.email === email);
+                    
+                    if (userExists) {
+                        completeSocialLogin('Google', email, name);
+                    } else {
+                        showErrorNotification('هذا الحساب غير مسجل في النظام. يرجى التسجيل أولاً.');
+                    }
+                    
+                    modal.remove();
+                });
+            });
+            
+            modal.querySelector('#addGoogleAccount').addEventListener('click', function() {
+                window.open('https://accounts.google.com', '_blank');
+                modal.remove();
+            });
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        // ============================================
+        // Complete Social Login
+        // ============================================
+        function completeSocialLogin(provider, email, name) {
+            // تخزين بيانات المستخدم
+            localStorage.setItem('userType', 'student');
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('userName', name);
+            localStorage.setItem('loginMethod', provider);
+            localStorage.setItem('isLoggedIn', 'true');
+            
+            // إظهار رسالة النجاح
+            showSuccessNotification(`تم تسجيل الدخول بنجاح باسم ${name}`);
+            
+            // إعادة التوجيه
+            setTimeout(() => {
+                window.location.href = 'student-internship.html';
+            }, 1500);
+        }
+
+        // ============================================
+        // Success Notification
+        // ============================================
+        function showSuccessNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 30px;
+                right: 30px;
+                background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+                color: white;
+                padding: 20px 30px;
+                border-radius: 15px;
+                box-shadow: 0 15px 50px rgba(81, 207, 102, 0.5);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                font-weight: 600;
+                animation: slideInRight 0.5s ease-out;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-check-circle" style="font-size: 28px;"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.5s ease-out';
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
+
+        // ============================================
+        // Error Notification
+        // ============================================
+        function showErrorNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'error-notification';
+            notification.innerHTML = `
+                <i class="fas fa-exclamation-triangle" style="font-size: 28px;"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.5s ease-out';
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
+
+        // ============================================
+        // Google Login Handler
+        // ============================================
+        googleBtn.addEventListener('click', function() {
+            showGoogleAccountSelection();
+        });
+
+        // ============================================
+        // Input Focus Effects
+        // ============================================
+        const inputs = document.querySelectorAll('.input-group input');
+
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
+        });
+
+        // ============================================
+        // Page Load Animation
+        // ============================================
+        window.addEventListener('load', () => {
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                document.body.style.transition = 'opacity 0.6s ease';
+                document.body.style.opacity = '1';
+            }, 100);
+        });
+
+        // ============================================
+        // Check Remember Me on Page Load
+        // ============================================
+        window.addEventListener('load', function() {
+            const rememberMe = localStorage.getItem('rememberMe');
+            const savedEmail = localStorage.getItem('userEmail');
+            
+            if (rememberMe === 'true' && savedEmail) {
+                document.getElementById('email').value = savedEmail;
+                document.getElementById('rememberMe').checked = true;
+            }
+        });
+
+        // ============================================
+        // Real-time Validation
+        // ============================================
+        document.getElementById('email').addEventListener('input', function() {
+            const email = this.value.trim();
+            if (email && !validateEmail(email)) {
+                showError('email', 'البريد الإلكتروني غير صحيح');
+            } else {
+                hideError('email');
+            }
+        });
+
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            if (password && password.length < 6) {
+                showError('password', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+            } else {
+                hideError('password');
+            }
+        });
+    </script>
+</body>
+</html>

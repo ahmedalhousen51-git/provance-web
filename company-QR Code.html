@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provance Control - QR Code System</title>
+    
+    <!-- تحسينات التحميل -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --color-primary: #667eea;
+            --color-primary-dark: #5568d3;
+            --color-success: #11998e;
+            --color-warning: #f5576c;
+            --bg-ultra-dark: #0a0e27;
+            --bg-dark: #0f1419;
+            --bg-darker: #1a1f2e;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --sidebar-width: 280px;
+            --header-height: 80px;
+            --border-radius: 16px;
+            --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-ultra-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            font-size: 16px;
+        }
+
+        /* Loading Indicator */
+        #loading {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            background: var(--bg-ultra-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: var(--glass-border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+
+        .loading-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--color-primary);
+            transition: width 0.3s ease;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--glass-border);
+            z-index: 1000;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s var(--transition-smooth);
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .sidebar-brand-text h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            margin-bottom: 5px;
+        }
+
+        .sidebar-brand-text p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Navigation */
+        .nav-menu {
+            padding: 20px 0;
+            flex-grow: 1;
+        }
+
+        .nav-section-title {
+            padding: 12px 20px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .nav-link-advanced {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s var(--transition-smooth);
+            margin: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .nav-link-advanced:hover {
+            background: var(--glass-bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-link-advanced.active {
+            background: rgba(102, 126, 234, 0.15);
+            color: var(--color-primary);
+        }
+
+        .nav-icon {
+            width: 20px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .nav-text {
+            flex: 1;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .collapsed .nav-text {
+            display: none;
+        }
+
+        .nav-badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .badge-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .badge-info {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid var(--glass-border);
+            margin-top: auto;
+        }
+
+        .logout-btn-advanced {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .logout-btn-advanced:hover {
+            background: var(--color-warning);
+            border-color: transparent;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-right: var(--sidebar-width);
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+            transition: all 0.4s var(--transition-smooth);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .main-content.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .sidebar.collapsed + .main-content {
+            margin-right: 70px;
+        }
+
+        /* Header */
+        .header-advanced {
+            height: var(--header-height);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .sidebar-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--color-primary);
+            transform: rotate(90deg);
+        }
+
+        .page-title-advanced {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-profile-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-profile-header:hover {
+            background: var(--glass-bg-hover);
+        }
+
+        .user-avatar-small {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .user-info-header {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name-header {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .user-role-header {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Page Container */
+        .page-container {
+            padding: 25px;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            transition: all 0.3s ease;
+            margin-bottom: 25px;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--color-primary);
+        }
+
+        .card-title i {
+            width: 40px;
+            height: 40px;
+            background: var(--color-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 25px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.4s var(--transition-smooth);
+            width: 200px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(17, 153, 142, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-button:hover::before {
+            opacity: 1;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-5px);
+            border-color: var(--color-primary);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button.active {
+            background: rgba(102, 126, 234, 0.15);
+            border-color: var(--color-primary);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .nav-button.active::before {
+            opacity: 1;
+        }
+
+        .nav-button-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-button.create .nav-button-icon {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .nav-button.records .nav-button-icon {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .nav-button-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-button-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-button-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--color-success);
+            color: white;
+            border-radius: 10px;
+            padding: 3px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            z-index: 2;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-darker);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--glass-bg-hover);
+            border-color: var(--color-primary);
+        }
+
+        /* QR Preview */
+        .qr-preview-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            padding: 30px;
+            background: var(--bg-darker);
+            border-radius: var(--border-radius);
+            margin: 25px 0;
+            border: 1px solid var(--glass-border);
+        }
+
+        #qrcode {
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .qr-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .qr-table thead {
+            background: var(--bg-darker);
+        }
+
+        .qr-table th {
+            padding: 15px;
+            text-align: right;
+            font-weight: 700;
+            border-bottom: 2px solid var(--glass-border);
+            color: var(--color-primary);
+        }
+
+        .qr-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .qr-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .qr-table tbody tr:hover {
+            background: var(--glass-bg-hover);
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-active {
+            background: rgba(17, 153, 142, 0.2);
+            color: var(--color-success);
+        }
+
+        .status-expired {
+            background: rgba(245, 87, 108, 0.2);
+            color: var(--color-warning);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* New Button Styles for Records Page */
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .btn-icon-only {
+            width: 35px;
+            height: 35px;
+            padding: 0;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .sidebar.collapsed + .main-content {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .header-advanced {
+                padding: 0 15px;
+            }
+            
+            .page-container {
+                padding: 15px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-buttons-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-button {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .btn-small {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Indicator -->
+    <div id="loading">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <i class="fas fa-qrcode"></i>
+            </div>
+            <h3 style="color: var(--color-primary); margin-bottom: 10px;">جاري تحميل نظام QR</h3>
+            <div class="loading-progress">
+                <div class="loading-progress-bar" id="loadingBar"></div>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">الرجاء الانتظار...</p>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="mainSidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <i class="fas fa-rocket"></i>
+            </div>
+            
+            <div class="sidebar-brand-text">
+                <h2>PROVANCE</h2>
+                <p>نظام إدارة التدريب</p>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="nav-menu">
+            <div class="nav-section-title">القائمة الرئيسية</div>
+            
+            <a class="nav-link-advanced" href="company-requests-control.html">
+                <div class="nav-icon"><i class="fas fa-cogs"></i></div>
+                <span class="nav-text">طلبات الأقسام</span>
+            </a>
+            
+            <a class="nav-link-advanced" href="company-dashboard.html">
+                <div class="nav-icon"><i class="fas fa-home"></i></div>
+                <span class="nav-text">لوحة التحكم</span>
+            </a>
+
+            <a class="nav-link-advanced active" href="company-qr-system.html">
+                <div class="nav-icon"><i class="fas fa-qrcode"></i></div>
+                <span class="nav-text">نظام QR</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-trainers.html">
+                <div class="nav-icon"><i class="fas fa-users"></i></div>
+                <span class="nav-text">المتدربين</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-interviews.html">
+                <div class="nav-icon"><i class="fas fa-handshake"></i></div>
+                <span class="nav-text">المقابلات</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-profile.html">
+                <div class="nav-icon"><i class="fas fa-building"></i></div>
+                <span class="nav-text">الملف الشخصي</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-batches.html">
+                <div class="nav-icon"><i class="fas fa-layer-group"></i></div>
+                <span class="nav-text">إدارة الدفعات</span>
+            </a>
+
+            <div class="nav-section-title">التقارير والتحليلات</div>
+
+            <a class="nav-link-advanced" href="company-departments.html">
+                <div class="nav-icon"><i class="fas fa-sitemap"></i></div>
+                <span class="nav-text">تحليل الأقسام</span>
+            </a>
+
+           <a class="nav-link-advanced" href="company-notifications.html">
+               <div class="nav-icon"><i class="fas fa-bell"></i></div>
+                <span class="nav-text">الإشعارات</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <button class="logout-btn-advanced" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header-advanced">
+            <div class="header-left">
+                <div class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </div>
+                
+                <div>
+                    <div class="page-title-advanced">
+                        <div class="page-icon">
+                            <i class="fas fa-qrcode"></i>
+                        </div>
+                        <span>نظام QR</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="user-profile-header" onclick="toggleUserMenu()">
+                    <div class="user-avatar-small">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="user-info-header">
+                        <div class="user-name-header">شركة التقنية</div>
+                        <div class="user-role-header">مدير الموارد البشرية</div>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Container -->
+        <div class="page-container">
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons-container">
+                <div class="nav-button create active" onclick="showQRSection('create')">
+                    <div class="nav-button-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="nav-button-title">إنشاء QR جديد</div>
+                    <div class="nav-button-desc">إنشاء كود QR جديد بخصائص متقدمة</div>
+                </div>
+                
+                <div class="nav-button records" onclick="showQRSection('records')">
+                    <div class="nav-button-badge" id="recordsBadge">0</div>
+                    <div class="nav-button-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="nav-button-title">سجل QR</div>
+                    <div class="nav-button-desc">عرض وإدارة جميع أكواد QR المحفوظة</div>
+                </div>
+            </div>
+
+            <!-- Create QR Section -->
+            <div id="create-section" class="content-section active">
+                <div class="glass-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-qrcode"></i>
+                        منشئ أكواد QR
+                    </h3>
+
+                    <form id="qrForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">نوع الـ QR</label>
+                                <select id="qrType" class="form-select" required>
+                                    <option value="">اختر نوع الكود...</option>
+                                    <option value="attendance">حضور وانصراف</option>
+                                    <option value="interview">مقابلة توظيف</option>
+                                    <option value="training">يوم تدريبي</option>
+                                    <option value="task">مهمة</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">اسم الكود</label>
+                                <input type="text" id="eventTitle" class="form-input" 
+                                       placeholder="اسم الحدث" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">وصف مختصر</label>
+                            <textarea id="description" class="form-textarea" 
+                                      placeholder="وصف الكود (اختياري)"></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">مدة الصلاحية</label>
+                                <select id="expiration" class="form-select" required>
+                                    <option value="30min">30 دقيقة</option>
+                                    <option value="1hour">ساعة واحدة</option>
+                                    <option value="1day">يوم واحد</option>
+                                    <option value="1week">أسبوع</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">قواعد المسح</label>
+                                <select id="scanRules" class="form-select" required>
+                                    <option value="single">مسح واحد فقط</option>
+                                    <option value="limited-5">5 مرات مسح</option>
+                                    <option value="limited-10">10 مرات مسح</option>
+                                    <option value="unlimited">مسح غير محدود</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                            <!-- تم تغيير نوع الزر من submit إلى button وإضافة onclick -->
+                            <button type="button" class="btn btn-primary" onclick="generateQRCode()">
+                                <i class="fas fa-qrcode"></i>
+                                إنشاء الكود
+                            </button>
+                            <button type="reset" class="btn btn-outline">
+                                <i class="fas fa-redo"></i>
+                                إعادة تعيين
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- QR Preview Card -->
+                <div class="glass-card" id="qrPreview" style="display: none;">
+                    <h3 class="card-title">
+                        <i class="fas fa-eye"></i>
+                        معاينة الكود
+                    </h3>
+
+                    <div class="qr-preview-container">
+                        <div id="qrcode"></div>
+
+                        <div class="download-buttons">
+                            <button class="btn btn-success" onclick="downloadQR('png')">
+                                <i class="fas fa-download"></i>
+                                تحميل PNG
+                            </button>
+                            <button class="btn btn-outline" onclick="printQR()">
+                                <i class="fas fa-print"></i>
+                                طباعة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Records Section -->
+            <div id="records-section" class="content-section" style="display: none;">
+                <div class="glass-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-database"></i>
+                        سجل QR
+                    </h3>
+
+                    <div class="table-container">
+                        <table class="qr-table">
+                            <thead>
+                                <tr>
+                                    <th>الحدث</th>
+                                    <th>النوع</th>
+                                    <th>تاريخ الإنشاء</th>
+                                    <th>الصلاحية</th>
+                                    <th>عمليات المسح</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="qrTableBody">
+                                <!-- سيتم ملؤها ديناميكيًا -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Load QR Code library dynamically with fallback -->
+    <script>
+        // ===== GLOBAL STATE =====
+        let qrCodes = [];
+        let currentQRCode = null;
+        let qrLibraryLoaded = false;
+
+        // ===== LOADING INDICATOR FUNCTIONS =====
+        function updateLoadingProgress(percent) {
+            const loadingBar = document.getElementById('loadingBar');
+            if (loadingBar) {
+                loadingBar.style.width = percent + '%';
+            }
+        }
+
+        function hideLoadingIndicator() {
+            const loadingIndicator = document.getElementById('loading');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('hidden');
+            }
+            
+            if (mainContent) {
+                mainContent.classList.add('loaded');
+            }
+            
+            // إزالة المؤشر من DOM بعد الانتهاء من التحريك
+            setTimeout(() => {
+                if (loadingIndicator && loadingIndicator.parentNode) {
+                    loadingIndicator.style.display = 'none';
+                }
+            }, 500);
+        }
+
+        // تحميل مكتبة QR Code بشكل ديناميكي بعد تحميل الصفحة
+        function loadQRCodeLibrary() {
+            return new Promise((resolve, reject) => {
+                // تحقق مما إذا كانت المكتبة محملة بالفعل
+                if (typeof QRCode !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                // محاولة تحميل المكتبة من CDN موثوق (qrcode-generator)
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+                script.async = true;
+                script.defer = true;
+                
+                script.onload = () => {
+                    console.log('QRCode library loaded successfully from cdnjs');
+                    qrLibraryLoaded = true;
+                    resolve();
+                };
+                
+                script.onerror = () => {
+                    console.error('Failed to load QRCode library from cdnjs, trying fallback...');
+                    // محاولة تحميل المكتبة من مصدر بديل
+                    const fallbackScript = document.createElement('script');
+                    fallbackScript.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js';
+                    fallbackScript.async = true;
+                    fallbackScript.defer = true;
+                    
+                    fallbackScript.onload = () => {
+                        console.log('QRCode library loaded successfully from fallback');
+                        qrLibraryLoaded = true;
+                        resolve();
+                    };
+                    
+                    fallbackScript.onerror = () => {
+                        console.error('All attempts to load QR library failed');
+                        reject(new Error('Failed to load QRCode library from all sources'));
+                    };
+                    
+                    document.body.appendChild(fallbackScript);
+                };
+                
+                document.body.appendChild(script);
+            });
+        }
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('QR System - Initializing with optimized loading...');
+            
+            // تحديث شريط التحميل
+            updateLoadingProgress(30);
+            
+            // تحميل المكتبة بشكل غير متزامن
+            loadQRCodeLibrary().then(() => {
+                console.log('QR Library is ready');
+                updateLoadingProgress(70);
+                
+                // تحميل البيانات بعد تحميل المكتبة
+                setTimeout(() => {
+                    loadQRCodes();
+                    renderQRTable();
+                    updateRecordsBadge();
+                    
+                    updateLoadingProgress(100);
+                    
+                    // إخفاء مؤشر التحميل بعد 500 مللي ثانية
+                    setTimeout(() => {
+                        hideLoadingIndicator();
+                    }, 500);
+                    
+                }, 300);
+                
+            }).catch(error => {
+                console.error('Failed to load QR library:', error);
+                updateLoadingProgress(100);
+                setTimeout(hideLoadingIndicator, 500);
+                
+                // عرض رسالة خطأ للمستخدم
+                showNotification('فشل تحميل مكتبة QR. يرجى تحديث الصفحة أو المحاولة لاحقًا.', 'error');
+            });
+        });
+
+        // ===== STORAGE =====
+        function loadQRCodes() {
+            try {
+                const saved = localStorage.getItem('provance_qr_codes');
+                if (saved) {
+                    qrCodes = JSON.parse(saved);
+                    console.log(`Loaded ${qrCodes.length} QR codes from storage`);
+                } else {
+                    qrCodes = [];
+                    console.log('No QR codes found in storage');
+                }
+            } catch (error) {
+                console.error('Error loading QR codes:', error);
+                qrCodes = [];
+            }
+        }
+
+        function saveQRCodes() {
+            try {
+                // حفظ فقط آخر 50 كود لتجنب استهلاك كبير للتخزين
+                const codesToSave = qrCodes.slice(0, 50);
+                localStorage.setItem('provance_qr_codes', JSON.stringify(codesToSave));
+                console.log(`Saved ${codesToSave.length} QR codes to storage`);
+            } catch (error) {
+                console.error('Error saving QR codes:', error);
+            }
+        }
+
+        // ===== QR GENERATION =====
+        function generateQRCode() {
+            // تحقق من تحميل المكتبة
+            if (!qrLibraryLoaded || typeof qrcode === 'undefined') {
+                showNotification('مكتبة QR Code لم تحمل بعد. الرجاء الانتظار...', 'error');
+                return;
+            }
+            
+            const type = document.getElementById('qrType').value;
+            const title = document.getElementById('eventTitle').value;
+            const description = document.getElementById('description').value;
+            const expiration = document.getElementById('expiration').value;
+            const scanRules = document.getElementById('scanRules').value;
+            
+            // التحقق من الحقول المطلوبة
+            if (!type || !title) {
+                showNotification('الرجاء ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+            
+            const id = 'QR-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            
+            // تحديد الرابط المناسب بناءً على نوع العملية
+            let qrContent = '';
+            const baseUrl = 'https://provance-control.com'; // يمكن تغييره لاحقاً
+            
+            if (type === 'interview') {
+                // مقابلة شخصية: رابط لتأكيد الحضور
+                qrContent = `${baseUrl}/confirm-interview?code=${id}`;
+            } else if (type === 'attendance' || type === 'training') {
+                // حضور تدريب: رابط لتسجيل الحضور اليومي
+                qrContent = `${baseUrl}/attendance?code=${id}`;
+            } else {
+                // أنواع أخرى (مثل مهمة) نضع بيانات JSON كاحتياطي
+                qrContent = JSON.stringify({
+                    id: id,
+                    type: type,
+                    title: title,
+                    description: description,
+                    expiration: expiration,
+                    scanRules: scanRules
+                });
+            }
+            
+            const formData = {
+                id: id,
+                type: type,
+                title: title,
+                description: description,
+                expiration: expiration,
+                scanRules: scanRules,
+                createdAt: new Date().toISOString(),
+                scans: 0,
+                status: 'active',
+                qrContent: qrContent // نحتفظ بالمحتوى للعرض لاحقاً
+            };
+
+            // Clear previous QR code
+            document.getElementById('qrcode').innerHTML = '';
+            
+            try {
+                // استخدام مكتبة qrcode-generator (اسم الكائن qrcode وليس QRCode)
+                const qr = qrcode(0, 'M'); // نوع تصحيح الخطأ M
+                qr.addData(qrContent);
+                qr.make();
+                
+                // إنشاء عنصر canvas
+                const canvas = document.createElement('canvas');
+                const size = qr.getModuleCount();
+                const cellSize = 5; // حجم الخلية بالبكسل
+                canvas.width = size * cellSize;
+                canvas.height = size * cellSize;
+                
+                const ctx = canvas.getContext('2d');
+                
+                // رسم الخلفية
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // رسم وحدات QR
+                ctx.fillStyle = '#667eea';
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        if (qr.isDark(row, col)) {
+                            ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                        }
+                    }
+                }
+                
+                // إضافة canvas إلى عنصر #qrcode
+                document.getElementById('qrcode').appendChild(canvas);
+
+                // Show preview
+                document.getElementById('qrPreview').style.display = 'block';
+
+                // Save to storage
+                qrCodes.unshift(formData);
+                saveQRCodes();
+                currentQRCode = formData;
+
+                // Update UI
+                renderQRTable();
+                updateRecordsBadge();
+
+                // إظهار إشعار ناجح مع توضيح نوع الرابط
+                const message = (type === 'interview') ? 'تم إنشاء رابط تأكيد المقابلة بنجاح' :
+                                ((type === 'attendance' || type === 'training') ? 'تم إنشاء رابط تسجيل الحضور بنجاح' : 'تم إنشاء الكود بنجاح');
+                showNotification(message, 'success');
+                
+            } catch (error) {
+                console.error('Error generating QR code:', error);
+                showNotification('حدث خطأ أثناء إنشاء الكود. الرجاء المحاولة مرة أخرى.', 'error');
+            }
+        }
+
+        // ===== NOTIFICATION SYSTEM =====
+        function showNotification(message, type) {
+            // إزالة أي إشعارات سابقة
+            const existingNotification = document.querySelector('.notification-toast');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // إنشاء الإشعار
+            const notification = document.createElement('div');
+            notification.className = `notification-toast ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            // إضافة الأنماط
+            notification.style.cssText = `
+                position: fixed;
+                top: 120px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'success' ? 'var(--color-success)' : 'var(--color-warning)'};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                z-index: 10000;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                animation: slideIn 0.3s ease;
+                max-width: 90%;
+                text-align: center;
+            `;
+            
+            // إضافة الأنيميشن
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { top: 80px; opacity: 0; }
+                    to { top: 120px; opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { top: 120px; opacity: 1; }
+                    to { top: 80px; opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(notification);
+            
+            // إزالة الإشعار بعد 3 ثواني
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                    if (style.parentNode) {
+                        style.remove();
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // ===== DOWNLOAD & PRINT =====
+        function downloadQR(format) {
+            if (!currentQRCode) {
+                showNotification('يرجى إنشاء كود QR أولاً', 'error');
+                return;
+            }
+
+            const canvas = document.querySelector('#qrcode canvas');
+            if (!canvas) {
+                showNotification('لم يتم العثور على الكود للتحميل', 'error');
+                return;
+            }
+
+            if (format === 'png') {
+                try {
+                    const link = document.createElement('a');
+                    link.download = `${currentQRCode.title || currentQRCode.id}.png`;
+                    link.href = canvas.toDataURL('image/png', 1.0);
+                    link.click();
+                    showNotification('بدأ تحميل الكود', 'success');
+                } catch (error) {
+                    console.error('Error downloading QR:', error);
+                    showNotification('حدث خطأ أثناء التحميل', 'error');
+                }
+            }
+        }
+
+        function printQR() {
+            if (!currentQRCode) {
+                showNotification('يرجى إنشاء كود QR أولاً', 'error');
+                return;
+            }
+            
+            try {
+                window.print();
+            } catch (error) {
+                console.error('Error printing QR:', error);
+                showNotification('حدث خطأ أثناء الطباعة', 'error');
+            }
+        }
+
+        // ===== TABLE RENDERING =====
+        function renderQRTable() {
+            const tbody = document.getElementById('qrTableBody');
+            if (!tbody) return;
+
+            if (qrCodes.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px;">
+                            <i class="fas fa-inbox" style="font-size: 2rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
+                            لا توجد أكواد محفوظة بعد
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = qrCodes.map(qr => `
+                <tr>
+                    <td><strong>${qr.title}</strong></td>
+                    <td>${getTypeText(qr.type)}</td>
+                    <td>${formatDate(qr.createdAt)}</td>
+                    <td>${getExpirationText(qr.expiration)}</td>
+                    <td><strong>${qr.scans}</strong></td>
+                    <td>
+                        <span class="status-badge status-${qr.status}">
+                            ${getStatusText(qr.status)}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-outline btn-small" onclick="viewQRDetails('${qr.id}')">
+                                <i class="fas fa-eye"></i>
+                                عرض
+                            </button>
+                            <button class="btn btn-outline btn-small" onclick="duplicateQR('${qr.id}')">
+                                <i class="fas fa-copy"></i>
+                                نسخ
+                            </button>
+                            <button class="btn btn-outline btn-small" onclick="deleteQR('${qr.id}')">
+                                <i class="fas fa-trash"></i>
+                                حذف
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ===== ACTIONS =====
+        function viewQRDetails(id) {
+            const qr = qrCodes.find(q => q.id === id);
+            if (!qr) {
+                showNotification('لم يتم العثور على الكود', 'error');
+                return;
+            }
+
+            const details = `تفاصيل الكود:\n\nالاسم: ${qr.title}\nالنوع: ${getTypeText(qr.type)}\nالوصف: ${qr.description || 'لا يوجد'}\nتاريخ الإنشاء: ${formatDate(qr.createdAt)}\nعمليات المسح: ${qr.scans}\nالحالة: ${getStatusText(qr.status)}\nمحتوى QR: ${qr.qrContent}`;
+            alert(details);
+        }
+
+        function duplicateQR(id) {
+            const qr = qrCodes.find(q => q.id === id);
+            if (!qr) {
+                showNotification('لم يتم العثور على الكود', 'error');
+                return;
+            }
+
+            const duplicated = {
+                ...qr,
+                id: 'QR-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                title: qr.title + ' (نسخة)',
+                createdAt: new Date().toISOString(),
+                scans: 0,
+                status: 'active'
+            };
+
+            qrCodes.unshift(duplicated);
+            saveQRCodes();
+            renderQRTable();
+            updateRecordsBadge();
+            showNotification('تم نسخ الكود بنجاح!', 'success');
+        }
+
+        function deleteQR(id) {
+            if (confirm('هل أنت متأكد من حذف هذا الكود؟')) {
+                qrCodes = qrCodes.filter(qr => qr.id !== id);
+                saveQRCodes();
+                renderQRTable();
+                updateRecordsBadge();
+                showNotification('تم حذف الكود بنجاح', 'success');
+            }
+        }
+
+        function updateRecordsBadge() {
+            const badge = document.getElementById('recordsBadge');
+            if (badge) badge.textContent = qrCodes.length;
+        }
+
+        // ===== NAVIGATION =====
+        function showQRSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(sec => sec.style.display = 'none');
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected section
+            const sectionElement = document.getElementById(`${section}-section`);
+            if (sectionElement) {
+                sectionElement.style.display = 'block';
+            }
+
+            // Add active class to selected button
+            document.querySelector(`.nav-button.${section}`).classList.add('active');
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mainSidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function toggleUserMenu() {
+            showNotification('قائمة المستخدم - سيتم تطويرها لاحقًا', 'info');
+        }
+
+        function logout() {
+            if (confirm('هل تريد تسجيل الخروج؟')) {
+                showNotification('جارٍ تسجيل الخروج...', 'info');
+                setTimeout(() => {
+                    window.location.href = 'company-login.html';
+                }, 1500);
+            }
+        }
+
+        // ===== HELPER FUNCTIONS =====
+        function getTypeText(type) {
+            const types = {
+                'attendance': 'حضور وانصراف', 
+                'interview': 'مقابلة توظيف', 
+                'training': 'يوم تدريبي', 
+                'task': 'مهمة'
+            };
+            return types[type] || type;
+        }
+
+        function getStatusText(status) {
+            const statuses = { 
+                'active': 'نشط', 
+                'expired': 'منتهي' 
+            };
+            return statuses[status] || status;
+        }
+
+        function getExpirationText(expiration) {
+            const expirations = {
+                '30min': '30 دقيقة', 
+                '1hour': 'ساعة واحدة', 
+                '1day': 'يوم واحد', 
+                '1week': 'أسبوع'
+            };
+            return expirations[expiration] || expiration;
+        }
+
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('ar-EG', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return 'تاريخ غير صالح';
+            }
+        }
+    </script>
+</body>
+</html>

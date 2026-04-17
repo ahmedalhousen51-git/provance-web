@@ -1,0 +1,4574 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provance Control - طلبات الأقسام</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* أنماط السايدبار والهيدر (مأخوذة من الصفحات الأخرى) */
+        :root {
+            --color-primary: #667eea;
+            --color-primary-dark: #5568d3;
+            --color-success: #11998e;
+            --color-warning: #f5576c;
+            --color-info: #17a2b8;
+            --color-purple: #9c27b0;
+            --color-orange: #ff9800;
+            --color-success-dark: #0d7c74;
+            --color-warning-dark: #e04a5c;
+            --color-primary-light: #7b90ff;
+            --bg-ultra-dark: #0a0e27;
+            --bg-dark: #0f1419;
+            --bg-darker: #1a1f2e;
+            --bg-medium: #2d3748;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-bg-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --text-tertiary: #718096;
+            --sidebar-width: 280px;
+            --header-height: 80px;
+            --border-radius: 16px;
+            --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-ultra-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            font-size: 16px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--glass-border);
+            z-index: 1000;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s var(--transition-smooth);
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .sidebar-brand-text h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            margin-bottom: 5px;
+        }
+
+        .sidebar-brand-text p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Navigation */
+        .nav-menu {
+            padding: 20px 0;
+            flex-grow: 1;
+        }
+
+        .nav-section-title {
+            padding: 12px 20px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .nav-link-advanced {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s var(--transition-smooth);
+            margin: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .nav-link-advanced:hover {
+            background: var(--glass-bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-link-advanced.active {
+            background: rgba(102, 126, 234, 0.15);
+            color: var(--color-primary);
+        }
+
+        .nav-icon {
+            width: 20px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .nav-text {
+            flex: 1;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .collapsed .nav-text {
+            display: none;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid var(--glass-border);
+            margin-top: auto;
+        }
+
+        .logout-btn-advanced {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .logout-btn-advanced:hover {
+            background: var(--color-warning);
+            border-color: transparent;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-right: var(--sidebar-width);
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+            transition: all 0.4s var(--transition-smooth);
+        }
+        
+        .sidebar.collapsed + .main-content {
+            margin-right: 70px;
+        }
+
+        /* Header */
+        .header-advanced {
+            height: var(--header-height);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .sidebar-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--color-primary);
+            transform: rotate(90deg);
+        }
+
+        .page-title-advanced {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-profile-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-profile-header:hover {
+            background: var(--glass-bg-hover);
+        }
+
+        .user-avatar-small {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .user-info-header {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name-header {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .user-role-header {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Page Container */
+        .page-container {
+            padding: 25px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .sidebar.collapsed + .main-content {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .header-advanced {
+                padding: 0 15px;
+            }
+            
+            .page-container {
+                padding: 15px;
+            }
+        }
+
+        /* الأنماط الأصلية لصفحة طلبات الأقسام */
+        .department-control-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-color: var(--color-primary);
+        }
+
+        .stat-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-icon.primary {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+        }
+
+        .stat-icon.warning {
+            background: linear-gradient(135deg, var(--color-warning), var(--color-warning-dark));
+        }
+
+        .stat-icon.info {
+            background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+        }
+
+        .stat-icon.success {
+            background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 2.8rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .department-selector-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .panel-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .panel-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .department-settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .settings-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .settings-panel:hover {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: var(--bg-darker);
+            border-radius: 10px;
+        }
+
+        .toggle-label {
+            font-weight: 600;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-medium);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--color-primary);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .panel-actions {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .btn-primary-advanced {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary-advanced:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--glass-bg-hover);
+            transform: translateY(-2px);
+            border-color: var(--color-primary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .trainee-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .trainee-card {
+            background: var(--bg-darker);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .trainee-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-color: var(--glass-border);
+        }
+        
+        .trainee-card.selected {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .card-info h4 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .card-info p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .card-price {
+            font-weight: 700;
+            color: var(--color-primary);
+            font-size: 0.95rem;
+        }
+        
+        .card-info-btn {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .card-info-btn:hover {
+            background: var(--glass-bg-hover);
+            color: var(--text-primary);
+        }
+
+        .card-details {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .card-details.active {
+            display: block;
+        }
+        
+        .card-details h5 {
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .card-details p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .card-details ul {
+            padding-right: 20px;
+            margin: 10px 0;
+        }
+        
+        .card-details li {
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .financial-fields {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .financial-fields.hidden {
+            display: none;
+        }
+        
+        .financial-field-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .field-note {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .salary-range-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .salary-range-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .salary-range-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .salary-range-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .salary-range-note {
+            background: rgba(102, 126, 234, 0.1);
+            border-right: 3px solid var(--color-primary);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .branch-management {
+            margin-top: 20px;
+        }
+
+        .branch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .branch-list {
+            display: grid;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .branch-item {
+            background: var(--bg-darker);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .branch-item:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .branch-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .branch-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .branch-details {
+            flex: 1;
+        }
+
+        .branch-details h4 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .branch-details p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .branch-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .status-active {
+            background: rgba(17, 153, 142, 0.2);
+            color: var(--color-success);
+            border: 1px solid var(--color-success);
+        }
+
+        .status-inactive {
+            background: rgba(245, 87, 108, 0.2);
+            color: var(--color-warning);
+            border: 1px solid var(--color-warning);
+        }
+
+        .branch-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .branch-action-btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+        }
+
+        .branch-edit-btn {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+        }
+
+        .branch-edit-btn:hover {
+            background: var(--glass-bg-hover);
+            color: var(--text-primary);
+        }
+
+        .branch-delete-btn {
+            background: transparent;
+            border: 1px solid var(--color-warning);
+            color: var(--color-warning);
+        }
+
+        .branch-delete-btn:hover {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state p {
+            font-size: 0.95rem;
+            max-width: 400px;
+            margin: 0 auto 20px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .notification-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .notification-error {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification-close {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--bg-darker);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 1200px;
+            max-height: 95vh;
+            overflow-y: auto;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: var(--glass-bg-hover);
+            color: var(--text-primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* أنماط الحقول المطلوبة */
+        .required-field {
+            border-left: 3px solid var(--color-warning) !important;
+        }
+
+        .field-error {
+            color: var(--color-warning);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* التعديلات الجديدة */
+        .branch-selector-container {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .branch-selector-container .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .branch-selector-container .btn-primary-advanced {
+            white-space: nowrap;
+            height: fit-content;
+            margin-bottom: 0;
+        }
+
+        /* أنماط الأقسام الجديدة */
+        .form-section {
+            background: var(--glass-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .section-title-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .training-fields-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .training-field-tag {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .training-field-tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .add-field-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .add-field-container input {
+            flex: 1;
+        }
+
+        .conditions-list {
+            margin-right: 20px;
+            margin-bottom: 20px;
+        }
+
+        .conditions-list li {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: var(--bg-darker);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .system-conditions {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .system-condition {
+            background: var(--bg-darker);
+            border-radius: 10px;
+            padding: 15px;
+            border-right: 3px solid var(--color-primary);
+        }
+
+        .system-condition h5 {
+            margin-bottom: 10px;
+            color: var(--color-primary);
+            font-size: 1.1rem;
+        }
+
+        .system-condition ul {
+            margin-right: 20px;
+        }
+
+        .system-condition li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* أنماط جديدة للمجالات التدريبية */
+        .training-field-details {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .training-field-details.hidden {
+            display: none;
+        }
+
+        .optional-field {
+            border-left: 3px solid var(--color-success) !important;
+        }
+
+        .optional-label {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
+
+        /* شروط النظام الجديدة - تحت النظام المختار مباشرة */
+        .system-requirements {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            border-right: 3px solid var(--color-primary);
+        }
+
+        .system-requirements h4 {
+            margin-bottom: 10px;
+            color: var(--color-primary);
+        }
+
+        .system-requirements ul {
+            margin-right: 20px;
+        }
+
+        .system-requirements li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* تعديلات جديدة للمجالات التدريبية */
+        .training-fields-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .training-fields-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .training-fields-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .training-fields-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* أنماط جديدة للحقول الإلزامية */
+        .required-asterisk {
+            color: var(--color-warning);
+            margin-right: 5px;
+        }
+
+        .validation-error {
+            border-color: var(--color-warning) !important;
+            box-shadow: 0 0 5px rgba(245, 87, 108, 0.5) !important;
+        }
+
+        .validation-message {
+            color: var(--color-warning);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* أنماط صفحة بروفايل الشركة */
+        .company-profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .profile-avatar-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 25px;
+        }
+
+        .profile-avatar-glow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            border-radius: 50%;
+            filter: blur(30px);
+            opacity: 0.4;
+        }
+
+        .profile-avatar {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+            z-index: 1;
+            border: 5px solid var(--bg-ultra-dark);
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.5);
+        }
+
+        .company-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--bg-darker);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .info-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+        }
+
+        .info-content h4 {
+            font-size: 0.9rem;
+            color: var(--text-tertiary);
+            margin-bottom: 5px;
+        }
+
+        .info-content p {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .company-description {
+            background: var(--glass-bg);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .description-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .description-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .company-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-item-large {
+            background: var(--glass-bg);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .stat-item-large:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-color: var(--color-primary);
+        }
+
+        .stat-icon-large {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 1.8rem;
+        }
+
+        .stat-value-large {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label-large {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        /* أنماط جديدة لقسم تفاصيل المجالات التدريبية */
+        .training-details-container {
+            margin-top: 20px;
+        }
+
+        .field-details-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .field-details-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .field-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .field-details-body {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .details-group {
+            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .details-group-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .details-group-title i {
+            color: var(--color-primary);
+        }
+
+        .salary-inputs-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .salary-input-wrapper {
+            position: relative;
+        }
+
+        .currency-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .currency-selector select {
+            flex: 1;
+        }
+
+        .currency-note {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        .benefits-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .benefit-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .benefit-input-group input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .benefits-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 50px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            border: 1px dashed var(--glass-border);
+        }
+
+        .benefit-tag {
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 20px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            max-width: 100%;
+            word-break: break-word;
+        }
+
+        .benefit-tag .remove {
+            cursor: pointer;
+            color: var(--color-warning);
+            font-weight: bold;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .tips-container {
+            background: rgba(255, 193, 7, 0.1);
+            border-right: 3px solid var(--color-orange);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .tips-container h5 {
+            color: var(--color-orange);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .tips-list {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            padding-right: 15px;
+            line-height: 1.5;
+        }
+
+        .tips-list li {
+            margin-bottom: 5px;
+        }
+
+        /* تحسينات للواجهة في النافذة المنبثقة */
+        .modal-form-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: calc(95vh - 150px);
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .modal-form-sections::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-form-sections::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .modal-form-sections::-webkit-scrollbar-thumb {
+            background: var(--color-primary);
+            border-radius: 4px;
+        }
+
+        .modal-form-sections::-webkit-scrollbar-thumb:hover {
+            background: var(--color-primary-dark);
+        }
+
+        .form-section-content {
+            padding: 15px;
+        }
+
+        .section-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .compact-form-group {
+            margin-bottom: 15px;
+        }
+
+        .compact-form-group .form-label {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+
+        .compact-form-group .form-input,
+        .compact-form-group .form-select,
+        .compact-form-group .form-textarea {
+            padding: 10px 12px;
+            font-size: 0.9rem;
+        }
+
+        .compact-form-group .form-textarea {
+            min-height: 80px;
+        }
+
+        .compact-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .field-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .compact-benefit-input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .compact-benefit-input-group input {
+            flex: 1;
+            padding: 8px 10px;
+            font-size: 0.85rem;
+        }
+
+        .compact-benefit-input-group .btn-outline {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .compact-benefits-list {
+            min-height: 40px;
+            padding: 8px;
+            gap: 6px;
+        }
+
+        .compact-benefit-tag {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+
+        .compact-tips-container {
+            padding: 8px;
+            margin-top: 8px;
+        }
+
+        .compact-tips-container h5 {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .compact-tips-list {
+            font-size: 0.75rem;
+            padding-right: 12px;
+        }
+
+        /* التعديلات الجديدة: قسم تفاصيل التدريب */
+        .training-summary {
+            margin-top: 20px;
+            background: var(--glass-bg);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .training-summary-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .training-summary-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .training-summary-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-success);
+        }
+
+        .training-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .training-summary-item {
+            background: var(--bg-darker);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .training-summary-item-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 12px;
+        }
+
+        .training-summary-item-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .training-summary-item-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .training-summary-item-content {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .training-summary-item-content ul {
+            padding-right: 20px;
+            margin: 10px 0;
+        }
+
+        .training-summary-item-content li {
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .training-summary-edit-btn {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .financial-summary {
+            background: rgba(102, 126, 234, 0.1);
+            border-right: 3px solid var(--color-primary);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .financial-summary-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: var(--color-primary);
+        }
+
+        .financial-summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .financial-summary-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .financial-summary-value {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 1200px) {
+            .department-settings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .company-info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .field-details-body {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                max-width: 95%;
+            }
+            
+            .training-summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-container {
+                padding: 15px;
+            }
+            
+            .stats-overview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .trainee-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .financial-field-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .branch-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .branch-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .branch-selector-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .company-profile-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .field-details-body {
+                grid-template-columns: 1fr;
+            }
+            
+            .salary-inputs-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .compact-form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .field-details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .currency-selector {
+                flex-direction: column;
+            }
+            
+            .modal-content {
+                padding: 20px;
+                max-width: 98%;
+            }
+            
+            .training-summary-item-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .page-container {
+                padding: 10px;
+            }
+            
+            .stats-overview {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                padding: 15px;
+            }
+            
+            .form-section {
+                padding: 15px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .section-icon {
+                margin-left: 0;
+            }
+            
+            .training-summary {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="mainSidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <i class="fas fa-rocket"></i>
+            </div>
+            
+            <div class="sidebar-brand-text">
+                <h2>PROVANCE</h2>
+                <p>نظام إدارة التدريب</p>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="nav-menu">
+            <div class="nav-section-title">القائمة الرئيسية</div>
+            
+            <a class="nav-link-advanced active" href="company-requests-control.html">
+                <div class="nav-icon"><i class="fas fa-cogs"></i></div>
+                <span class="nav-text">طلبات الأقسام</span>
+            </a>
+            
+            <a class="nav-link-advanced" href="company-dashboard.html">
+                <div class="nav-icon"><i class="fas fa-home"></i></div>
+                <span class="nav-text">لوحة التحكم</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-QR Code.html">
+                <div class="nav-icon"><i class="fas fa-qrcode"></i></div>
+                <span class="nav-text">نظام QR</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-trainers.html">
+                <div class="nav-icon"><i class="fas fa-users"></i></div>
+                <span class="nav-text">المتدربين</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-interviews.html">
+                <div class="nav-icon"><i class="fas fa-handshake"></i></div>
+                <span class="nav-text">المقابلات</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-profile.html">
+                <div class="nav-icon"><i class="fas fa-building"></i></div>
+                <span class="nav-text">الملف الشخصي</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-batches.html">
+                <div class="nav-icon"><i class="fas fa-layer-group"></i></div>
+                <span class="nav-text">إدارة الدفعات</span>
+            </a>
+
+            <div class="nav-section-title">التقارير والتحليلات</div>
+
+            <a class="nav-link-advanced" href="company-departments.html">
+                <div class="nav-icon"><i class="fas fa-sitemap"></i></div>
+                <span class="nav-text">تحليل الأقسام</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-notifications.html">
+                <div class="nav-icon"><i class="fas fa-bell"></i></div>
+                <span class="nav-text">الإشعارات</span>
+            </a>
+            
+            <div class="nav-section title">إدارة النظام</div>
+
+            <a class="nav-link-advanced" href="company-data-management.html">
+                <div class="nav-icon"><i class="fas fa-database"></i></div>
+                <span class="nav-text">إدارة البيانات</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <button class="logout-btn-advanced" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header-advanced">
+            <div class="header-left">
+                <div class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </div>
+                
+                <div>
+                    <div class="page-title-advanced">
+                        <div class="page-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <span>طلبات الأقسام</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="user-profile-header" onclick="toggleUserMenu()">
+                    <div class="user-avatar-small">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="user-info-header">
+                        <div class="user-name-header">شركة التقنية</div>
+                        <div class="user-role-header">مدير النظام</div>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Container -->
+        <div class="page-container">
+            <!-- المحتوى الأصلي لصفحة طلبات الأقسام -->
+            <div class="department-control-container">
+                <div class="page-header" style="margin-bottom: 30px;">
+                    <h1 class="section-title">إدارة طلبات الأقسام</h1>
+                    <p class="section-subtitle">تحكم في الأقسام المتاحة للتقديم، عدد الفرص، وحالة القسم</p>
+                </div>
+
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-icon primary">
+                            <i class="fas fa-door-open"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="openDepartments">5</div>
+                            <div class="stat-label">الأقسام المفتوحة</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon warning">
+                            <i class="fas fa-door-closed"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="closedDepartments">3</div>
+                            <div class="stat-label">الأقسام المغلقة</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon info">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="totalApplications">127</div>
+                            <div class="stat-label">إجمالي الطلبات</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon success">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="pendingApplications">42</div>
+                            <div class="stat-label">طلبات قيد المراجعة</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="department-selector-section">
+                    <div class="panel-header">
+                        <div class="panel-icon">
+                            <i class="fas fa-list-alt"></i>
+                        </div>
+                        <h2 class="panel-title">اختيار القسم والفرع</h2>
+                    </div>
+                    
+                    <!-- حقل اختيار الفرع -->
+                    <div class="form-group">
+                        <label class="form-label">اختر الفرع الذي تريد التعديل عليه</label>
+                        <select class="form-select" id="branchSelector" onchange="loadBranchSettings()">
+                            <option value="">-- اختر فرع --</option>
+                            <!-- سيتم ملء الخيارات من خلال JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <!-- حقل اختيار القسم مع زر إضافة قسم جديد -->
+                    <div class="form-group">
+                        <label class="form-label">اختر القسم الذي تريد تعديل إعداداته</label>
+                        <div class="branch-selector-container">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <select class="form-select" id="departmentSelector" onchange="loadDepartmentSettings()">
+                                    <option value="">-- اختر قسم --</option>
+                                    <option value="sales">المبيعات - Sales</option>
+                                    <option value="marketing">التسويق - Marketing</option>
+                                    <option value="accounting">المحاسبة - Accounting</option>
+                                    <option value="hr">الموارد البشرية - HR</option>
+                                    <option value="it">تكنولوجيا المعلومات - IT</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary-advanced" onclick="openDepartmentModal()">
+                                <i class="fas fa-plus"></i>
+                                <span>إضافة قسم جديد</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">العملة المفضلة للشركة</label>
+                        <select class="form-select" id="preferredCurrency" onchange="updateFinancialSystemDisplay()">
+                            <option value="SAR">الريال السعودي (SAR)</option>
+                            <option value="EGP">الجنية المصري (EGP)</option>
+                            <option value="USD">الدولار الأمريكي (USD)</option>
+                        </select>
+                        <div class="field-note">سيتم عرض جميع الأسعار بهذه العملة</div>
+                    </div>
+                </div>
+
+                <div class="department-settings-grid" id="departmentSettings" style="display: none;">
+                    <!-- Basic Information Panel -->
+                    <div class="settings-panel">
+                        <div class="panel-header">
+                            <div class="panel-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <h2 class="panel-title">المعلومات الأساسية</h2>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">اسم القسم</label>
+                            <input type="text" class="form-input" id="departmentName" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">وصف القسم (اختياري)</label>
+                            <textarea class="form-textarea" id="departmentDescription" placeholder="اكتب وصفًا مختصرًا يظهر للمتدرب عند التقديم..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Application Capacity Panel -->
+                    <div class="settings-panel">
+                        <div class="panel-header">
+                            <div class="panel-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h2 class="panel-title">سعة التقديم</h2>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">عدد الفرص المتاحة للمتدربين</label>
+                            <input type="number" class="form-input" id="openPositions" min="1" max="100" value="10">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">الحد الأقصى للطلبات قبل الإغلاق التلقائي</label>
+                            <input type="number" class="form-input" id="maxApplications" min="10" max="500" value="50">
+                            <small style="color: var(--text-secondary); display: block; margin-top: 5px;">
+                                عند الوصول لهذا العدد، سيتم إغلاق التقديم تلقائيًا حتى تراجع الطلبات
+                            </small>
+                        </div>
+                        
+                        <div class="toggle-group">
+                            <span class="toggle-label">تفعيل الإغلاق التلقائي</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="autoCloseToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Financial System Panel -->
+                    <div class="settings-panel">
+                        <div class="panel-header">
+                            <div class="panel-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <h2 class="panel-title">النظام المالي <span class="required-asterisk">*</span></h2>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">اختر النظام المالي لهذا القسم <span class="required-asterisk">*</span></label>
+                            <div class="trainee-options">
+                                <!-- النظام الأول: متدرب لأول مرة -->
+                                <div class="trainee-card" onclick="selectFinancialSystem('first-time', this)">
+                                    <div class="card-header">
+                                        <div class="card-icon">
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                        <div class="card-info">
+                                            <h4>النظام الأول</h4>
+                                            <p>متدرب لأول مرة</p>
+                                        </div>
+                                    </div>
+                                    <p class="card-description">
+                                        طالب أو خريج ليس لديه أي خبرة تدريب سابقة. هذا هو تدريبه الأول في بيئة عمل حقيقية.
+                                    </p>
+                                    <div class="card-footer">
+                                        <div class="card-price">الشركة تحصل على 25% من رسوم التدريب</div>
+                                        <button type="button" class="card-info-btn" onclick="toggleFinancialDetails('first-time', event)">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>تفاصيل</span>
+                                        </button>
+                                    </div>
+                                    <!-- شروط النظام الأول - تظهر تحت النظام مباشرة -->
+                                    <div class="system-requirements" id="requirements-first-time" style="display: none;">
+                                        <h4>شروط النظام الأول - متدرب لأول مرة</h4>
+                                        <ul>
+                                            <li>✅ الراتب بعد التعيين</li>
+                                            <li>✅ الميزة المعرفية</li>
+                                            <li>✅ المشرف والعدد والمدة</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- النظام الثاني: متدرب ذو خبرة -->
+                                <div class="trainee-card" onclick="selectFinancialSystem('once-trained', this)">
+                                    <div class="card-header">
+                                        <div class="card-icon">
+                                            <i class="fas fa-user-graduate"></i>
+                                        </div>
+                                        <div class="card-info">
+                                            <h4>النظام الثاني</h4>
+                                            <p>متدرب ذو خبرة</p>
+                                        </div>
+                                    </div>
+                                    <p class="card-description">
+                                        متدرب سبق له التدريب في شركة واحدة فقط. لديه أساس معرفي بسيط في المجال ويفهم بيئة العمل.
+                                    </p>
+                                    <div class="card-footer">
+                                        <div class="card-price">خدمة مجانية تماماً</div>
+                                        <button type="button" class="card-info-btn" onclick="toggleFinancialDetails('once-trained', event)">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>تفاصيل</span>
+                                        </button>
+                                    </div>
+                                    <!-- شروط النظام الثاني - تظهر تحت النظام مباشرة -->
+                                    <div class="system-requirements" id="requirements-once-trained" style="display: none;">
+                                        <h4>شروط النظام الثاني - متدرب ذو خبرة</h4>
+                                        <ul>
+                                            <li>✅ كل شروط النظام الأول +</li>
+                                            <li>✅ الميزة المادية (إلزامي)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- النظام الثالث: متدرب متمرس (Training) -->
+                                <div class="trainee-card" onclick="selectFinancialSystem('twice-trained', this)">
+                                    <div class="card-header">
+                                        <div class="card-icon">
+                                            <i class="fas fa-briefcase"></i>
+                                        </div>
+                                        <div class="card-info">
+                                            <h4>النظام الثالث</h4>
+                                            <p>Training - متدرب متمرس</p>
+                                        </div>
+                                    </div>
+                                    <p class="card-description">
+                                        متدرب ذو خبرة تدريب في شركتين أو أكثر. يمتلك خبرة عملية جيدة وجاهز للإنتاجية.
+                                    </p>
+                                    <div class="card-footer">
+                                        <div class="card-price">الشركة تدفع 25% من رسوم التدريب</div>
+                                        <button type="button" class="card-info-btn" onclick="toggleFinancialDetails('twice-trained', event)">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>تفاصيل</span>
+                                        </button>
+                                    </div>
+                                    <!-- شروط النظام الثالث - تظهر تحت النظام مباشرة -->
+                                    <div class="system-requirements" id="requirements-twice-trained" style="display: none;">
+                                        <h4>شروط النظام الثالث - متدرب متمرس</h4>
+                                        <ul>
+                                            <li>✅ كل شروط النظام الثاني +</li>
+                                            <li>✅ مدة تدريب حتى 3 أسابيع كحد أقصى</li>
+                                            <li>✅ اسم النظام: Training وليس Internship</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="validation-message" id="financialSystemError" style="display: none;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>يجب اختيار نظام مالي للقسم</span>
+                            </div>
+                        </div>
+                        
+                        <!-- الحقول الإضافية للأنظمة المالية -->
+                        <div class="financial-fields hidden" id="financialFields">
+                            <h4 style="margin-bottom: 15px;">تفاصيل النظام المالي المختار</h4>
+                            
+                            <!-- النظام الأول: متدرب لأول مرة -->
+                            <div class="financial-system-fields" id="fields-first-time" style="display: none;">
+                                <div class="salary-range-container">
+                                    <div class="salary-range-header">
+                                        <div class="salary-range-icon">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </div>
+                                        <h4 class="salary-range-title">نطاق الراتب بعد التعيين <span class="required-asterisk">*</span></h4>
+                                    </div>
+                                    <div class="financial-field-group">
+                                        <div class="form-group">
+                                            <label class="form-label">الحد الأدنى للراتب <span class="required-asterisk">*</span></label>
+                                            <input type="number" class="form-input" id="minSalaryFirst" placeholder="أدخل الحد الأدنى للراتب">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">الحد الأقصى للراتب <span class="required-asterisk">*</span></label>
+                                            <input type="number" class="form-input" id="maxSalaryFirst" placeholder="أدخل الحد الأقصى للراتب">
+                                        </div>
+                                    </div>
+                                    <div class="salary-range-note">
+                                        <strong>ملاحظة:</strong> هذا الحقل إلزامي في جميع الأنظمة: يجب تحديد نطاق الراتب المحتمل في حال قررت الشركة تعيين المتدرب بعد انتهاء فترة التدريب. التعيين نفسه ليس إلزامياً، لكن تحديد نطاق الراتب يساعد المتدربين على اتخاذ قرار التقديم. تحديد نطاق الراتب يزيد من فرص جذب المتدربين المتميزين ويوضح توقعات الشركة بشكل شفاف.
+                                    </div>
+                                </div>
+                                <div class="financial-field-group">
+                                    <div class="form-group">
+                                        <label class="form-label">المشرف <span class="required-asterisk">*</span></label>
+                                        <input type="text" class="form-input" id="supervisor" placeholder="أدخل اسم المشرف">
+                                        <div class="field-note">اسم المشرف المسؤول عن المتدربين</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">مدة التدريب <span class="required-asterisk">*</span></label>
+                                        <select class="form-select" id="trainingDurationFirst">
+                                            <option value="">اختر المدة</option>
+                                            <option value="2-weeks">أسبوعين</option>
+                                            <option value="3-weeks">3 أسابيع</option>
+                                            <option value="1-month">شهر واحد</option>
+                                            <option value="1.5-months">شهر ونصف</option>
+                                            <option value="2-months">شهرين</option>
+                                            <option value="2.5-months">شهرين ونصف</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">الميزة المعرفية <span class="required-asterisk">*</span></label>
+                                    <textarea class="form-textarea" id="knowledgeBenefit" placeholder="اكتب الميزة المعرفية التي سيحصل عليها المتدرب..."></textarea>
+                                    <div class="field-note">هذا الحقل إلزامي في جميع الأنظمة المالية</div>
+                                </div>
+                            </div>
+                            
+                            <!-- النظام الثاني: متدرب ذو خبرة -->
+                            <div class="financial-system-fields" id="fields-once-trained" style="display: none;">
+                                <div class="salary-range-container">
+                                    <div class="salary-range-header">
+                                        <div class="salary-range-icon">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </div>
+                                        <h4 class="salary-range-title">نطاق الراتب بعد التعيين <span class="required-asterisk">*</span></h4>
+                                    </div>
+                                    <div class="financial-field-group">
+                                        <div class="form-group">
+                                            <label class="form-label">الحد الأدنى للراتب <span class="required-asterisk">*</span></label>
+                                            <input type="number" class="form-input" id="minSalaryOnce" placeholder="أدخل الحد الأدنى للراتب">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">الحد الأقصى للراتب <span class="required-asterisk">*</span></label>
+                                            <input type="number" class="form-input" id="maxSalaryOnce" placeholder="أدخل الحد الأقصى للراتب">
+                                        </div>
+                                    </div>
+                                    <div class="salary-range-note">
+                                        <strong>ملاحظة:</strong> هذا الحقل إلزامي في جميع الأنظمة: يجب تحديد نطاق الراتب المحتمل في حال قررت الشركة تعيين المتدرب بعد انتهاء فترة التدريب. التعيين نفسه ليس إلزامياً، لكن تحديد نطاق الراتب يساعد المتدربين على اتخاذ قرار التقديم. تحديد نطاق الراتب يزيد من فرص جذب المتدربين المتميزين ويوضح توقعات الشركة بشكل شفاف.
+                                    </div>
+                                </div>
+                                <div class="financial-field-group">
+                                    <div class="form-group">
+                                        <label class="form-label">المشرف <span class="required-asterisk">*</span></label>
+                                        <input type="text" class="form-input" id="supervisorOnce" placeholder="أدخل اسم المشرف">
+                                        <div class="field-note">اسم المشرف المسؤول عن المتدربين</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">مدة التدريب <span class="required-asterisk">*</span></label>
+                                        <select class="form-select" id="trainingDurationOnce">
+                                            <option value="">اختر المدة</option>
+                                            <option value="2-weeks">أسبوعين</option>
+                                            <option value="3-weeks">3 أسابيع</option>
+                                            <option value="1-month">شهر واحد</option>
+                                            <option value="1.5-months">شهر ونصف</option>
+                                            <option value="2-months">شهرين</option>
+                                            <option value="2.5-months">شهرين ونصف</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">الميزة المعرفية <span class="required-asterisk">*</span></label>
+                                    <textarea class="form-textarea" id="knowledgeBenefitOnce" placeholder="اكتب الميزة المعرفية التي سيحصل عليه المتدرب..."></textarea>
+                                    <div class="field-note">هذا الحقل إلزامي في جميع الأنظمة المالية</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">الميزة المادية <span class="required-asterisk">*</span></label>
+                                    <textarea class="form-textarea" id="materialBenefitOnce" placeholder="اكتب الميزة المادية التي سيحصل عليها المتدرب (مواصلات، بدل معيشة، إلخ)..."></textarea>
+                                    <div class="field-note">هذا الحقل إلزامي في النظام الثاني</div>
+                                </div>
+                            </div>
+                            
+                            <!-- النظام الثالث: Training -->
+                            <div class="financial-system-fields" id="fields-twice-trained" style="display: none;">
+                                <div class="salary-range-container">
+                                    <div class="salary-range-header">
+                                        <div class="salary-range-icon">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </div>
+                                        <h4 class="salary-range-title">نطاق الراتب بعد التعيين <span class="required-asterisk">*</span></h4>
+                                    </div>
+                                    <div class="financial-field-group">
+                                        <div class="form-group">
+                                            <label class="form-label">الحد الأدنى للراتب <span class="required-asterisk">*</span></label>
+                                            <input type="number" class="form-input" id="minSalaryTwice" placeholder="أدخل الحد الأدنى للراتب">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">الحد الأقصى للراتب <span class="required-asterisk">*</span></label>
+                                            <input type="number" class="form-input" id="maxSalaryTwice" placeholder="أدخل الحد الأقصى للراتب">
+                                        </div>
+                                    </div>
+                                    <div class="salary-range-note">
+                                        <strong>ملاحظة:</strong> هذا الحقل إلزامي في جميع الأنظمة: يجب تحديد نطاق الراتب المحتمل في حال قررت الشركة تعيين المتدرب بعد انتهاء فترة التدريب. التعيين نفسه ليس إلزامياً، لكن تحديد نطاق الراتب يساعد المتدربين على اتخاذ قرار التقديم. تحديد نطاق الراتب يزيد من فرص جذب المتدربين المتميزين ويوضح توقعات الشركة بشكل شفاف.
+                                    </div>
+                                </div>
+                                <div class="financial-field-group">
+                                    <div class="form-group">
+                                        <label class="form-label">المشرف <span class="required-asterisk">*</span></label>
+                                        <input type="text" class="form-input" id="supervisorTwice" placeholder="أدخل اسم المشرف">
+                                        <div class="field-note">اسم المشرف المسؤول عن المتدربين</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">مدة التدريب <span class="required-asterisk">*</span></label>
+                                        <select class="form-select" id="trainingDurationTwice">
+                                            <option value="">اختر المدة</option>
+                                            <option value="2-weeks">أسبوعين</option>
+                                            <option value="3-weeks">3 أسابيع</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">الميزة المعرفية <span class="required-asterisk">*</span></label>
+                                    <textarea class="form-textarea" id="knowledgeBenefitTwice" placeholder="اكتب الميزة المعرفية التي سيحصل عليه المتدرب..."></textarea>
+                                    <div class="field-note">هذا الحقل إلزامي في جميع الأنظمة المالية</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">الميزة المادية <span class="required-asterisk">*</span></label>
+                                    <textarea class="form-textarea" id="materialBenefitTwice" placeholder="اكتب الميزة المادية التي سيحصل عليها المتدرب (مواصلات، بدل معيشة، إلخ)..."></textarea>
+                                    <div class="field-note">هذا الحقل إلزامي في النظام الثالث</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time Settings Panel -->
+                    <div class="settings-panel">
+                        <div class="panel-header">
+                            <div class="panel-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h2 class="panel-title">إعدادات الوقت</h2>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">تاريخ البدء</label>
+                            <input type="text" class="form-input" id="startDate" placeholder="DD/MM/YYYY">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">تاريخ الانتهاء</label>
+                            <input type="text" class="form-input" id="endDate" placeholder="DD/MM/YYYY">
+                        </div>
+                        
+                        <div class="toggle-group">
+                            <span class="toggle-label">إعادة الفتح التلقائي بعد انتهاء الدفعة</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="autoReopenToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قسم جديد: تفاصيل التدريب -->
+                <div class="training-summary" id="trainingSummary" style="display: none;">
+                    <div class="training-summary-header">
+                        <div class="training-summary-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <h2 class="training-summary-title">تفاصيل التدريب للقسم المختار</h2>
+                    </div>
+                    
+                    <div class="training-summary-grid">
+                        <!-- النظام المالي -->
+                        <div class="training-summary-item">
+                            <div class="training-summary-item-header">
+                                <div class="training-summary-item-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <h3 class="training-summary-item-title">النظام المالي</h3>
+                            </div>
+                            <div class="training-summary-item-content">
+                                <div id="financialSystemSummary">
+                                    <p>لم يتم اختيار نظام مالي بعد</p>
+                                </div>
+                                <div class="financial-summary" id="financialDetailsSummary" style="display: none;">
+                                    <div class="financial-summary-header">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>تفاصيل مالية:</strong>
+                                    </div>
+                                    <div class="financial-summary-item">
+                                        <span class="financial-summary-label">الحد الأدنى للراتب:</span>
+                                        <span class="financial-summary-value" id="summaryMinSalary">-</span>
+                                    </div>
+                                    <div class="financial-summary-item">
+                                        <span class="financial-summary-label">الحد الأقصى للراتب:</span>
+                                        <span class="financial-summary-value" id="summaryMaxSalary">-</span>
+                                    </div>
+                                    <div class="financial-summary-item">
+                                        <span class="financial-summary-label">المشرف:</span>
+                                        <span class="financial-summary-value" id="summarySupervisor">-</span>
+                                    </div>
+                                    <div class="financial-summary-item">
+                                        <span class="financial-summary-label">مدة التدريب:</span>
+                                        <span class="financial-summary-value" id="summaryDuration">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="training-summary-edit-btn">
+                                <button class="btn-outline" onclick="editFinancialSystem()">
+                                    <i class="fas fa-edit"></i>
+                                    <span>تعديل النظام المالي</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- سعة التقديم -->
+                        <div class="training-summary-item">
+                            <div class="training-summary-item-header">
+                                <div class="training-summary-item-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <h3 class="training-summary-item-title">سعة التقديم</h3>
+                            </div>
+                            <div class="training-summary-item-content">
+                                <div id="capacitySummary">
+                                    <p>لم يتم تعيين سعة تقديم بعد</p>
+                                </div>
+                            </div>
+                            <div class="training-summary-edit-btn">
+                                <button class="btn-outline" onclick="editCapacitySettings()">
+                                    <i class="fas fa-edit"></i>
+                                    <span>تعديل السعة</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- إعدادات الوقت -->
+                        <div class="training-summary-item">
+                            <div class="training-summary-item-header">
+                                <div class="training-summary-item-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <h3 class="training-summary-item-title">إعدادات الوقت</h3>
+                            </div>
+                            <div class="training-summary-item-content">
+                                <div id="timeSettingsSummary">
+                                    <p>لم يتم تعيين إعدادات وقت بعد</p>
+                                </div>
+                            </div>
+                            <div class="training-summary-edit-btn">
+                                <button class="btn-outline" onclick="editTimeSettings()">
+                                    <i class="fas fa-edit"></i>
+                                    <span>تعديل الوقت</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- المعلومات الأساسية -->
+                        <div class="training-summary-item">
+                            <div class="training-summary-item-header">
+                                <div class="training-summary-item-icon">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <h3 class="training-summary-item-title">المعلومات الأساسية</h3>
+                            </div>
+                            <div class="training-summary-item-content">
+                                <div id="basicInfoSummary">
+                                    <p>لم يتم تعيين معلومات أساسية بعد</p>
+                                </div>
+                            </div>
+                            <div class="training-summary-edit-btn">
+                                <button class="btn-outline" onclick="editBasicInfo()">
+                                    <i class="fas fa-edit"></i>
+                                    <span>تعديل المعلومات</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons" id="globalActions" style="display: none;">
+                    <button class="btn-outline" onclick="resetToDefaults()">
+                        <i class="fas fa-undo"></i> إعادة التعيين
+                    </button>
+                    <button class="btn-primary-advanced" onclick="saveAllChanges()">
+                        <i class="fas fa-save"></i> حفظ جميع التغييرات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Department Modal -->
+    <div class="modal-overlay" id="departmentModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="departmentModalTitle">إضافة قسم جديد</h2>
+                <button class="modal-close" onclick="closeDepartmentModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-form-sections">
+                <form id="departmentForm">
+                    <!-- قسم معلومات القسم -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <h3 class="section-title-text">١- معلومات القسم الأساسية</h3>
+                        </div>
+                        <div class="form-section-content">
+                            <div class="section-description">
+                                أدخل المعلومات الأساسية للقسم الجديد
+                            </div>
+                            
+                            <div class="compact-form-group">
+                                <label class="form-label">اسم القسم <span class="required-asterisk">*</span></label>
+                                <input type="text" class="form-input" id="departmentNameInput" placeholder="أدخل اسم القسم (مثال: تطوير الويب، التسويق الرقمي، المحاسبة)" required>
+                            </div>
+                            
+                            <div class="compact-form-group">
+                                <label class="form-label">وصف القسم (اختياري)</label>
+                                <textarea class="form-textarea optional-field" id="departmentDescriptionInput" placeholder="اكتب وصفًا مختصرًا للقسم يظهر للمتدربين عند التقديم..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- قسم المجالات التدريبية -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <h3 class="section-title-text">٢- المجالات التدريبية <span class="required-asterisk">*</span></h3>
+                        </div>
+                        <div class="form-section-content">
+                            <div class="section-description">
+                                أضف المجالات التدريبية المتاحة في هذا القسم
+                            </div>
+                            
+                            <div class="training-fields-header">
+                                <div class="training-fields-icon">
+                                    <i class="fas fa-list"></i>
+                                </div>
+                                <h4 class="training-fields-title">المجالات التدريبية المتاحة <span class="required-asterisk">*</span></h4>
+                            </div>
+                            
+                            <div class="compact-form-group">
+                                <div class="training-fields-container" id="departmentTrainingFieldsContainer">
+                                    <!-- سيتم إضافة المجالات هنا ديناميكياً -->
+                                </div>
+                                <div class="validation-message" id="departmentTrainingFieldsError" style="display: none;">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <span>يجب إضافة مجال تدريبي واحد على الأقل</span>
+                                </div>
+                                <div class="add-field-container">
+                                    <input type="text" class="form-input" id="departmentTrainingFieldInput" placeholder="أضف مجال تدريبي (مثال: تطوير الويب، التسويق الرقمي، البرمجة...)">
+                                    <button type="button" class="btn-outline" onclick="addDepartmentTrainingField()">إضافة</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- قسم اختيار نظام المتدربين -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <h3 class="section-title-text">٣- اختيار نوع المتدربين <span class="required-asterisk">*</span></h3>
+                        </div>
+                        <div class="form-section-content">
+                            <div class="section-description">
+                                اختر النظام المالي المناسب لنوع المتدربين الذي ترغب في استقباله
+                            </div>
+                            
+                            <div class="compact-form-group">
+                                <label class="form-label">اختيار النظام المالي للقسم <span class="required-asterisk">*</span></label>
+                                <div class="trainee-options">
+                                    <!-- النظام الأول: متدرب لأول مرة -->
+                                    <div class="trainee-card" onclick="selectDepartmentTraineeSystem('first-time', this)">
+                                        <div class="card-header">
+                                            <div class="card-icon" style="background: var(--color-success);">
+                                                <i class="fas fa-star"></i>
+                                            </div>
+                                            <div class="card-info">
+                                                <h4>🟢 النظام الأول</h4>
+                                                <p>متدرب لأول مرة</p>
+                                            </div>
+                                        </div>
+                                        <p class="card-description">
+                                            طالب أو خريج ليس لديه أي خبرة تدريب سابقة. هذا هو تدريبه الأول في بيئة عمل حقيقية.
+                                        </p>
+                                        <!-- شروط النظام الأول - تظهر تحت النظام مباشرة -->
+                                        <div class="system-requirements" id="department-requirements-first-time" style="display: none;">
+                                            <h4>شروط النظام الأول - متدرب لأول مرة</h4>
+                                            <ul>
+                                                <li>✅ الراتب بعد التعيين</li>
+                                                <li>✅ الميزة المعرفية</li>
+                                                <li>✅ المشرف والعدد والمدة</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- النظام الثاني: متدرب ذو خبرة -->
+                                    <div class="trainee-card" onclick="selectDepartmentTraineeSystem('once-trained', this)">
+                                        <div class="card-header">
+                                            <div class="card-icon" style="background: var(--color-warning);">
+                                                <i class="fas fa-user-graduate"></i>
+                                            </div>
+                                            <div class="card-info">
+                                                <h4>🟡 النظام الثاني</h4>
+                                                <p>متدرب ذو خبرة</p>
+                                            </div>
+                                        </div>
+                                        <p class="card-description">
+                                            متدرب سبق له التدريب في شركة واحدة فقط. لديه أساس معرفي بسيط في المجال ويفهم بيئة العمل.
+                                        </p>
+                                        <!-- شروط النظام الثاني - تظهر تحت النظام مباشرة -->
+                                        <div class="system-requirements" id="department-requirements-once-trained" style="display: none;">
+                                            <h4>شروط النظام الثاني - متدرب ذو خبرة</h4>
+                                            <ul>
+                                                <li>✅ كل شروط النظام الأول +</li>
+                                                <li>✅ الميزة المادية (إلزامي)</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- النظام الثالث: متدرب متمرس (Training) -->
+                                    <div class="trainee-card" onclick="selectDepartmentTraineeSystem('twice-trained', this)">
+                                        <div class="card-header">
+                                            <div class="card-icon" style="background: var(--color-warning-dark);">
+                                                <i class="fas fa-briefcase"></i>
+                                            </div>
+                                            <div class="card-info">
+                                                <h4>🔴 النظام الثالث</h4>
+                                                <p>Training - متدرب متمرس</p>
+                                            </div>
+                                        </div>
+                                        <p class="card-description">
+                                            متدرب ذو خبرة تدريب في شركتين أو أكثر. يمتلك خبرة عملية جيدة وجاهز للإنتاجية.
+                                        </p>
+                                        <!-- شروط النظام الثالث - تظهر تحت النظام مباشرة -->
+                                        <div class="system-requirements" id="department-requirements-twice-trained" style="display: none;">
+                                            <h4>شروط النظام الثالث - متدرب متمرس</h4>
+                                            <ul>
+                                                <li>✅ كل شروط النظام الثاني +</li>
+                                                <li>✅ مدة تدريب حتى 3 أسابيع كحد أقصى</li>
+                                                <li>✅ اسم النظام: Training وليس Internship</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="validation-message" id="departmentTraineeSystemError" style="display: none;">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <span>يجب اختيار نظام للمتدربين</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- قسم تفاصيل المجالات التدريبية (الجديد) -->
+                    <div class="form-section" id="departmentTrainingDetailsSection" style="display: none;">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <h3 class="section-title-text">٤- تفاصيل المجالات التدريبية <span class="required-asterisk">*</span></h3>
+                        </div>
+                        <div class="form-section-content">
+                            <div class="section-description">
+                                أدخل التفاصيل الكاملة لكل مجال تدريبي مضاف
+                            </div>
+                            
+                            <div class="training-details-container" id="departmentTrainingDetailsContainer">
+                                <!-- سيتم إضافة تفاصيل المجالات هنا ديناميكياً -->
+                            </div>
+                            
+                            <div class="validation-message" id="departmentTrainingDetailsError" style="display: none;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>يجب تعبئة جميع الحقول المطلوبة لكل مجال تدريبي</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- قسم سعة التقديم -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h3 class="section-title-text">٥- سعة التقديم والإعدادات</h3>
+                        </div>
+                        <div class="form-section-content">
+                            <div class="section-description">
+                                حدد سعة التقديم والإعدادات العامة للقسم
+                            </div>
+                            
+                            <div class="compact-form-row">
+                                <div class="compact-form-group">
+                                    <label class="form-label">عدد الفرص المتاحة <span class="required-asterisk">*</span></label>
+                                    <input type="number" class="form-input" id="departmentOpenPositions" min="1" max="100" value="10" required>
+                                </div>
+                                <div class="compact-form-group">
+                                    <label class="form-label">الحد الأقصى للطلبات <span class="required-asterisk">*</span></label>
+                                    <input type="number" class="form-input" id="departmentMaxApplications" min="10" max="500" value="50" required>
+                                </div>
+                            </div>
+                            
+                            <div class="compact-form-group">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="departmentAutoCloseToggle" checked>
+                                    <span>تفعيل الإغلاق التلقائي عند الوصول للحد الأقصى</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- قسم متطلبات التدريب -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <h3 class="section-title-text">٦- متطلبات التدريب</h3>
+                        </div>
+                        <div class="form-section-content">
+                            <div class="section-description">
+                                حدد متطلبات التدريب والشروط الخاصة بالقسم
+                            </div>
+                            
+                            <div class="compact-form-group">
+                                <label class="form-label">مدة الرد على الطلبات (3-14 يوم)</label>
+                                <input type="number" class="form-input optional-field" id="departmentResponseTime" min="3" max="14" value="7">
+                            </div>
+
+                            <div class="compact-form-group">
+                                <label class="form-label">توفر المعدات والأجهزة</label>
+                                <select class="form-select optional-field" id="departmentEquipmentAvailability" onchange="toggleDepartmentTraineeRequirements()">
+                                    <option value="full">متوفر بالكامل</option>
+                                    <option value="partial">متوفر جزئياً</option>
+                                    <option value="none">غير متوفر</option>
+                                </select>
+                            </div>
+
+                            <div class="compact-form-group hidden" id="departmentTraineeRequirementsContainer">
+                                <label class="form-label">متطلبات المتدرب</label>
+                                <textarea class="form-textarea optional-field" id="departmentTraineeRequirements" placeholder="اذكر المتطلبات التي يجب على المتدرب توفيرها..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- قسم الشروط الإلزامية -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="fas fa-file-contract"></i>
+                            </div>
+                            <h3 class="section-title-text">٧- الشروط الإلزامية للقبول</h3>
+                        </div>
+                        <div class="form-section-content">
+                            <div class="section-description">
+                                أوافق على الشروط والإجراءات المذكورة أدناه
+                            </div>
+                            
+                            <div class="compact-form-group">
+                                <h4>شروط عامة:</h4>
+                                <ul class="conditions-list">
+                                    <li>✅ الموافقة على العقد والأنظمة</li>
+                                    <li>✅ صحة البيانات المقدمة</li>
+                                    <li>✅ الالتزام بالشفافية المالية</li>
+                                    <li>✅ تقديم تقارير أسبوعية عن التقدم</li>
+                                    <li>✅ الحضور المنتظم خلال فترة التدريب</li>
+                                </ul>
+                            </div>
+
+                            <div class="compact-form-group">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="departmentAcceptConditions" required>
+                                    <span>أوافق على جميع الشروط والإجراءات المذكورة أعلاه</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-outline" onclick="closeDepartmentModal()">إلغاء</button>
+                        <button type="submit" class="btn-primary-advanced">
+                            <i class="fas fa-save"></i>
+                            <span id="departmentModalSubmitText">حفظ القسم</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== GLOBAL STATE =====
+        let currentDepartment = null;
+        let currentBranch = null;
+        let selectedFinancialSystem = null;
+        let selectedDepartmentTraineeSystem = null;
+        let departmentTrainingFields = [];
+        let departmentTrainingDetails = {};
+        let departments = [
+            {
+                id: 'sales',
+                name: 'المبيعات - Sales',
+                description: 'قسم المبيعات والعلاقات مع العملاء',
+                trainingFields: ['مبيعات', 'خدمة العملاء'],
+                traineeSystem: 'first-time',
+                openPositions: 10,
+                maxApplications: 50,
+                autoClose: true
+            },
+            {
+                id: 'marketing',
+                name: 'التسويق - Marketing',
+                description: 'قسم التسويق الرقمي والإعلان',
+                trainingFields: ['تسويق رقمي', 'إعلانات'],
+                traineeSystem: 'once-trained',
+                openPositions: 8,
+                maxApplications: 40,
+                autoClose: true
+            },
+            {
+                id: 'accounting',
+                name: 'المحاسبة - Accounting',
+                description: 'قسم المحاسبة والموارد المالية',
+                trainingFields: ['محاسبة', 'تدقيق'],
+                traineeSystem: 'first-time',
+                openPositions: 6,
+                maxApplications: 30,
+                autoClose: true
+            },
+            {
+                id: 'hr',
+                name: 'الموارد البشرية - HR',
+                description: 'قسم الموارد البشرية والتوظيف',
+                trainingFields: ['توظيف', 'تدريب'],
+                traineeSystem: 'once-trained',
+                openPositions: 5,
+                maxApplications: 25,
+                autoClose: true
+            },
+            {
+                id: 'it',
+                name: 'تكنولوجيا المعلومات - IT',
+                description: 'قسم تكنولوجيا المعلومات والدعم الفني',
+                trainingFields: ['دعم فني', 'شبكات'],
+                traineeSystem: 'twice-trained',
+                openPositions: 12,
+                maxApplications: 60,
+                autoClose: true
+            }
+        ];
+        let branches = [
+            {
+                id: 'branch_1',
+                name: 'الفرع الرئيسي',
+                code: 'BR-001',
+                address: 'الرياض - حي العليا - شارع الملك فهد',
+                city: 'الرياض',
+                region: 'منطقة الرياض',
+                phone: '0112345678',
+                email: 'main@techcompany.com',
+                manager: 'أحمد محمد',
+                capacity: 20,
+                description: 'الفرع الرئيسي للشركة ومقر الإدارة العامة',
+                status: 'active',
+                createdAt: '2023-01-15'
+            },
+            {
+                id: 'branch_2',
+                name: 'فرع جدة',
+                code: 'BR-002',
+                address: 'جدة - حي السلامة - شارع الأمير سلطان',
+                city: 'جدة',
+                region: 'منطقة مكة المكرمة',
+                phone: '0123456789',
+                email: 'jeddah@techcompany.com',
+                manager: 'سارة أحمد',
+                capacity: 15,
+                description: 'فرع جدة المتخصص في التدريب التقني',
+                status: 'active',
+                createdAt: '2023-03-10'
+            }
+        ];
+        let currentEditingDepartment = null;
+
+        // ===== دوال مساعدة للتواريخ =====
+        function formatDateToDDMMYYYY(date) {
+            if (!date) return '';
+            const d = new Date(date);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function parseDateFromDDMMYYYY(dateString) {
+            if (!dateString) return null;
+            const parts = dateString.split('/');
+            if (parts.length !== 3) return null;
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
+            return new Date(year, month, day);
+        }
+
+        function validateDateInput(dateString) {
+            if (!dateString) return false;
+            const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+            if (!regex.test(dateString)) return false;
+            
+            const date = parseDateFromDDMMYYYY(dateString);
+            return date && date instanceof Date && !isNaN(date);
+        }
+
+        function formatDateInputOnBlur(input) {
+            let value = input.value.trim();
+            
+            // إزالة أي أحرف غير رقمية
+            value = value.replace(/\D/g, '');
+            
+            // إعادة تنسيق إلى DD/MM/YYYY
+            if (value.length >= 8) {
+                const day = value.substring(0, 2);
+                const month = value.substring(2, 4);
+                const year = value.substring(4, 8);
+                input.value = `${day}/${month}/${year}`;
+                
+                // التحقق من صحة التاريخ
+                if (!validateDateInput(input.value)) {
+                    input.style.borderColor = 'var(--color-warning)';
+                    showNotification('تاريخ غير صحيح. الرجاء استخدام الصيغة DD/MM/YYYY', 'error');
+                } else {
+                    input.style.borderColor = '';
+                }
+            }
+        }
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 بدء تحميل نظام إدارة طلبات ProVance...');
+            
+            initializeRequestsControl();
+            loadBranches();
+            loadDepartments();
+            
+            // إضافة مستمعين لأحداث blur لحقول التاريخ
+            document.getElementById('startDate').addEventListener('blur', function() {
+                formatDateInputOnBlur(this);
+            });
+            
+            document.getElementById('endDate').addEventListener('blur', function() {
+                formatDateInputOnBlur(this);
+            });
+            
+            // تحميل بيانات الشركة الحقيقية من التسجيل
+            setTimeout(() => {
+                loadCompanyDataFromRegistration();
+            }, 500);
+            
+            console.log('✅ تم تهيئة نظام إدارة الطلبات بنجاح');
+        });
+
+        // Initialize the application when DOM is loaded
+        function initializeRequestsControl() {
+            // Set default dates with DD/MM/YYYY format
+            const today = new Date();
+            const nextMonth = new Date(today);
+            nextMonth.setMonth(today.getMonth() + 1);
+            
+            document.getElementById('startDate').value = formatDateToDDMMYYYY(today);
+            document.getElementById('endDate').value = formatDateToDDMMYYYY(nextMonth);
+        }
+
+        // تحميل بيانات الشركة من التسجيل
+        function loadCompanyDataFromRegistration() {
+            try {
+                console.log('🔍 جاري تحميل بيانات الشركة من التسجيل...');
+                
+                const savedCompanies = localStorage.getItem('companiesData');
+                const currentCompany = localStorage.getItem('currentCompany');
+                
+                let companyData = null;
+                
+                if (savedCompanies) {
+                    const companies = JSON.parse(savedCompanies);
+                    companyData = companies[0];
+                    console.log('✅ تم تحميل بيانات الشركة:', companyData);
+                } else if (currentCompany) {
+                    companyData = JSON.parse(currentCompany);
+                    console.log('✅ تم تحميل بيانات الشركة الحالية:', companyData);
+                }
+                
+                if (companyData) {
+                    updateUIWithCompanyData(companyData);
+                    updateRealStats(companyData);
+                    updateDepartmentsFromTrainingFields(companyData);
+                    showNotification('تم تحميل بيانات الشركة بنجاح', 'success');
+                } else {
+                    console.warn('⚠️ لا توجد بيانات شركة مسجلة');
+                    showNotification('لا توجد بيانات شركة مسجلة، سيتم استخدام بيانات تجريبية', 'warning');
+                }
+                
+                return companyData;
+                
+            } catch (error) {
+                console.error('❌ خطأ في تحميل بيانات الشركة:', error);
+                showNotification('خطأ في تحميل بيانات الشركة', 'error');
+                return null;
+            }
+        }
+
+        // تحديث واجهة المستخدم ببيانات الشركة الحقيقية
+        function updateUIWithCompanyData(companyData) {
+            const companyInfo = companyData.companyInfo || {};
+            
+            const companyNameElement = document.querySelector('.user-name-header');
+            if (companyNameElement && companyInfo.name) {
+                companyNameElement.textContent = companyInfo.name;
+            }
+            
+            updateRealStats(companyData);
+        }
+
+        // تحديث الإحصائيات بناءً على البيانات الحقيقية
+        function updateRealStats(companyData) {
+            const trainingInfo = companyData.trainingInfo || {};
+            const applicationsData = JSON.parse(localStorage.getItem('applicationsData') || '[]');
+            
+            const totalFields = trainingInfo.fields ? trainingInfo.fields.length : departments.length;
+            const closedFields = 0;
+            
+            const totalApplications = applicationsData.filter(app => 
+                app.companyId === companyData.companyInfo?.id
+            ).length;
+            
+            const pendingApplications = applicationsData.filter(app => 
+                app.companyId === companyData.companyInfo?.id && app.status === 'pending'
+            ).length;
+            
+            updateStatCardValue('openDepartments', totalFields);
+            updateStatCardValue('closedDepartments', closedFields);
+            updateStatCardValue('totalApplications', totalApplications);
+            updateStatCardValue('pendingApplications', pendingApplications);
+        }
+
+        function updateStatCardValue(statType, value) {
+            const element = document.getElementById(statType);
+            if (element) {
+                element.textContent = value;
+            }
+        }
+
+        // تحديث الأقسام بناءً على مجالات التدريب المسجلة
+        function updateDepartmentsFromTrainingFields(companyData) {
+            const trainingInfo = companyData.trainingInfo || {};
+            const departmentSelector = document.getElementById('departmentSelector');
+            
+            if (!departmentSelector) return;
+            
+            while (departmentSelector.options.length > 1) {
+                departmentSelector.remove(1);
+            }
+            
+            if (trainingInfo.fields && trainingInfo.fields.length > 0) {
+                trainingInfo.fields.forEach(field => {
+                    const option = document.createElement('option');
+                    option.value = field;
+                    option.textContent = field + ' - ' + field;
+                    departmentSelector.appendChild(option);
+                    
+                    departments.push({
+                        id: field,
+                        name: field + ' - ' + field,
+                        description: 'قسم ' + field + ' من بيانات التسجيل',
+                        trainingFields: [field],
+                        traineeSystem: 'first-time',
+                        openPositions: 5,
+                        maxApplications: 25,
+                        autoClose: true
+                    });
+                });
+                
+                console.log('✅ تم تحديث الأقسام بناءً على مجالات التدريب:', trainingInfo.fields);
+            }
+        }
+
+        // تحميل الأقسام في القائمة المنسدلة
+        function loadDepartments() {
+            const departmentSelector = document.getElementById('departmentSelector');
+            
+            while (departmentSelector.options.length > 1) {
+                departmentSelector.remove(1);
+            }
+            
+            departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept.id;
+                option.textContent = dept.name;
+                departmentSelector.appendChild(option);
+            });
+        }
+
+        // تحميل إعدادات القسم
+        function loadDepartmentSettings() {
+            const departmentSelector = document.getElementById('departmentSelector');
+            const selectedDepartment = departmentSelector.value;
+            
+            if (selectedDepartment) {
+                currentDepartment = selectedDepartment;
+                
+                const branchSelector = document.getElementById('branchSelector');
+                if (branchSelector.value) {
+                    document.getElementById('departmentSettings').style.display = 'grid';
+                    document.getElementById('globalActions').style.display = 'flex';
+                    document.getElementById('trainingSummary').style.display = 'block';
+                }
+                
+                const department = departments.find(d => d.id === selectedDepartment);
+                if (department) {
+                    document.getElementById('departmentName').value = department.name.split(' - ')[0];
+                    document.getElementById('departmentDescription').value = department.description || '';
+                    document.getElementById('openPositions').value = department.openPositions || 10;
+                    document.getElementById('maxApplications').value = department.maxApplications || 50;
+                    document.getElementById('autoCloseToggle').checked = department.autoClose !== false;
+                    
+                    if (department.traineeSystem) {
+                        selectFinancialSystem(department.traineeSystem);
+                    }
+                }
+                
+                loadRealDepartmentSettings(selectedDepartment);
+                
+                // تحديث قسم تفاصيل التدريب
+                updateTrainingSummary();
+            } else {
+                document.getElementById('departmentSettings').style.display = 'none';
+                document.getElementById('globalActions').style.display = 'none';
+                document.getElementById('trainingSummary').style.display = 'none';
+            }
+        }
+
+        // تحديث قسم تفاصيل التدريب
+        function updateTrainingSummary() {
+            const department = departments.find(d => d.id === currentDepartment);
+            if (!department) return;
+            
+            // تحديث النظام المالي
+            updateFinancialSystemSummary();
+            
+            // تحديث سعة التقديم
+            updateCapacitySummary();
+            
+            // تحديث إعدادات الوقت
+            updateTimeSettingsSummary();
+            
+            // تحديث المعلومات الأساسية
+            updateBasicInfoSummary();
+        }
+
+        // تحديث ملخص النظام المالي
+        function updateFinancialSystemSummary() {
+            const financialSystemSummary = document.getElementById('financialSystemSummary');
+            const financialDetailsSummary = document.getElementById('financialDetailsSummary');
+            
+            if (selectedFinancialSystem) {
+                let systemName = '';
+                let systemDescription = '';
+                
+                switch(selectedFinancialSystem) {
+                    case 'first-time':
+                        systemName = 'النظام الأول: متدرب لأول مرة';
+                        systemDescription = 'طالب أو خريج ليس لديه أي خبرة تدريب سابقة';
+                        break;
+                    case 'once-trained':
+                        systemName = 'النظام الثاني: متدرب ذو خبرة';
+                        systemDescription = 'متدرب سبق له التدريب في شركة واحدة فقط';
+                        break;
+                    case 'twice-trained':
+                        systemName = 'النظام الثالث: متدرب متمرس (Training)';
+                        systemDescription = 'متدرب ذو خبرة تدريب في شركتين أو أكثر';
+                        break;
+                }
+                
+                financialSystemSummary.innerHTML = `
+                    <p><strong>${systemName}</strong></p>
+                    <p>${systemDescription}</p>
+                `;
+                
+                // تحديث التفاصيل المالية
+                updateFinancialDetailsSummary();
+                financialDetailsSummary.style.display = 'block';
+            } else {
+                financialSystemSummary.innerHTML = '<p>لم يتم اختيار نظام مالي بعد</p>';
+                financialDetailsSummary.style.display = 'none';
+            }
+        }
+
+        // تحديث تفاصيل النظام المالي
+        function updateFinancialDetailsSummary() {
+            const systemType = selectedFinancialSystem;
+            if (!systemType) return;
+            
+            let minSalary = '';
+            let maxSalary = '';
+            let supervisor = '';
+            let duration = '';
+            
+            if (systemType === 'first-time') {
+                minSalary = document.getElementById('minSalaryFirst').value;
+                maxSalary = document.getElementById('maxSalaryFirst').value;
+                supervisor = document.getElementById('supervisor').value;
+                duration = document.getElementById('trainingDurationFirst').value;
+            } else if (systemType === 'once-trained') {
+                minSalary = document.getElementById('minSalaryOnce').value;
+                maxSalary = document.getElementById('maxSalaryOnce').value;
+                supervisor = document.getElementById('supervisorOnce').value;
+                duration = document.getElementById('trainingDurationOnce').value;
+            } else if (systemType === 'twice-trained') {
+                minSalary = document.getElementById('minSalaryTwice').value;
+                maxSalary = document.getElementById('maxSalaryTwice').value;
+                supervisor = document.getElementById('supervisorTwice').value;
+                duration = document.getElementById('trainingDurationTwice').value;
+            }
+            
+            // تحديث عرض التفاصيل
+            document.getElementById('summaryMinSalary').textContent = minSalary ? `${minSalary} (${document.getElementById('preferredCurrency').value})` : '-';
+            document.getElementById('summaryMaxSalary').textContent = maxSalary ? `${maxSalary} (${document.getElementById('preferredCurrency').value})` : '-';
+            document.getElementById('summarySupervisor').textContent = supervisor || '-';
+            document.getElementById('summaryDuration').textContent = duration ? getDurationText(duration) : '-';
+        }
+
+        // الحصول على نص مدة التدريب
+        function getDurationText(durationValue) {
+            const durationMap = {
+                '2-weeks': 'أسبوعين',
+                '3-weeks': '3 أسابيع',
+                '1-month': 'شهر واحد',
+                '1.5-months': 'شهر ونصف',
+                '2-months': 'شهرين',
+                '2.5-months': 'شهرين ونصف'
+            };
+            
+            return durationMap[durationValue] || durationValue;
+        }
+
+        // تحديث ملخص سعة التقديم
+        function updateCapacitySummary() {
+            const capacitySummary = document.getElementById('capacitySummary');
+            const openPositions = document.getElementById('openPositions').value;
+            const maxApplications = document.getElementById('maxApplications').value;
+            const autoClose = document.getElementById('autoCloseToggle').checked;
+            
+            capacitySummary.innerHTML = `
+                <p><strong>عدد الفرص المتاحة:</strong> ${openPositions}</p>
+                <p><strong>الحد الأقصى للطلبات:</strong> ${maxApplications}</p>
+                <p><strong>الإغلاق التلقائي:</strong> ${autoClose ? 'مفعل ✓' : 'معطل ✗'}</p>
+            `;
+        }
+
+        // تحديث ملخص إعدادات الوقت
+        function updateTimeSettingsSummary() {
+            const timeSettingsSummary = document.getElementById('timeSettingsSummary');
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const autoReopen = document.getElementById('autoReopenToggle').checked;
+            
+            timeSettingsSummary.innerHTML = `
+                <p><strong>تاريخ البدء:</strong> ${startDate || '-'}</p>
+                <p><strong>تاريخ الانتهاء:</strong> ${endDate || '-'}</p>
+                <p><strong>إعادة الفتح التلقائي:</strong> ${autoReopen ? 'مفعل ✓' : 'معطل ✗'}</p>
+            `;
+        }
+
+        // تحديث ملخص المعلومات الأساسية
+        function updateBasicInfoSummary() {
+            const basicInfoSummary = document.getElementById('basicInfoSummary');
+            const departmentName = document.getElementById('departmentName').value;
+            const departmentDescription = document.getElementById('departmentDescription').value;
+            
+            basicInfoSummary.innerHTML = `
+                <p><strong>اسم القسم:</strong> ${departmentName}</p>
+                <p><strong>وصف القسم:</strong> ${departmentDescription ? departmentDescription.substring(0, 100) + '...' : 'لا يوجد وصف'}</p>
+            `;
+        }
+
+        // تحميل إعدادات القسم الحقيقية
+        function loadRealDepartmentSettings(departmentId) {
+            const companyData = getCurrentCompanyData();
+            if (!companyData) return;
+            
+            const trainingInfo = companyData.trainingInfo || {};
+            const trainingDetails = trainingInfo.details || {};
+            
+            const fieldDetails = trainingDetails[departmentId];
+            if (!fieldDetails) {
+                console.warn('⚠️ لا توجد تفاصيل للقسم: ' + departmentId);
+                return;
+            }
+            
+            console.log('🔧 تحميل إعدادات القسم:', fieldDetails);
+            
+            document.getElementById('departmentDescription').value = 
+                fieldDetails.knowledgeBenefits || 'لا يوجد وصف مفصل';
+            
+            document.getElementById('openPositions').value = 
+                fieldDetails.count || 5;
+            
+            document.getElementById('maxApplications').value = 
+                (fieldDetails.count || 5) * 3;
+            
+            const financialSystem = trainingInfo.traineeType || 'first-time';
+            selectFinancialSystem(financialSystem);
+            
+            if (financialSystem === 'once-trained' || financialSystem === 'twice-trained') {
+                document.getElementById('financialCompensation').value = 
+                    fieldDetails.financialBenefits || '';
+            }
+            
+            if (financialSystem === 'twice-trained') {
+                document.getElementById('totalTraineeAmount').value = 1000;
+                document.getElementById('companyAmount').value = 250;
+            }
+            
+            const durationInput = financialSystem === 'twice-trained' ? 
+                document.getElementById('trainingDurationTwice') : 
+                document.getElementById('trainingDurationOnce');
+            
+            if (durationInput && fieldDetails.duration) {
+                durationInput.value = fieldDetails.duration;
+            }
+            
+            const today = new Date();
+            const endDate = new Date(today);
+            
+            if (fieldDetails.duration) {
+                const durationWeeks = parseInt(durationInput.value) || 4;
+                endDate.setDate(today.getDate() + (durationWeeks * 7));
+            } else {
+                endDate.setMonth(today.getMonth() + 1);
+            }
+            
+            document.getElementById('startDate').value = formatDateToDDMMYYYY(today);
+            document.getElementById('endDate').value = formatDateToDDMMYYYY(endDate);
+        }
+
+        // دالة جديدة لتحميل إعدادات الفرع
+        function loadBranchSettings() {
+            const branchSelector = document.getElementById('branchSelector');
+            const selectedBranchId = branchSelector.value;
+            
+            if (selectedBranchId) {
+                currentBranch = selectedBranchId;
+                
+                const departmentSelector = document.getElementById('departmentSelector');
+                if (departmentSelector.value) {
+                    document.getElementById('departmentSettings').style.display = 'grid';
+                    document.getElementById('globalActions').style.display = 'flex';
+                    document.getElementById('trainingSummary').style.display = 'block';
+                }
+                
+                const branch = branches.find(b => b.id === selectedBranchId);
+                if (branch) {
+                    document.getElementById('departmentName').value = document.getElementById('departmentName').value + ' - ' + branch.name;
+                }
+                
+                setCurrentDate();
+            } else {
+                document.getElementById('departmentSettings').style.display = 'none';
+                document.getElementById('globalActions').style.display = 'none';
+                document.getElementById('trainingSummary').style.display = 'none';
+            }
+        }
+
+        // دالة جديدة لتعيين التاريخ الحالي
+        function setCurrentDate() {
+            const today = new Date();
+            const formattedDate = formatDateToDDMMYYYY(today);
+            document.getElementById('startDate').value = formattedDate;
+            
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const formattedTomorrow = formatDateToDDMMYYYY(tomorrow);
+            document.getElementById('endDate').value = formattedTomorrow;
+        }
+
+        // الحصول على بيانات الشركة الحالية
+        function getCurrentCompanyData() {
+            const savedCompanies = localStorage.getItem('companiesData');
+            const currentCompany = localStorage.getItem('currentCompany');
+            
+            if (savedCompanies) {
+                const companies = JSON.parse(savedCompanies);
+                return companies[0];
+            } else if (currentCompany) {
+                return JSON.parse(currentCompany);
+            }
+            
+            return null;
+        }
+
+        // Select financial system
+        function selectFinancialSystem(systemType, element) {
+            document.querySelectorAll('.trainee-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            if (element) {
+                element.classList.add('selected');
+            } else {
+                const card = document.querySelector('.trainee-card[onclick*="' + systemType + '"]');
+                if (card) {
+                    card.classList.add('selected');
+                }
+            }
+            
+            selectedFinancialSystem = systemType;
+            
+            document.getElementById('financialSystemError').style.display = 'none';
+            
+            const financialFields = document.getElementById('financialFields');
+            const fieldsFirstTime = document.getElementById('fields-first-time');
+            const fieldsOnceTrained = document.getElementById('fields-once-trained');
+            const fieldsTwiceTrained = document.getElementById('fields-twice-trained');
+            
+            if (systemType === 'first-time' || systemType === 'once-trained' || systemType === 'twice-trained') {
+                financialFields.classList.remove('hidden');
+                
+                if (systemType === 'first-time') {
+                    fieldsFirstTime.style.display = 'block';
+                    fieldsOnceTrained.style.display = 'none';
+                    fieldsTwiceTrained.style.display = 'none';
+                } else if (systemType === 'once-trained') {
+                    fieldsFirstTime.style.display = 'none';
+                    fieldsOnceTrained.style.display = 'block';
+                    fieldsTwiceTrained.style.display = 'none';
+                } else if (systemType === 'twice-trained') {
+                    fieldsFirstTime.style.display = 'none';
+                    fieldsOnceTrained.style.display = 'none';
+                    fieldsTwiceTrained.style.display = 'block';
+                }
+            } else {
+                financialFields.classList.add('hidden');
+                fieldsFirstTime.style.display = 'none';
+                fieldsOnceTrained.style.display = 'none';
+                fieldsTwiceTrained.style.display = 'none';
+            }
+            
+            document.querySelectorAll('.system-requirements').forEach(req => {
+                req.style.display = 'none';
+            });
+            
+            const requirementsElement = document.getElementById('requirements-' + systemType);
+            if (requirementsElement) {
+                requirementsElement.style.display = 'block';
+            }
+            
+            // تحديث ملخص النظام المالي
+            updateFinancialSystemSummary();
+        }
+
+        // Select department trainee system in department modal
+        function selectDepartmentTraineeSystem(systemType, element) {
+            document.querySelectorAll('.trainee-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            element.classList.add('selected');
+            
+            selectedDepartmentTraineeSystem = systemType;
+            
+            document.getElementById('departmentTraineeSystemError').style.display = 'none';
+            
+            document.querySelectorAll('.system-requirements').forEach(req => {
+                req.style.display = 'none';
+            });
+            
+            const requirementsElement = document.getElementById('department-requirements-' + systemType);
+            if (requirementsElement) {
+                requirementsElement.style.display = 'block';
+            }
+            
+            // بعد اختيار النظام، عرض قسم تفاصيل المجالات التدريبية
+            document.getElementById('departmentTrainingDetailsSection').style.display = 'block';
+            renderDepartmentTrainingDetails();
+        }
+
+        // Add department training field
+        function addDepartmentTrainingField() {
+            const input = document.getElementById('departmentTrainingFieldInput');
+            const field = input.value.trim();
+            
+            if (field && !departmentTrainingFields.includes(field)) {
+                departmentTrainingFields.push(field);
+                renderDepartmentTrainingFields();
+                input.value = '';
+                
+                document.getElementById('departmentTrainingFieldsError').style.display = 'none';
+                
+                // إذا كان النظام المختار موجود، نعرض قسم التفاصيل
+                if (selectedDepartmentTraineeSystem) {
+                    document.getElementById('departmentTrainingDetailsSection').style.display = 'block';
+                    renderDepartmentTrainingDetails();
+                }
+            }
+        }
+
+        // Remove department training field
+        function removeDepartmentTrainingField(index) {
+            const removedField = departmentTrainingFields[index];
+            departmentTrainingFields.splice(index, 1);
+            delete departmentTrainingDetails[removedField];
+            
+            renderDepartmentTrainingFields();
+            
+            if (departmentTrainingFields.length === 0) {
+                document.getElementById('departmentTrainingFieldsError').style.display = 'flex';
+                document.getElementById('departmentTrainingDetailsSection').style.display = 'none';
+            } else {
+                renderDepartmentTrainingDetails();
+            }
+        }
+
+        // Render department training fields
+        function renderDepartmentTrainingFields() {
+            const container = document.getElementById('departmentTrainingFieldsContainer');
+            container.innerHTML = '';
+            
+            departmentTrainingFields.forEach((field, index) => {
+                const fieldTag = document.createElement('div');
+                fieldTag.className = 'training-field-tag';
+                fieldTag.innerHTML = `
+                    ${field}
+                    <span class="remove" onclick="removeDepartmentTrainingField(${index})">×</span>
+                `;
+                container.appendChild(fieldTag);
+            });
+        }
+
+        // Render department training details
+        function renderDepartmentTrainingDetails() {
+            const container = document.getElementById('departmentTrainingDetailsContainer');
+            container.innerHTML = '';
+            
+            if (departmentTrainingFields.length === 0 || !selectedDepartmentTraineeSystem) {
+                return;
+            }
+            
+            departmentTrainingFields.forEach((field, index) => {
+                // تهيئة تفاصيل المجال إذا لم تكن موجودة
+                if (!departmentTrainingDetails[field]) {
+                    departmentTrainingDetails[field] = {
+                        duration: '',
+                        count: 1,
+                        supervisor: '',
+                        minSalary: '',
+                        maxSalary: '',
+                        currency: 'EGP',
+                        otherCurrency: '',
+                        knowledgeBenefits: [],
+                        financialBenefits: [],
+                        trainingRequirements: []
+                    };
+                }
+                
+                const details = departmentTrainingDetails[field];
+                const isFinancialBenefitsRequired = selectedDepartmentTraineeSystem === 'once-trained' || selectedDepartmentTraineeSystem === 'twice-trained';
+                
+                const fieldDetails = document.createElement('div');
+                fieldDetails.className = 'field-details-section';
+                fieldDetails.innerHTML = `
+                    <div class="field-details-header">
+                        <div class="field-name">${field}</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">المجال ${index + 1}</div>
+                    </div>
+                    
+                    <div class="field-details-grid">
+                        <!-- مدة التدريب وعدد المتدربين -->
+                        <div class="details-group">
+                            <div class="details-group-title">
+                                <i class="fas fa-clock"></i>
+                                <span>مدة التدريب وعدد المتدربين</span>
+                            </div>
+                            <div class="compact-form-row">
+                                <div class="compact-form-group">
+                                    <label class="form-label">مدة التدريب <span class="required-asterisk">*</span></label>
+                                    <select class="form-select" id="duration-${index}" onchange="updateDepartmentFieldDetail('${field}', 'duration', this.value)" required>
+                                        <option value="">اختر المدة</option>
+                                        ${selectedDepartmentTraineeSystem === 'twice-trained' ? 
+                                            `<option value="2-weeks" ${details.duration === '2-weeks' ? 'selected' : ''}>أسبوعين</option>
+                                             <option value="3-weeks" ${details.duration === '3-weeks' ? 'selected' : ''}>3 أسابيع</option>` :
+                                            `<option value="2-weeks" ${details.duration === '2-weeks' ? 'selected' : ''}>أسبوعين</option>
+                                             <option value="3-weeks" ${details.duration === '3-weeks' ? 'selected' : ''}>3 أسابيع</option>
+                                             <option value="1-month" ${details.duration === '1-month' ? 'selected' : ''}>شهر واحد</option>
+                                             <option value="1.5-months" ${details.duration === '1.5-months' ? 'selected' : ''}>شهر ونصف</option>
+                                             <option value="2-months" ${details.duration === '2-months' ? 'selected' : ''}>شهرين</option>
+                                             <option value="2.5-months" ${details.duration === '2.5-months' ? 'selected' : ''}>شهرين ونصف</option>`
+                                        }
+                                    </select>
+                                </div>
+                                <div class="compact-form-group">
+                                    <label class="form-label">عدد المتدربين <span class="required-asterisk">*</span></label>
+                                    <input type="number" class="form-input" id="count-${index}" min="1" value="${details.count || 1}" onchange="updateDepartmentFieldDetail('${field}', 'count', this.value)" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- المشرف -->
+                        <div class="details-group">
+                            <div class="details-group-title">
+                                <i class="fas fa-user-tie"></i>
+                                <span>المشرف على التدريب</span>
+                            </div>
+                            <div class="compact-form-group">
+                                <input type="text" class="form-input" id="supervisor-${index}" placeholder="اسم المشرف" value="${details.supervisor || ''}" onchange="updateDepartmentFieldDetail('${field}', 'supervisor', this.value)" required>
+                            </div>
+                        </div>
+                        
+                        <!-- الراتب بعد التعيين -->
+                        <div class="details-group">
+                            <div class="details-group-title">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>الراتب بعد التعيين <span class="required-asterisk">*</span></span>
+                            </div>
+                            <div class="salary-inputs-container">
+                                <div class="compact-form-group">
+                                    <label class="form-label">الحد الأدنى</label>
+                                    <input type="number" class="form-input" id="minSalary-${index}" min="0" value="${details.minSalary || ''}" onchange="updateDepartmentFieldDetail('${field}', 'minSalary', this.value)" required>
+                                </div>
+                                <div class="compact-form-group">
+                                    <label class="form-label">الحد الأقصى</label>
+                                    <input type="number" class="form-input" id="maxSalary-${index}" min="0" value="${details.maxSalary || ''}" onchange="updateDepartmentFieldDetail('${field}', 'maxSalary', this.value)" required>
+                                </div>
+                            </div>
+                            <div class="currency-selector">
+                                <div class="compact-form-group" style="flex: 1;">
+                                    <select class="form-select" id="currency-${index}" onchange="updateDepartmentFieldDetail('${field}', 'currency', this.value); toggleOtherCurrencyField(${index})">
+                                        <option value="EGP" ${details.currency === 'EGP' ? 'selected' : ''}>جنيه مصري (EGP)</option>
+                                        <option value="USD" ${details.currency === 'USD' ? 'selected' : ''}>دولار أمريكي (USD)</option>
+                                        <option value="SAR" ${details.currency === 'SAR' ? 'selected' : ''}>ريال سعودي (SAR)</option>
+                                        <option value="other" ${details.currency === 'other' ? 'selected' : ''}>عملة أخرى</option>
+                                    </select>
+                                </div>
+                                <div class="compact-form-group" style="flex: 1; display: ${details.currency === 'other' ? 'block' : 'none'};" id="otherCurrencyContainer-${index}">
+                                    <input type="text" class="form-input" id="otherCurrency-${index}" placeholder="اسم العملة" value="${details.otherCurrency || ''}" onchange="updateDepartmentFieldDetail('${field}', 'otherCurrency', this.value)">
+                                </div>
+                            </div>
+                            <div class="currency-note">
+                                هذا الحقل إلزامي في جميع الأنظمة: يجب تحديد نطاق الراتب المحتمل في حال قررت الشركة تعيين المتدرب بعد انتهاء فترة التدريب.
+                            </div>
+                        </div>
+                        
+                        <!-- الميزة المعرفية -->
+                        <div class="details-group">
+                            <div class="details-group-title">
+                                <i class="fas fa-brain"></i>
+                                <span>الميزة المعرفية <span class="required-asterisk">*</span></span>
+                            </div>
+                            <div class="benefits-container">
+                                <div class="compact-benefit-input-group">
+                                    <input type="text" class="form-input" id="knowledgeBenefitInput-${index}" placeholder="ما هي المهارات والمعرفة التي سيحصل عليها المتدرب؟">
+                                    <button type="button" class="btn-outline" style="white-space: nowrap;" onclick="addKnowledgeBenefit('${field}', ${index})">إضافة</button>
+                                </div>
+                                <div class="compact-benefits-list" id="knowledgeBenefitsList-${index}">
+                                    ${details.knowledgeBenefits && details.knowledgeBenefits.length > 0 ? 
+                                        details.knowledgeBenefits.map((benefit, i) => `
+                                            <div class="compact-benefit-tag">
+                                                ${benefit}
+                                                <span class="remove" onclick="removeKnowledgeBenefit('${field}', ${i})">×</span>
+                                            </div>
+                                        `).join('') : 
+                                        '<div style="color: var(--text-tertiary); font-size: 0.9rem; text-align: center; width: 100%;">لم تتم إضافة أي ميزة معرفية بعد</div>'
+                                    }
+                                </div>
+                            </div>
+                            <div class="compact-tips-container">
+                                <h5>نصائح للكتابة:</h5>
+                                <ul class="compact-tips-list">
+                                    <li>اذكر المهارات التقنية والشخصية التي سيتم تطويرها</li>
+                                    <li>صف المشاريع والتحديات التي سيعمل عليها المتدرب</li>
+                                    <li>أبرز فرص النمو والتطوير المهني المتاحة</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- الميزة المادية (إذا كانت مطلوبة) -->
+                        ${isFinancialBenefitsRequired ? `
+                        <div class="details-group">
+                            <div class="details-group-title">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>الميزة المادية <span class="required-asterisk">*</span></span>
+                            </div>
+                            <div class="benefits-container">
+                                <div class="compact-benefit-input-group">
+                                    <input type="text" class="form-input" id="financialBenefitInput-${index}" placeholder="هل تقدم مكافآت مالية أو بدائل نقل أو وجبات؟">
+                                    <button type="button" class="btn-outline" style="white-space: nowrap;" onclick="addFinancialBenefit('${field}', ${index})">إضافة</button>
+                                </div>
+                                <div class="compact-benefits-list" id="financialBenefitsList-${index}">
+                                    ${details.financialBenefits && details.financialBenefits.length > 0 ? 
+                                        details.financialBenefits.map((benefit, i) => `
+                                            <div class="compact-benefit-tag">
+                                                ${benefit}
+                                                <span class="remove" onclick="removeFinancialBenefit('${field}', ${i})">×</span>
+                                            </div>
+                                        `).join('') : 
+                                        '<div style="color: var(--text-tertiary); font-size: 0.9rem; text-align: center; width: 100%;">لم تتم إضافة أي ميزة مادية بعد</div>'
+                                    }
+                                </div>
+                            </div>
+                            <div class="compact-tips-container">
+                                <h5>نصائح:</h5>
+                                <ul class="compact-tips-list">
+                                    <li>هذا الحقل إلزامي للنظام المختار (${selectedDepartmentTraineeSystem === 'once-trained' ? 'النظام الثاني' : 'النظام الثالث'})</li>
+                                    <li>يمكن أن تكون الميزة المادية: بدل مواصلات، وجبات، مكافأة مالية، إلخ</li>
+                                </ul>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <!-- مواصفات المتدرب -->
+                        <div class="details-group">
+                            <div class="details-group-title">
+                                <i class="fas fa-user-check"></i>
+                                <span>مواصفات المتدرب <span class="required-asterisk">*</span></span>
+                            </div>
+                            <div class="benefits-container">
+                                <div class="compact-benefit-input-group">
+                                    <input type="text" class="form-input" id="trainingRequirementInput-${index}" placeholder="ما هي مواصفات المتدرب المطلوبة لهذا المجال؟">
+                                    <button type="button" class="btn-outline" style="white-space: nowrap;" onclick="addTrainingRequirement('${field}', ${index})">إضافة</button>
+                                </div>
+                                <div class="compact-benefits-list" id="trainingRequirementsList-${index}">
+                                    ${details.trainingRequirements && details.trainingRequirements.length > 0 ? 
+                                        details.trainingRequirements.map((requirement, i) => `
+                                            <div class="compact-benefit-tag">
+                                                ${requirement}
+                                                <span class="remove" onclick="removeTrainingRequirement('${field}', ${i})">×</span>
+                                            </div>
+                                        `).join('') : 
+                                        '<div style="color: var(--text-tertiary); font-size: 0.9rem; text-align: center; width: 100%;">لم تتم إضافة أي متطلب تدريبي بعد</div>'
+                                    }
+                                </div>
+                            </div>
+                            <div class="compact-tips-container">
+                                <h5>نصائح للكتابة:</h5>
+                                <ul class="compact-tips-list">
+                                    <li>حدد المؤهلات التعليمية المطلوبة (تخصص، سنة دراسية...)</li>
+                                    <li>اذكر المعرفة النظرية المطلوبة (أساسيات برمجة، أساسيات التصميم...)</li>
+                                    <li>اذكر الصفات الشخصية التي تبحث عنها في المتدرب</li>
+                                    <li>حدد اللغات المطلوبة ومستواها</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(fieldDetails);
+            });
+        }
+
+        // Toggle other currency field
+        function toggleOtherCurrencyField(index) {
+            const currencySelect = document.getElementById(`currency-${index}`);
+            const otherCurrencyContainer = document.getElementById(`otherCurrencyContainer-${index}`);
+            
+            if (currencySelect && otherCurrencyContainer) {
+                otherCurrencyContainer.style.display = currencySelect.value === 'other' ? 'block' : 'none';
+            }
+        }
+
+        // Update department field detail
+        function updateDepartmentFieldDetail(field, key, value) {
+            if (!departmentTrainingDetails[field]) {
+                departmentTrainingDetails[field] = {};
+            }
+            departmentTrainingDetails[field][key] = value;
+            
+            // تحديث ملخص التدريب إذا كان القسم محدد
+            if (currentDepartment && field === currentDepartment) {
+                updateTrainingSummary();
+            }
+        }
+
+        // Add knowledge benefit
+        function addKnowledgeBenefit(field, index) {
+            const input = document.getElementById(`knowledgeBenefitInput-${index}`);
+            const benefit = input.value.trim();
+            
+            if (benefit) {
+                if (!departmentTrainingDetails[field].knowledgeBenefits) {
+                    departmentTrainingDetails[field].knowledgeBenefits = [];
+                }
+                
+                if (!departmentTrainingDetails[field].knowledgeBenefits.includes(benefit)) {
+                    departmentTrainingDetails[field].knowledgeBenefits.push(benefit);
+                    renderDepartmentTrainingDetails();
+                    input.value = '';
+                }
+            }
+        }
+
+        // Remove knowledge benefit
+        function removeKnowledgeBenefit(field, benefitIndex) {
+            if (departmentTrainingDetails[field] && departmentTrainingDetails[field].knowledgeBenefits) {
+                departmentTrainingDetails[field].knowledgeBenefits.splice(benefitIndex, 1);
+                renderDepartmentTrainingDetails();
+            }
+        }
+
+        // Add financial benefit
+        function addFinancialBenefit(field, index) {
+            const input = document.getElementById(`financialBenefitInput-${index}`);
+            const benefit = input.value.trim();
+            
+            if (benefit) {
+                if (!departmentTrainingDetails[field].financialBenefits) {
+                    departmentTrainingDetails[field].financialBenefits = [];
+                }
+                
+                if (!departmentTrainingDetails[field].financialBenefits.includes(benefit)) {
+                    departmentTrainingDetails[field].financialBenefits.push(benefit);
+                    renderDepartmentTrainingDetails();
+                    input.value = '';
+                }
+            }
+        }
+
+        // Remove financial benefit
+        function removeFinancialBenefit(field, benefitIndex) {
+            if (departmentTrainingDetails[field] && departmentTrainingDetails[field].financialBenefits) {
+                departmentTrainingDetails[field].financialBenefits.splice(benefitIndex, 1);
+                renderDepartmentTrainingDetails();
+            }
+        }
+
+        // Add training requirement
+        function addTrainingRequirement(field, index) {
+            const input = document.getElementById(`trainingRequirementInput-${index}`);
+            const requirement = input.value.trim();
+            
+            if (requirement) {
+                if (!departmentTrainingDetails[field].trainingRequirements) {
+                    departmentTrainingDetails[field].trainingRequirements = [];
+                }
+                
+                if (!departmentTrainingDetails[field].trainingRequirements.includes(requirement)) {
+                    departmentTrainingDetails[field].trainingRequirements.push(requirement);
+                    renderDepartmentTrainingDetails();
+                    input.value = '';
+                }
+            }
+        }
+
+        // Remove training requirement
+        function removeTrainingRequirement(field, requirementIndex) {
+            if (departmentTrainingDetails[field] && departmentTrainingDetails[field].trainingRequirements) {
+                departmentTrainingDetails[field].trainingRequirements.splice(requirementIndex, 1);
+                renderDepartmentTrainingDetails();
+            }
+        }
+
+        // Toggle department trainee requirements
+        function toggleDepartmentTraineeRequirements() {
+            const equipmentAvailability = document.getElementById('departmentEquipmentAvailability').value;
+            const traineeRequirementsContainer = document.getElementById('departmentTraineeRequirementsContainer');
+            
+            if (equipmentAvailability === 'none') {
+                traineeRequirementsContainer.classList.remove('hidden');
+            } else {
+                traineeRequirementsContainer.classList.add('hidden');
+            }
+        }
+
+        // Toggle financial details
+        function toggleFinancialDetails(systemType, event) {
+            event.stopPropagation();
+            
+            document.querySelectorAll('.card-details').forEach(detail => {
+                detail.classList.remove('active');
+            });
+            
+            const detailsElement = document.getElementById('details-' + systemType);
+            detailsElement.classList.toggle('active');
+        }
+
+        // Reset to defaults
+        function resetToDefaults() {
+            if (!currentBranch) {
+                showNotification('يرجى اختيار فرع أولاً', 'error');
+                return;
+            }
+            
+            if (confirm('هل أنت متأكد من إعادة جميع الإعدادات إلى القيم الافتراضية؟')) {
+                document.getElementById('departmentDescription').value = '';
+                document.getElementById('openPositions').value = 10;
+                document.getElementById('maxApplications').value = 50;
+                document.getElementById('autoCloseToggle').checked = true;
+                document.getElementById('autoReopenToggle').checked = false;
+                
+                selectFinancialSystem('first-time');
+                
+                document.getElementById('minSalaryFirst').value = '';
+                document.getElementById('maxSalaryFirst').value = '';
+                document.getElementById('supervisor').value = '';
+                document.getElementById('knowledgeBenefit').value = '';
+                document.getElementById('trainingDurationFirst').value = '';
+                
+                document.getElementById('minSalaryOnce').value = '';
+                document.getElementById('maxSalaryOnce').value = '';
+                document.getElementById('supervisorOnce').value = '';
+                document.getElementById('knowledgeBenefitOnce').value = '';
+                document.getElementById('materialBenefitOnce').value = '';
+                document.getElementById('trainingDurationOnce').value = '';
+                
+                document.getElementById('minSalaryTwice').value = '';
+                document.getElementById('maxSalaryTwice').value = '';
+                document.getElementById('supervisorTwice').value = '';
+                document.getElementById('knowledgeBenefitTwice').value = '';
+                document.getElementById('materialBenefitTwice').value = '';
+                document.getElementById('trainingDurationTwice').value = '';
+                
+                setCurrentDate();
+                
+                // تحديث ملخص التدريب
+                updateTrainingSummary();
+                
+                showNotification('تم إعادة التعيين إلى الإعدادات الافتراضية', 'success');
+            }
+        }
+
+        // Save all changes
+        function saveAllChanges() {
+            if (!currentBranch) {
+                showNotification('يرجى اختيار فرع أولاً', 'error');
+                return;
+            }
+            
+            // التحقق من صحة التواريخ
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (startDate && !validateDateInput(startDate)) {
+                showNotification('تاريخ البدء غير صحيح. الرجاء استخدام الصيغة DD/MM/YYYY', 'error');
+                return;
+            }
+            
+            if (endDate && !validateDateInput(endDate)) {
+                showNotification('تاريخ الانتهاء غير صحيح. الرجاء استخدام الصيغة DD/MM/YYYY', 'error');
+                return;
+            }
+            
+            // تحديث ملخص التدريب
+            updateTrainingSummary();
+            
+            showNotification('تم حفظ جميع التغييرات بنجاح', 'success');
+        }
+
+        // تحرير النظام المالي
+        function editFinancialSystem() {
+            // انتقل إلى قسم النظام المالي
+            document.querySelector('.settings-panel:nth-child(3)').scrollIntoView({ behavior: 'smooth' });
+            
+            // إضافة تأثير مرئي
+            const panel = document.querySelector('.settings-panel:nth-child(3)');
+            panel.style.boxShadow = '0 0 0 3px var(--color-primary)';
+            setTimeout(() => {
+                panel.style.boxShadow = '';
+            }, 2000);
+            
+            showNotification('يمكنك الآن تعديل النظام المالي', 'info');
+        }
+
+        // تحرير سعة التقديم
+        function editCapacitySettings() {
+            // انتقل إلى قسم سعة التقديم
+            document.querySelector('.settings-panel:nth-child(2)').scrollIntoView({ behavior: 'smooth' });
+            
+            // إضافة تأثير مرئي
+            const panel = document.querySelector('.settings-panel:nth-child(2)');
+            panel.style.boxShadow = '0 0 0 3px var(--color-primary)';
+            setTimeout(() => {
+                panel.style.boxShadow = '';
+            }, 2000);
+            
+            showNotification('يمكنك الآن تعديل سعة التقديم', 'info');
+        }
+
+        // تحرير إعدادات الوقت
+        function editTimeSettings() {
+            // انتقل إلى قسم إعدادات الوقت
+            document.querySelector('.settings-panel:nth-child(4)').scrollIntoView({ behavior: 'smooth' });
+            
+            // إضافة تأثير مرئي
+            const panel = document.querySelector('.settings-panel:nth-child(4)');
+            panel.style.boxShadow = '0 0 0 3px var(--color-primary)';
+            setTimeout(() => {
+                panel.style.boxShadow = '';
+            }, 2000);
+            
+            showNotification('يمكنك الآن تعديل إعدادات الوقت', 'info');
+        }
+
+        // تحرير المعلومات الأساسية
+        function editBasicInfo() {
+            // انتقل إلى قسم المعلومات الأساسية
+            document.querySelector('.settings-panel:nth-child(1)').scrollIntoView({ behavior: 'smooth' });
+            
+            // إضافة تأثير مرئي
+            const panel = document.querySelector('.settings-panel:nth-child(1)');
+            panel.style.boxShadow = '0 0 0 3px var(--color-primary)';
+            setTimeout(() => {
+                panel.style.boxShadow = '';
+            }, 2000);
+            
+            showNotification('يمكنك الآن تعديل المعلومات الأساسية', 'info');
+        }
+
+        // Load branches into the UI
+        function loadBranches() {
+            const branchSelector = document.getElementById('branchSelector');
+            
+            while (branchSelector.options.length > 1) {
+                branchSelector.remove(1);
+            }
+            
+            branches.forEach(branch => {
+                const option = document.createElement('option');
+                option.value = branch.id;
+                option.textContent = branch.name + ' - ' + branch.code;
+                branchSelector.appendChild(option);
+            });
+        }
+
+        // Open department modal for adding
+        function openDepartmentModal() {
+            const modal = document.getElementById('departmentModal');
+            modal.style.display = 'flex';
+            resetDepartmentForm();
+        }
+
+        // Close department modal
+        function closeDepartmentModal() {
+            document.getElementById('departmentModal').style.display = 'none';
+            currentEditingDepartment = null;
+        }
+
+        // Reset department form
+        function resetDepartmentForm() {
+            document.getElementById('departmentForm').reset();
+            departmentTrainingFields = [];
+            departmentTrainingDetails = {};
+            renderDepartmentTrainingFields();
+            selectedDepartmentTraineeSystem = null;
+            document.querySelectorAll('.trainee-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            document.querySelectorAll('.system-requirements').forEach(req => {
+                req.style.display = 'none';
+            });
+            
+            document.getElementById('departmentTraineeSystemError').style.display = 'none';
+            document.getElementById('departmentTrainingFieldsError').style.display = 'none';
+            document.getElementById('departmentTrainingDetailsError').style.display = 'none';
+            document.getElementById('departmentTrainingDetailsSection').style.display = 'none';
+            
+            document.getElementById('departmentTraineeRequirementsContainer').classList.add('hidden');
+        }
+
+        // Handle department form submission
+        document.getElementById('departmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // التحقق من الحقول الإلزامية
+            const errors = [];
+            
+            if (!selectedDepartmentTraineeSystem) {
+                errors.push('نوع المتدربين');
+                document.getElementById('departmentTraineeSystemError').style.display = 'flex';
+            }
+            
+            if (departmentTrainingFields.length === 0) {
+                errors.push('المجالات التدريبية');
+                document.getElementById('departmentTrainingFieldsError').style.display = 'flex';
+            }
+            
+            // التحقق من تفاصيل المجالات التدريبية
+            let trainingDetailsValid = true;
+            if (departmentTrainingFields.length > 0 && selectedDepartmentTraineeSystem) {
+                departmentTrainingFields.forEach(field => {
+                    const details = departmentTrainingDetails[field];
+                    if (!details) {
+                        trainingDetailsValid = false;
+                        return;
+                    }
+                    
+                    // التحقق من الحقول الإلزامية الأساسية
+                    if (!details.duration || !details.count || !details.supervisor || 
+                        !details.minSalary || !details.maxSalary) {
+                        trainingDetailsValid = false;
+                        return;
+                    }
+                    
+                    // التحقق من الميزة المعرفية
+                    if (!details.knowledgeBenefits || details.knowledgeBenefits.length === 0) {
+                        trainingDetailsValid = false;
+                        return;
+                    }
+                    
+                    // التحقق من الميزة المادية إذا كانت مطلوبة
+                    const isFinancialBenefitsRequired = selectedDepartmentTraineeSystem === 'once-trained' || selectedDepartmentTraineeSystem === 'twice-trained';
+                    if (isFinancialBenefitsRequired && (!details.financialBenefits || details.financialBenefits.length === 0)) {
+                        trainingDetailsValid = false;
+                        return;
+                    }
+                    
+                    // التحقق من متطلبات التدريب
+                    if (!details.trainingRequirements || details.trainingRequirements.length === 0) {
+                        trainingDetailsValid = false;
+                        return;
+                    }
+                });
+            }
+            
+            if (!trainingDetailsValid) {
+                errors.push('تفاصيل المجالات التدريبية');
+                document.getElementById('departmentTrainingDetailsError').style.display = 'flex';
+            }
+            
+            if (errors.length > 0) {
+                showNotification(`يجب تعبئة الحقول التالية: ${errors.join(', ')}`, 'error');
+                return;
+            }
+            
+            const departmentName = document.getElementById('departmentNameInput').value;
+            const departmentId = departmentName.replace(/\s+/g, '-').toLowerCase();
+            
+            // تحويل التفاصيل إلى تنسيق مناسب للتخزين
+            const trainingDetailsForStorage = {};
+            departmentTrainingFields.forEach(field => {
+                const details = departmentTrainingDetails[field];
+                trainingDetailsForStorage[field] = {
+                    duration: details.duration,
+                    count: details.count,
+                    supervisor: details.supervisor,
+                    minSalary: details.minSalary,
+                    maxSalary: details.maxSalary,
+                    currency: details.currency,
+                    otherCurrency: details.otherCurrency || '',
+                    knowledgeBenefits: details.knowledgeBenefits.join('\n'),
+                    financialBenefits: details.financialBenefits ? details.financialBenefits.join('\n') : '',
+                    trainingRequirements: details.trainingRequirements.join('\n')
+                };
+            });
+            
+            const newDepartment = {
+                id: departmentId,
+                name: departmentName + ' - ' + departmentName,
+                description: document.getElementById('departmentDescriptionInput').value || 'قسم جديد',
+                trainingFields: [...departmentTrainingFields],
+                trainingDetails: trainingDetailsForStorage,
+                traineeSystem: selectedDepartmentTraineeSystem,
+                openPositions: parseInt(document.getElementById('departmentOpenPositions').value) || 10,
+                maxApplications: parseInt(document.getElementById('departmentMaxApplications').value) || 50,
+                autoClose: document.getElementById('departmentAutoCloseToggle').checked,
+                responseTime: parseInt(document.getElementById('departmentResponseTime').value) || 7,
+                equipmentAvailability: document.getElementById('departmentEquipmentAvailability').value,
+                traineeRequirements: document.getElementById('departmentTraineeRequirements').value || ''
+            };
+            
+            // Add new department to the array
+            departments.push(newDepartment);
+            
+            // Update the department selector
+            const departmentSelector = document.getElementById('departmentSelector');
+            const option = document.createElement('option');
+            option.value = newDepartment.id;
+            option.textContent = newDepartment.name;
+            departmentSelector.appendChild(option);
+            
+            // Select the new department
+            departmentSelector.value = newDepartment.id;
+            loadDepartmentSettings();
+            
+            showNotification('تم إضافة القسم الجديد بنجاح', 'success');
+            closeDepartmentModal();
+            
+            // Update statistics
+            updateStatCardValue('openDepartments', departments.length);
+        });
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = 'notification notification-' + type;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+                <button class="notification-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Update financial system display
+        function updateFinancialSystemDisplay() {
+            const currency = document.getElementById('preferredCurrency').value;
+            console.log('Currency changed to:', currency);
+            
+            // تحديث ملخص التدريب
+            updateFinancialSystemSummary();
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('departmentModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDepartmentModal();
+            }
+        });
+
+        // ===== NAVIGATION FUNCTIONS =====
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mainSidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function toggleUserMenu() {
+            let userMenu = document.getElementById('userMenuDropdown');
+            
+            if (!userMenu) {
+                userMenu = document.createElement('div');
+                userMenu.id = 'userMenuDropdown';
+                userMenu.style.cssText = `
+                    position: absolute;
+                    top: 70px;
+                    left: 20px;
+                    background: var(--bg-darker);
+                    border: 1px solid var(--glass-border);
+                    border-radius: 10px;
+                    padding: 10px;
+                    min-width: 200px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    z-index: 1000;
+                `;
+                
+                userMenu.innerHTML = `
+                    <div style="padding: 10px; border-bottom: 1px solid var(--glass-border);">
+                        <div style="font-weight: 700; font-size: 0.9rem;">${document.querySelector('.user-name-header').textContent}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">مدير النظام</div>
+                    </div>
+                    <div style="padding: 5px 0;">
+                        <a href="company-profile.html" style="display: block; padding: 8px 12px; color: var(--text-primary); text-decoration: none; border-radius: 5px; transition: all 0.3s ease;" 
+                           onmouseover="this.style.background='var(--glass-bg-hover)'" onmouseout="this.style.background='transparent'">
+                           <i class="fas fa-user" style="margin-left: 8px;"></i>الملف الشخصي
+                        </a>
+                        <a href="#" style="display: block; padding: 8px 12px; color: var(--text-primary); text-decoration: none; border-radius: 5px; transition: all 0.3s ease;" 
+                           onmouseover="this.style.background='var(--glass-bg-hover)'" onmouseout="this.style.background='transparent'">
+                           <i class="fas fa-cog" style="margin-left: 8px;"></i>الإعدادات
+                        </a>
+                        <a href="#" style="display: block; padding: 8px 12px; color: var(--text-primary); text-decoration: none; border-radius: 5px; transition: all 0.3s ease;" 
+                           onmouseover="this.style.background='var(--glass-bg-hover)'" onmouseout="this.style.background='transparent'" onclick="logout()">
+                           <i class="fas fa-sign-out-alt" style="margin-left: 8px;"></i>تسجيل الخروج
+                        </a>
+                    </div>
+                `;
+                
+                document.body.appendChild(userMenu);
+                
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!e.target.closest('.user-profile-header') && !e.target.closest('#userMenuDropdown')) {
+                        userMenu.remove();
+                        document.removeEventListener('click', closeMenu);
+                    }
+                });
+            } else {
+                userMenu.remove();
+            }
+        }
+
+        function logout() {
+            if (confirm('هل تريد تسجيل الخروج؟')) {
+                window.location.href = 'company-login.html';
+            }
+        }
+    </script>
+</body>
+</html>

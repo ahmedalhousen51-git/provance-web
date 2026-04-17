@@ -1,0 +1,2749 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProVance - إدارة المتدربين</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+            --secondary: #00D9FF;
+            --secondary-dark: #00A8CC;
+            --accent: #FF6B9D;
+            --success: #51cf66;
+            --warning: #ffd700;
+            --error: #ff6b6b;
+            --info: #4da7f7;
+            --bg-dark: #0a0c1f;
+            --bg-secondary: #15132e;
+            --bg-card: #1a1838;
+            --bg-input: rgba(255, 255, 255, 0.05);
+            --text-primary: #ffffff;
+            --text-secondary: #b8b5c9;
+            --border: rgba(255, 255, 255, 0.1);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.4);
+            --shadow-xl: 0 30px 80px rgba(0, 0, 0, 0.5);
+            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            padding: var(--spacing-lg) 0;
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar-header {
+            padding: 0 var(--spacing-lg) var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .admin-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .admin-logo {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .admin-brand h1 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .admin-profile:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .admin-info {
+            flex: 1;
+        }
+
+        .admin-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .admin-role {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Navigation */
+        .sidebar-nav {
+            padding: var(--spacing-md) 0;
+        }
+
+        .nav-section {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .nav-title {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 var(--spacing-lg);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .nav-links {
+            list-style: none;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: 0.9rem var(--spacing-lg);
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+            border-right: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--primary);
+            border-right-color: var(--primary);
+        }
+
+        .nav-link i {
+            width: 22px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .nav-link span {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-right: 280px;
+            padding: var(--spacing-lg);
+            min-height: 100vh;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Header */
+        .content-header {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .page-title h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-action {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .btn-refresh {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-refresh:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-export {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Stats */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .stat-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+        }
+
+        .stat-icon.active {
+            background: rgba(0, 217, 255, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+        }
+
+        .stat-icon.blocked {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .stat-icon.suspended {
+            background: rgba(255, 215, 0, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .stat-icon.students {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Filter */
+        .filter-section {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid var(--border);
+        }
+
+        .filter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .filter-header h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .table-info {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            padding: 0.85rem var(--spacing-md);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .search-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .search-box i {
+            color: var(--text-secondary);
+            margin-left: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .search-box input {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.95rem;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Table */
+        .table-container {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--border);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+
+        .table-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            text-align: right;
+            padding: 1.2rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            border-bottom: 2px solid var(--border);
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .data-table td {
+            padding: 1.2rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .data-table tr:hover {
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .info-cell {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-md);
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .info-details h4 {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+
+        .info-details p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Status */
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .status-active {
+            background: rgba(0, 217, 255, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+        }
+
+        .status-suspended {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .status-blocked {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--error);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        /* Action Column */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-table {
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-view {
+            background: rgba(77, 167, 247, 0.1);
+            color: var(--info);
+            border: 1px solid rgba(77, 167, 247, 0.2);
+        }
+
+        .btn-view:hover {
+            background: var(--info);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(77, 167, 247, 0.3);
+        }
+
+        .btn-suspend {
+            background: rgba(255, 215, 0, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .btn-suspend:hover {
+            background: var(--warning);
+            color: black;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-reject {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .btn-reject:hover {
+            background: var(--error);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-activate {
+            background: rgba(0, 217, 255, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+        }
+
+        .btn-activate:hover {
+            background: var(--secondary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 217, 255, 0.3);
+        }
+
+        /* Penalty Reason Badge */
+        .penalty-reason-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(255, 107, 107, 0.15);
+            color: var(--error);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+            margin-top: 5px;
+            max-width: 200px;
+            word-break: break-word;
+        }
+
+        .penalty-reason-badge i {
+            font-size: 0.9rem;
+        }
+
+        .status-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-empty {
+            padding: 0.75rem 1.5rem;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .btn-empty:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: var(--spacing-lg);
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            width: 95%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 2px solid var(--primary);
+            box-shadow: var(--shadow-xl);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: var(--bg-card);
+            z-index: 100;
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+
+        .modal-header h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal-close {
+            background: var(--bg-input);
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+        }
+
+        .modal-close:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Trainee Details */
+        .trainee-summary {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid var(--border);
+        }
+
+        .trainee-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .trainee-avatar-lg {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.2rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .trainee-info {
+            flex: 1;
+        }
+
+        .trainee-info h3 {
+            font-size: 1.6rem;
+            margin-bottom: 0.5rem;
+            font-weight: 800;
+        }
+
+        .trainee-info p {
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            text-align: left;
+            max-width: 250px;
+            word-break: break-word;
+            font-weight: 500;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: flex-end;
+            padding: var(--spacing-lg);
+            border-top: 1px solid var(--border);
+            position: sticky;
+            bottom: 0;
+            background: var(--bg-card);
+            border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        }
+
+        /* New Styles for Info Sections */
+        .info-section {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid var(--border);
+        }
+
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .info-header i {
+            color: var(--primary);
+            font-size: 1.4rem;
+        }
+
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 20px;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 12px;
+            margin: 20px 0;
+            border-right: 4px solid var(--primary);
+        }
+
+        .section-divider i {
+            color: var(--primary);
+        }
+
+        .photo-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            margin: 10px auto;
+            display: block;
+        }
+
+        .photo-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--bg-input);
+            border: 2px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px auto;
+        }
+
+        .photo-placeholder i {
+            font-size: 2rem;
+            color: var(--text-secondary);
+        }
+
+        /* Penalty Form */
+        .penalty-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: var(--transition);
+            outline: none;
+            font-family: inherit;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+            background: var(--bg-card);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        /* Notification */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .notification {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            box-shadow: var(--shadow-lg);
+            animation: notificationSlideIn 0.3s ease;
+            border-right: 4px solid var(--primary);
+        }
+
+        @keyframes notificationSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .notification.success {
+            border-right-color: var(--success);
+        }
+
+        .notification.error {
+            border-right-color: var(--error);
+        }
+
+        .notification.info {
+            border-right-color: var(--info);
+        }
+
+        /* Send Message Modal */
+        .send-message-modal {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            padding: var(--spacing-lg);
+        }
+
+        .send-message-modal.show {
+            display: flex;
+        }
+
+        .message-content {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            width: 95%;
+            max-width: 500px;
+            border: 2px solid var(--primary);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .message-header h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .message-preview {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid var(--border);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .message-preview p {
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+
+        /* Penalty Reason Section */
+        .penalty-info-section {
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .penalty-info-section .info-header i {
+            color: var(--error);
+        }
+
+        .penalty-reason-text {
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-md);
+            margin-top: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .menu-toggle {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .stats-overview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filter-controls {
+                flex-direction: column;
+            }
+            
+            .search-box {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: var(--spacing-md);
+            }
+            
+            .content-header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                align-items: flex-start;
+            }
+            
+            .stats-overview {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+            
+            .trainee-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="admin-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="admin-brand">
+                    <div class="admin-logo">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h1>ProVance</h1>
+                </div>
+                
+                <div class="admin-profile">
+                    <div class="admin-avatar" id="adminAvatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="admin-info">
+                        <div class="admin-name" id="adminName">المسؤول</div>
+                        <div class="admin-role" id="adminRole">مدير النظام</div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-title">القائمة الرئيسية</div>
+                    <ul class="nav-links">
+                        <li>
+                            <a href="admin-dashboard.html" class="nav-link">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>لوحة التحكم</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="admin-campany.html" class="nav-link">
+                                <i class="fas fa-building"></i>
+                                <span>إدارة الشركات</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link active">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>إدارة المتدربين</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="internships.html" class="nav-link">
+                                <i class="fas fa-briefcase"></i>
+                                <span>التدريبات</span>
+                            </a>
+                        </li>
+                            <a href="admin-notification.html" class="nav-link">
+                                <i class="fas fa-bell"></i>
+                                <span>إدارة الإشعارات</span>
+                            </a>
+                        <li>
+                    </ul>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-title">إعدادات النظام</div>
+                    <ul class="nav-links">
+                        <li>
+                            <a href="settings.html" class="nav-link">
+                                <i class="fas fa-cog"></i>
+                                <span>الإعدادات</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="index.html" class="nav-link" id="logoutBtn">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>تسجيل الخروج</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="content-header">
+                <div class="page-title">
+                    <h1>إدارة المتدربين</h1>
+                    <p>إدارة حسابات المتدربين المسجلين في المنصة</p>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="btn-action btn-refresh" id="refreshTraineesBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        تحديث
+                    </button>
+                    <button class="btn-action btn-export" id="exportTraineesBtn">
+                        <i class="fas fa-download"></i>
+                        تصدير البيانات
+                    </button>
+                </div>
+            </header>
+            
+            <section class="stats-overview">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="activeTrainees">0</div>
+                            <div class="stat-label">متدرب نشط</div>
+                        </div>
+                        <div class="stat-icon active">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="blockedTrainees">0</div>
+                            <div class="stat-label">متدرب محظور</div>
+                        </div>
+                        <div class="stat-icon blocked">
+                            <i class="fas fa-user-lock"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="suspendedTrainees">0</div>
+                            <div class="stat-label">متدرب موقوف</div>
+                        </div>
+                        <div class="stat-icon suspended">
+                            <i class="fas fa-user-slash"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="totalTraineesList">0</div>
+                            <div class="stat-label">إجمالي المتدربين</div>
+                        </div>
+                        <div class="stat-icon students">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="filter-section">
+                <div class="filter-header">
+                    <h3>تصفية المتدربين</h3>
+                    <div class="table-info">
+                        <span id="traineesCount">0</span> متدرب موجود
+                    </div>
+                </div>
+                
+                <div class="filter-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchTraineesInput" placeholder="ابحث عن متدرب بالاسم، البريد، أو الجامعة...">
+                    </div>
+                    
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">الكل</button>
+                        <button class="filter-btn" data-filter="active">نشط</button>
+                        <button class="filter-btn" data-filter="suspended">موقوف</button>
+                        <button class="filter-btn" data-filter="blocked">محظور</button>
+                    </div>
+                </div>
+            </section>
+            
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">قائمة المتدربين</h3>
+                    <div class="table-controls">
+                        <button class="btn-action btn-export" onclick="addSampleTrainees()">
+                            <i class="fas fa-plus"></i>
+                            إضافة بيانات تجريبية
+                        </button>
+                    </div>
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>المتدرب</th>
+                            <th>الجامعة</th>
+                            <th>التخصص</th>
+                            <th>المستوى</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="traineesTableBody">
+                        <!-- سيتم ملؤها ديناميكياً -->
+                    </tbody>
+                </table>
+                
+                <div class="empty-state" id="traineesEmptyState" style="display: none;">
+                    <i class="fas fa-user-graduate"></i>
+                    <h3>لا توجد بيانات متدربين</h3>
+                    <p>لم يتم تسجيل أي متدربين حتى الآن</p>
+                    <button class="btn-empty" onclick="addSampleTrainees()">
+                        <i class="fas fa-plus"></i>
+                        إضافة بيانات تجريبية
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Trainee Details Modal -->
+    <div class="modal-overlay" id="traineeDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTraineeName">تفاصيل المتدرب</h2>
+                <button class="modal-close" id="traineeModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="trainee-summary">
+                    <div class="trainee-header">
+                        <div class="trainee-avatar-lg" id="modalTraineeAvatar">
+                            <i class="fas fa-user" id="modalTraineeIcon"></i>
+                        </div>
+                        <div class="trainee-info">
+                            <h3 id="modalTraineeFullName">الاسم الكامل</h3>
+                            <p id="modalTraineeEmail">البريد الإلكتروني</p>
+                            <p id="modalTraineeUniversity">الجامعة</p>
+                        </div>
+                    </div>
+                    
+                    <!-- عرض سبب الجزاء إذا كان الحساب موقوفاً أو محظوراً -->
+                    <div id="penaltyInfoContainer" style="display: none;">
+                        <!-- سيتم ملؤها ديناميكياً -->
+                    </div>
+                    
+                    <!-- الصورة الشخصية -->
+                    <div class="info-section">
+                        <div class="info-header">
+                            <i class="fas fa-camera"></i>
+                            <h3>الصورة الشخصية</h3>
+                        </div>
+                        <div id="modalTraineePhotoContainer">
+                            <!-- سيتم إضافة الصورة هنا ديناميكياً -->
+                        </div>
+                    </div>
+                    
+                    <!-- المعلومات الشخصية -->
+                    <div class="info-section">
+                        <div class="info-header">
+                            <i class="fas fa-user"></i>
+                            <h3>المعلومات الشخصية</h3>
+                        </div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">الاسم الثلاثي:</span>
+                                <span class="info-value" id="modalTraineeFullName2">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">البريد الإلكتروني:</span>
+                                <span class="info-value" id="modalTraineeEmail2">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">تاريخ الميلاد:</span>
+                                <span class="info-value" id="modalTraineeBirthDate">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">العمر:</span>
+                                <span class="info-value" id="modalTraineeAge">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">رقم الهاتف:</span>
+                                <span class="info-value" id="modalTraineePhone">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">مكان الإقامة:</span>
+                                <span class="info-value" id="modalTraineeAddress">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">تاريخ التسجيل:</span>
+                                <span class="info-value" id="modalTraineeDate">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">حالة الحساب:</span>
+                                <span class="info-value" id="modalTraineeStatus">غير محدد</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- المعلومات الأكاديمية -->
+                    <div class="info-section">
+                        <div class="info-header">
+                            <i class="fas fa-graduation-cap"></i>
+                            <h3>المعلومات الأكاديمية</h3>
+                        </div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">الجامعة:</span>
+                                <span class="info-value" id="modalTraineeUniversity2">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">الكلية:</span>
+                                <span class="info-value" id="modalTraineeCollege">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">التخصص:</span>
+                                <span class="info-value" id="modalTraineeMajor">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">المستوى الدراسي:</span>
+                                <span class="info-value" id="modalTraineeLevel">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">المعدل التراكمي:</span>
+                                <span class="info-value" id="modalTraineeGPA">غير محدد</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- المهارات والإحصائيات -->
+                    <div class="info-section">
+                        <div class="info-header">
+                            <i class="fas fa-tools"></i>
+                            <h3>المهارات والإحصائيات</h3>
+                        </div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">المهارات:</span>
+                                <span class="info-value" id="modalTraineeSkills">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">التدريبات المكتملة:</span>
+                                <span class="info-value" id="modalTraineeTrainings">0</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">التقييم العام:</span>
+                                <span class="info-value" id="modalTraineeRating">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- معلومات العقد -->
+                    <div class="info-section">
+                        <div class="info-header">
+                            <i class="fas fa-file-contract"></i>
+                            <h3>معلومات العقد</h3>
+                        </div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">موافقة على العقد:</span>
+                                <span class="info-value" id="modalTraineeContract">غير محدد</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">تاريخ الموافقة:</span>
+                                <span class="info-value" id="modalTraineeContractDate">غير محدد</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-table btn-suspend" onclick="showPenaltyModal('suspension')">
+                    <i class="fas fa-ban"></i>
+                    تعليق الحساب
+                </button>
+                <button class="btn-table btn-reject" onclick="showPenaltyModal('block')">
+                    <i class="fas fa-lock"></i>
+                    حظر الحساب
+                </button>
+                <button class="btn-table btn-activate" id="activateTraineeBtn" style="display: none;">
+                    <i class="fas fa-check"></i>
+                    تفعيل الحساب
+                </button>
+                <button class="btn-table btn-view" onclick="closeTraineeModal()">
+                    <i class="fas fa-times"></i>
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Penalty Modal -->
+    <div class="modal-overlay" id="penaltyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="penaltyModalTitle">تطبيق جزاء على المتدرب</h2>
+                <button class="modal-close" id="penaltyModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="penaltyForm" class="penalty-form">
+                    <div class="form-group">
+                        <label for="penaltyType" class="form-label">نوع الجزاء</label>
+                        <select class="form-select" id="penaltyType" required>
+                            <option value="">اختر نوع الجزاء</option>
+                            <option value="warning">إنذار</option>
+                            <option value="suspension">تعليق مؤقت</option>
+                            <option value="block">حظر دائم</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="penaltyDuration" class="form-label">مدة الجزاء (أيام)</label>
+                        <input type="number" class="form-input" id="penaltyDuration" min="1" max="365" placeholder="أدخل عدد الأيام">
+                        <small style="color: var(--text-secondary);">اتركه فارغًا للجزاء الدائم</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="penaltyReason" class="form-label">سبب الجزاء</label>
+                        <textarea class="form-textarea" id="penaltyReason" placeholder="أدخل سبب تطبيق الجزاء..." required></textarea>
+                        <small style="color: var(--text-secondary);">سيتم عرض هذا السبب في جدول المتدربين وفي تفاصيل المتدرب</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="notifyTrainee" checked>
+                            <span>إرسال رسالة للمتدرب توضح سبب الجزاء</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-table btn-reject" onclick="applyPenalty()">
+                    <i class="fas fa-gavel"></i>
+                    تطبيق الجزاء
+                </button>
+                <button class="btn-table btn-view" onclick="closePenaltyModal()">
+                    <i class="fas fa-times"></i>
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Send Message Modal -->
+    <div class="modal-overlay send-message-modal" id="sendMessageModal">
+        <div class="message-content">
+            <div class="message-header">
+                <h3>إرسال رسالة للمتدرب</h3>
+                <button class="modal-close" onclick="closeMessageModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="message-preview">
+                <p id="messagePreviewContent">سيتم عرض محتوى الرسالة هنا...</p>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-table btn-reject" onclick="sendMessageToTrainee()">
+                    <i class="fas fa-paper-plane"></i>
+                    إرسال الرسالة
+                </button>
+                <button class="btn-table btn-view" onclick="closeMessageModal()">
+                    <i class="fas fa-times"></i>
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script>
+        // حالة التطبيق
+        const appState = {
+            trainees: {
+                data: [],
+                filteredData: [],
+                currentFilter: 'all',
+                selectedTraineeId: null,
+                searchQuery: '',
+                penaltyData: {
+                    type: '',
+                    reason: '',
+                    duration: ''
+                }
+            }
+        };
+
+        // عناصر DOM
+        const elements = {
+            sidebar: document.getElementById('sidebar'),
+            menuToggle: document.getElementById('menuToggle'),
+            adminName: document.getElementById('adminName'),
+            adminRole: document.getElementById('adminRole'),
+            adminAvatar: document.getElementById('adminAvatar'),
+            
+            activeTrainees: document.getElementById('activeTrainees'),
+            blockedTrainees: document.getElementById('blockedTrainees'),
+            suspendedTrainees: document.getElementById('suspendedTrainees'),
+            totalTraineesList: document.getElementById('totalTraineesList'),
+            traineesCount: document.getElementById('traineesCount'),
+            searchTraineesInput: document.getElementById('searchTraineesInput'),
+            traineesTableBody: document.getElementById('traineesTableBody'),
+            traineesEmptyState: document.getElementById('traineesEmptyState'),
+            
+            traineeDetailsModal: document.getElementById('traineeDetailsModal'),
+            penaltyModal: document.getElementById('penaltyModal'),
+            sendMessageModal: document.getElementById('sendMessageModal'),
+            notificationContainer: document.getElementById('notificationContainer'),
+            
+            penaltyInfoContainer: document.getElementById('penaltyInfoContainer')
+        };
+
+        // تهيئة التطبيق
+        function initApp() {
+            updateAdminInfo();
+            setupEventListeners();
+            loadTraineesData();
+        }
+
+        // تحديث معلومات المسؤول
+        function updateAdminInfo() {
+            const adminName = localStorage.getItem('adminName') || 'المسؤول';
+            const adminRole = localStorage.getItem('adminRole') || 'مدير النظام';
+            
+            elements.adminName.textContent = adminName;
+            elements.adminRole.textContent = adminRole;
+            
+            const firstChar = adminName.charAt(0);
+            elements.adminAvatar.innerHTML = `<span>${firstChar}</span>`;
+        }
+
+        // تحميل بيانات المتدربين
+        function loadTraineesData() {
+            try {
+                // محاولة تحميل البيانات من التسجيل
+                let trainees = JSON.parse(localStorage.getItem('traineesData')) || [];
+                
+                if (trainees.length === 0) {
+                    trainees = getSampleTraineesData();
+                    localStorage.setItem('traineesData', JSON.stringify(trainees));
+                }
+                
+                appState.trainees.data = trainees;
+                appState.trainees.filteredData = [...trainees];
+                
+                updateTraineesStats();
+                displayTrainees();
+                
+            } catch (error) {
+                console.error('خطأ في تحميل بيانات المتدربين:', error);
+                showNotification('حدث خطأ في تحميل بيانات المتدربين', 'error');
+            }
+        }
+
+        // بيانات تجريبية للمتدربين (محدثة لتحتوي على جميع الحقول)
+        function getSampleTraineesData() {
+            return [
+                {
+                    id: 'trainee-1',
+                    personalInfo: {
+                        fullName: 'أحمد محمد علي',
+                        email: 'ahmed@example.com',
+                        birthDate: '2000-05-15',
+                        age: 23,
+                        phone: '0551234567',
+                        address: 'الرياض، السعودية'
+                    },
+                    academicInfo: {
+                        university: 'جامعة الملك سعود',
+                        college: 'كلية علوم الحاسب والمعلومات',
+                        major: 'هندسة الحاسب',
+                        level: '4',
+                        gpa: '4.5',
+                        skills: ['HTML', 'CSS', 'JavaScript', 'React', 'Node.js']
+                    },
+                    photoData: null,
+                    accountStatus: 'active',
+                    contract: {
+                        agreed: true,
+                        agreedAt: '2023-09-15T08:30:00Z'
+                    },
+                    stats: {
+                        completedTrainings: 2,
+                        activeApplications: 1,
+                        overallRating: 4.5
+                    },
+                    registeredAt: '2023-09-15T08:30:00Z',
+                    updatedAt: '2024-01-10T14:20:00Z'
+                },
+                {
+                    id: 'trainee-2',
+                    personalInfo: {
+                        fullName: 'سارة عبدالله أحمد',
+                        email: 'sara@example.com',
+                        birthDate: '2001-08-20',
+                        age: 22,
+                        phone: '0552345678',
+                        address: 'جدة، السعودية'
+                    },
+                    academicInfo: {
+                        university: 'جامعة الأميرة نورة',
+                        college: 'كلية علوم الحاسب',
+                        major: 'علوم الحاسب',
+                        level: '3',
+                        gpa: '4.2',
+                        skills: ['Python', 'Data Analysis', 'Machine Learning', 'SQL']
+                    },
+                    photoData: null,
+                    accountStatus: 'active',
+                    contract: {
+                        agreed: true,
+                        agreedAt: '2023-10-10T11:45:00Z'
+                    },
+                    stats: {
+                        completedTrainings: 1,
+                        activeApplications: 2,
+                        overallRating: 4.2
+                    },
+                    registeredAt: '2023-10-10T11:45:00Z',
+                    updatedAt: '2024-01-12T09:15:00Z'
+                },
+                {
+                    id: 'trainee-3',
+                    personalInfo: {
+                        fullName: 'خالد سعيد القحطاني',
+                        email: 'khaled@example.com',
+                        birthDate: '1999-03-10',
+                        age: 24,
+                        phone: '0553456789',
+                        address: 'الدمام، السعودية'
+                    },
+                    academicInfo: {
+                        university: 'جامعة الملك عبدالعزيز',
+                        college: 'كلية الحاسبات وتقنية المعلومات',
+                        major: 'نظم المعلومات',
+                        level: 'graduate',
+                        gpa: '4.8',
+                        skills: ['Java', 'Spring Boot', 'Database Design', 'Linux']
+                    },
+                    photoData: null,
+                    accountStatus: 'suspended',
+                    contract: {
+                        agreed: true,
+                        agreedAt: '2023-08-05T10:15:00Z'
+                    },
+                    stats: {
+                        completedTrainings: 3,
+                        activeApplications: 0,
+                        overallRating: 4.8
+                    },
+                    registeredAt: '2023-08-05T10:15:00Z',
+                    suspendedAt: '2024-01-08T16:30:00Z',
+                    penaltyInfo: {
+                        type: 'suspension',
+                        reason: 'مخالفة شروط الاستخدام - نشر محتوى غير لائق',
+                        duration: '7 أيام',
+                        appliedAt: '2024-01-08T16:30:00Z'
+                    },
+                    updatedAt: '2024-01-08T16:30:00Z'
+                },
+                {
+                    id: 'trainee-4',
+                    personalInfo: {
+                        fullName: 'فاطمة حسن محمد',
+                        email: 'fatima@example.com',
+                        birthDate: '2002-11-05',
+                        age: 21,
+                        phone: '0554567890',
+                        address: 'الرياض، السعودية'
+                    },
+                    academicInfo: {
+                        university: 'جامعة الملك سعود',
+                        college: 'كلية إدارة الأعمال',
+                        major: 'التسويق',
+                        level: '4',
+                        gpa: '3.8',
+                        skills: ['Digital Marketing', 'Content Writing', 'Social Media', 'SEO']
+                    },
+                    photoData: null,
+                    accountStatus: 'blocked',
+                    contract: {
+                        agreed: true,
+                        agreedAt: '2023-11-20T13:40:00Z'
+                    },
+                    stats: {
+                        completedTrainings: 0,
+                        activeApplications: 3,
+                        overallRating: 0
+                    },
+                    registeredAt: '2023-11-20T13:40:00Z',
+                    blockedAt: '2024-01-05T11:30:00Z',
+                    penaltyInfo: {
+                        type: 'block',
+                        reason: 'سلوك غير لائق - إساءة استخدام المنصة',
+                        duration: 'دائم',
+                        appliedAt: '2024-01-05T11:30:00Z'
+                    },
+                    updatedAt: '2024-01-05T11:30:00Z'
+                }
+            ];
+        }
+
+        // تحديث إحصائيات المتدربين
+        function updateTraineesStats() {
+            const trainees = appState.trainees.data;
+            
+            const active = trainees.filter(t => t.accountStatus === 'active').length;
+            const blocked = trainees.filter(t => t.accountStatus === 'blocked').length;
+            const suspended = trainees.filter(t => t.accountStatus === 'suspended').length;
+            const total = trainees.length;
+            
+            elements.activeTrainees.textContent = active;
+            elements.blockedTrainees.textContent = blocked;
+            elements.suspendedTrainees.textContent = suspended;
+            elements.totalTraineesList.textContent = total;
+        }
+
+        // عرض المتدربين في الجدول
+        function displayTrainees() {
+            const trainees = appState.trainees.filteredData;
+            const tbody = elements.traineesTableBody;
+            const emptyState = elements.traineesEmptyState;
+            
+            tbody.innerHTML = '';
+            
+            if (trainees.length === 0) {
+                emptyState.style.display = 'block';
+                elements.traineesCount.textContent = '0';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            elements.traineesCount.textContent = trainees.length;
+            
+            trainees.forEach(trainee => {
+                const row = createTraineeRow(trainee);
+                tbody.appendChild(row);
+            });
+        }
+
+        // إنشاء صف للمتدرب مع عرض سبب الجزاء
+        function createTraineeRow(trainee) {
+            const row = document.createElement('tr');
+            const personalInfo = trainee.personalInfo || {};
+            const academicInfo = trainee.academicInfo || {};
+            
+            // تحويل التاريخ الميلادي إلى تنسيق عربي
+            const date = new Date(trainee.registeredAt);
+            const formattedDate = formatGregorianDate(date);
+            
+            const firstChar = personalInfo.fullName ? personalInfo.fullName.charAt(0) : '?';
+            
+            let statusText = '';
+            let statusClass = '';
+            let penaltyReason = '';
+            
+            switch (trainee.accountStatus) {
+                case 'active':
+                    statusText = 'نشط';
+                    statusClass = 'status-active';
+                    break;
+                case 'suspended':
+                    statusText = 'موقوف';
+                    statusClass = 'status-suspended';
+                    penaltyReason = trainee.penaltyInfo?.reason || 'غير محدد';
+                    break;
+                case 'blocked':
+                    statusText = 'محظور';
+                    statusClass = 'status-blocked';
+                    penaltyReason = trainee.penaltyInfo?.reason || 'غير محدد';
+                    break;
+                default:
+                    statusText = 'نشط';
+                    statusClass = 'status-active';
+            }
+            
+            const levelName = getLevelName(academicInfo.level);
+            
+            row.innerHTML = `
+                <td>
+                    <div class="info-cell">
+                        <div class="avatar">${firstChar}</div>
+                        <div class="info-details">
+                            <h4>${personalInfo.fullName || 'غير محدد'}</h4>
+                            <p>${personalInfo.email || 'لا يوجد بريد إلكتروني'}</p>
+                        </div>
+                    </div>
+                </td>
+                <td>${academicInfo.university || 'غير محدد'}</td>
+                <td>${academicInfo.major || 'غير محدد'}</td>
+                <td>${levelName}</td>
+                <td class="status-cell">
+                    <span class="status-badge ${statusClass}">${statusText}</span>
+                    ${penaltyReason ? `
+                        <div class="penalty-reason-badge" title="${penaltyReason}">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>${truncateText(penaltyReason, 30)}</span>
+                        </div>
+                    ` : ''}
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-table btn-view" onclick="viewTraineeDetails('${trainee.id}')">
+                            <i class="fas fa-eye"></i>
+                            عرض التفاصيل
+                        </button>
+                        ${trainee.accountStatus === 'active' ? `
+                            <button class="btn-table btn-suspend" onclick="showPenaltyModalForTrainee('${trainee.id}', 'suspension')">
+                                <i class="fas fa-pause"></i>
+                                تعليق
+                            </button>
+                            <button class="btn-table btn-reject" onclick="showPenaltyModalForTrainee('${trainee.id}', 'block')">
+                                <i class="fas fa-lock"></i>
+                                حظر
+                            </button>
+                        ` : ''}
+                        ${trainee.accountStatus !== 'active' ? `
+                            <button class="btn-table btn-activate" onclick="activateTrainee('${trainee.id}')">
+                                <i class="fas fa-play"></i>
+                                تفعيل
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+
+        // تقصير النص
+        function truncateText(text, maxLength) {
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+
+        // تصفية المتدربين
+        function filterTrainees() {
+            const searchQuery = elements.searchTraineesInput.value.toLowerCase();
+            const filter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
+            
+            appState.trainees.searchQuery = searchQuery;
+            appState.trainees.currentFilter = filter;
+            
+            let filtered = [...appState.trainees.data];
+            
+            if (searchQuery) {
+                filtered = filtered.filter(trainee => {
+                    const personalInfo = trainee.personalInfo || {};
+                    const academicInfo = trainee.academicInfo || {};
+                    const name = personalInfo.fullName?.toLowerCase() || '';
+                    const email = personalInfo.email?.toLowerCase() || '';
+                    const university = academicInfo.university?.toLowerCase() || '';
+                    const major = academicInfo.major?.toLowerCase() || '';
+                    const college = academicInfo.college?.toLowerCase() || '';
+                    
+                    return name.includes(searchQuery) || 
+                           email.includes(searchQuery) || 
+                           university.includes(searchQuery) || 
+                           major.includes(searchQuery) ||
+                           college.includes(searchQuery);
+                });
+            }
+            
+            if (filter !== 'all') {
+                filtered = filtered.filter(trainee => trainee.accountStatus === filter);
+            }
+            
+            appState.trainees.filteredData = filtered;
+            displayTrainees();
+        }
+
+        // دوال إدارة المتدربين
+        window.viewTraineeDetails = function(traineeId) {
+            const trainee = appState.trainees.data.find(t => t.id === traineeId);
+            if (!trainee) {
+                showNotification('لم يتم العثور على بيانات المتدرب', 'error');
+                return;
+            }
+            
+            appState.trainees.selectedTraineeId = traineeId;
+            displayTraineeDetails(trainee);
+        };
+
+        function displayTraineeDetails(trainee) {
+            const personalInfo = trainee.personalInfo || {};
+            const academicInfo = trainee.academicInfo || {};
+            const stats = trainee.stats || {};
+            const contract = trainee.contract || {};
+            const penaltyInfo = trainee.penaltyInfo || {};
+            
+            // تحديث العنوان
+            document.getElementById('modalTraineeName').textContent = `تفاصيل المتدرب: ${personalInfo.fullName}`;
+            
+            // تحديث المعلومات الأساسية
+            document.getElementById('modalTraineeFullName').textContent = personalInfo.fullName || 'غير محدد';
+            document.getElementById('modalTraineeFullName2').textContent = personalInfo.fullName || 'غير محدد';
+            document.getElementById('modalTraineeEmail').textContent = personalInfo.email || 'غير محدد';
+            document.getElementById('modalTraineeEmail2').textContent = personalInfo.email || 'غير محدد';
+            document.getElementById('modalTraineeUniversity').textContent = academicInfo.university || 'غير محدد';
+            document.getElementById('modalTraineeUniversity2').textContent = academicInfo.university || 'غير محدد';
+            
+            // تحديث معلومات الجزاء إذا كان الحساب موقوفاً أو محظوراً
+            if (trainee.accountStatus === 'suspended' || trainee.accountStatus === 'blocked') {
+                let penaltyTypeText = trainee.accountStatus === 'suspended' ? 'تعليق' : 'حظر';
+                let appliedDate = '';
+                if (penaltyInfo.appliedAt) {
+                    const date = new Date(penaltyInfo.appliedAt);
+                    appliedDate = formatGregorianDate(date);
+                }
+                
+                const penaltyHtml = `
+                    <div class="penalty-info-section">
+                        <div class="info-header">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>تفاصيل الجزاء</h3>
+                        </div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">نوع الجزاء:</span>
+                                <span class="info-value">${penaltyTypeText}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">المدة:</span>
+                                <span class="info-value">${penaltyInfo.duration || 'غير محدد'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">تاريخ التطبيق:</span>
+                                <span class="info-value">${appliedDate || 'غير محدد'}</span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">سبب الجزاء:</span>
+                        </div>
+                        <div class="penalty-reason-text">${penaltyInfo.reason || 'غير محدد'}</div>
+                    </div>
+                `;
+                
+                elements.penaltyInfoContainer.innerHTML = penaltyHtml;
+                elements.penaltyInfoContainer.style.display = 'block';
+            } else {
+                elements.penaltyInfoContainer.style.display = 'none';
+            }
+            
+            // تحديث المعلومات الشخصية
+            document.getElementById('modalTraineeBirthDate').textContent = formatGregorianDateString(personalInfo.birthDate) || 'غير محدد';
+            document.getElementById('modalTraineeAge').textContent = personalInfo.age ? `${personalInfo.age} سنة` : 'غير محدد';
+            document.getElementById('modalTraineePhone').textContent = personalInfo.phone || 'غير محدد';
+            document.getElementById('modalTraineeAddress').textContent = personalInfo.address || 'غير محدد';
+            
+            // تحديث المعلومات الأكاديمية
+            document.getElementById('modalTraineeCollege').textContent = academicInfo.college || 'غير محدد';
+            document.getElementById('modalTraineeMajor').textContent = academicInfo.major || 'غير محدد';
+            document.getElementById('modalTraineeLevel').textContent = getLevelName(academicInfo.level);
+            document.getElementById('modalTraineeGPA').textContent = academicInfo.gpa || 'غير محدد';
+            
+            // تحديث المهارات والإحصائيات
+            document.getElementById('modalTraineeSkills').textContent = academicInfo.skills ? 
+                Array.isArray(academicInfo.skills) ? academicInfo.skills.join(', ') : academicInfo.skills 
+                : 'لا توجد مهارات';
+            document.getElementById('modalTraineeTrainings').textContent = stats.completedTrainings || 0;
+            document.getElementById('modalTraineeRating').textContent = stats.overallRating || 0;
+            
+            // تحديث معلومات العقد
+            document.getElementById('modalTraineeContract').textContent = contract.agreed ? 'موافق' : 'غير موافق';
+            if (contract.agreedAt) {
+                const contractDate = new Date(contract.agreedAt);
+                document.getElementById('modalTraineeContractDate').textContent = formatGregorianDate(contractDate);
+            } else {
+                document.getElementById('modalTraineeContractDate').textContent = 'غير محدد';
+            }
+            
+            // تحديث الصورة الشخصية
+            const photoContainer = document.getElementById('modalTraineePhotoContainer');
+            if (trainee.photoData) {
+                photoContainer.innerHTML = `
+                    <img src="${trainee.photoData}" alt="الصورة الشخصية" class="photo-preview">
+                `;
+            } else {
+                photoContainer.innerHTML = `
+                    <div class="photo-placeholder">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <p style="text-align: center; color: var(--text-secondary); margin-top: 10px;">لا توجد صورة شخصية</p>
+                `;
+            }
+            
+            // تحديث الصورة الرمزية
+            const firstChar = personalInfo.fullName ? personalInfo.fullName.charAt(0) : '?';
+            document.getElementById('modalTraineeAvatar').innerHTML = `<span>${firstChar}</span>`;
+            
+            // تحديث تاريخ التسجيل
+            const registeredDate = new Date(trainee.registeredAt);
+            document.getElementById('modalTraineeDate').textContent = formatGregorianDate(registeredDate) + ' ' + 
+                                                                    formatGregorianTime(registeredDate);
+            
+            // تحديث حالة الحساب
+            let statusText = '';
+            switch (trainee.accountStatus) {
+                case 'active': 
+                    statusText = '<span style="color: var(--secondary);">نشط</span>'; 
+                    break;
+                case 'suspended': 
+                    statusText = '<span style="color: var(--warning);">موقوف</span>'; 
+                    break;
+                case 'blocked': 
+                    statusText = '<span style="color: var(--error);">محظور</span>'; 
+                    break;
+                default: 
+                    statusText = '<span style="color: var(--text-secondary);">غير محدد</span>';
+            }
+            document.getElementById('modalTraineeStatus').innerHTML = statusText;
+            
+            // التحكم في زر التفعيل
+            const activateBtn = document.getElementById('activateTraineeBtn');
+            if (trainee.accountStatus !== 'active') {
+                activateBtn.style.display = 'flex';
+            } else {
+                activateBtn.style.display = 'none';
+            }
+            
+            // عرض المودال
+            elements.traineeDetailsModal.classList.add('show');
+        }
+
+        window.showPenaltyModalForTrainee = function(traineeId, penaltyType) {
+            appState.trainees.selectedTraineeId = traineeId;
+            
+            const trainee = appState.trainees.data.find(t => t.id === traineeId);
+            if (!trainee) return;
+            
+            document.getElementById('penaltyModalTitle').textContent = 
+                `تطبيق جزاء على: ${trainee.personalInfo.fullName}`;
+            
+            document.getElementById('penaltyType').value = penaltyType;
+            
+            const durationInput = document.getElementById('penaltyDuration');
+            if (penaltyType === 'suspension') {
+                durationInput.value = '7';
+            } else if (penaltyType === 'block') {
+                durationInput.value = '365';
+            }
+            
+            elements.penaltyModal.classList.add('show');
+        };
+
+        window.showPenaltyModal = function(penaltyType) {
+            const traineeId = appState.trainees.selectedTraineeId;
+            if (!traineeId) return;
+            
+            const trainee = appState.trainees.data.find(t => t.id === traineeId);
+            if (!trainee) return;
+            
+            document.getElementById('penaltyModalTitle').textContent = 
+                `تطبيق جزاء على: ${trainee.personalInfo.fullName}`;
+            
+            document.getElementById('penaltyType').value = penaltyType;
+            
+            const durationInput = document.getElementById('penaltyDuration');
+            if (penaltyType === 'suspension') {
+                durationInput.value = '7';
+            } else if (penaltyType === 'block') {
+                durationInput.value = '365';
+            }
+            
+            elements.penaltyModal.classList.add('show');
+        };
+
+        function closePenaltyModal() {
+            elements.penaltyModal.classList.remove('show');
+            document.getElementById('penaltyForm').reset();
+        }
+
+        function applyPenalty() {
+            const penaltyType = document.getElementById('penaltyType').value;
+            const penaltyDuration = document.getElementById('penaltyDuration').value;
+            const penaltyReason = document.getElementById('penaltyReason').value.trim();
+            const notifyTrainee = document.getElementById('notifyTrainee').checked;
+            
+            if (!penaltyReason) {
+                showNotification('يرجى إدخال سبب الجزاء', 'error');
+                return;
+            }
+            
+            if (confirm('هل أنت متأكد من تطبيق هذا الجزاء على المتدرب؟')) {
+                const traineeIndex = appState.trainees.data.findIndex(t => t.id === appState.trainees.selectedTraineeId);
+                if (traineeIndex !== -1) {
+                    // حفظ بيانات الجزاء
+                    appState.trainees.penaltyData = {
+                        type: penaltyType,
+                        reason: penaltyReason,
+                        duration: penaltyDuration ? `${penaltyDuration} أيام` : 'دائم'
+                    };
+                    
+                    if (penaltyType === 'block') {
+                        appState.trainees.data[traineeIndex].accountStatus = 'blocked';
+                        appState.trainees.data[traineeIndex].blockedAt = new Date().toISOString();
+                        appState.trainees.data[traineeIndex].penaltyInfo = {
+                            type: 'block',
+                            reason: penaltyReason,
+                            duration: penaltyDuration ? `${penaltyDuration} أيام` : 'دائم',
+                            appliedAt: new Date().toISOString()
+                        };
+                    } else if (penaltyType === 'suspension') {
+                        appState.trainees.data[traineeIndex].accountStatus = 'suspended';
+                        appState.trainees.data[traineeIndex].suspendedAt = new Date().toISOString();
+                        appState.trainees.data[traineeIndex].penaltyInfo = {
+                            type: 'suspension',
+                            reason: penaltyReason,
+                            duration: penaltyDuration ? `${penaltyDuration} أيام` : 'دائم',
+                            appliedAt: new Date().toISOString()
+                        };
+                    }
+                    
+                    appState.trainees.data[traineeIndex].updatedAt = new Date().toISOString();
+                    
+                    saveTraineesData();
+                    filterTrainees();
+                    updateTraineesStats();
+                    
+                    // إغلاق مودال الجزاء
+                    closePenaltyModal();
+                    
+                    // إذا كان مطلوب إرسال رسالة للمتدرب
+                    if (notifyTrainee) {
+                        showMessageModal();
+                    } else {
+                        closeTraineeModal();
+                        showNotification('تم تطبيق الجزاء على المتدرب بنجاح', 'success');
+                    }
+                }
+            }
+        };
+
+        function showMessageModal() {
+            const traineeId = appState.trainees.selectedTraineeId;
+            if (!traineeId) return;
+            
+            const trainee = appState.trainees.data.find(t => t.id === traineeId);
+            if (!trainee) return;
+            
+            const penaltyTypeText = appState.trainees.penaltyData.type === 'block' ? 'حظر' : 'تعليق';
+            const penaltyDurationText = appState.trainees.penaltyData.duration;
+            const penaltyReason = appState.trainees.penaltyData.reason;
+            
+            const messageContent = `
+                <strong>عزيزي/عزيزتي ${trainee.personalInfo.fullName}</strong><br><br>
+                
+                نود إبلاغك بأنه تم تطبيق جزاء ${penaltyTypeText} على حسابك في منصة ProVance.<br><br>
+                
+                <strong>تفاصيل الجزاء:</strong><br>
+                - نوع الجزاء: ${penaltyTypeText}<br>
+                - مدة الجزاء: ${penaltyDurationText}<br>
+                - تاريخ التطبيق: ${formatGregorianDate(new Date())}<br><br>
+                
+                <strong>سبب الجزاء:</strong><br>
+                ${penaltyReason}<br><br>
+                
+                <strong>التعليمات:</strong><br>
+                ${appState.trainees.penaltyData.type === 'block' 
+                    ? 'هذا الحظر دائم ولن تتمكن من الوصول إلى حسابك مرة أخرى.' 
+                    : 'يمكنك العودة إلى استخدام حسابك بعد انتهاء مدة التعليق.'}<br><br>
+                
+                إذا كنت تعتقد أن هذا الجزاء تم تطبيقه عن طريق الخطأ، يمكنك التواصل مع دعم المنصة.<br><br>
+                
+                مع خالص التحية،<br>
+                فريق إدارة ProVance
+            `;
+            
+            document.getElementById('messagePreviewContent').innerHTML = messageContent;
+            elements.sendMessageModal.classList.add('show');
+        }
+
+        function closeMessageModal() {
+            elements.sendMessageModal.classList.remove('show');
+        }
+
+        function sendMessageToTrainee() {
+            // في التطبيق الحقيقي، هنا سيتم إرسال الرسالة عبر البريد الإلكتروني أو نظام الإشعارات
+            // هنا سنقوم بمحاكاة الإرسال
+            
+            const traineeId = appState.trainees.selectedTraineeId;
+            if (!traineeId) return;
+            
+            const trainee = appState.trainees.data.find(t => t.id === traineeId);
+            if (!trainee) return;
+            
+            // محاكاة إرسال الرسالة
+            setTimeout(() => {
+                closeMessageModal();
+                closeTraineeModal();
+                showNotification(`تم تطبيق الجزاء وإرسال الرسالة إلى ${trainee.personalInfo.fullName}`, 'success');
+            }, 1000);
+        }
+
+        window.activateTrainee = function(traineeId) {
+            if (confirm('هل أنت متأكد من تفعيل حساب هذا المتدرب؟')) {
+                const traineeIndex = appState.trainees.data.findIndex(t => t.id === traineeId);
+                if (traineeIndex !== -1) {
+                    appState.trainees.data[traineeIndex].accountStatus = 'active';
+                    appState.trainees.data[traineeIndex].activatedAt = new Date().toISOString();
+                    appState.trainees.data[traineeIndex].updatedAt = new Date().toISOString();
+                    
+                    // إزالة معلومات الجزاء عند التفعيل
+                    delete appState.trainees.data[traineeIndex].penaltyInfo;
+                    delete appState.trainees.data[traineeIndex].suspendedAt;
+                    delete appState.trainees.data[traineeIndex].blockedAt;
+                    
+                    saveTraineesData();
+                    filterTrainees();
+                    updateTraineesStats();
+                    
+                    showNotification('تم تفعيل حساب المتدرب بنجاح', 'success');
+                }
+            }
+        };
+
+        // دوال مساعدة لتنسيق التواريخ الميلادية
+        function formatGregorianDate(date) {
+            if (!date) return 'غير محدد';
+            
+            const d = new Date(date);
+            if (isNaN(d.getTime())) return date;
+            
+            return d.toLocaleDateString('ar-SA-u-ca-gregory', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function formatGregorianDateString(dateString) {
+            if (!dateString) return 'غير محدد';
+            
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            
+            return date.toLocaleDateString('ar-SA-u-ca-gregory', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function formatGregorianTime(date) {
+            if (!date) return '';
+            
+            const d = new Date(date);
+            if (isNaN(d.getTime())) return '';
+            
+            return d.toLocaleTimeString('ar-SA', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // دوال مساعدة
+        function getLevelName(level) {
+            const levels = {
+                '1': 'السنة الأولى',
+                '2': 'السنة الثانية',
+                '3': 'السنة الثالثة',
+                '4': 'السنة الرابعة',
+                '5': 'السنة الخامسة',
+                'graduate': 'خريج'
+            };
+            return levels[level] || level || 'غير محدد';
+        }
+
+        // حفظ البيانات
+        function saveTraineesData() {
+            try {
+                localStorage.setItem('traineesData', JSON.stringify(appState.trainees.data));
+                return true;
+            } catch (error) {
+                console.error('خطأ في حفظ بيانات المتدربين:', error);
+                showNotification('حدث خطأ في حفظ البيانات', 'error');
+                return false;
+            }
+        }
+
+        // بيانات تجريبية
+        function addSampleTrainees() {
+            if (confirm('هل تريد إضافة بيانات تجريبية للمتدربين؟')) {
+                const sampleTrainees = getSampleTraineesData();
+                const currentTrainees = JSON.parse(localStorage.getItem('traineesData')) || [];
+                
+                sampleTrainees.forEach(sample => {
+                    const exists = currentTrainees.some(t => t.id === sample.id);
+                    if (!exists) {
+                        currentTrainees.push(sample);
+                    }
+                });
+                
+                localStorage.setItem('traineesData', JSON.stringify(currentTrainees));
+                loadTraineesData();
+                showNotification('تم إضافة بيانات تجريبية للمتدربين بنجاح', 'success');
+            }
+        }
+
+        // تصدير البيانات
+        function exportTraineesData() {
+            const trainees = appState.trainees.filteredData;
+            
+            if (trainees.length === 0) {
+                showNotification('لا توجد بيانات للتصدير', 'info');
+                return;
+            }
+            
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            
+            const headers = [
+                "اسم المتدرب",
+                "البريد الإلكتروني",
+                "تاريخ الميلاد",
+                "العمر",
+                "رقم الهاتف",
+                "مكان الإقامة",
+                "الجامعة",
+                "الكلية",
+                "التخصص",
+                "المستوى الدراسي",
+                "المعدل التراكمي",
+                "المهارات",
+                "حالة الحساب",
+                "سبب الجزاء",
+                "موافقة على العقد",
+                "التدريبات المكتملة",
+                "تاريخ التسجيل"
+            ];
+            
+            csvContent += headers.join(",") + "\n";
+            
+            trainees.forEach(trainee => {
+                const personalInfo = trainee.personalInfo || {};
+                const academicInfo = trainee.academicInfo || {};
+                const stats = trainee.stats || {};
+                const contract = trainee.contract || {};
+                const registeredDate = new Date(trainee.registeredAt);
+                const penaltyReason = trainee.penaltyInfo?.reason || '';
+                
+                const row = [
+                    `"${personalInfo.fullName || ''}"`,
+                    `"${personalInfo.email || ''}"`,
+                    `"${formatGregorianDateString(personalInfo.birthDate) || ''}"`,
+                    `"${personalInfo.age || ''}"`,
+                    `"${personalInfo.phone || ''}"`,
+                    `"${personalInfo.address || ''}"`,
+                    `"${academicInfo.university || ''}"`,
+                    `"${academicInfo.college || ''}"`,
+                    `"${academicInfo.major || ''}"`,
+                    `"${getLevelName(academicInfo.level)}"`,
+                    `"${academicInfo.gpa || ''}"`,
+                    `"${(academicInfo.skills || []).join(', ')}"`,
+                    `"${getStatusText(trainee.accountStatus)}"`,
+                    `"${penaltyReason}"`,
+                    `"${contract.agreed ? 'نعم' : 'لا'}"`,
+                    `"${stats.completedTrainings || 0}"`,
+                    `"${formatGregorianDate(registeredDate)}"`
+                ];
+                
+                csvContent += row.join(",") + "\n";
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `بيانات_المتدربين_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('تم تصدير بيانات المتدربين بنجاح', 'success');
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'active': return 'نشط';
+                case 'suspended': return 'موقوف';
+                case 'blocked': return 'محظور';
+                default: return 'نشط';
+            }
+        }
+
+        // إغلاق المودالات
+        function closeTraineeModal() {
+            elements.traineeDetailsModal.classList.remove('show');
+            appState.trainees.selectedTraineeId = null;
+        }
+
+        // الإشعارات
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? 'fa-check-circle' : 
+                        type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+            
+            notification.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            elements.notificationContainer.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // إعداد مستمعي الأحداث
+        function setupEventListeners() {
+            // تبديل القائمة الجانبية
+            elements.menuToggle.addEventListener('click', () => {
+                elements.sidebar.classList.toggle('active');
+            });
+            
+            // تسجيل الخروج
+            document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+                    localStorage.removeItem('adminLoggedIn');
+                    localStorage.removeItem('userType');
+                    window.location.href = 'index.html';
+                }
+            });
+            
+            // البحث
+            elements.searchTraineesInput.addEventListener('input', debounce(filterTrainees, 300));
+            
+            // أزرار التصفية
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => 
+                        b.classList.remove('active'));
+                    btn.classList.add('active');
+                    filterTrainees();
+                });
+            });
+            
+            // تحديث البيانات
+            document.getElementById('refreshTraineesBtn')?.addEventListener('click', () => {
+                loadTraineesData();
+                showNotification('تم تحديث بيانات المتدربين', 'success');
+            });
+            
+            // تصدير البيانات
+            document.getElementById('exportTraineesBtn')?.addEventListener('click', exportTraineesData);
+            
+            // إغلاق المودالات
+            document.getElementById('traineeModalClose')?.addEventListener('click', closeTraineeModal);
+            document.getElementById('penaltyModalClose')?.addEventListener('click', closePenaltyModal);
+            
+            // إغلاق المودالات بالضغط على ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (elements.traineeDetailsModal.classList.contains('show')) {
+                        closeTraineeModal();
+                    }
+                    if (elements.penaltyModal.classList.contains('show')) {
+                        closePenaltyModal();
+                    }
+                    if (elements.sendMessageModal.classList.contains('show')) {
+                        closeMessageModal();
+                    }
+                }
+            });
+            
+            // إغلاق المودالات بالضغط خارج المحتوى
+            elements.traineeDetailsModal?.addEventListener('click', (e) => {
+                if (e.target === elements.traineeDetailsModal) {
+                    closeTraineeModal();
+                }
+            });
+            
+            elements.penaltyModal?.addEventListener('click', (e) => {
+                if (e.target === elements.penaltyModal) {
+                    closePenaltyModal();
+                }
+            });
+            
+            elements.sendMessageModal?.addEventListener('click', (e) => {
+                if (e.target === elements.sendMessageModal) {
+                    closeMessageModal();
+                }
+            });
+        }
+
+        // Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // تشغيل التطبيق
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

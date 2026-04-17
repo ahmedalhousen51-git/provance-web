@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provance Control - الملف الشخصي للشركة</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --color-primary: #667eea;
+            --color-primary-dark: #5568d3;
+            --color-success: #11998e;
+            --color-warning: #f5576c;
+            --color-info: #17a2b8;
+            --bg-ultra-dark: #0a0e27;
+            --bg-dark: #0f1419;
+            --bg-darker: #1a1f2e;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-bg-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --sidebar-width: 280px;
+            --header-height: 80px;
+            --border-radius: 16px;
+            --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-ultra-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            font-size: 16px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--glass-border);
+            z-index: 1000;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s var(--transition-smooth);
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .sidebar-brand-text h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            margin-bottom: 5px;
+        }
+
+        .sidebar-brand-text p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Navigation */
+        .nav-menu {
+            padding: 20px 0;
+            flex-grow: 1;
+        }
+
+        .nav-section-title {
+            padding: 12px 20px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .nav-link-advanced {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s var(--transition-smooth);
+            margin: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .nav-link-advanced:hover {
+            background: var(--glass-bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-link-advanced.active {
+            background: rgba(102, 126, 234, 0.15);
+            color: var(--color-primary);
+        }
+
+        .nav-icon {
+            width: 20px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .nav-text {
+            flex: 1;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .collapsed .nav-text {
+            display: none;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid var(--glass-border);
+            margin-top: auto;
+        }
+
+        .logout-btn-advanced {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .logout-btn-advanced:hover {
+            background: var(--color-warning);
+            border-color: transparent;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-right: var(--sidebar-width);
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+            transition: all 0.4s var(--transition-smooth);
+        }
+        
+        .sidebar.collapsed + .main-content {
+            margin-right: 70px;
+        }
+
+        /* Header */
+        .header-advanced {
+            height: var(--header-height);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .sidebar-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--color-primary);
+            transform: rotate(90deg);
+        }
+
+        .page-title-advanced {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-profile-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-profile-header:hover {
+            background: var(--glass-bg-hover);
+        }
+
+        .user-avatar-small {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .user-info-header {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name-header {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .user-role-header {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Page Container */
+        .page-container {
+            padding: 25px;
+        }
+
+        /* Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            transition: all 0.3s ease;
+            margin-bottom: 25px;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--color-primary);
+        }
+
+        .card-title i {
+            width: 40px;
+            height: 40px;
+            background: var(--color-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-darker);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--glass-bg-hover);
+            border-color: var(--color-primary);
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        /* Profile Header */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            margin-bottom: 30px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .profile-avatar-large {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--color-primary);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .profile-avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .profile-change-avatar {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            left: 0;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            z-index: 10;
+            color: white;
+        }
+
+        .profile-change-avatar:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .profile-info-header {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .profile-type {
+            font-size: 1.1rem;
+            color: var(--color-primary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .profile-status {
+            display: inline-block;
+            padding: 6px 15px;
+            background: rgba(17, 153, 142, 0.2);
+            color: var(--color-success);
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 25px;
+            margin-top: 15px;
+        }
+
+        .profile-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .profile-stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+        }
+
+        .profile-stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Company Details */
+        .company-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .company-detail-card {
+            background: var(--bg-darker);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .company-detail-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .company-detail-title i {
+            font-size: 1.2rem;
+        }
+
+        .company-detail-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .company-detail-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* روابط التواصل المحسنة */
+        .contact-links-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .contact-link-card {
+            background: var(--bg-darker);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .contact-link-card:hover {
+            background: var(--glass-bg-hover);
+            border-color: var(--color-primary);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .contact-link-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .website-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .linkedin-icon {
+            background: linear-gradient(135deg, #0077b5 0%, #00a0dc 100%);
+        }
+
+        .facebook-icon {
+            background: linear-gradient(135deg, #1877f2 0%, #0d63cb 100%);
+        }
+
+        .contact-link-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .contact-link-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .contact-link-url {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            direction: ltr;
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .contact-link-arrow {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .contact-link-card:hover .contact-link-arrow {
+            opacity: 1;
+            transform: translateX(-3px);
+        }
+
+        .no-links-message {
+            text-align: center;
+            padding: 40px 20px;
+            background: var(--bg-darker);
+            border-radius: 12px;
+            border: 1px dashed var(--glass-border);
+            color: var(--text-secondary);
+        }
+
+        .no-links-message i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--color-primary);
+            opacity: 0.5;
+        }
+
+        .no-links-message h4 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .no-links-message p {
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-darker);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--glass-border);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .sidebar.collapsed + .main-content {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .header-advanced {
+                padding: 0 15px;
+            }
+            
+            .page-container {
+                padding: 15px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .profile-stats {
+                justify-content: center;
+            }
+            
+            .company-details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-links-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="mainSidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <i class="fas fa-rocket"></i>
+            </div>
+            
+            <div class="sidebar-brand-text">
+                <h2>PROVANCE</h2>
+                <p>نظام إدارة التدريب</p>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="nav-menu">
+            <div class="nav-section-title">القائمة الرئيسية</div>
+            
+            <a class="nav-link-advanced" href="company-requests-control.html">
+                <div class="nav-icon"><i class="fas fa-cogs"></i></div>
+                <span class="nav-text">طلبات الأقسام</span>
+            </a>
+            
+            <a class="nav-link-advanced" href="company-dashboard.html">
+                <div class="nav-icon"><i class="fas fa-home"></i></div>
+                <span class="nav-text">لوحة التحكم</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-QR Code.html">
+                <div class="nav-icon"><i class="fas fa-qrcode"></i></div>
+                <span class="nav-text">نظام QR</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-trainers.html">
+                <div class="nav-icon"><i class="fas fa-users"></i></div>
+                <span class="nav-text">المتدربين</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-interviews.html">
+                <div class="nav-icon"><i class="fas fa-handshake"></i></div>
+                <span class="nav-text">المقابلات</span>
+            </a>
+
+            <a class="nav-link-advanced active" href="company-profile.html">
+                <div class="nav-icon"><i class="fas fa-building"></i></div>
+                <span class="nav-text">الملف الشخصي</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-batches.html">
+                <div class="nav-icon"><i class="fas fa-layer-group"></i></div>
+                <span class="nav-text">إدارة الدفعات</span>
+            </a>
+
+            <div class="nav-section-title">التقارير والتحليلات</div>
+
+            <a class="nav-link-advanced" href="company-departments.html">
+                <div class="nav-icon"><i class="fas fa-sitemap"></i></div>
+                <span class="nav-text">تحليل الأقسام</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-notifications.html">
+                <div class="nav-icon"><i class="fas fa-bell"></i></div>
+                <span class="nav-text">الإشعارات</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <button class="logout-btn-advanced" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header-advanced">
+            <div class="header-left">
+                <div class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </div>
+                
+                <div>
+                    <div class="page-title-advanced">
+                        <div class="page-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <span>الملف الشخصي للشركة</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="user-profile-header" onclick="toggleUserMenu()">
+                    <div class="user-avatar-small">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="user-info-header">
+                        <div class="user-name-header" id="headerCompanyName">شركة التقنية المتطورة</div>
+                        <div class="user-role-header">مدير النظام</div>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Container -->
+        <div class="page-container">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="profile-avatar-large" id="companyLogoContainer">
+                    <i class="fas fa-building" id="companyLogoIcon"></i>
+                    <img id="companyLogoImage" alt="شعار الشركة">
+                    <input type="file" id="logoUpload" accept="image/*" style="display: none;">
+                    <div class="profile-change-avatar" onclick="document.getElementById('logoUpload').click()">
+                        <i class="fas fa-camera"></i> تغيير الشعار
+                    </div>
+                </div>
+                
+                <div class="profile-info-header">
+                    <h1 class="profile-name" id="companyName">شركة التقنية المتطورة</h1>
+                    <div class="profile-type" id="companyField">تكنولوجيا المعلومات والبرمجيات</div>
+                    <div class="profile-status">نشطة</div>
+                    
+                    <div class="profile-stats">
+                        <div class="profile-stat">
+                            <div class="profile-stat-value" id="totalTrainees">47</div>
+                            <div class="profile-stat-label">متدرب إجمالي</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-value" id="currentTrainees">12</div>
+                            <div class="profile-stat-label">متدرب حالياً</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-value" id="departmentsCount">5</div>
+                            <div class="profile-stat-label">أقسام</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-value" id="successRate">87%</div>
+                            <div class="profile-stat-label">نسبة النجاح</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <button class="btn btn-primary" onclick="editCompanyProfile()">
+                        <i class="fas fa-edit"></i>
+                        تعديل الملف
+                    </button>
+                    <button class="btn btn-outline btn-small" onclick="removeCompanyLogo()" id="removeLogoBtn" style="display: none; margin-top: 10px;">
+                        <i class="fas fa-trash"></i>
+                        إزالة الشعار
+                    </button>
+                </div>
+            </div>
+
+            <!-- Company Information -->
+            <div class="glass-card">
+                <h3 class="card-title">
+                    <i class="fas fa-info-circle"></i>
+                    المعلومات الأساسية للشركة
+                </h3>
+                
+                <div class="company-details-grid">
+                    <div class="company-detail-card">
+                        <div class="company-detail-title">
+                            <i class="fas fa-envelope"></i>
+                            البريد الإلكتروني
+                        </div>
+                        <div class="company-detail-value" id="companyEmail">info@tech-solutions.com</div>
+                        <div class="company-detail-label">البريد الرسمي للشركة</div>
+                    </div>
+                    
+                    <div class="company-detail-card">
+                        <div class="company-detail-title">
+                            <i class="fas fa-phone"></i>
+                            الهاتف الأساسي
+                        </div>
+                        <div class="company-detail-value" id="companyPhone">+966112345678</div>
+                        <div class="company-detail-label">الهاتف الرئيسي</div>
+                    </div>
+                    
+                    <div class="company-detail-card">
+                        <div class="company-detail-title">
+                            <i class="fas fa-map-marker-alt"></i>
+                            الموقع
+                        </div>
+                        <div class="company-detail-value" id="companyLocation">الرياض، حي العليا، المملكة العربية السعودية</div>
+                        <div class="company-detail-label">المقر الرئيسي</div>
+                    </div>
+                    
+                    <div class="company-detail-card">
+                        <div class="company-detail-title">
+                            <i class="fas fa-users"></i>
+                            عدد الموظفين
+                        </div>
+                        <div class="company-detail-value" id="employeesCount">150-200 موظف</div>
+                        <div class="company-detail-label">موظف بدوام كامل</div>
+                    </div>
+                    
+                    <div class="company-detail-card">
+                        <div class="company-detail-title">
+                            <i class="fas fa-code-branch"></i>
+                            عدد الفروع
+                        </div>
+                        <div class="company-detail-value" id="branchesCount">3 فروع</div>
+                        <div class="company-detail-label">فروع متاحة للتدريب</div>
+                    </div>
+                    
+                    <div class="company-detail-card">
+                        <div class="company-detail-title">
+                            <i class="fas fa-graduation-cap"></i>
+                            نوع المتدربين
+                        </div>
+                        <div class="company-detail-value" id="traineeType">النظام الثاني - متدرب ذو خبرة</div>
+                        <div class="company-detail-label">النظام المختار</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px;">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-alt"></i>
+                        نبذة عن الشركة
+                    </h3>
+                    <div class="form-group">
+                        <p id="companyDescription" style="line-height: 1.8; font-size: 1.1rem;">
+                            شركة التقنية المتطورة هي شركة رائدة في مجال تطوير البرمجيات والحلول التقنية في المملكة العربية السعودية، تأسست عام 2015. نقدم خدمات استشارية وتطويرية متكاملة للقطاعين الحكومي والخاص، ونحرص على تقديم أفضل تجربة تدريبية للطلاب والطالبات من خلال برامج تدريبية متميزة تغطي مختلف تخصصات تقنية المعلومات. نحن نؤمن بأهمية نقل المعرفة وتطوير الكوادر الوطنية في مجال التكنولوجيا.
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px;">
+                    <h3 class="card-title">
+                        <i class="fas fa-bullseye"></i>
+                        مجالات التدريب المتاحة
+                    </h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;" id="trainingFieldsList">
+                        <!-- سيتم ملؤها ديناميكيًا -->
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px;">
+                    <h3 class="card-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        الفروع المتاحة للتدريب
+                    </h3>
+                    <div style="margin-top: 15px;" id="branchLocationsList">
+                        <!-- سيتم ملؤها ديناميكيًا -->
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px;">
+                    <h3 class="card-title">
+                        <i class="fas fa-link"></i>
+                        روابط التواصل
+                    </h3>
+                    <div class="contact-links-container" id="contactLinksContainer">
+                        <!-- سيتم ملؤها ديناميكيًا -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Training Details Card -->
+            <div class="glass-card">
+                <h3 class="card-title">
+                    <i class="fas fa-chart-line"></i>
+                    إحصائيات التدريب
+                </h3>
+                
+                <div class="company-details-grid">
+                    <div class="company-detail-card">
+                        <div class="company-detail-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            تاريخ التسجيل
+                        </div>
+                        <div class="company-detail-value" id="registrationDate">15 مارس 2024</div>
+                        <div class="company-detail-label">تاريخ انضمام الشركة</div>
+                    </div>
+                    
+                    <div class="company-detail-card">
+                        <div class="company-detail-title">
+                            <i class="fas fa-check-circle"></i>
+                            حالة العقد
+                        </div>
+                        <div class="company-detail-value" id="contractStatus">مقبول</div>
+                        <div class="company-detail-label">موافقة على الشروط</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal-overlay" id="editProfileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">تعديل معلومات الشركة</h3>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">اسم الشركة</label>
+                <input type="text" id="editCompanyName" class="form-input" placeholder="اسم الشركة">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">البريد الإلكتروني</label>
+                    <input type="email" id="editCompanyEmail" class="form-input" placeholder="البريد الإلكتروني">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">الهاتف</label>
+                    <input type="tel" id="editCompanyPhone" class="form-input" placeholder="الهاتف">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">الموقع</label>
+                <input type="text" id="editCompanyLocation" class="form-input" placeholder="الموقع">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">المجال الرئيسي</label>
+                    <input type="text" id="editCompanyField" class="form-input" placeholder="المجال الرئيسي">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">عدد الموظفين</label>
+                    <input type="text" id="editEmployeesCount" class="form-input" placeholder="عدد الموظفين">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">نبذة عن الشركة</label>
+                <textarea id="editCompanyDescription" class="form-textarea" rows="4" placeholder="نبذة عن الشركة"></textarea>
+            </div>
+            
+            <!-- قسم روابط التواصل في نافذة التعديل -->
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
+                <h3 class="modal-title" style="font-size: 1.2rem; margin-bottom: 15px;">
+                    <i class="fas fa-link"></i> روابط التواصل
+                </h3>
+                
+                <div class="form-group">
+                    <label class="form-label">الموقع الإلكتروني</label>
+                    <input type="url" id="editWebsite" class="form-input" placeholder="https://www.example.com">
+                    <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-top: 5px;">اترك الحقل فارغاً لحذف الرابط</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">رابط LinkedIn</label>
+                    <input type="url" id="editLinkedin" class="form-input" placeholder="https://linkedin.com/company/example">
+                    <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-top: 5px;">اترك الحقل فارغاً لحذف الرابط</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">رابط Facebook</label>
+                    <input type="url" id="editFacebook" class="form-input" placeholder="https://facebook.com/example">
+                    <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-top: 5px;">اترك الحقل فارغاً لحذف الرابط</small>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                <button class="btn btn-success" onclick="saveCompanyProfile()">
+                    <i class="fas fa-save"></i>
+                    حفظ التغييرات
+                </button>
+                <button class="btn btn-outline" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== GLOBAL STATE =====
+        let companyData = null;
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load company data from registration form
+            loadCompanyData();
+            
+            // Display default data immediately
+            displayDefaultData();
+            
+            // Update company stats
+            updateCompanyStats();
+            
+            // Set up logo upload
+            setupLogoUpload();
+            
+            // Load saved logo if exists
+            loadSavedLogo();
+            
+            // Check and update logo button visibility
+            updateLogoButtonVisibility();
+        });
+
+        // ===== LOGO UPLOAD FUNCTIONALITY =====
+        function setupLogoUpload() {
+            const logoUpload = document.getElementById('logoUpload');
+            
+            logoUpload.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                // Check if file is an image
+                if (!file.type.startsWith('image/')) {
+                    showNotification('الرجاء اختيار ملف صورة فقط', 'error');
+                    return;
+                }
+                
+                // Check file size (max 2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    showNotification('حجم الصورة كبير جداً. الحد الأقصى 2 ميجابايت', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    // Display the new logo
+                    displayLogo(e.target.result);
+                    
+                    // Save to localStorage
+                    localStorage.setItem('companyLogo', e.target.result);
+                    
+                    // Show success message
+                    showNotification('تم تغيير شعار الشركة بنجاح', 'success');
+                    
+                    // Update button visibility
+                    updateLogoButtonVisibility();
+                };
+                
+                reader.onerror = function() {
+                    showNotification('حدث خطأ أثناء قراءة الصورة. الرجاء المحاولة مرة أخرى', 'error');
+                };
+                
+                reader.readAsDataURL(file);
+                
+                // Reset the input to allow selecting the same file again
+                event.target.value = '';
+            });
+        }
+
+        function displayLogo(imageData) {
+            const icon = document.getElementById('companyLogoIcon');
+            const image = document.getElementById('companyLogoImage');
+            
+            // Hide the icon
+            icon.style.display = 'none';
+            
+            // Show and set the image
+            image.style.display = 'block';
+            image.src = imageData;
+        }
+
+        function removeCompanyLogo() {
+            if (confirm('هل تريد إزالة شعار الشركة والعودة للأيقونة الافتراضية؟')) {
+                const icon = document.getElementById('companyLogoIcon');
+                const image = document.getElementById('companyLogoImage');
+                
+                // Show the icon
+                icon.style.display = 'flex';
+                
+                // Hide the image
+                image.style.display = 'none';
+                image.src = '';
+                
+                // Remove from localStorage
+                localStorage.removeItem('companyLogo');
+                
+                // Show success message
+                showNotification('تم إزالة شعار الشركة', 'success');
+                
+                // Update button visibility
+                updateLogoButtonVisibility();
+            }
+        }
+
+        function loadSavedLogo() {
+            const savedLogo = localStorage.getItem('companyLogo');
+            if (savedLogo) {
+                displayLogo(savedLogo);
+            }
+        }
+
+        function updateLogoButtonVisibility() {
+            const removeLogoBtn = document.getElementById('removeLogoBtn');
+            const hasLogo = localStorage.getItem('companyLogo');
+            
+            if (hasLogo) {
+                removeLogoBtn.style.display = 'block';
+            } else {
+                removeLogoBtn.style.display = 'none';
+            }
+        }
+
+        function showNotification(message, type) {
+            // Remove any existing notification
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'success' ? 'var(--color-success)' : 'var(--color-warning)'};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                z-index: 10000;
+                font-weight: 600;
+                animation: slideIn 0.3s ease;
+                max-width: 90%;
+                text-align: center;
+            `;
+            
+            // Add animation keyframes
+            if (!document.querySelector('#notificationStyles')) {
+                const style = document.createElement('style');
+                style.id = 'notificationStyles';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { top: 50px; opacity: 0; }
+                        to { top: 100px; opacity: 1; }
+                    }
+                    @keyframes slideOut {
+                        from { top: 100px; opacity: 1; }
+                        to { top: 50px; opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // ===== DEFAULT DATA =====
+        function displayDefaultData() {
+            // Create default data structure
+            const defaultData = {
+                formData: {
+                    companyName: "شركة التقنية المتطورة",
+                    companyField: "تكنولوجيا المعلومات والبرمجيات",
+                    email: "info@tech-solutions.com",
+                    primaryPhone: "+966112345678",
+                    companyLocation: "الرياض، حي العليا، المملكة العربية السعودية",
+                    companyBio: "شركة التقنية المتطورة هي شركة رائدة في مجال تطوير البرمجيات والحلول التقنية في المملكة العربية السعودية، تأسست عام 2015. نقدم خدمات استشارية وتطويرية متكاملة للقطاعين الحكومي والخاص، ونحرص على تقديم أفضل تجربة تدريبية للطلاب والطالبات من خلال برامج تدريبية متميزة تغطي مختلف تخصصات تقنية المعلومات. نحن نؤمن بأهمية نقل المعرفة وتطوير الكوادر الوطنية في مجال التكنولوجيا.",
+                    employeesCount: "150-200 موظف",
+                    branchesCount: "3",
+                    selectedTraineeType: "once-trained",
+                    website: "https://www.tech-solutions.com",
+                    linkedinUrl: "https://linkedin.com/company/tech-solutions",
+                    facebookUrl: "https://facebook.com/techsolutions"
+                },
+                trainingFields: [
+                    "تطوير الويب والمواقع الإلكترونية",
+                    "تطوير تطبيقات الجوال",
+                    "أمن المعلومات والاختراق الأخلاقي",
+                    "تحليل البيانات والذكاء الاصطناعي",
+                    "إدارة قواعد البيانات"
+                ],
+                branchLocations: [
+                    { fullAddress: "الرياض، حي العليا، برج التقنية، الطابق 12" },
+                    { fullAddress: "جدة، حي الصفا، مركز الأعمال، الطابق 8" },
+                    { fullAddress: "الدمام، حي الثقبة، مجمع الأعمال، الطابق 5" }
+                ]
+            };
+
+            companyData = defaultData;
+            
+            // Update all UI elements
+            updateCompanyInfo(defaultData.formData);
+            updateTrainingInfo(defaultData.formData);
+            updateContactInfo(defaultData.formData);
+            displayTrainingFields(defaultData.trainingFields);
+            displayBranchLocations(defaultData.branchLocations);
+            
+            // Update modal values
+            document.getElementById('editCompanyName').value = defaultData.formData.companyName;
+            document.getElementById('editCompanyField').value = defaultData.formData.companyField;
+            document.getElementById('editCompanyEmail').value = defaultData.formData.email;
+            document.getElementById('editCompanyPhone').value = defaultData.formData.primaryPhone;
+            document.getElementById('editCompanyLocation').value = defaultData.formData.companyLocation;
+            document.getElementById('editCompanyDescription').value = defaultData.formData.companyBio;
+            document.getElementById('editEmployeesCount').value = defaultData.formData.employeesCount;
+            document.getElementById('editWebsite').value = defaultData.formData.website;
+            document.getElementById('editLinkedin').value = defaultData.formData.linkedinUrl;
+            document.getElementById('editFacebook').value = defaultData.formData.facebookUrl;
+        }
+
+        // ===== COMPANY DATA LOADING =====
+        function loadCompanyData() {
+            try {
+                // Try to load from registration state first
+                const registrationState = localStorage.getItem('provance_registration_state');
+                
+                if (registrationState) {
+                    const state = JSON.parse(registrationState);
+                    companyData = state;
+                    displayCompanyData();
+                    return;
+                }
+                
+                // Try to load from current company data
+                const companyProfile = localStorage.getItem('provance_currentCompany');
+                
+                if (companyProfile) {
+                    const profile = JSON.parse(companyProfile);
+                    companyData = profile;
+                    displayCompanyData();
+                    return;
+                }
+                
+                // Try to load from companies data
+                const companiesData = localStorage.getItem('provance_companiesData');
+                
+                if (companiesData) {
+                    const companies = JSON.parse(companiesData);
+                    if (companies.length > 0) {
+                        companyData = companies[0];
+                        displayCompanyData();
+                        return;
+                    }
+                }
+                
+                // If no data found, use default data (already displayed)
+                console.log('استخدام البيانات الافتراضية');
+                
+            } catch (error) {
+                console.error('خطأ في تحميل بيانات الشركة:', error);
+                // Continue with default data
+            }
+        }
+
+        function displayCompanyData() {
+            if (!companyData) {
+                console.log('لا توجد بيانات شركة محملة');
+                return;
+            }
+            
+            console.log('بيانات الشركة المحملة:', companyData);
+            
+            // Display basic information
+            if (companyData.formData) {
+                // Data from registration form
+                const formData = companyData.formData;
+                updateCompanyInfo(formData);
+                updateTrainingInfo(formData);
+                updateContactInfo(formData);
+                
+                // Update modal values
+                document.getElementById('editCompanyName').value = formData.companyName || '';
+                document.getElementById('editCompanyField').value = formData.companyField || '';
+                document.getElementById('editCompanyEmail').value = formData.email || '';
+                document.getElementById('editCompanyPhone').value = formData.primaryPhone || '';
+                document.getElementById('editCompanyLocation').value = formData.companyLocation || '';
+                document.getElementById('editCompanyDescription').value = formData.companyBio || '';
+                document.getElementById('editEmployeesCount').value = formData.employeesCount || '';
+                document.getElementById('editWebsite').value = formData.website || '';
+                document.getElementById('editLinkedin').value = formData.linkedinUrl || '';
+                document.getElementById('editFacebook').value = formData.facebookUrl || '';
+            } else if (companyData.companyInfo) {
+                // Data from saved company profile
+                const companyInfo = companyData.companyInfo;
+                updateCompanyInfo(companyInfo);
+                
+                if (companyData.trainingInfo) {
+                    updateTrainingInfo(companyData.trainingInfo);
+                }
+                
+                if (companyData.contactInfo) {
+                    updateContactInfo(companyData.contactInfo);
+                    
+                    // Update modal values for contact info
+                    document.getElementById('editWebsite').value = companyData.contactInfo.website || '';
+                    document.getElementById('editLinkedin').value = companyData.contactInfo.linkedinUrl || '';
+                    document.getElementById('editFacebook').value = companyData.contactInfo.facebookUrl || '';
+                }
+            } else if (companyData.companyName) {
+                // Direct data
+                updateCompanyInfo(companyData);
+            }
+            
+            // Display training fields if available
+            if (companyData.trainingFields && companyData.trainingFields.length > 0) {
+                displayTrainingFields(companyData.trainingFields);
+            } else if (companyData.trainingInfo && companyData.trainingInfo.fields) {
+                displayTrainingFields(companyData.trainingInfo.fields);
+            }
+            
+            // Display branch locations if available
+            if (companyData.branchLocations && companyData.branchLocations.length > 0) {
+                displayBranchLocations(companyData.branchLocations);
+            } else if (companyData.companyInfo && companyData.companyInfo.branchLocations) {
+                displayBranchLocations(companyData.companyInfo.branchLocations);
+            }
+        }
+
+        function updateCompanyInfo(data) {
+            // Update company name
+            if (data.companyName) {
+                document.getElementById('companyName').textContent = data.companyName;
+                document.getElementById('headerCompanyName').textContent = data.companyName;
+                document.getElementById('editCompanyName').value = data.companyName;
+            } else if (data.name) {
+                document.getElementById('companyName').textContent = data.name;
+                document.getElementById('headerCompanyName').textContent = data.name;
+                document.getElementById('editCompanyName').value = data.name;
+            }
+            
+            // Update company field
+            if (data.companyField) {
+                document.getElementById('companyField').textContent = data.companyField;
+                document.getElementById('editCompanyField').value = data.companyField;
+            } else if (data.field) {
+                document.getElementById('companyField').textContent = data.field;
+                document.getElementById('editCompanyField').value = data.field;
+            }
+            
+            // Update company email
+            if (data.email) {
+                document.getElementById('companyEmail').textContent = data.email;
+                document.getElementById('editCompanyEmail').value = data.email;
+            } else if (data.companyEmail) {
+                document.getElementById('companyEmail').textContent = data.companyEmail;
+                document.getElementById('editCompanyEmail').value = data.companyEmail;
+            }
+            
+            // Update company phone
+            if (data.primaryPhone) {
+                document.getElementById('companyPhone').textContent = data.primaryPhone;
+                document.getElementById('editCompanyPhone').value = data.primaryPhone;
+            } else if (data.phone) {
+                document.getElementById('companyPhone').textContent = data.phone;
+                document.getElementById('editCompanyPhone').value = data.phone;
+            }
+            
+            // Update company location
+            if (data.companyLocation) {
+                document.getElementById('companyLocation').textContent = data.companyLocation;
+                document.getElementById('editCompanyLocation').value = data.companyLocation;
+            } else if (data.location) {
+                document.getElementById('companyLocation').textContent = data.location;
+                document.getElementById('editCompanyLocation').value = data.location;
+            }
+            
+            // Update company description
+            if (data.companyBio) {
+                document.getElementById('companyDescription').textContent = data.companyBio;
+                document.getElementById('editCompanyDescription').value = data.companyBio;
+            } else if (data.bio || data.description) {
+                const description = data.bio || data.description;
+                document.getElementById('companyDescription').textContent = description;
+                document.getElementById('editCompanyDescription').value = description;
+            }
+            
+            // Update employees count
+            if (data.employeesCount) {
+                let employeesText = data.employeesCount;
+                if (data.exactEmployeeCount) {
+                    employeesText += ` (${data.exactEmployeeCount})`;
+                }
+                document.getElementById('employeesCount').textContent = employeesText;
+                document.getElementById('editEmployeesCount').value = data.employeesCount;
+            } else if (data.employees) {
+                document.getElementById('employeesCount').textContent = data.employees;
+                document.getElementById('editEmployeesCount').value = data.employees;
+            }
+            
+            // Update branches count
+            if (data.branchesCount) {
+                document.getElementById('branchesCount').textContent = data.branchesCount + " فروع";
+            } else if (data.branchLocations && data.branchLocations.length > 0) {
+                document.getElementById('branchesCount').textContent = data.branchLocations.length + " فروع";
+            } else if (data.companyInfo && data.companyInfo.branchLocations && data.companyInfo.branchLocations.length > 0) {
+                document.getElementById('branchesCount').textContent = data.companyInfo.branchLocations.length + " فروع";
+            }
+        }
+
+        function updateTrainingInfo(data) {
+            // Update trainee type
+            if (data.selectedTraineeType) {
+                const traineeTypeNames = {
+                    'first-time': 'النظام الأول - متدرب لأول مرة',
+                    'once-trained': 'النظام الثاني - متدرب ذو خبرة',
+                    'twice-trained': 'النظام الثالث - متدرب متمرس'
+                };
+                document.getElementById('traineeType').textContent = traineeTypeNames[data.selectedTraineeType] || data.selectedTraineeType;
+            } else if (data.traineeType) {
+                const traineeTypeNames = {
+                    'first-time': 'النظام الأول - متدرب لأول مرة',
+                    'once-trained': 'النظام الثاني - متدرب ذو خبرة',
+                    'twice-trained': 'النظام الثالث - متدرب متمرس'
+                };
+                document.getElementById('traineeType').textContent = traineeTypeNames[data.traineeType] || data.traineeType;
+            }
+            
+            // Update registration date
+            if (data.registeredAt) {
+                const date = new Date(data.registeredAt);
+                document.getElementById('registrationDate').textContent = date.toLocaleDateString('ar-SA');
+            } else if (data.savedAt) {
+                const date = new Date(data.savedAt);
+                document.getElementById('registrationDate').textContent = date.toLocaleDateString('ar-SA');
+            } else {
+                document.getElementById('registrationDate').textContent = new Date().toLocaleDateString('ar-SA');
+            }
+        }
+
+        function updateContactInfo(data) {
+            const container = document.getElementById('contactLinksContainer');
+            
+            // Clear existing content
+            container.innerHTML = '';
+            
+            // Check if there are any links
+            const hasWebsite = data.website && data.website.trim() !== '';
+            const hasLinkedin = data.linkedinUrl && data.linkedinUrl.trim() !== '';
+            const hasFacebook = data.facebookUrl && data.facebookUrl.trim() !== '';
+            
+            const hasAnyLinks = hasWebsite || hasLinkedin || hasFacebook;
+            
+            if (!hasAnyLinks) {
+                // Show message when there are no links
+                const noLinksMessage = document.createElement('div');
+                noLinksMessage.className = 'no-links-message';
+                noLinksMessage.innerHTML = `
+                    <i class="fas fa-link"></i>
+                    <h4>لا يوجد روابط تواصل حتى الآن</h4>
+                    <p>يمكنك إضافة روابط التواصل الخاصة بشركتك من خلال نافذة تعديل الملف الشخصي.</p>
+                    <button class="btn btn-outline btn-small" onclick="editCompanyProfile()">
+                        <i class="fas fa-plus"></i>
+                        إضافة روابط التواصل
+                    </button>
+                `;
+                container.appendChild(noLinksMessage);
+                return;
+            }
+            
+            // Create website link card
+            if (hasWebsite) {
+                const websiteCard = createContactLinkCard(
+                    'website',
+                    'fa-globe',
+                    'الموقع الإلكتروني',
+                    data.website,
+                    data.website
+                );
+                container.appendChild(websiteCard);
+            }
+            
+            // Create LinkedIn link card
+            if (hasLinkedin) {
+                const linkedinCard = createContactLinkCard(
+                    'linkedin',
+                    'fab fa-linkedin',
+                    'LinkedIn',
+                    data.linkedinUrl,
+                    data.linkedinUrl
+                );
+                container.appendChild(linkedinCard);
+            }
+            
+            // Create Facebook link card
+            if (hasFacebook) {
+                const facebookCard = createContactLinkCard(
+                    'facebook',
+                    'fab fa-facebook',
+                    'Facebook',
+                    data.facebookUrl,
+                    data.facebookUrl
+                );
+                container.appendChild(facebookCard);
+            }
+        }
+
+        function createContactLinkCard(type, iconClass, title, url, fullUrl) {
+            const card = document.createElement('a');
+            card.className = 'contact-link-card';
+            card.href = fullUrl;
+            card.target = '_blank';
+            
+            // Create icon container
+            const iconContainer = document.createElement('div');
+            iconContainer.className = `contact-link-icon ${type}-icon`;
+            
+            const icon = document.createElement('i');
+            icon.className = iconClass;
+            iconContainer.appendChild(icon);
+            
+            // Create info container
+            const infoContainer = document.createElement('div');
+            infoContainer.className = 'contact-link-info';
+            
+            const linkTitle = document.createElement('div');
+            linkTitle.className = 'contact-link-title';
+            linkTitle.textContent = title;
+            
+            const linkUrl = document.createElement('div');
+            linkUrl.className = 'contact-link-url';
+            linkUrl.textContent = url.replace('https://', '').replace('http://', '');
+            
+            infoContainer.appendChild(linkTitle);
+            infoContainer.appendChild(linkUrl);
+            
+            // Create arrow
+            const arrow = document.createElement('div');
+            arrow.className = 'contact-link-arrow';
+            arrow.innerHTML = '<i class="fas fa-arrow-left"></i>';
+            
+            // Append all elements
+            card.appendChild(iconContainer);
+            card.appendChild(infoContainer);
+            card.appendChild(arrow);
+            
+            return card;
+        }
+
+        function displayTrainingFields(fields) {
+            const container = document.getElementById('trainingFieldsList');
+            
+            if (!fields || fields.length === 0) {
+                container.innerHTML = '<span class="loading-text">لم يتم إضافة أي مجالات تدريبية</span>';
+                return;
+            }
+            
+            const colors = ['#667eea', '#f5576c', '#11998e', '#f093fb', '#ffd166'];
+            
+            const fieldsHTML = fields.map((field, index) => {
+                const color = colors[index % colors.length];
+                return `<span style="padding: 8px 15px; background: rgba(${parseInt(color.slice(1,3),16)}, ${parseInt(color.slice(3,5),16)}, ${parseInt(color.slice(5,7),16)}, 0.2); color: ${color}; border-radius: 20px; font-weight: 600; display: flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-${getFieldIcon(field)}"></i> ${field}
+                </span>`;
+            }).join('');
+            
+            container.innerHTML = fieldsHTML;
+        }
+
+        function getFieldIcon(field) {
+            if (field.includes('ويب') || field.includes('موقع')) return 'laptop-code';
+            if (field.includes('جوال') || field.includes('تطبيق')) return 'mobile-alt';
+            if (field.includes('أمن') || field.includes('اختراق')) return 'shield-alt';
+            if (field.includes('بيانات') || field.includes('ذكاء')) return 'chart-line';
+            if (field.includes('قاعدة بيانات')) return 'database';
+            return 'code';
+        }
+
+        function displayBranchLocations(branches) {
+            const container = document.getElementById('branchLocationsList');
+            
+            if (!branches || branches.length === 0) {
+                container.innerHTML = '<span class="loading-text">لا توجد فروع محددة</span>';
+                return;
+            }
+            
+            const branchesHTML = branches.map((branch, index) => {
+                const address = branch.fullAddress || branch.address || branch;
+                return `
+                    <div style="padding: 15px; background: var(--bg-darker); border-radius: 10px; margin-bottom: 10px; border-right: 3px solid var(--color-primary); display: flex; align-items: flex-start; gap: 10px;">
+                        <div style="width: 30px; height: 30px; background: var(--color-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; flex-shrink: 0;">${index + 1}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; margin-bottom: 5px; color: var(--color-primary);">فرع ${index + 1}</div>
+                            <div style="color: var(--text-secondary); font-size: 0.95rem;">${address}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = branchesHTML;
+        }
+
+        function updateCompanyStats() {
+            // Update stats with dynamic values
+            document.getElementById('totalTrainees').textContent = '47';
+            document.getElementById('currentTrainees').textContent = '12';
+            document.getElementById('departmentsCount').textContent = companyData?.trainingFields?.length || '5';
+            document.getElementById('successRate').textContent = '87%';
+        }
+
+        // ===== PROFILE EDITING =====
+        function editCompanyProfile() {
+            // Open modal
+            document.getElementById('editProfileModal').classList.add('active');
+        }
+
+        function saveCompanyProfile() {
+            // Get values from modal
+            const companyName = document.getElementById('editCompanyName').value;
+            const companyField = document.getElementById('editCompanyField').value;
+            const companyEmail = document.getElementById('editCompanyEmail').value;
+            const companyPhone = document.getElementById('editCompanyPhone').value;
+            const companyLocation = document.getElementById('editCompanyLocation').value;
+            const companyDescription = document.getElementById('editCompanyDescription').value;
+            const employeesCount = document.getElementById('editEmployeesCount').value;
+            
+            // Get contact links values
+            const website = document.getElementById('editWebsite').value.trim();
+            const linkedinUrl = document.getElementById('editLinkedin').value.trim();
+            const facebookUrl = document.getElementById('editFacebook').value.trim();
+            
+            // Update UI
+            document.getElementById('companyName').textContent = companyName;
+            document.getElementById('headerCompanyName').textContent = companyName;
+            document.getElementById('companyField').textContent = companyField;
+            document.getElementById('companyEmail').textContent = companyEmail;
+            document.getElementById('companyPhone').textContent = companyPhone;
+            document.getElementById('companyLocation').textContent = companyLocation;
+            document.getElementById('companyDescription').textContent = companyDescription;
+            document.getElementById('employeesCount').textContent = employeesCount;
+            
+            // Update companyData object
+            if (companyData) {
+                if (companyData.formData) {
+                    companyData.formData.companyName = companyName;
+                    companyData.formData.companyField = companyField;
+                    companyData.formData.email = companyEmail;
+                    companyData.formData.primaryPhone = companyPhone;
+                    companyData.formData.companyLocation = companyLocation;
+                    companyData.formData.companyBio = companyDescription;
+                    companyData.formData.employeesCount = employeesCount;
+                    
+                    // Update contact links
+                    companyData.formData.website = website;
+                    companyData.formData.linkedinUrl = linkedinUrl;
+                    companyData.formData.facebookUrl = facebookUrl;
+                } else if (companyData.companyInfo) {
+                    companyData.companyInfo.name = companyName;
+                    companyData.companyInfo.field = companyField;
+                    companyData.companyInfo.email = companyEmail;
+                    companyData.companyInfo.phone = companyPhone;
+                    companyData.companyInfo.location = companyLocation;
+                    companyData.companyInfo.bio = companyDescription;
+                    companyData.companyInfo.employeesCount = employeesCount;
+                    
+                    // Update contact links
+                    if (!companyData.contactInfo) {
+                        companyData.contactInfo = {};
+                    }
+                    companyData.contactInfo.website = website;
+                    companyData.contactInfo.linkedinUrl = linkedinUrl;
+                    companyData.contactInfo.facebookUrl = facebookUrl;
+                } else {
+                    companyData.companyName = companyName;
+                    companyData.companyField = companyField;
+                    companyData.email = companyEmail;
+                    companyData.phone = companyPhone;
+                    companyData.companyLocation = companyLocation;
+                    companyData.companyBio = companyDescription;
+                    companyData.employeesCount = employeesCount;
+                    
+                    // Update contact links
+                    companyData.website = website;
+                    companyData.linkedinUrl = linkedinUrl;
+                    companyData.facebookUrl = facebookUrl;
+                }
+                
+                // Save updated data to localStorage
+                localStorage.setItem('provance_registration_state', JSON.stringify(companyData));
+            }
+            
+            // Update contact info display
+            updateContactInfo({
+                website: website,
+                linkedinUrl: linkedinUrl,
+                facebookUrl: facebookUrl
+            });
+            
+            // Close modal
+            closeEditModal();
+            
+            showNotification('تم حفظ معلومات الشركة بنجاح', 'success');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editProfileModal').classList.remove('active');
+        }
+
+        // ===== NAVIGATION =====
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mainSidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function toggleUserMenu() {
+            // Create user menu if it doesn't exist
+            let userMenu = document.getElementById('userMenuDropdown');
+            
+            if (!userMenu) {
+                userMenu = document.createElement('div');
+                userMenu.id = 'userMenuDropdown';
+                userMenu.style.cssText = `
+                    position: absolute;
+                    top: 70px;
+                    left: 20px;
+                    background: var(--bg-darker);
+                    border: 1px solid var(--glass-border);
+                    border-radius: 10px;
+                    padding: 10px;
+                    min-width: 200px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    z-index: 1000;
+                `;
+                
+                userMenu.innerHTML = `
+                    <div style="padding: 10px; border-bottom: 1px solid var(--glass-border);">
+                        <div style="font-weight: 700; font-size: 0.9rem;">${document.getElementById('headerCompanyName').textContent}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">مدير النظام</div>
+                    </div>
+                    <div style="padding: 5px 0;">
+                        <a href="#" style="display: block; padding: 8px 12px; color: var(--text-primary); text-decoration: none; border-radius: 5px; transition: all 0.3s ease;" 
+                           onmouseover="this.style.background='var(--glass-bg-hover)'" onmouseout="this.style.background='transparent'">
+                           <i class="fas fa-user" style="margin-left: 8px;"></i>الملف الشخصي
+                        </a>
+                        <a href="#" style="display: block; padding: 8px 12px; color: var(--text-primary); text-decoration: none; border-radius: 5px; transition: all 0.3s ease;" 
+                           onmouseover="this.style.background='var(--glass-bg-hover)'" onmouseout="this.style.background='transparent'">
+                           <i class="fas fa-cog" style="margin-left: 8px;"></i>الإعدادات
+                        </a>
+                        <a href="#" style="display: block; padding: 8px 12px; color: var(--text-primary); text-decoration: none; border-radius: 5px; transition: all 0.3s ease;" 
+                           onmouseover="this.style.background='var(--glass-bg-hover)'" onmouseout="this.style.background='transparent'" onclick="logout()">
+                           <i class="fas fa-sign-out-alt" style="margin-left: 8px;"></i>تسجيل الخروج
+                        </a>
+                    </div>
+                `;
+                
+                document.body.appendChild(userMenu);
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!e.target.closest('.user-profile-header') && !e.target.closest('#userMenuDropdown')) {
+                        userMenu.remove();
+                        document.removeEventListener('click', closeMenu);
+                    }
+                });
+            } else {
+                userMenu.remove();
+            }
+        }
+
+        function logout() {
+            if (confirm('هل تريد تسجيل الخروج؟')) {
+                alert('جارٍ تسجيل الخروج...');
+                // إعادة التوجيه إلى صفحة تسجيل الدخول
+                window.location.href = 'company-login.html';
+            }
+        }
+    </script>
+</body>
+</html>

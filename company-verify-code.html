@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التحقق من الرمز - Provance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="storage-manager.js"></script>
+    <style>
+        :root {
+            --primary: #1a2a6c;
+            --secondary: #b21f1f;
+            --accent: #fdbb2d;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gradient: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 8s infinite ease-in-out;
+        }
+
+        .shape-1 { width: 300px; height: 300px; top: 10%; left: 5%; animation-delay: 0s; }
+        .shape-2 { width: 200px; height: 200px; top: 70%; left: 80%; animation-delay: 2s; }
+        .shape-3 { width: 150px; height: 150px; top: 20%; left: 85%; animation-delay: 4s; }
+        .shape-4 { width: 250px; height: 250px; top: 65%; left: 10%; animation-delay: 6s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+            33% { transform: translateY(-20px) rotate(5deg) scale(1.05); }
+            66% { transform: translateY(10px) rotate(-5deg) scale(0.95); }
+        }
+
+        .verify-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            padding: 50px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            margin: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: containerSlide 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes containerSlide {
+            from { opacity: 0; transform: translateY(60px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .logo-section { margin-bottom: 30px; }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            display: inline-block;
+            animation: logoGlow 3s infinite alternate;
+        }
+
+        @keyframes logoGlow {
+            0% { filter: drop-shadow(0 0 5px rgba(253, 187, 45, 0.3)); }
+            100% { filter: drop-shadow(0 0 15px rgba(253, 187, 45, 0.6)); }
+        }
+
+        .verify-title {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .verify-subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 400px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+        }
+
+        .verify-form {
+            margin-bottom: 30px;
+            text-align: right;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            text-align: right;
+        }
+
+        .code-inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            direction: ltr;
+        }
+
+        .code-input {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+            transition: all 0.3s;
+        }
+
+        .code-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 42, 108, 0.1);
+            transform: translateY(-2px);
+            background: white;
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            text-align: right;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+
+        .btn {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: 0 10px 25px rgba(26, 42, 108, 0.3);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(26, 42, 108, 0.4);
+        }
+
+        .btn:active { transform: translateY(0) scale(1); }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn:hover::before { left: 100%; }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .back-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .back-link a:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+            display: none;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .timer {
+            margin-top: 15px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .resend-link {
+            margin-top: 15px;
+        }
+
+        .resend-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .resend-link a:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .verify-container { padding: 30px 20px; margin: 15px; }
+            .logo { font-size: 2.8rem; }
+            .verify-title { font-size: 1.7rem; }
+            .verify-subtitle { font-size: 1rem; }
+            .code-input { width: 45px; height: 55px; font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+        <div class="floating-shape shape-4"></div>
+    </div>
+
+    <div class="verify-container">
+        <div class="logo-section">
+            <div class="logo">بروفانس</div>
+            <h1 class="verify-title">التحقق من الرمز</h1>
+            <p class="verify-subtitle">أدخل رمز التحقق المكون من 6 أرقام الذي تم إرساله إلى بريدك الإلكتروني</p>
+        </div>
+        
+        <div class="alert alert-danger" id="errorAlert" style="display: none;"></div>
+        <div class="alert alert-success" id="successAlert" style="display: none;"></div>
+        
+        <form class="verify-form" id="verifyForm">
+            <div class="form-group">
+                <label for="code">رمز التحقق</label>
+                <div class="code-inputs">
+                    <input type="text" class="code-input" maxlength="1" data-index="0">
+                    <input type="text" class="code-input" maxlength="1" data-index="1">
+                    <input type="text" class="code-input" maxlength="1" data-index="2">
+                    <input type="text" class="code-input" maxlength="1" data-index="3">
+                    <input type="text" class="code-input" maxlength="1" data-index="4">
+                    <input type="text" class="code-input" maxlength="1" data-index="5">
+                </div>
+                <div class="error" id="codeError">رمز التحقق غير صحيح</div>
+            </div>
+            
+            <div class="timer" id="timer">يمكنك إعادة إرسال الرمز خلال <span id="countdown">60</span> ثانية</div>
+            <div class="resend-link" id="resendLink" style="display: none;">
+                <a href="#" id="resendBtn">إعادة إرسال رمز التحقق</a>
+            </div>
+            
+            <button type="submit" class="btn" id="submitBtn">تحقق من الرمز</button>
+        </form>
+        
+        <div class="back-link">
+            <a href="company-forgot-password.html"><i class="fas fa-arrow-right"></i> العودة إلى استعادة كلمة المرور</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const verifyForm = document.getElementById('verifyForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const codeInputs = document.querySelectorAll('.code-input');
+            const errorAlert = document.getElementById('errorAlert');
+            const successAlert = document.getElementById('successAlert');
+            const timer = document.getElementById('timer');
+            const countdown = document.getElementById('countdown');
+            const resendLink = document.getElementById('resendLink');
+            const resendBtn = document.getElementById('resendBtn');
+            
+            let timeLeft = 60;
+            let countdownInterval;
+            
+            // الحصول على البريد الإلكتروني من الرابط
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get('email');
+            
+            // بدء العد التنازلي
+            startCountdown();
+            
+            // إدارة إدخال الرمز
+            codeInputs.forEach((input, index) => {
+                input.addEventListener('input', function() {
+                    if (this.value.length === 1 && index < codeInputs.length - 1) {
+                        codeInputs[index + 1].focus();
+                    }
+                    
+                    hideError();
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && this.value.length === 0 && index > 0) {
+                        codeInputs[index - 1].focus();
+                    }
+                });
+            });
+            
+            verifyForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const code = Array.from(codeInputs).map(input => input.value).join('');
+                
+                if (code.length !== 6) {
+                    showError('يرجى إدخال رمز التحقق كاملاً');
+                    return;
+                }
+                
+                const resetData = storageManager.getItem('passwordReset');
+                
+                if (!resetData) {
+                    showError('لم يتم العثور على طلب استعادة كلمة مرور. يرجى إعادة المحاولة.');
+                    return;
+                }
+                
+                if (resetData.code !== code) {
+                    showError('رمز التحقق غير صحيح');
+                    resetData.attempts = (resetData.attempts || 0) + 1;
+                    storageManager.setItem('passwordReset', resetData);
+                    
+                    if (resetData.attempts >= 3) {
+                        showError('لقد تجاوزت عدد المحاولات المسموح بها. يرجى طلب رمز جديد.');
+                        storageManager.removeItem('passwordReset');
+                        setTimeout(() => {
+                            window.location.href = 'company-forgot-password.html';
+                        }, 3000);
+                    }
+                    return;
+                }
+                
+                // التحقق من انتهاء صلاحية الرمز (10 دقائق)
+                const createdAt = new Date(resetData.createdAt);
+                const now = new Date();
+                const diffInMinutes = (now - createdAt) / (1000 * 60);
+                
+                if (diffInMinutes > 10) {
+                    showError('انتهت صلاحية رمز التحقق. يرجى طلب رمز جديد.');
+                    storageManager.removeItem('passwordReset');
+                    setTimeout(() => {
+                        window.location.href = 'company-forgot-password.html';
+                    }, 3000);
+                    return;
+                }
+                
+                // تم التحقق بنجاح
+                resetData.verified = true;
+                storageManager.setItem('passwordReset', resetData);
+                
+                showSuccess('تم التحقق من الرمز بنجاح! سيتم توجيهك إلى صفحة إعادة تعيين كلمة المرور.');
+                
+                setTimeout(() => {
+                    window.location.href = 'company-reset-password.html?email=' + encodeURIComponent(email);
+                }, 2000);
+            });
+            
+            resendBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // إنشاء رمز تحقق جديد
+                const verificationCodeValue = Math.floor(100000 + Math.random() * 900000).toString();
+                
+                const resetData = {
+                    email: email,
+                    code: verificationCodeValue,
+                    createdAt: new Date().toISOString(),
+                    attempts: 0,
+                    verified: false
+                };
+                
+                storageManager.setItem('passwordReset', resetData);
+                
+                showSuccess('تم إرسال رمز تحقق جديد إلى بريدك الإلكتروني.');
+                
+                // إعادة تعيين العد التنازلي
+                timeLeft = 60;
+                startCountdown();
+            });
+            
+            function startCountdown() {
+                clearInterval(countdownInterval);
+                
+                countdownInterval = setInterval(() => {
+                    timeLeft--;
+                    countdown.textContent = timeLeft;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(countdownInterval);
+                        timer.style.display = 'none';
+                        resendLink.style.display = 'block';
+                    }
+                }, 1000);
+            }
+            
+            function showError(message) {
+                hideAlerts();
+                errorAlert.textContent = message;
+                errorAlert.style.display = 'block';
+            }
+            
+            function showSuccess(message) {
+                hideAlerts();
+                successAlert.textContent = message;
+                successAlert.style.display = 'block';
+            }
+            
+            function hideAlerts() {
+                errorAlert.style.display = 'none';
+                successAlert.style.display = 'none';
+            }
+            
+            function hideError() {
+                document.getElementById('codeError').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

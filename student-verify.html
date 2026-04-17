@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التحقق من الهوية - ProVance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --student-primary: #667eea;
+            --student-secondary: #764ba2;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --card-bg: #222222;
+            --border-color: #333333;
+            --error-color: #ff4757;
+            --success-color: #2ed573;
+            --warning-color: #ffa502;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--bg-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .container {
+            display: flex;
+            max-width: 1000px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .left-panel {
+            flex: 1;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            z-index: 1;
+        }
+
+        .left-panel > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .right-panel {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: var(--bg-secondary);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+        }
+
+        .logo-icon i {
+            font-size: 24px;
+            color: var(--student-primary);
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--student-primary) 0%, var(--student-secondary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+
+        .panel-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .panel-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .features {
+            margin-top: 30px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            color: var(--student-primary);
+        }
+
+        .feature-text h4 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .feature-text p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .stats {
+            display: flex;
+            margin-top: 40px;
+            justify-content: space-between;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--student-primary);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .back-btn:hover {
+            color: var(--student-primary);
+        }
+
+        .back-btn i {
+            margin-right: 5px;
+        }
+
+        .form-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .form-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .email-info {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .email-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .email-value {
+            font-weight: 600;
+            color: var(--student-primary);
+        }
+
+        .timer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 25px;
+            color: var(--text-secondary);
+        }
+
+        .timer.warning {
+            color: var(--warning-color);
+        }
+
+        .timer.danger {
+            color: var(--error-color);
+        }
+
+        .code-inputs {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 25px 0;
+            direction: ltr; /* إصلاح مشكلة اتجاه الأرقام */
+        }
+
+        .code-input {
+            width: 55px;
+            height: 65px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            transition: all 0.3s;
+            outline: none;
+            direction: ltr; /* إصلاح مشكلة اتجاه الأرقام */
+        }
+
+        .code-input:focus {
+            border-color: var(--student-primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .code-input.filled {
+            border-color: var(--student-primary);
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--student-primary);
+        }
+
+        .code-input.error {
+            border-color: var(--error-color);
+            background: rgba(255, 71, 87, 0.1);
+            animation: shake 0.5s;
+        }
+
+        .demo-hint {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+        }
+
+        .demo-code {
+            font-weight: 700;
+            color: var(--student-primary);
+            font-size: 16px;
+            letter-spacing: 2px;
+            font-family: monospace;
+            direction: ltr; /* إصلاح مشكلة اتجاه الأرقام */
+            display: inline-block;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--student-primary) 0%, var(--student-secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .resend-option {
+            text-align: center;
+            margin: 25px 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .resend-link {
+            color: var(--student-primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .resend-link:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .back-to-login {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .back-to-login a {
+            color: var(--student-primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+            height: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .error-message.show {
+            opacity: 1;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .success-notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, var(--success-color) 0%, #25a25a 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(46, 213, 115, 0.4);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 600;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .auto-submit-notice {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .left-panel {
+                padding: 30px;
+            }
+            
+            .right-panel {
+                padding: 30px;
+            }
+            
+            .code-input {
+                width: 45px;
+                height: 55px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="logo-text">ProVance</div>
+            </div>
+            
+            <h1 class="panel-title">التحقق من الهوية</h1>
+            <p class="panel-subtitle">أدخل رمز التحقق المكون من 6 أرقام</p>
+            
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h4>رمز تحقق آمن</h4>
+                        <p>رمز تحقق فريد يضمن أمان حسابك</p>
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h4>صلاحية محدودة</h4>
+                        <p>الرمز صالح لمدة 10 دقائق فقط</p>
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-redo"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h4>إعادة الإرسال</h4>
+                        <p>يمكنك طلب رمز جديد عند الحاجة</p>
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h4>حماية متكاملة</h4>
+                        <p>نظام حماية متقدم لحسابك</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-number">6</span>
+                    <span class="stat-label">أرقام</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">10</span>
+                    <span class="stat-label">دقائق</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">أمان</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <a href="student-forgot.html" class="back-btn">
+                <i class="fas fa-arrow-right"></i>
+                العودة
+            </a>
+            
+            <h2 class="form-title">أدخل رمز التحقق</h2>
+            <p class="form-subtitle">تم إرسال رمز التحقق إلى بريدك الإلكتروني</p>
+            
+            <div class="email-info">
+                <div class="email-label">البريد الإلكتروني</div>
+                <div class="email-value" id="userEmail">ahmedalhousen51@gmail.com</div>
+            </div>
+            
+            <div class="timer" id="timer">
+                <i class="fas fa-clock"></i>
+                <span>الرمز صالح لمدة: <strong id="countdown">10:00</strong></span>
+            </div>
+            
+            <form id="verificationForm">
+                <div class="code-inputs">
+                    <input type="text" maxlength="1" class="code-input" data-index="0" inputmode="numeric" autocomplete="one-time-code">
+                    <input type="text" maxlength="1" class="code-input" data-index="1" inputmode="numeric" autocomplete="one-time-code">
+                    <input type="text" maxlength="1" class="code-input" data-index="2" inputmode="numeric" autocomplete="one-time-code">
+                    <input type="text" maxlength="1" class="code-input" data-index="3" inputmode="numeric" autocomplete="one-time-code">
+                    <input type="text" maxlength="1" class="code-input" data-index="4" inputmode="numeric" autocomplete="one-time-code">
+                    <input type="text" maxlength="1" class="code-input" data-index="5" inputmode="numeric" autocomplete="one-time-code">
+                </div>
+                
+                <div class="auto-submit-notice">
+                    <i class="fas fa-info-circle"></i> سيتم التحقق تلقائياً عند إكمال الرمز
+                </div>
+                
+                <div class="error-message" id="codeError"></div>
+                
+                <div class="demo-hint">
+                    <i class="fas fa-info-circle"></i>
+                    لأغراض العرض: الرمز هو <span class="demo-code" id="demoCode">623749</span>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span>تحقق من الرمز</span>
+                    <i class="fas fa-check"></i>
+                </button>
+            </form>
+            
+            <div class="resend-option">
+                <span>لم تستلم الرمز؟ </span>
+                <a href="#" class="resend-link" id="resendLink">إعادة إرسال الرمز</a>
+                <span id="resendTimer"></span>
+            </div>
+            
+            <div class="back-to-login">
+                <p>تريد تغيير البريد الإلكتروني؟ <a href="student-login.html">العودة لتسجيل الدخول</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // العناصر
+        const verificationForm = document.getElementById('verificationForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const codeInputs = document.querySelectorAll('.code-input');
+        const resendLink = document.getElementById('resendLink');
+        const resendTimer = document.getElementById('resendTimer');
+        const countdownElement = document.getElementById('countdown');
+        const timerElement = document.getElementById('timer');
+        const demoCodeElement = document.getElementById('demoCode');
+        const userEmailElement = document.getElementById('userEmail');
+        const codeErrorElement = document.getElementById('codeError');
+
+        // المتغيرات
+        let verificationCode = "623749"; // الرمز الثابت للتجربة
+        let countdownTime = 10 * 60; // 10 دقائق بالثواني
+        let resendCooldown = 60; // 60 ثانية لإعادة الإرسال
+        let countdownInterval;
+        let resendInterval;
+
+        // تهيئة الصفحة
+        function initializePage() {
+            console.log('تهيئة صفحة التحقق...');
+            
+            // تعيين الرمز التجريبي
+            demoCodeElement.textContent = verificationCode;
+            console.log('الرمز التجريبي:', verificationCode);
+            
+            // تعيين البريد الإلكتروني
+            const userEmail = localStorage.getItem('recoveryEmail') || 'ahmedalhousen51@gmail.com';
+            userEmailElement.textContent = userEmail;
+            
+            // بدء المؤقت
+            startCountdown();
+            
+            // بدء مؤقت إعادة الإرسال
+            startResendCooldown();
+            
+            // التركيز على أول حقل إدخال
+            codeInputs[0].focus();
+            
+            console.log('تم تهيئة الصفحة بنجاح');
+        }
+
+        // مؤقت العد التنازلي
+        function startCountdown() {
+            clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                const minutes = Math.floor(countdownTime / 60);
+                const seconds = countdownTime % 60;
+                
+                countdownElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // تحديث لون المؤقت بناءً على الوقت المتبقي
+                if (countdownTime <= 0) {
+                    clearInterval(countdownInterval);
+                    showError('انتهت صلاحية رمز التحقق، يرجى طلب رمز جديد');
+                    submitBtn.disabled = true;
+                    timerElement.classList.add('danger');
+                } else if (countdownTime <= 60) {
+                    timerElement.classList.remove('warning');
+                    timerElement.classList.add('danger');
+                } else if (countdownTime <= 300) {
+                    timerElement.classList.remove('danger');
+                    timerElement.classList.add('warning');
+                }
+                
+                countdownTime--;
+            }, 1000);
+        }
+
+        // مؤقت إعادة الإرسال
+        function startResendCooldown() {
+            clearInterval(resendInterval);
+            
+            resendLink.style.pointerEvents = 'none';
+            resendLink.style.opacity = '0.5';
+            
+            resendInterval = setInterval(() => {
+                resendTimer.textContent = `(${resendCooldown} ثانية)`;
+                
+                if (resendCooldown <= 0) {
+                    clearInterval(resendInterval);
+                    resendLink.style.pointerEvents = 'auto';
+                    resendLink.style.opacity = '1';
+                    resendTimer.textContent = '';
+                }
+                
+                resendCooldown--;
+            }, 1000);
+        }
+
+        // إدارة حقول إدخال الرمز
+        function initializeCodeInputs() {
+            codeInputs.forEach((input, index) => {
+                input.addEventListener('input', function(e) {
+                    // السماح بالأرقام فقط
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    
+                    if (this.value.length === 1) {
+                        // إضافة كلاس للإشارة إلى أن الحقل مملوء
+                        this.classList.add('filled');
+                        
+                        // الانتقال إلى الحقل التالي
+                        if (index < codeInputs.length - 1) {
+                            codeInputs[index + 1].focus();
+                        } else {
+                            // إذا كان آخر حقل، حاول التحقق تلقائياً
+                            setTimeout(() => {
+                                console.log('التحقق التلقائي بعد إكمال الرمز');
+                                if (verifyCode()) {
+                                    console.log('الرمز صحيح، إرسال النموذج');
+                                    verificationForm.dispatchEvent(new Event('submit'));
+                                }
+                            }, 300);
+                        }
+                    } else {
+                        this.classList.remove('filled');
+                    }
+                    
+                    hideError();
+                    updateSubmitButton();
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace') {
+                        if (this.value.length === 0 && index > 0) {
+                            // الانتقال إلى الحقل السابق ومسحه
+                            codeInputs[index - 1].focus();
+                            codeInputs[index - 1].value = '';
+                            codeInputs[index - 1].classList.remove('filled');
+                        } else {
+                            // مسح الحقل الحالي
+                            this.value = '';
+                            this.classList.remove('filled');
+                        }
+                        hideError();
+                        updateSubmitButton();
+                        e.preventDefault();
+                    }
+                    
+                    // السماح بمفاتيح الأسهم للتنقل
+                    if (e.key === 'ArrowRight' && index > 0) {
+                        codeInputs[index - 1].focus();
+                    }
+                    if (e.key === 'ArrowLeft' && index < codeInputs.length - 1) {
+                        codeInputs[index + 1].focus();
+                    }
+                    
+                    // منع إدخال غير الأرقام
+                    if (!/^[0-9]$/.test(e.key) && 
+                        !['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab', 'Delete', 'Enter'].includes(e.key)) {
+                        e.preventDefault();
+                    }
+                });
+                
+                // دعم اللصق
+                input.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+                    console.log('تم لصق البيانات:', pastedData);
+                    
+                    if (pastedData.length === 6) {
+                        for (let i = 0; i < 6; i++) {
+                            codeInputs[i].value = pastedData[i] || '';
+                            if (pastedData[i]) {
+                                codeInputs[i].classList.add('filled');
+                            } else {
+                                codeInputs[i].classList.remove('filled');
+                            }
+                        }
+                        codeInputs[5].focus();
+                        
+                        // التحقق التلقائي بعد اللصق
+                        setTimeout(() => {
+                            console.log('التحقق التلقائي بعد اللصق');
+                            if (verifyCode()) {
+                                console.log('الرمز صحيح، إرسال النموذج');
+                                verificationForm.dispatchEvent(new Event('submit'));
+                            }
+                        }, 300);
+                    } else {
+                        showError('الرجاء لصق رمز مكون من 6 أرقام');
+                    }
+                });
+                
+                // النقر لتحديد كل النص
+                input.addEventListener('click', function() {
+                    this.select();
+                });
+            });
+        }
+
+        // تحديث حالة زر الإرسال
+        function updateSubmitButton() {
+            const enteredCode = getEnteredCode();
+            submitBtn.disabled = enteredCode.length !== 6;
+        }
+
+        // الحصول على الرمز المدخل
+        function getEnteredCode() {
+            return Array.from(codeInputs).map(input => input.value).join('');
+        }
+
+        // إظهار خطأ
+        function showError(message) {
+            codeErrorElement.textContent = message;
+            codeErrorElement.classList.add('show');
+            console.log('عرض الخطأ:', message);
+            
+            // هزة للحقول وإضافة كلاس الخطأ
+            codeInputs.forEach(input => {
+                input.classList.add('error');
+                setTimeout(() => {
+                    input.classList.remove('error');
+                }, 500);
+            });
+        }
+
+        // إخفاء الخطأ
+        function hideError() {
+            codeErrorElement.classList.remove('show');
+        }
+
+        // التحقق من الرمز
+        function verifyCode() {
+            const enteredCode = getEnteredCode();
+            console.log('التحقق من الرمز المدخل:', enteredCode, 'مقابل الرمز الصحيح:', verificationCode);
+            
+            // إعادة تعيين الأخطاء
+            hideError();
+            
+            // التحقق
+            if (enteredCode.length !== 6) {
+                showError('يرجى إدخال رمز التحقق المكون من 6 أرقام');
+                return false;
+            }
+            
+            if (enteredCode !== verificationCode) {
+                showError('رمز التحقق غير صحيح، يرجى المحاولة مرة أخرى');
+                console.log('الرمز غير صحيح');
+                return false;
+            }
+            
+            console.log('الرمز صحيح!');
+            return true;
+        }
+
+        // إشعار النجاح
+        function showSuccessNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'success-notification';
+            
+            notification.innerHTML = `
+                <i class="fas fa-check-circle" style="font-size: 28px;"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            console.log('عرض إشعار النجاح:', message);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // إعداد إرسال النموذج
+        function setupFormSubmission() {
+            verificationForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('بدء إرسال النموذج');
+                
+                if (!verifyCode()) {
+                    console.log('فشل التحقق من الرمز');
+                    return;
+                }
+                
+                // إظهار حالة التحميل
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
+                submitBtn.disabled = true;
+                console.log('عرض حالة التحميل');
+                
+                // محاكاة استدعاء API
+                setTimeout(() => {
+                    // إظهار رسالة النجاح
+                    showSuccessNotification('تم التحقق بنجاح! سيتم توجيهك إلى صفحة تعيين كلمة المرور');
+                    
+                    // إعادة التوجيه إلى صفحة إعادة تعيين كلمة المرور
+                    setTimeout(() => {
+                        console.log('إعادة التوجيه إلى صفحة إعادة تعيين كلمة المرور');
+                        window.location.href = 'student-reset-password.html';
+                    }, 2000);
+                }, 1500);
+            });
+        }
+
+        // إعداد إعادة إرسال الرمز
+        function setupResendCode() {
+            resendLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('النقر على إعادة إرسال الرمز');
+                
+                // توليد رمز جديد (في الواقع سيكون من الخادم)
+                verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+                demoCodeElement.textContent = verificationCode;
+                console.log('الرمز الجديد:', verificationCode);
+                
+                // إعادة تعيين العد التنازلي
+                countdownTime = 10 * 60;
+                startCountdown();
+                
+                // إعادة تعيين تنسيق المؤقت
+                timerElement.classList.remove('danger', 'warning');
+                
+                // إعادة تعيين وقت الانتظار لإعادة الإرسال
+                resendCooldown = 60;
+                startResendCooldown();
+                
+                // مسح الحقول
+                codeInputs.forEach(input => {
+                    input.value = '';
+                    input.classList.remove('filled', 'error');
+                });
+                codeInputs[0].focus();
+                updateSubmitButton();
+                
+                // إظهار رسالة النجاح
+                showSuccessNotification('تم إعادة إرسال رمز التحقق بنجاح');
+                
+                // إخفاء أي أخطاء
+                hideError();
+            });
+        }
+
+        // تهيئة عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('تم تحميل DOM، تهيئة صفحة التحقق');
+            initializeCodeInputs();
+            setupFormSubmission();
+            setupResendCode();
+            initializePage();
+        });
+
+        // تنظيف المؤقتات عند إغلاق الصفحة
+        window.addEventListener('beforeunload', function() {
+            clearInterval(countdownInterval);
+            clearInterval(resendInterval);
+        });
+    </script>
+</body>
+</html>

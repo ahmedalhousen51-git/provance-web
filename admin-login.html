@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل دخول الأدمن - ProVance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ============================================
+           Global Variables - Admin Theme
+        ============================================ */
+        :root {
+            --admin-primary: #8b5cf6;
+            --admin-secondary: #7c3aed;
+            --admin-gradient: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            --admin-light: #a78bfa;
+            --dark-bg: #0f0c29;
+            --dark-secondary: #1a1a2e;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --text-primary: #ffffff;
+            --text-secondary: #b8b5c9;
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --error-color: #ff6b6b;
+            --success-color: #51cf66;
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.4);
+            --shadow-xl: 0 30px 80px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* ============================================
+           Background Shapes (ثابتة بدون حركة)
+        ============================================ */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+        }
+
+        .shape-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--admin-primary);
+            top: -150px;
+            right: -150px;
+        }
+
+        .shape-2 {
+            width: 450px;
+            height: 450px;
+            background: var(--admin-secondary);
+            bottom: -150px;
+            left: -150px;
+        }
+
+        .shape-3 {
+            width: 400px;
+            height: 400px;
+            background: var(--admin-light);
+            top: 40%;
+            left: 30%;
+        }
+
+        /* ============================================
+           Login Container
+        ============================================ */
+        .login-container {
+            display: grid;
+            grid-template-columns: 55% 45%;
+            height: 100vh;
+        }
+
+        /* ============================================
+           Left Side - Branding
+        ============================================ */
+        .login-left {
+            background: var(--admin-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-left::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+        }
+
+        .branding-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .logo-circle {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo-circle i {
+            font-size: 50px;
+            color: white;
+        }
+
+        .brand-name {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            line-height: 1.2;
+        }
+
+        .brand-tagline {
+            font-size: 1.2rem;
+            margin-bottom: 50px;
+            opacity: 0.95;
+        }
+
+        /* Benefits List */
+        .benefits-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .benefit-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(-10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .benefit-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .benefit-icon i {
+            font-size: 24px;
+            color: white;
+        }
+
+        .benefit-text h4 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .benefit-text p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        /* ============================================
+           Right Side - Form
+        ============================================ */
+        .login-right {
+            background: var(--dark-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        /* Back Button */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            transform: translateX(5px);
+        }
+
+        /* User Type Badge */
+        .user-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 25px;
+            background: var(--admin-gradient);
+            border-radius: 50px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .user-type-badge i {
+            font-size: 1.2rem;
+        }
+
+        .user-type-badge span {
+            font-weight: 600;
+        }
+
+        /* Form Header */
+        .form-header {
+            margin-bottom: 35px;
+        }
+
+        .form-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: var(--admin-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 35px;
+        }
+
+        .input-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 16px 20px;
+            background: var(--input-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--admin-primary);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+        }
+
+        .input-group input::placeholder {
+            color: rgba(184, 181, 201, 0.4);
+        }
+
+        /* Error Message */
+        .error-message {
+            display: block;
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .error-message.show {
+            opacity: 1;
+        }
+
+        /* Admin Note */
+        .admin-note {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .admin-note p {
+            color: var(--admin-light);
+            font-size: 0.9rem;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 17px;
+            background: var(--admin-gradient);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(139, 92, 246, 0.5);
+        }
+
+        .submit-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-loader {
+            display: none;
+        }
+
+        .submit-btn.loading .btn-text,
+        .submit-btn.loading .btn-icon {
+            display: none;
+        }
+
+        .submit-btn.loading .btn-loader {
+            display: inline-block;
+        }
+
+        /* Switch User */
+        .switch-user {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .switch-user p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .switch-user a {
+            color: var(--admin-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .switch-user a:hover {
+            color: var(--admin-light);
+            text-decoration: underline;
+        }
+
+        /* ============================================
+           Success Notification
+        ============================================ */
+        .success-notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 50px rgba(81, 207, 102, 0.5);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 600;
+        }
+
+        /* Error Notification */
+        .error-notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 50px rgba(255, 107, 107, 0.5);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 600;
+        }
+
+        /* ============================================
+           Admin Welcome Modal
+        ============================================ */
+        .admin-welcome-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .admin-welcome-modal.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .welcome-content {
+            background: var(--dark-secondary);
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            border: 2px solid var(--admin-primary);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--admin-gradient);
+        }
+
+        .welcome-icon {
+            width: 100px;
+            height: 100px;
+            background: var(--admin-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 45px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.5);
+        }
+
+        .welcome-title {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            background: var(--admin-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .welcome-info {
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .welcome-info-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 10px 0;
+            font-size: 1.1rem;
+        }
+
+        .welcome-info-item i {
+            color: var(--admin-primary);
+            font-size: 1.3rem;
+        }
+
+        .welcome-info-item .time-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .welcome-info-item .time-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .welcome-info-item .time-value {
+            font-family: 'Courier New', monospace;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .welcome-message {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+
+        .welcome-btn {
+            background: var(--admin-gradient);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 16px 35px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 0 auto;
+        }
+
+        .welcome-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(139, 92, 246, 0.5);
+        }
+
+        /* ============================================
+           Security Features
+        ============================================ */
+        .security-info {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            display: none;
+        }
+
+        .security-info.show {
+            display: block;
+        }
+
+        .security-info p {
+            color: #ff6b6b;
+            font-size: 0.85rem;
+        }
+
+        .failed-attempts {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        /* ============================================
+           Responsive Design
+        ============================================ */
+        @media (max-width: 1200px) {
+            .login-container {
+                grid-template-columns: 50% 50%;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .login-container {
+                grid-template-columns: 1fr;
+            }
+
+            .login-left {
+                display: none;
+            }
+
+            .login-right {
+                padding: 60px 30px;
+            }
+
+            .welcome-content {
+                padding: 40px 25px;
+            }
+
+            .welcome-title {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .login-right {
+                padding: 40px 20px;
+            }
+
+            .form-header h2 {
+                font-size: 2rem;
+            }
+
+            .welcome-content {
+                padding: 30px 20px;
+            }
+
+            .welcome-title {
+                font-size: 1.5rem;
+            }
+
+            .welcome-icon {
+                width: 80px;
+                height: 80px;
+                font-size: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Shapes (ثابتة بدون حركة) -->
+    <div class="bg-animation">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <!-- Admin Welcome Modal -->
+    <div class="admin-welcome-modal" id="adminWelcomeModal">
+        <div class="welcome-content">
+            <div class="welcome-icon">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <h2 class="welcome-title">مرحباً بك، <span id="adminName"></span>!</h2>
+            <p class="welcome-subtitle" id="adminRole"></p>
+            
+            <div class="welcome-info">
+                <div class="welcome-info-item">
+                    <i class="fas fa-user-check"></i>
+                    <span>تم التحقق من هويتك بنجاح</span>
+                </div>
+                <div class="welcome-info-item">
+                    <i class="fas fa-calendar-check"></i>
+                    <div>
+                        <div>آخر دخول:</div>
+                        <div style="margin-top: 10px; text-align: center;">
+                            <div style="margin-bottom: 8px; color: var(--admin-light); font-size: 1.1rem;">
+                                <span id="lastLoginDate"></span>
+                            </div>
+                            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 15px;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;">الساعات</div>
+                                    <div class="time-value" id="hoursValue" style="font-size: 1.3rem; font-weight: bold; background: rgba(139, 92, 246, 0.2);">--</div>
+                                </div>
+                                <div style="align-self: center; font-size: 1.5rem; color: var(--admin-primary);">:</div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;">الدقائق</div>
+                                    <div class="time-value" id="minutesValue" style="font-size: 1.3rem; font-weight: bold; background: rgba(139, 92, 246, 0.2);">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="welcome-info-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>المستوى: <span id="adminLevel"></span></span>
+                </div>
+            </div>
+            
+            <p class="welcome-message">
+                نرحب بك في لوحة تحكم ProVance. لديك الآن صلاحيات الوصول الكاملة لإدارة المنصة، 
+                متابعة المستخدمين، والتحكم في كافة العمليات. نتمنى لك تجربة إدارة مثمرة.
+            </p>
+            
+            <button class="welcome-btn" id="continueToDashboard">
+                <i class="fas fa-tachometer-alt"></i>
+                الانتقال إلى لوحة التحكم
+            </button>
+        </div>
+    </div>
+
+    <!-- Login Container -->
+    <div class="login-container">
+        <!-- Left Side - Branding -->
+        <div class="login-left">
+            <div class="branding-content">
+                <div class="logo-circle">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h1 class="brand-name">مرحباً بك في لوحة التحكم</h1>
+                <p class="brand-tagline">إدارة منصة ProVance بشكل كامل</p>
+                
+                <div class="benefits-list">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="benefit-text">
+                            <h4>لوحة تحكم شاملة</h4>
+                            <p>إدارة كاملة للمستخدمين والتقارير والإحصائيات</p>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-users-cog"></i>
+                        </div>
+                        <div class="benefit-text">
+                            <h4>إدارة المستخدمين</h4>
+                            <p>مراقبة وإدارة حسابات الطلاب والشركات</p>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="benefit-text">
+                            <h4>المراجعات والموافقات</h4>
+                            <p>مراجعة واعتماد التدريبات والشهادات</p>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <div class="benefit-text">
+                            <h4>إعدادات النظام</h4>
+                            <p>تخصيص إعدادات المنصة وفقاً لمتطلباتك</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-bar">
+                    <div class="stat">
+                        <span class="stat-number">10K+</span>
+                        <span class="stat-label">مستخدم نشط</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">500+</span>
+                        <span class="stat-label">شركة مسجلة</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">2.5K+</span>
+                        <span class="stat-label">فرصة تدريب</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Login Form -->
+        <div class="login-right">
+            <div class="form-container">
+                <!-- Back Button -->
+                <a href="index.html" class="back-btn">
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+
+                <!-- User Type Badge -->
+                <div class="user-type-badge">
+                    <i class="fas fa-user-shield"></i>
+                    <span>حساب الأدمن</span>
+                </div>
+
+                <!-- Form Header -->
+                <div class="form-header">
+                    <h2>تسجيل دخول الأدمن</h2>
+                    <p>أدخل بريدك الإلكتروني للتحقق من الصلاحيات</p>
+                </div>
+
+                <!-- Security Information -->
+                <div class="security-info" id="securityInfo">
+                    <p><i class="fas fa-shield-alt"></i> تم اكتشاف محاولة دخول غير مصرح بها</p>
+                </div>
+
+                <!-- Admin Note -->
+                <div class="admin-note">
+                    <p><strong>ملاحظة:</strong> سيتم التحقق من صلاحيتك تلقائياً</p>
+                </div>
+
+                <!-- Login Form -->
+                <form class="login-form" id="adminLoginForm">
+                    <!-- Email Input Only -->
+                    <div class="input-group">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i>
+                            البريد الإلكتروني
+                        </label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="أدخل بريدك الإلكتروني"
+                            required
+                            autocomplete="username"
+                        >
+                        <span class="error-message" id="emailError"></span>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="submit-btn">
+                        <span class="btn-text">التحقق والدخول</span>
+                        <span class="btn-icon"><i class="fas fa-arrow-left"></i></span>
+                        <span class="btn-loader">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    </button>
+
+                    <!-- Failed Attempts Counter -->
+                    <div class="failed-attempts" id="failedAttempts">
+                        محاولات دخول فاشلة: <span id="attemptCount">0</span>
+                    </div>
+
+                    <!-- Switch User Link -->
+                    <div class="switch-user">
+                        <p>هل تريد تسجيل الدخول كمستخدم آخر؟ <a href="student-login.html">تسجيل دخول الطلاب</a></p>
+                        <!-- Switch User Link -->
+                    <div class="switch-user">
+                        <p>هل تريد تسجيل الدخول كمستخدم آخر؟ <a href="company-login.html">تسجيل دخول الشركات</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        
+        // ============================================
+        // Secure Admin Login System (No Password)
+        // ============================================
+
+        // Elements Selection
+        const loginForm = document.getElementById('adminLoginForm');
+        const submitBtn = document.querySelector('.submit-btn');
+        const emailInput = document.getElementById('email');
+        const securityInfo = document.getElementById('securityInfo');
+        const attemptCountElement = document.getElementById('attemptCount');
+        const adminWelcomeModal = document.getElementById('adminWelcomeModal');
+        const continueToDashboardBtn = document.getElementById('continueToDashboard');
+
+        // ============================================
+        // Admin Authorization System
+        // ============================================
+        class AdminAuthorization {
+            constructor() {
+                // قائمة بالبريدات الإلكترونية المسموح لها بالدخول (مشفرة)
+                this.authorizedEmails = [
+                    this.rot13('nzrqnyubhfura51@tznvy.pbz'), // ahmedalhousen51@gmail.com
+                    this.rot13('nzrqnyubhfura64@tznvy.pbz'), // ahmedalhousen64@gmail.com
+                    this.rot13('fnenynnn7608@tznvy.pbz')    // saraalaa7608@gmail.com
+                ];
+                
+                // البريدات الإلكترونية المديرين المسموح لهم (غير مشفرة للاستخدام)
+                this.allowedEmails = [
+                    'ahmedalhousen51@gmail.com',
+                    'ahmedalhousen64@gmail.com',
+                    'saraalaa7608@gmail.com'
+                ];
+                
+                // معلومات الأدمن المصرح لهم
+                this.adminProfiles = {
+                    'ahmedalhousen51@gmail.com': {
+                        name: 'أحمد الحسين',
+                        role: 'المسؤول العام',
+                        level: 'مستوى عالي',
+                        permissions: ['all']
+                    },
+                    'ahmedalhousen64@gmail.com': {
+                        name: 'أحمد الحسين',
+                        role: 'مدير النظام',
+                        level: 'مستوى متوسط',
+                        permissions: ['users', 'reports', 'settings']
+                    },
+                    'saraalaa7608@gmail.com': {
+                        name: 'سارة علاء',
+                        role: 'مشرف المحتوى',
+                        level: 'مستوى أساسي',
+                        permissions: ['content', 'reviews']
+                    }
+                };
+            }
+
+            // دالة ROT13 للتشفير البسيط
+            rot13(str) {
+                return str.replace(/[a-zA-Z]/g, function(c) {
+                    return String.fromCharCode(
+                        (c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26
+                    );
+                });
+            }
+
+            // فك تشفير البريد
+            decryptEmail(encryptedEmail) {
+                return this.rot13(encryptedEmail);
+            }
+
+            // التحقق من صلاحية البريد الإلكتروني
+            isAuthorized(email) {
+                const normalizedEmail = email.toLowerCase().trim();
+                
+                // التحقق من القائمة غير المشفرة أولاً
+                if (this.allowedEmails.includes(normalizedEmail)) {
+                    return true;
+                }
+                
+                // التحقق من القائمة المشفرة
+                for (const encryptedEmail of this.authorizedEmails) {
+                    const decryptedEmail = this.decryptEmail(encryptedEmail);
+                    if (normalizedEmail === decryptedEmail) {
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+
+            // الحصول على معلومات الأدمن
+            getAdminInfo(email) {
+                const normalizedEmail = email.toLowerCase().trim();
+                return this.adminProfiles[normalizedEmail] || {
+                    name: 'مسؤول النظام',
+                    role: 'مسؤول',
+                    level: 'مستوى أساسي',
+                    permissions: ['basic']
+                };
+            }
+        }
+
+        // ============================================
+        // Security Manager
+        // ============================================
+        class SecurityManager {
+            constructor() {
+                this.maxAttempts = 3; // 3 محاولات فقط للدخول
+                this.lockoutTime = 10 * 60 * 1000; // 10 دقائق
+                this.loadAttempts();
+            }
+
+            loadAttempts() {
+                const attemptsData = localStorage.getItem('adminLoginAttempts');
+                if (attemptsData) {
+                    const data = JSON.parse(attemptsData);
+                    const now = Date.now();
+                    
+                    // إذا انتهت مدة القفل
+                    if (data.lockedUntil && now > data.lockedUntil) {
+                        this.resetAttempts();
+                        return;
+                    }
+                    
+                    this.attempts = data.attempts || 0;
+                    this.lockedUntil = data.lockedUntil || null;
+                } else {
+                    this.attempts = 0;
+                    this.lockedUntil = null;
+                }
+                
+                this.updateUI();
+            }
+
+            saveAttempts() {
+                localStorage.setItem('adminLoginAttempts', JSON.stringify({
+                    attempts: this.attempts,
+                    lockedUntil: this.lockedUntil,
+                    timestamp: Date.now()
+                }));
+            }
+
+            incrementAttempt() {
+                this.attempts++;
+                if (this.attempts >= this.maxAttempts) {
+                    this.lockedUntil = Date.now() + this.lockoutTime;
+                    this.showLockoutMessage();
+                }
+                this.saveAttempts();
+                this.updateUI();
+            }
+
+            resetAttempts() {
+                this.attempts = 0;
+                this.lockedUntil = null;
+                this.saveAttempts();
+                this.updateUI();
+            }
+
+            isLocked() {
+                if (!this.lockedUntil) return false;
+                return Date.now() < this.lockedUntil;
+            }
+
+            getRemainingTime() {
+                if (!this.lockedUntil) return 0;
+                return Math.ceil((this.lockedUntil - Date.now()) / 1000);
+            }
+
+            showLockoutMessage() {
+                securityInfo.classList.add('show');
+                securityInfo.innerHTML = `
+                    <p><i class="fas fa-lock"></i> تم تعليق الوصول مؤقتاً. حاول مرة أخرى بعد ${Math.ceil(this.lockoutTime / 60000)} دقائق</p>
+                `;
+            }
+
+            updateUI() {
+                attemptCountElement.textContent = this.attempts;
+                
+                if (this.isLocked()) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    securityInfo.classList.add('show');
+                    
+                    const remainingMinutes = Math.ceil(this.getRemainingTime() / 60);
+                    securityInfo.innerHTML = `
+                        <p><i class="fas fa-lock"></i> الوصول معطل. حاول مرة أخرى بعد ${remainingMinutes} دقيقة</p>
+                    `;
+                } else {
+                    if (this.attempts > 0) {
+                        securityInfo.classList.add('show');
+                        securityInfo.innerHTML = `
+                            <p><i class="fas fa-exclamation-triangle"></i> تحذير: ${this.attempts} محاولة فاشلة</p>
+                        `;
+                    } else {
+                        securityInfo.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        // ============================================
+        // Initialize Systems
+        // ============================================
+        const adminAuth = new AdminAuthorization();
+        const securityManager = new SecurityManager();
+
+        // ============================================
+        // Form Validation
+        // ============================================
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function showError(inputId, message) {
+            const errorElement = document.getElementById(inputId + 'Error');
+            const inputElement = document.getElementById(inputId);
+            
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+            inputElement.style.borderColor = 'var(--error-color)';
+        }
+
+        function hideError(inputId) {
+            const errorElement = document.getElementById(inputId + 'Error');
+            const inputElement = document.getElementById(inputId);
+            
+            errorElement.classList.remove('show');
+            inputElement.style.borderColor = 'var(--border-color)';
+        }
+
+        // ============================================
+        // Show Welcome Modal
+        // ============================================
+        function showWelcomeModal(adminInfo) {
+            // تحديث معلومات الأدمن في المودال
+            document.getElementById('adminName').textContent = adminInfo.name;
+            document.getElementById('adminRole').textContent = adminInfo.role;
+            document.getElementById('adminLevel').textContent = adminInfo.level;
+            
+            // عرض تاريخ آخر دخول بالتقويم الميلادي
+            const now = new Date();
+            
+            // خيارات التاريخ الميلادي
+            const dateOptions = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'UTC'
+            };
+            
+            // استخدام اللغة العربية مع التقويم الميلادي
+            const dateStr = now.toLocaleDateString('ar-SA-u-ca-gregory', dateOptions);
+            document.getElementById('lastLoginDate').textContent = dateStr;
+            
+            // استخراج الساعات والدقائق بشكل منفصل
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            
+            // عرض الساعات والدقائق بشكل منفصل
+            document.getElementById('hoursValue').textContent = hours;
+            document.getElementById('minutesValue').textContent = minutes;
+            
+            // عرض المودال
+            setTimeout(() => {
+                adminWelcomeModal.classList.add('show');
+            }, 100);
+        }
+
+        // ============================================
+        // Form Submit
+        // ============================================
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // التحقق من حالة القفل
+            if (securityManager.isLocked()) {
+                showError('email', 'الوصول معطل مؤقتاً. حاول مرة أخرى لاحقاً');
+                return;
+            }
+            
+            const email = emailInput.value.trim();
+            
+            // Reset errors
+            hideError('email');
+            
+            // Validate
+            let isValid = true;
+            
+            if (!email) {
+                showError('email', 'البريد الإلكتروني مطلوب');
+                isValid = false;
+            } else if (!validateEmail(email)) {
+                showError('email', 'البريد الإلكتروني غير صحيح');
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                securityManager.incrementAttempt();
+                return;
+            }
+            
+            // Show loading
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            // محاكاة تأخير للتحقق من الصلاحيات
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // التحقق من الصلاحيات
+            if (adminAuth.isAuthorized(email)) {
+                // نجاح التحقق
+                securityManager.resetAttempts();
+                
+                // الحصول على معلومات الأدمن
+                const adminInfo = adminAuth.getAdminInfo(email);
+                
+                // تخزين بيانات الأدمن
+                localStorage.setItem('userType', 'admin');
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userName', adminInfo.name);
+                localStorage.setItem('userRole', adminInfo.role);
+                localStorage.setItem('userPermissions', JSON.stringify(adminInfo.permissions));
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('isAdmin', 'true');
+                localStorage.setItem('lastLogin', new Date().toISOString());
+                
+                // تسجيل محاولة الدخول الناجحة
+                logLoginAttempt(email, true);
+                
+                // إظهار رسالة الترحيب
+                showWelcomeModal(adminInfo);
+                
+                // إعادة تعيين الزر
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            } else {
+                // فشل التحقق
+                securityManager.incrementAttempt();
+                showError('email', 'لا تملك صلاحيات الدخول كمسؤول');
+                
+                // تسجيل محاولة الدخول الفاشلة
+                logLoginAttempt(email, false);
+                
+                // إعادة تعيين الزر
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }
+        });
+
+        // ============================================
+        // Continue to Dashboard
+        // ============================================
+        continueToDashboardBtn.addEventListener('click', function() {
+            // إخفاء المودال
+            adminWelcomeModal.classList.remove('show');
+            
+            // الانتقال إلى لوحة التحكم بعد تأخير قصير
+            setTimeout(() => {
+                window.location.href = 'admin-dashboard.html';
+            }, 300);
+        });
+
+        // ============================================
+        // Close Modal on Escape Key
+        // ============================================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && adminWelcomeModal.classList.contains('show')) {
+                adminWelcomeModal.classList.remove('show');
+                setTimeout(() => {
+                    window.location.href = 'admin-dashboard.html';
+                }, 300);
+            }
+        });
+
+        // ============================================
+        // Login Attempt Logger
+        // ============================================
+        function logLoginAttempt(email, success) {
+            const logEntry = {
+                email: email,
+                success: success,
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                ip: 'N/A' // في تطبيق حقيقي، سيتم الحصول على الـ IP من الخادم
+            };
+            
+            // الحصول على السجلات الحالية
+            const logs = JSON.parse(localStorage.getItem('adminLoginLogs') || '[]');
+            
+            // إضافة السجل الجديد
+            logs.push(logEntry);
+            
+            // الاحتفاظ فقط بـ 50 سجل حديث
+            if (logs.length > 50) {
+                logs.splice(0, logs.length - 50);
+            }
+            
+            // حفظ السجلات
+            localStorage.setItem('adminLoginLogs', JSON.stringify(logs));
+        }
+
+        // ============================================
+        // Input Focus Effects
+        // ============================================
+        emailInput.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'translateY(-2px)';
+            hideError('email');
+        });
+        
+        emailInput.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'translateY(0)';
+            
+            // التحقق من صحة البريد عند ترك الحقل فقط
+            const email = this.value.trim();
+            if (email && !validateEmail(email)) {
+                showError('email', 'البريد الإلكتروني غير صحيح');
+            }
+        });
+
+        // ============================================
+        // Real-time Validation
+        // ============================================
+        let validationTimeout;
+        emailInput.addEventListener('input', function() {
+            // مسح المهلة السابقة
+            clearTimeout(validationTimeout);
+            
+            const email = this.value.trim();
+            
+            // إخفاء الخطأ فوراً أثناء الكتابة
+            hideError('email');
+            
+            // تأجيل التحقق من الصحة حتى يتوقف المستخدم عن الكتابة
+            validationTimeout = setTimeout(() => {
+                if (email && !validateEmail(email)) {
+                    showError('email', 'البريد الإلكتروني غير صحيح');
+                }
+            }, 500); // انتظر 500ms بعد توقف الكتابة
+        });
+
+        // ============================================
+        // Session Security
+        // ============================================
+        window.addEventListener('beforeunload', function() {
+            // مسح الحقل عند مغادرة الصفحة
+            if (!localStorage.getItem('isLoggedIn')) {
+                emailInput.value = '';
+            }
+        });
+
+        // ============================================
+        // Keyboard Shortcuts
+        // ============================================
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+Shift+L لمسح الحقل
+            if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+                emailInput.value = '';
+                hideError('email');
+                emailInput.focus();
+            }
+            
+            // Enter للانتقال للنموذج
+            if (e.key === 'Enter' && document.activeElement === emailInput) {
+                loginForm.dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        // ============================================
+        // Auto-focus on page load
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                emailInput.focus();
+            }, 300);
+        });
+    </script>
+</body>
+</html>

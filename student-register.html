@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProVance - تسجيل الطلاب</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="student-register-style.css">
+    <style>
+        /* أنماط إضافية للعقود والملخص */
+        .summary-section, .contract-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 217, 255, 0.1);
+        }
+
+        .summary-header, .contract-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .summary-icon, .contract-header .contract-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .summary-info h3, .contract-header h2 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .summary-info p, .contract-header p {
+            color: var(--text-secondary);
+            margin: 8px 0 0;
+            font-size: 0.9rem;
+        }
+
+        .summary-content {
+            background: rgba(0, 217, 255, 0.03);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(0, 217, 255, 0.1);
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-item .label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .summary-item .value {
+            color: var(--text-primary);
+            font-weight: 600;
+            flex: 1;
+            text-align: left;
+        }
+
+        .summary-item .value img {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid var(--primary-light);
+        }
+
+        .summary-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 217, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* أنماط العقد */
+        .contract-obligation {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .obligation-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .obligation-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .obligation-title {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .obligation-content {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .obligation-list {
+            list-style: none;
+            padding: 0;
+            margin: 12px 0;
+        }
+
+        .obligation-list li {
+            padding: 8px 0;
+            padding-right: 24px;
+            position: relative;
+        }
+
+        .obligation-list li:before {
+            content: "•";
+            color: var(--primary);
+            font-size: 1.2rem;
+            position: absolute;
+            right: 0;
+        }
+
+        .obligation-content h4 {
+            color: var(--text-primary);
+            margin: 16px 0 8px;
+            font-size: 1rem;
+        }
+
+        .obligation-note {
+            background: rgba(0, 217, 255, 0.05);
+            border-right: 3px solid var(--primary);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .contract-agreement {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+            border: 1px solid rgba(0, 217, 255, 0.2);
+        }
+
+        .agreement-checkbox {
+            margin-bottom: 16px;
+        }
+
+        .final-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: rgba(0, 217, 255, 0.05);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            border-right: 3px solid var(--primary);
+        }
+
+        .final-note i {
+            color: var(--primary);
+            font-size: 1.2rem;
+            margin-top: 2px;
+        }
+
+        .final-note p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .section-divider {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin: 32px 0 24px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .sub-section {
+            margin-right: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+    </div>
+
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Navigation Header -->
+    <header class="nav-header">
+        <div class="nav-content">
+            <div class="nav-logo">
+                <i class="fas fa-rocket"></i>
+                <span>ProVance</span>
+            </div>
+            <a href="student-login.html" class="back-to-login">
+                <i class="fas fa-arrow-right"></i>
+                <span>العودة لتسجيل الدخول</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="register-container">
+        <!-- Header Section -->
+        <header class="register-header">
+            <div class="logo-badge">
+                <div class="logo-inner">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="logo-rings">
+                    <div class="ring ring-1"></div>
+                    <div class="ring ring-2"></div>
+                    <div class="ring ring-3"></div>
+                </div>
+            </div>
+            <h1 class="main-title">
+                <span class="title-gradient">تسجيل الطلاب</span>
+                <span class="title-brand">في منصة ProVance</span>
+            </h1>
+            <p class="subtitle">انضم إلى منصة التدريب المتطورة وابحث عن أفضل فرص التدريب المناسبة لمهاراتك وتخصصك</p>
+
+            <!-- Stats Cards -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">+5,000</div>
+                        <div class="stat-label">طالب مسجل</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">+500</div>
+                        <div class="stat-label">شركة متعاونة</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">+2,000</div>
+                        <div class="stat-label">تدريب مكتمل</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">4.7/5</div>
+                        <div class="stat-label">تقييم الطلاب</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Progress Section -->
+        <section class="progress-container">
+            <div class="progress-header">
+                <h3>تقدم التسجيل</h3>
+                <div class="progress-text">
+                    الخطوة <span id="currentStep">1</span> من <span id="totalSteps">4</span>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-dots">
+                <div class="progress-dot active" data-step="1">
+                    <i class="fas fa-user"></i>
+                    <span>المعلومات الشخصية</span>
+                </div>
+                <div class="progress-dot" data-step="2">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>المعلومات الأكاديمية</span>
+                </div>
+                <div class="progress-dot" data-step="3">
+                    <i class="fas fa-file-alt"></i>
+                    <span>ملخص التسجيل</span>
+                </div>
+                <div class="progress-dot" data-step="4">
+                    <i class="fas fa-file-contract"></i>
+                    <span>العقود والموافقة</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Form Container -->
+        <div class="form-container">
+            <form id="studentRegisterForm">
+                <!-- Step 1: Personal Information -->
+                <div class="form-step active" data-step="1">
+                    <div class="step-header">
+                        <div class="step-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="step-info">
+                            <h2 class="step-title">المعلومات الشخصية</h2>
+                            <p class="step-description">أدخل معلوماتك الشخصية الأساسية للبدء في عملية التسجيل</p>
+                        </div>
+                    </div>
+
+                    <!-- Photo Upload Section -->
+                    <section class="upload-section">
+                        <div class="upload-header">
+                            <h3><i class="fas fa-camera"></i> الصورة الشخصية</h3>
+                            <p>قم برفع صورتك الشخصية لتعزيز ملفك الشخصي</p>
+                        </div>
+                        <div class="logo-upload-container">
+                            <div class="logo-upload-area" onclick="document.getElementById('studentPhoto').click()">
+                                <div class="logo-preview-wrapper">
+                                    <img id="photoPreview" class="logo-preview" alt="Student Photo Preview">
+                                    <div class="logo-placeholder">
+                                        <div class="upload-icon">
+                                            <i class="fas fa-user-plus"></i>
+                                        </div>
+                                        <h4>رفع الصورة الشخصية</h4>
+                                        <p>PNG, JPG - الحد الأقصى 2MB</p>
+                                    </div>
+                                    <div class="upload-overlay">
+                                        <i class="fas fa-camera"></i>
+                                        <span>تغيير الصورة</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="file" id="studentPhoto" accept="image/*" class="hidden">
+                            <div class="upload-actions">
+                                <button type="button" class="btn-upload" onclick="document.getElementById('studentPhoto').click()">
+                                    <i class="fas fa-upload"></i>
+                                    <span>اختر صورة</span>
+                                </button>
+                                <button type="button" class="btn-remove hidden" id="photoRemoveBtn" onclick="removePhoto(event)">
+                                    <i class="fas fa-trash"></i>
+                                    <span>إزالة</span>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Personal Information Form -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="fullName" class="form-label required">
+                                <i class="fas fa-user"></i>
+                                الاسم الثلاثي
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" id="fullName" class="form-input" placeholder="أدخل الاسم الثلاثي" required>
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label required">
+                                <i class="fas fa-envelope"></i>
+                                البريد الإلكتروني
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="email" id="email" class="form-input" placeholder="student@example.com" required>
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="birthDate" class="form-label required">
+                                <i class="fas fa-calendar-alt"></i>
+                                تاريخ الميلاد
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="date" id="birthDate" class="form-input" required onchange="calculateAge()">
+                                <div class="input-border"></div>
+                            </div>
+                            <div id="ageDisplay" class="age-display">
+                                العمر: -- سنة
+                            </div>
+                            <div class="form-note">يجب أن يكون عمرك بين 18 و 30 سنة للتسجيل</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone" class="form-label required">
+                                <i class="fas fa-phone"></i>
+                                رقم الهاتف
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="tel" id="phone" class="form-input" placeholder="مثال: 0551234567" required>
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address" class="form-label required">
+                                <i class="fas fa-map-marker-alt"></i>
+                                مكان الإقامة
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" id="address" class="form-input" placeholder="المدينة والمنطقة" required>
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label required">
+                                <i class="fas fa-lock"></i>
+                                كلمة المرور
+                            </label>
+                            <div class="password-wrapper">
+                                <input type="password" id="password" class="form-input" placeholder="كلمة المرور (8 أحرف على الأقل)" minlength="8" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <div class="input-border"></div>
+                            </div>
+                            <div class="password-strength">
+                                <div class="strength-bar"></div>
+                                <div class="strength-text">قوة كلمة المرور: ضعيفة</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword" class="form-label required">
+                                <i class="fas fa-lock"></i>
+                                تأكيد كلمة المرور
+                            </label>
+                            <div class="password-wrapper">
+                                <input type="password" id="confirmPassword" class="form-input" placeholder="أعد كتابة كلمة المرور" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <div class="input-border"></div>
+                            </div>
+                            <div id="passwordMatch" class="password-match"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Academic Information -->
+                <div class="form-step" data-step="2">
+                    <div class="step-header">
+                        <div class="step-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="step-info">
+                            <h2 class="step-title">المعلومات الأكاديمية</h2>
+                            <p class="step-description">أدخل معلوماتك الأكاديمية لتحديد فرص التدريب المناسبة لك</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="university" class="form-label required">
+                                <i class="fas fa-university"></i>
+                                الجامعة
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" id="university" class="form-input" placeholder="أدخل اسم الجامعة" required>
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="college" class="form-label required">
+                                <i class="fas fa-graduation-cap"></i>
+                                الكلية
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" id="college" class="form-input" placeholder="أدخل اسم الكلية" required>
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="major" class="form-label">
+                                <i class="fas fa-book"></i>
+                                التخصص (اختياري)
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" id="major" class="form-input" placeholder="أدخل التخصص">
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="level" class="form-label required">
+                                <i class="fas fa-layer-group"></i>
+                                المستوى / السنة الدراسية
+                            </label>
+                            <div class="select-wrapper">
+                                <select id="level" class="form-select" required>
+                                    <option value="">اختر المستوى</option>
+                                    <option value="1">السنة الأولى</option>
+                                    <option value="2">السنة الثانية</option>
+                                    <option value="3">السنة الثالثة</option>
+                                    <option value="4">السنة الرابعة</option>
+                                    <option value="5">السنة الخامسة</option>
+                                    <option value="graduate">خريج</option>
+                                </select>
+                                <div class="select-arrow">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="skills" class="form-label">
+                                <i class="fas fa-tools"></i>
+                                المهارات (اختياري)
+                            </label>
+                            <div class="textarea-wrapper">
+                                <textarea id="skills" class="form-textarea" placeholder="اذكر المهارات التي تمتلكها (مثال: HTML, CSS, JavaScript, تصميم جرافيك...)"></textarea>
+                                <div class="textarea-border"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Summary -->
+                <div class="form-step" data-step="3">
+                    <div class="step-header">
+                        <div class="step-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="step-info">
+                            <h2 class="step-title">ملخص التسجيل</h2>
+                            <p class="step-description">راجع معلوماتك قبل إتمام التسجيل</p>
+                        </div>
+                    </div>
+
+                    <!-- Summary Section -->
+                    <section class="summary-section">
+                        <div class="summary-header">
+                            <div class="summary-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="summary-info">
+                                <h3>ملخص التسجيل</h3>
+                                <p>راجع معلوماتك قبل إتمام التسجيل</p>
+                            </div>
+                        </div>
+                        <div id="summaryContent" class="summary-content">
+                            <div class="summary-loading">
+                                <div class="loading-spinner"></div>
+                                <p>جاري تجهيز الملخص...</p>
+                            </div>
+                        </div>
+                        <div class="final-note">
+                            <i class="fas fa-info-circle"></i>
+                            <p>بعد إتمام التسجيل، ستحصل على إشعار بالبريد الإلكتروني لتأكيد الحساب وتفعيله</p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Step 4: Contracts -->
+                <div class="form-step" data-step="4">
+                    <div class="step-header">
+                        <div class="step-icon">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <div class="step-info">
+                            <h2 class="step-title">الشروط والأحكام</h2>
+                            <p class="step-description">يرجى قراءة والموافقة على شروط وأحكام استخدام منصة Provance</p>
+                        </div>
+                    </div>
+
+                    <!-- Contract Terms Section -->
+                    <section class="contract-section">
+                        <div class="contract-header">
+                            <h2>الشروط والأحكام لاستخدام Provance</h2>
+                            <p>باستخدام منصة Provance، تُقر بأنك قد قرأت وفهمت هذه الشروط والأحكام وتوافق على الالتزام بها بشكل كامل وملزم قانونيًا</p>
+                        </div>
+
+                        <div class="contract-content">
+                            <!-- الشرط الأول -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط الأول: القبول والالتزام بالشروط</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>باستخدام منصة Provance، يُقر كل من المتدرب والشركة بأنه قد قرأ هذه الشروط والأحكام وفهمها بالكامل، ويوافق على الالتزام بها التزامًا قانونيًا كاملًا دون أي استثناء.</li>
+                                        <li>تحتفظ Provance بالحق في تعديل أو تحديث هذه الشروط في أي وقت، على أن يتم إشعار المستخدمين مسبقًا عبر البريد الإلكتروني أو إشعار داخل المنصة قبل سريان أي تعديل.</li>
+                                        <li>ويُعد استمرار استخدام المنصة بعد التعديل موافقة صريحة وملزمة على الشروط المعدلة.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الثاني -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط الثاني: متطلبات التسجيل واستخدام المنصة</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يجب على المتدرب والشركة تقديم بيانات صحيحة ودقيقة وكاملة عند التسجيل، مع الالتزام بتحديثها عند أي تغيير.</li>
+                                        <li>يُمنع إنشاء حسابات وهمية أو تقديم معلومات مضللة أو انتحال أي صفة.</li>
+                                        <li>يحق لـ Provance التحقق من صحة البيانات، ورفض أو تعليق أو إنهاء أي حساب مخالف، مع فرض تعويض مالي مباشر للطرف المتضرر ولـ Provance عند ثبوت المخالفة.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- قسم شروط المتدربين -->
+                            <div class="section-divider">
+                                <i class="fas fa-user-graduate"></i>
+                                أولًا: الشروط والأحكام الخاصة بالمتدربين
+                            </div>
+
+                            <!-- الشرط الثالث -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-user-graduate"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط الثالث: الالتزام بالتدريب</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يلتزم المتدرب بتنفيذ جميع المهام والمتطلبات التدريبية المحددة له وفقًا للمجال الذي تم قبوله فيه.</li>
+                                        <li>يُحظر أي سلوك غير مهني أو مخالف لأهداف التدريب داخل المنصة.</li>
+                                        <li>أي مخالفة تؤدي إلى الحظر الفوري للمتدرب، مع فرض تعويض مالي مباشر للطرف المتضرر وProvance.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الرابع -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط الرابع: الرسوم والدفع</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يدفع المتدرب أي رسوم أو مستحقات مالية من خلال نظام الدفع الداخلي لمنصة Provance فقط.</li>
+                                        <li>يُمنع دفع أي مبالغ مالية مباشرة لأي شركة خارج المنصة.</li>
+                                        <li>أي محاولة للدفع خارج النظام المعتمد تُعد مخالفة جسيمة تؤدي إلى الحظر وفرض تعويض مالي كامل.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الخامس -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-user-slash"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط الخامس: إنهاء حساب المتدرب</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يحق لـ Provance تعليق أو إنهاء حساب المتدرب في حال مخالفة الشروط.</li>
+                                        <li>لا يحق للمتدرب المطالبة باسترجاع أي بيانات أو محتوى بعد الحظر.</li>
+                                        <li>وفي حال كانت المخالفة جسيمة أو متكررة، يتم فرض تعويض مالي مضاعف.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- قسم شروط الشركات -->
+                            <div class="section-divider">
+                                <i class="fas fa-building"></i>
+                                ثانيًا: الشروط والأحكام الخاصة بالشركات
+                            </div>
+
+                            <!-- الشرط السادس -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-clipboard-check"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط السادس: معايير التدريب والتقييم</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>تلتزم الشركات بتقديم تدريب مهني حقيقي يتوافق مع تخصص المتدرب وأهداف المنصة.</li>
+                                        <li>يُحظر استغلال المتدربين في مهام خارج نطاق التدريب أو تحقيق أي مكاسب مالية مباشرة منهم.</li>
+                                        <li>يجب تقديم تقييمات عادلة وموضوعية تعكس الأداء الحقيقي للمتدرب.</li>
+                                    </ul>
+                                    <div class="obligation-note">
+                                        <p><strong>أي مخالفة تؤدي إلى:</strong></p>
+                                        <ul class="obligation-list">
+                                            <li>حظر الشركة وإدراجها ضمن الشركات المخالفة</li>
+                                            <li>فرض تعويض مالي للمتدرب وProvance</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- الشرط السابع -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-hand-holding-usd"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط السابع: الرسوم والدفع</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يُمنع على الشركات تحصيل أي مبالغ مالية من المتدربين بشكل مباشر.</li>
+                                        <li>تتم جميع المدفوعات حصريًا من خلال نظام الدفع الداخلي للمنصة.</li>
+                                        <li>أي مخالفة لهذا الشرط تؤدي إلى الحظر الفوري وفرض تعويض مالي كامل.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الثامن -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-building-slash"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط الثامن: إنهاء حساب الشركة</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يحق لـ Provance تعليق أو إنهاء حساب أي شركة تخالف هذه الشروط دون إشعار مسبق.</li>
+                                        <li>لا يحق للشركة المطالبة باسترجاع أي بيانات أو تعويضات بعد الحظر.</li>
+                                        <li>في حال المخالفات الجسيمة أو المتكررة، يتم فرض تعويض مالي مضاعف.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- قسم البنود العامة -->
+                            <div class="section-divider">
+                                <i class="fas fa-balance-scale"></i>
+                                البنود العامة (المحايدة)
+                            </div>
+
+                            <!-- الشرط التاسع -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط التاسع: سرية البيانات وحماية الخصوصية</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>تلتزم Provance بحماية بيانات المتدربين والشركات وفقًا لسياسات الخصوصية المعتمدة.</li>
+                                        <li>يُحظر على أي طرف استخدام أو مشاركة البيانات خارج نطاق المنصة دون موافقة خطية مسبقة.</li>
+                                        <li>بعد انتهاء التدريب، تصبح Provance الجهة الوحيدة المخوّلة بمشاركة تقييمات المتدربين بما يضمن فرصًا عادلة.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط العاشر -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-credit-card"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط العاشر: الرسوم والخدمات الإضافية</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>قد تتضمن بعض الخدمات داخل المنصة رسومًا إضافية.</li>
+                                        <li>يتم توضيح أي رسوم قبل تنفيذ الخدمة.</li>
+                                        <li>أي محاولة للتحايل على النظام المالي تؤدي إلى الحظر وفرض تعويض مالي مباشر.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الحادي عشر -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-gavel"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط الحادي عشر: حقوق Provance وإخلاء المسؤولية</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>تهدف Provance إلى تسهيل التدريب وربط المتدربين بالشركات.</li>
+                                        <li>لا تتحمل المنصة مسؤولية النتائج النهائية للتدريب أو التوظيف.</li>
+                                        <li>تحتفظ Provance بحق تطوير أو تعديل خدماتها في أي وقت.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الثاني عشر -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-globe"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط الثاني عشر: القانون والاختصاص القضائي الدولي</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>تخضع هذه الشروط والأحكام لقوانين الدولة التي يقيم فيها الطرف المستخدم.</li>
+                                        <li>يتم الفصل في أي نزاع أمام الجهة القضائية المختصة في تلك الدولة.</li>
+                                        <li>يُعد هذا العقد ملزمًا وقابلًا للتنفيذ في جميع الدول التي تُستخدم فيها المنصة.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الثالث عشر -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon">
+                                        <i class="fas fa-file-signature"></i>
+                                    </div>
+                                    <h3 class="obligation-title">الشرط الثالث عشر: الموافقة النهائية</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <p>باستخدام منصة Provance، يقر كل من المتدرب والشركة بالموافقة الكاملة والنهائية على جميع الشروط والأحكام المذكورة أعلاه والالتزام بها التزامًا قانونيًا كاملًا.</p>
+                                    <div class="obligation-note">
+                                        <p><strong>ملاحظة هامة:</strong> هذه الشروط والأحكام تمثل اتفاقية قانونية ملزمة. يرجى قراءتها بعناية قبل الموافقة.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agreement Section -->
+                        <div class="contract-agreement">
+                            <div class="agreement-checkbox">
+                                <div class="checkbox-card">
+                                    <div class="checkbox-wrapper">
+                                        <input type="checkbox" id="contractAgreement" required>
+                                        <label for="contractAgreement" class="checkbox-content">
+                                            <div class="checkbox-icon">
+                                                <i class="fas fa-file-contract"></i>
+                                            </div>
+                                            <div class="checkbox-info">
+                                                <h4>أوافق على شروط وأحكام منصة Provance</h4>
+                                                <p>أقر بأنني قد قرأت وفهمت جميع الشروط والأحكام المذكورة أعلاه وأوافق على الالتزام بها بشكل كامل</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="final-note">
+                                <i class="fas fa-info-circle"></i>
+                                <p>بعد الموافقة على الشروط والأحكام، سيتم إتمام عملية التسجيل وإنشاء حسابك في منصة Provance</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Form Navigation -->
+                <div class="form-navigation">
+                    <button type="button" id="btnPrev" class="btn-nav btn-prev" onclick="previousStep()">
+                        <i class="fas fa-arrow-right"></i>
+                        <span>السابق</span>
+                    </button>
+                    <button type="button" id="btnNext" class="btn-nav btn-next" onclick="nextStep()">
+                        <span>التالي</span>
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button type="submit" id="btnSubmit" class="btn-nav btn-submit hidden">
+                        <i class="fas fa-check"></i>
+                        <span>إتمام التسجيل</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        <div class="footer-content">
+            <p>© 2023 ProVance. جميع الحقوق محفوظة</p>
+            <div class="footer-links">
+                <a href="#">الشروط والأحكام</a>
+                <a href="#">سياسة الخصوصية</a>
+                <a href="#">الدعم والمساعدة</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="student-register-script.js"></script>
+    <script>
+        // دالة لعرض ملخص التسجيل
+        function generateSummary() {
+            const summaryContent = document.getElementById('summaryContent');
+            
+            // جمع البيانات من النموذج
+            const photoPreview = document.getElementById('photoPreview').src;
+            const fullName = document.getElementById('fullName').value || 'لم يتم الإدخال';
+            const email = document.getElementById('email').value || 'لم يتم الإدخال';
+            const birthDate = document.getElementById('birthDate').value || 'لم يتم الإدخال';
+            const phone = document.getElementById('phone').value || 'لم يتم الإدخال';
+            const address = document.getElementById('address').value || 'لم يتم الإدخال';
+            const university = document.getElementById('university').value || 'لم يتم الإدخال';
+            const college = document.getElementById('college').value || 'لم يتم الإدخال';
+            const major = document.getElementById('major').value || 'لم يتم الإدخال';
+            const level = document.getElementById('level').value || 'لم يتم الإدخال';
+            const skills = document.getElementById('skills').value || 'لم يتم الإدخال';
+
+            // تحويل مستوى الدراسة
+            let levelText = '';
+            switch(level) {
+                case '1': levelText = 'السنة الأولى'; break;
+                case '2': levelText = 'السنة الثانية'; break;
+                case '3': levelText = 'السنة الثالثة'; break;
+                case '4': levelText = 'السنة الرابعة'; break;
+                case '5': levelText = 'السنة الخامسة'; break;
+                case 'graduate': levelText = 'خريج'; break;
+                default: levelText = 'لم يتم التحديد';
+            }
+
+            // إنشاء HTML للملخص
+            const summaryHTML = `
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="label">الصورة الشخصية:</div>
+                        <div class="value">
+                            ${photoPreview && photoPreview !== '' ? 
+                                `<img src="${photoPreview}" alt="صورة الطالب">` : 
+                                'لم يتم رفع صورة'}
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="label">الاسم الثلاثي:</div>
+                        <div class="value">${fullName}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="label">البريد الإلكتروني:</div>
+                        <div class="value">${email}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="label">تاريخ الميلاد:</div>
+                        <div class="value">${birthDate}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="label">رقم الهاتف:</div>
+                        <div class="value">${phone}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="label">مكان الإقامة:</div>
+                        <div class="value">${address}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="label">الجامعة:</div>
+                        <div class="value">${university}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="label">الكلية:</div>
+                        <div class="value">${college}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="label">التخصص:</div>
+                        <div class="value">${major}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="label">المستوى الدراسي:</div>
+                        <div class="value">${levelText}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="label">المهارات:</div>
+                        <div class="value">${skills.split('\n').map(skill => `<div>• ${skill}</div>`).join('')}</div>
+                    </div>
+                </div>
+            `;
+
+            summaryContent.innerHTML = summaryHTML;
+        }
+
+        // استدعاء دالة توليد الملخص عند الوصول للخطوة الثالثة
+        document.addEventListener('DOMContentLoaded', function() {
+            // إضافة مستمع حدث للانتقال بين الخطوات
+            const nextButton = document.getElementById('btnNext');
+            const prevButton = document.getElementById('btnPrev');
+            
+            // عند النقر على التالي
+            nextButton.addEventListener('click', function() {
+                const currentStep = parseInt(document.getElementById('currentStep').textContent);
+                if (currentStep === 2) { // إذا كنا في الخطوة الثانية وننتقل للثالثة (الملخص)
+                    setTimeout(generateSummary, 300);
+                }
+            });
+            
+            // عند النقر على السابق
+            prevButton.addEventListener('click', function() {
+                const currentStep = parseInt(document.getElementById('currentStep').textContent);
+                if (currentStep === 4) { // إذا كنا في الخطوة الرابعة (العقود) ونعود للثالثة (الملخص)
+                    setTimeout(generateSummary, 300);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

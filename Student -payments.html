@@ -1,0 +1,3284 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProVance - نظام المصروفات والمدفوعات عبر تيلدا</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ===== ROOT VARIABLES (Same as Profile) ===== */
+        :root {
+            /* Professional Color Palette */
+            --primary-blue: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-light: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            
+            /* Gradients */
+            --gradient-primary: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            
+            /* Tilda Brand Colors */
+            --tilda-primary: #00a2ff;
+            --tilda-secondary: #0088cc;
+            --tilda-light: #33bbff;
+            
+            /* Shadows */
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.4);
+            
+            /* Spacing */
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --spacing-xl: 3rem;
+            
+            /* Border Radius */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+            
+            /* Transitions */
+            --transition-fast: 0.2s ease;
+            --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.5s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== PROFESSIONAL HEADER (Same as Profile) ===== */
+        .prof-header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--card-border);
+            padding: var(--spacing-md) 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .prof-header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .prof-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .prof-logo i {
+            color: var(--primary-blue);
+            font-size: 2rem;
+        }
+
+        .prof-nav {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .prof-nav-link {
+            padding: var(--spacing-sm) var(--spacing-md);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-base);
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .prof-nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .prof-nav-link.active {
+            color: var(--primary-blue);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .prof-nav-link i {
+            font-size: 1.1rem;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: var(--error);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .prof-user-menu {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            cursor: pointer;
+            padding: var(--spacing-sm);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-base);
+        }
+
+        .prof-user-menu:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .prof-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 1.1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prof-user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .prof-user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .prof-user-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .prof-user-role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .payments-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+            padding-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+        }
+
+        .page-actions {
+            display: flex;
+            gap: var(--spacing-md);
+        }
+
+        /* ===== TILDA PAYMENT SYSTEM INFO ===== */
+        .tilda-info-card {
+            background: linear-gradient(135deg, rgba(0, 162, 255, 0.1) 0%, rgba(0, 136, 204, 0.1) 100%);
+            border: 2px solid var(--tilda-primary);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tilda-info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--tilda-primary) 0%, var(--tilda-secondary) 100%);
+        }
+
+        .tilda-info-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .tilda-logo {
+            background: var(--tilda-primary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .tilda-info-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .tilda-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .tilda-feature {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            text-align: center;
+            transition: all var(--transition-base);
+        }
+
+        .tilda-feature:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .tilda-feature-icon {
+            font-size: 2.5rem;
+            color: var(--tilda-primary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .tilda-feature-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        .tilda-feature-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .privacy-notice {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-xl);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+        }
+
+        .privacy-icon {
+            color: var(--success);
+            font-size: 1.5rem;
+        }
+
+        .privacy-content h4 {
+            color: var(--success);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .privacy-content p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ===== SUMMARY CARDS ===== */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card.pending {
+            border-color: var(--warning);
+        }
+
+        .summary-card.overdue {
+            border-color: var(--error);
+        }
+
+        .summary-card.paid {
+            border-color: var(--success);
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+
+        .summary-card.pending::before {
+            background: var(--gradient-warning);
+        }
+
+        .summary-card.overdue::before {
+            background: var(--gradient-danger);
+        }
+
+        .summary-card.paid::before {
+            background: var(--gradient-success);
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .summary-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .summary-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .summary-icon.pending {
+            background: var(--gradient-warning);
+        }
+
+        .summary-icon.overdue {
+            background: var(--gradient-danger);
+        }
+
+        .summary-icon.paid {
+            background: var(--gradient-success);
+        }
+
+        .summary-icon.total {
+            background: var(--gradient-primary);
+        }
+
+        .summary-amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .summary-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .summary-details {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--card-border);
+        }
+
+        .summary-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* ===== PAYMENTS SECTION ===== */
+        .payments-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--card-border);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .section-title i {
+            color: var(--primary-blue);
+        }
+
+        /* ===== PAYMENT TABS ===== */
+        .payment-tabs {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-xl);
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: var(--spacing-sm);
+            flex-wrap: wrap;
+        }
+
+        .payment-tab {
+            padding: var(--spacing-sm) var(--spacing-lg);
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            transition: all var(--transition-base);
+            position: relative;
+        }
+
+        .payment-tab:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .payment-tab.active {
+            color: var(--primary-blue);
+        }
+
+        .payment-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            border-radius: 3px 3px 0 0;
+        }
+
+        /* ===== PAYMENT CARDS ===== */
+        .payment-cards {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .payment-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payment-card:hover {
+            border-color: var(--primary-blue);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .payment-card.pending {
+            border-color: var(--warning);
+        }
+
+        .payment-card.overdue {
+            border-color: var(--error);
+        }
+
+        .payment-card.paid {
+            border-color: var(--success);
+        }
+
+        .payment-card.partial {
+            border-color: #8b5cf6;
+        }
+
+        .payment-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: var(--primary-blue);
+            opacity: 0.05;
+            border-radius: 50%;
+            transform: translate(50px, -50px);
+        }
+
+        .payment-card.pending::before {
+            background: var(--warning);
+        }
+
+        .payment-card.overdue::before {
+            background: var(--error);
+        }
+
+        .payment-card.paid::before {
+            background: var(--success);
+        }
+
+        .payment-card.partial::before {
+            background: #8b5cf6;
+        }
+
+        .payment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-lg);
+            position: relative;
+            z-index: 1;
+        }
+
+        .payment-info {
+            flex: 1;
+        }
+
+        .payment-company {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .payment-training {
+            color: var(--primary-blue);
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .payment-period {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .payment-status {
+            padding: 8px 16px;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .status-overdue {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .status-paid {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-partial {
+            background: rgba(139, 92, 246, 0.15);
+            color: #8b5cf6;
+            border: 1px solid #8b5cf6;
+        }
+
+        .payment-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin: var(--spacing-lg) 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .payment-stat {
+            text-align: center;
+            padding: var(--spacing-md);
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--card-border);
+        }
+
+        .payment-stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .payment-stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .payment-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+            position: relative;
+            z-index: 1;
+            flex-wrap: wrap;
+        }
+
+        /* ===== PAYMENT BUTTONS ===== */
+        .payment-btn {
+            padding: var(--spacing-md) var(--spacing-xl);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .payment-btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .payment-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .payment-btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid var(--card-border);
+        }
+
+        .payment-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary-blue);
+        }
+
+        .payment-btn-success {
+            background: var(--gradient-success);
+            color: white;
+        }
+
+        .payment-btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .payment-btn-warning {
+            background: var(--gradient-warning);
+            color: white;
+        }
+
+        .payment-btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .payment-btn-tilda {
+            background: linear-gradient(135deg, var(--tilda-primary) 0%, var(--tilda-secondary) 100%);
+            color: white;
+        }
+
+        .payment-btn-tilda:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 162, 255, 0.3);
+        }
+
+        /* ===== PAYMENT MODAL ===== */
+        .payment-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: var(--spacing-lg);
+            backdrop-filter: blur(10px);
+        }
+
+        .payment-modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .payment-modal {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-xl);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .payment-modal-header {
+            padding: var(--spacing-xl);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--card-bg) 0%, #2d3748 100%);
+        }
+
+        .payment-modal-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .payment-modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-base);
+        }
+
+        .payment-modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+
+        .payment-modal-body {
+            padding: var(--spacing-xl);
+        }
+
+        /* ===== PAYMENT FORM ===== */
+        .payment-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .payment-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .payment-form-label {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .payment-form-label i {
+            color: var(--primary-blue);
+            font-size: 1rem;
+        }
+
+        .payment-form-input, .payment-form-select, .payment-form-textarea {
+            padding: var(--spacing-md);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all var(--transition-base);
+        }
+
+        .payment-form-input:focus, .payment-form-select:focus, .payment-form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .payment-form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .payment-amount-input {
+            position: relative;
+        }
+
+        .payment-amount-input .currency {
+            position: absolute;
+            left: var(--spacing-md);
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .payment-amount-input .payment-form-input {
+            padding-right: var(--spacing-md);
+            padding-left: 50px;
+        }
+
+        /* ===== TILDA PAYMENT METHODS ===== */
+        .tilda-methods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .tilda-method {
+            border: 2px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+        }
+
+        .tilda-method:hover {
+            border-color: var(--tilda-primary);
+            background: rgba(0, 162, 255, 0.05);
+        }
+
+        .tilda-method.selected {
+            border-color: var(--tilda-primary);
+            background: rgba(0, 162, 255, 0.1);
+        }
+
+        .tilda-method-icon {
+            font-size: 2.5rem;
+            margin-bottom: var(--spacing-md);
+            color: var(--tilda-primary);
+        }
+
+        .tilda-method-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .tilda-method-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .tilda-method-note {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* ===== TILDA BANK ACCOUNT DISPLAY ===== */
+        .tilda-bank-display {
+            background: linear-gradient(135deg, var(--tilda-primary) 0%, var(--tilda-secondary) 100%);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            margin: var(--spacing-lg) 0;
+            position: relative;
+            overflow: hidden;
+            color: white;
+        }
+
+        .tilda-bank-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .tilda-bank-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+            position: relative;
+            z-index: 1;
+        }
+
+        .tilda-bank-logo {
+            font-weight: 800;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .tilda-bank-chip {
+            width: 50px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .tilda-bank-number {
+            font-family: 'Courier New', monospace;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            margin: var(--spacing-xl) 0;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.1);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+        }
+
+        .tilda-bank-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tilda-bank-info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .tilda-bank-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .tilda-bank-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        /* ===== PAYMENT TIMELINE ===== */
+        .payment-timeline {
+            margin: var(--spacing-xl) 0;
+            padding: var(--spacing-lg);
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--card-border);
+        }
+
+        .timeline-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-lg);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .timeline-items {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+            position: relative;
+        }
+
+        .timeline-items::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--card-border);
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: var(--spacing-lg);
+            position: relative;
+            padding-right: 50px;
+        }
+
+        .timeline-item.completed::before {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .timeline-item.current::before {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        .timeline-item.pending::before {
+            background: transparent;
+            border-color: var(--text-muted);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 5px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid var(--card-border);
+            background: var(--dark-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .timeline-item.completed::after {
+            content: '✓';
+            position: absolute;
+            right: 13px;
+            top: 5px;
+            color: white;
+            font-weight: bold;
+            z-index: 3;
+        }
+
+        .timeline-item.current::after {
+            content: '●';
+            position: absolute;
+            right: 13px;
+            top: 5px;
+            color: white;
+            font-size: 1.5rem;
+            z-index: 3;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-date {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .timeline-text {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .timeline-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* ===== PAYMENT SUCCESS ===== */
+        .payment-success {
+            text-align: center;
+            padding: var(--spacing-xl);
+        }
+
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: var(--gradient-success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--spacing-lg);
+            font-size: 3rem;
+            color: white;
+        }
+
+        .success-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: var(--spacing-md);
+            color: var(--success);
+        }
+
+        .success-message {
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xl);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .receipt-details {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin: var(--spacing-xl) 0;
+            text-align: right;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .receipt-row:last-child {
+            border-bottom: none;
+        }
+
+        .receipt-label {
+            color: var(--text-secondary);
+        }
+
+        .receipt-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .receipt-value.total {
+            font-size: 1.3rem;
+            color: var(--success);
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 1200px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .payment-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tilda-features {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .prof-header-content {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+            
+            .prof-nav {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .payments-container {
+                padding: var(--spacing-lg) var(--spacing-md);
+            }
+            
+            .page-header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                text-align: center;
+            }
+            
+            .page-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .payment-header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+            
+            .payment-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .payment-actions {
+                flex-direction: column;
+            }
+            
+            .payment-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .payment-modal {
+                margin: var(--spacing-md);
+            }
+            
+            .payment-modal-header,
+            .payment-modal-body {
+                padding: var(--spacing-lg);
+            }
+            
+            .tilda-features {
+                grid-template-columns: 1fr;
+            }
+            
+            .tilda-methods-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tilda-bank-number {
+                font-size: 1.4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .payment-tabs {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .payment-tab {
+                text-align: center;
+                border-radius: var(--radius-md);
+            }
+            
+            .payment-tab.active::after {
+                display: none;
+            }
+            
+            .tilda-bank-number {
+                font-size: 1.2rem;
+                letter-spacing: 1px;
+            }
+            
+            .success-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* ===== UTILITY CLASSES ===== */
+        .text-success {
+            color: var(--success) !important;
+        }
+
+        .text-warning {
+            color: var(--warning) !important;
+        }
+
+        .text-error {
+            color: var(--error) !important;
+        }
+
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        .text-tilda {
+            color: var(--tilda-primary) !important;
+        }
+
+        .mb-0 {
+            margin-bottom: 0 !important;
+        }
+
+        .mt-0 {
+            margin-top: 0 !important;
+        }
+
+        .text-center {
+            text-align: center !important;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ===== LOADING SPINNER ===== */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: var(--spacing-xl) auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ===== SCROLLBAR STYLING ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--card-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-blue);
+            border-radius: var(--radius-full);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-light);
+        }
+
+        /* ===== TRANSACTION HISTORY ===== */
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--spacing-md);
+        }
+
+        .transactions-table th {
+            background: rgba(255, 255, 255, 0.03);
+            padding: var(--spacing-md);
+            text-align: right;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--card-border);
+        }
+
+        .transactions-table td {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-secondary);
+        }
+
+        .transactions-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .transaction-status {
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .transaction-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .transaction-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .transaction-failed {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--error);
+        }
+
+        /* ===== DEADLINE WARNING ===== */
+        .deadline-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin: var(--spacing-md) 0;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .deadline-warning-icon {
+            color: var(--warning);
+            font-size: 1.5rem;
+        }
+
+        .deadline-warning-content {
+            flex: 1;
+        }
+
+        .deadline-warning-title {
+            color: var(--warning);
+            font-weight: 700;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .deadline-warning-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* ===== PAYMENT INSTALLMENTS ===== */
+        .installment-plan {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .installment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .installment-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .installment-badge {
+            padding: 6px 12px;
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="prof-header">
+        <div class="prof-header-content">
+            <a href="#" class="prof-logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>ProVance</span>
+            </a>
+            
+            <nav class="prof-nav">
+                <a href="student-internship.html" class="prof-nav-link">
+                    <i class="fas fa-briefcase"></i>
+                    <span>التدريبات</span>
+                </a>
+                <a href="student-profile.html" class="prof-nav-link">
+                    <i class="fas fa-user"></i>
+                    <span>الملف الشخصي</span>
+                </a>
+                <a href="#" class="prof-nav-link">
+                    <i class="fas fa-bell"></i>
+                    <span>الإشعارات</span>
+                    <span class="notification-badge">2</span>
+                </a>
+            
+                <a href="student-applications.html" class="prof-nav-link">
+                   <i class="fas fa-user-tie"></i>
+                    <span>طلباتي</span>
+                </a>            
+             <a href="#" class="prof-nav-link active">
+                   <i class="fas fa-money-bill-wave"></i>
+                    <span>المصروفات</span>
+                </a>            
+            </nav>
+
+            
+            <div class="prof-user-menu" onclick="toggleUserMenu()">
+                <div class="prof-user-avatar" id="headerAvatar">
+                    <span id="headerAvatarText">م</span>
+                </div>
+                <div class="prof-user-info">
+                    <div class="prof-user-name">مستخدم</div>
+                    <div class="prof-user-role">متدرب</div>
+                </div>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="payments-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">
+                    <i class="fas fa-money-bill-wave"></i>
+                    نظام المصروفات والمدفوعات عبر تيلدا
+                </h1>
+                <p class="page-subtitle">
+                    نظام دفع آمن يحافظ على خصوصيتك - نستخدم بطاقة تيلدا الخاصة بالمشروع فقط، ولا نطلب أي بياناتك البنكية الشخصية
+                </p>
+            </div>
+            <div class="page-actions">
+                <button class="payment-btn payment-btn-secondary" onclick="loadTransactionHistory()">
+                    <i class="fas fa-history"></i>
+                    سجل المعاملات
+                </button>
+                <button class="payment-btn payment-btn-tilda" onclick="showTildaPaymentInfo()">
+                    <i class="fas fa-shield-alt"></i>
+                    معلومات تيلدا
+                </button>
+            </div>
+        </div>
+
+        <!-- Tilda Payment System Info -->
+        <div class="tilda-info-card">
+            <div class="tilda-info-header">
+                <div class="tilda-logo">T</div>
+                <h2 class="tilda-info-title">نظام الدفع عبر تيلدا - خصوصية كاملة</h2>
+            </div>
+            
+            <div class="tilda-features">
+                <div class="tilda-feature">
+                    <div class="tilda-feature-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h3 class="tilda-feature-title">خصوصية تامة</h3>
+                    <p class="tilda-feature-description">
+                        لا يتم كشف أي معلومات شخصية للمستخدم. نستخدم بطاقة تيلدا الخاصة بالمشروع فقط
+                    </p>
+                </div>
+                
+                <div class="tilda-feature">
+                    <div class="tilda-feature-icon">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <h3 class="tilda-feature-title">تحويل بنكي آمن</h3>
+                    <p class="tilda-feature-description">
+                        يمكنك التحويل من أي بنك مصري إلى حساب تيلدا الخاص بالمشروع
+                    </p>
+                </div>
+                
+                <div class="tilda-feature">
+                    <div class="tilda-feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="tilda-feature-title">دفع إلكتروني</h3>
+                    <p class="tilda-feature-description">
+                        ربط خدمات فوري أو أمان لشحن رصيد تيلدا بدون كشف بياناتك
+                    </p>
+                </div>
+                
+                <div class="tilda-feature">
+                    <div class="tilda-feature-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h3 class="tilda-feature-title">بطاقات متنوعة</h3>
+                    <p class="tilda-feature-description">
+                        قبول بطاقات Visa/Mastercard للإيداع المباشر لحساب تيلدا
+                    </p>
+                </div>
+            </div>
+            
+            <div class="privacy-notice">
+                <div class="privacy-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <div class="privacy-content">
+                    <h4>معلومة هامة: خصوصية البيانات</h4>
+                    <p>
+                        نؤكد أن نظام الدفع الخاص بنا مصمم للحفاظ على خصوصيتك بالكامل. البطاقة المسجلة في نظامنا هي بطاقة تيلدا الخاصة بالمشروع وليست بطاقتك الشخصية. 
+                        لا نطلب أو نخزن أي بيانات بنكية شخصية للمستخدم. جميع المعاملات تتم عبر منصة تيلدا الآمنة.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Alert Banner -->
+        <div class="deadline-warning" id="paymentAlertBanner" style="display: none;">
+            <div class="deadline-warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="deadline-warning-content">
+                <div class="deadline-warning-title">تنبيه: مدفوعات معلقة</div>
+                <div class="deadline-warning-text" id="paymentAlertBannerText">
+                    لديك مدفوعات معلقة للتدريبات. يمكنك سدادها بأمان عبر نظام تيلدا مع الحفاظ على خصوصيتك.
+                </div>
+            </div>
+            <button class="payment-btn payment-btn-tilda" onclick="showPendingPayments()">
+                <i class="fas fa-money-bill-wave"></i>
+                سداد المدفوعات
+            </button>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <!-- Total Pending Payments -->
+            <div class="summary-card pending">
+                <div class="summary-header">
+                    <div>
+                        <div class="summary-title">
+                            <i class="fas fa-clock"></i>
+                            المدفوعات المعلقة
+                        </div>
+                        <div class="summary-amount" id="totalPendingAmount">0 ريال</div>
+                        <div class="summary-subtitle">المجموع الكامل للمبالغ المستحقة</div>
+                    </div>
+                    <div class="summary-icon pending">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div class="summary-details">
+                    <div class="summary-detail">
+                        <span class="detail-label">عدد الفواتير</span>
+                        <span class="detail-value" id="pendingCount">0 فاتورة</span>
+                    </div>
+                    <div class="summary-detail">
+                        <span class="detail-label">أقرب موعد</span>
+                        <span class="detail-value" id="nearestDeadline">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overdue Payments -->
+            <div class="summary-card overdue">
+                <div class="summary-header">
+                    <div>
+                        <div class="summary-title">
+                            <i class="fas fa-exclamation-circle"></i>
+                            المدفوعات المتأخرة
+                        </div>
+                        <div class="summary-amount" id="totalOverdueAmount">0 ريال</div>
+                        <div class="summary-subtitle">مبالغ تجاوزت موعد السداد</div>
+                    </div>
+                    <div class="summary-icon overdue">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                </div>
+                <div class="summary-details">
+                    <div class="summary-detail">
+                        <span class="detail-label">عدد الفواتير</span>
+                        <span class="detail-value" id="overdueCount">0 فاتورة</span>
+                    </div>
+                    <div class="summary-detail">
+                        <span class="detail-label">أيام التأخير</span>
+                        <span class="detail-value text-error" id="overdueDays">0 أيام</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paid Payments -->
+            <div class="summary-card paid">
+                <div class="summary-header">
+                    <div>
+                        <div class="summary-title">
+                            <i class="fas fa-check-circle"></i>
+                            المدفوعات المكتملة
+                        </div>
+                        <div class="summary-amount" id="totalPaidAmount">0 ريال</div>
+                        <div class="summary-subtitle">إجمالي المبالغ المدفوعة عبر تيلدا</div>
+                    </div>
+                    <div class="summary-icon paid">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="summary-details">
+                    <div class="summary-detail">
+                        <span class="detail-label">عدد الفواتير</span>
+                        <span class="detail-value" id="paidCount">0 فواتير</span>
+                    </div>
+                    <div class="summary-detail">
+                        <span class="detail-label">آخر دفعة</span>
+                        <span class="detail-value" id="lastPaymentDate">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Summary -->
+            <div class="summary-card">
+                <div class="summary-header">
+                    <div>
+                        <div class="summary-title">
+                            <i class="fas fa-chart-line"></i>
+                            إجمالي المصروفات
+                        </div>
+                        <div class="summary-amount" id="totalAmount">0 ريال</div>
+                        <div class="summary-subtitle">مجموع جميع المدفوعات عبر تيلدا</div>
+                    </div>
+                    <div class="summary-icon total">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+                <div class="summary-details">
+                    <div class="summary-detail">
+                        <span class="detail-label">إجمالي التدريبات</span>
+                        <span class="detail-value" id="totalTrainings">0 تدريبات</span>
+                    </div>
+                    <div class="summary-detail">
+                        <span class="detail-label">متوسط التكلفة</span>
+                        <span class="detail-value" id="averageCost">0 ريال</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Payments Section -->
+        <section class="payments-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-clock"></i>
+                    المدفوعات المعلقة
+                </h2>
+                <div class="payment-tabs">
+                    <button class="payment-tab active" onclick="filterPayments('pending')">المعلقة</button>
+                    <button class="payment-tab" onclick="filterPayments('overdue')">المتأخرة</button>
+                    <button class="payment-tab" onclick="filterPayments('paid')">المكتملة</button>
+                    <button class="payment-tab" onclick="filterPayments('all')">الجميع</button>
+                </div>
+            </div>
+            
+            <div class="payment-cards" id="paymentCardsContainer">
+                <!-- سيتم ملؤها ديناميكيًا -->
+            </div>
+            
+            <div class="text-center" id="noPaymentsMessage" style="display: none;">
+                <div style="font-size: 4rem; color: var(--text-muted); margin-bottom: var(--spacing-md);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 style="color: var(--text-secondary); margin-bottom: var(--spacing-sm);">لا توجد مدفوعات معلقة</h3>
+                <p style="color: var(--text-muted);">جميع مدفوعاتك محدثة ومكتملة عبر نظام تيلدا</p>
+            </div>
+        </section>
+
+        <!-- Transaction History Section -->
+        <section class="payments-section" id="transactionsSection" style="display: none;">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-history"></i>
+                    سجل المعاملات عبر تيلدا
+                </h2>
+                <button class="payment-btn payment-btn-tilda" onclick="downloadTransactionHistory()">
+                    <i class="fas fa-download"></i>
+                    تحميل السجل
+                </button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="transactions-table" id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>الوصف</th>
+                            <th>المبلغ</th>
+                            <th>طريقة الدفع</th>
+                            <th>الحالة</th>
+                            <th>رقم المرجع</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody">
+                        <!-- سيتم ملؤها ديناميكيًا -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="text-center" id="noTransactionsMessage" style="display: none;">
+                <p style="color: var(--text-muted); padding: var(--spacing-xl);">
+                    <i class="fas fa-info-circle"></i>
+                    لا توجد معاملات سابقة
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Payment Modal -->
+    <div class="payment-modal-overlay" id="paymentModal">
+        <div class="payment-modal">
+            <div class="payment-modal-header">
+                <h3 class="payment-modal-title">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span id="paymentModalTitle">إتمام عملية الدفع عبر تيلدا</span>
+                </h3>
+                <button class="payment-modal-close" onclick="closePaymentModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="payment-modal-body">
+                <div id="paymentFormContainer">
+                    <!-- سيتم ملؤها ديناميكيًا -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tilda Bank Transfer Modal -->
+    <div class="payment-modal-overlay" id="tildaBankModal">
+        <div class="payment-modal">
+            <div class="payment-modal-header">
+                <h3 class="payment-modal-title">
+                    <i class="fas fa-university"></i>
+                    تفاصيل التحويل البنكي إلى تيلدا
+                </h3>
+                <button class="payment-modal-close" onclick="closeTildaBankModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="payment-modal-body">
+                <!-- Tilda Bank Account Display -->
+                <div class="tilda-bank-display">
+                    <div class="tilda-bank-header">
+                        <div class="tilda-bank-logo">
+                            <i class="fas fa-university"></i>
+                            حساب تيلدا - ProVance
+                        </div>
+                        <div class="tilda-bank-chip">
+                            <i class="fas fa-microchip"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="tilda-bank-number" id="tildaAccountNumber">
+                        SA44 5000 0000 1234 5678 9012 3456
+                    </div>
+                    
+                    <div class="tilda-bank-footer">
+                        <div class="tilda-bank-info">
+                            <div class="tilda-bank-label">اسم صاحب الحساب</div>
+                            <div class="tilda-bank-value">Pro Vance (Tilda Account)</div>
+                        </div>
+                        <div class="tilda-bank-info">
+                            <div class="tilda-bank-label">اسم البنك</div>
+                            <div class="tilda-bank-value">البنك الأهلي السعودي</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Important Notice -->
+                <div class="privacy-notice" style="margin: var(--spacing-lg) 0;">
+                    <div class="privacy-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="privacy-content">
+                        <h4>معلومة هامة للحفاظ على خصوصيتك</h4>
+                        <p>
+                            هذا الحساب هو حساب تيلدا الخاص بمشروع ProVance وليس حسابك الشخصي. 
+                            لا تشارك أي معلومات بنكية شخصية. التحويلات تتم مباشرة إلى حساب تيلدا الآمن.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Payment Timeline -->
+                <div class="payment-timeline">
+                    <h4 class="timeline-title">
+                        <i class="fas fa-info-circle"></i>
+                        خطوات التحويل البنكي إلى تيلدا
+                    </h4>
+                    <div class="timeline-items">
+                        <div class="timeline-item completed">
+                            <div class="timeline-content">
+                                <div class="timeline-text">قم بالتحويل إلى حساب تيلدا أعلاه</div>
+                                <div class="timeline-description">
+                                    رقم الحساب: <strong>SA44 5000 0000 1234 5678 9012 3456</strong><br>
+                                    مبلغ التحويل: <span id="tildaTransferAmount"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item current">
+                            <div class="timeline-content">
+                                <div class="timeline-text">احفظ إيصال التحويل</div>
+                                <div class="timeline-description">
+                                    تأكد من حفظ إيصال التحويل أو تصويره لاستخدامه كدليل على السداد
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item pending">
+                            <div class="timeline-content">
+                                <div class="timeline-text">أرفق إيصال التحويل</div>
+                                <div class="timeline-description">
+                                    قم بتحميل صورة إيصال التحويل في النموذج التالي لتأكيد عملية الدفع
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transfer Form -->
+                <div class="payment-form">
+                    <div class="payment-form-group">
+                        <label class="payment-form-label">
+                            <i class="fas fa-receipt"></i>
+                            رفع إيصال التحويل إلى تيلدا
+                        </label>
+                        <div class="file-upload" onclick="document.getElementById('tildaReceiptUpload').click()" style="border: 2px dashed var(--card-border); border-radius: var(--radius-md); padding: var(--spacing-xl); text-align: center; cursor: pointer;">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: var(--spacing-md);"></i>
+                            </div>
+                            <div class="upload-text" style="color: var(--text-secondary); margin-bottom: var(--spacing-sm);">
+                                اسحب وأفلت إيصال التحويل هنا أو انقر للاختيار
+                            </div>
+                            <div class="upload-hint" style="color: var(--text-muted); font-size: 0.9rem;">
+                                الصور المدعومة: JPG, PNG, PDF - الحد الأقصى 10MB
+                            </div>
+                        </div>
+                        <input type="file" id="tildaReceiptUpload" accept=".jpg,.jpeg,.png,.pdf" style="display: none;" onchange="handleTildaReceiptUpload(event)">
+                    </div>
+                    
+                    <div class="payment-form-group">
+                        <label class="payment-form-label">
+                            <i class="fas fa-calendar-alt"></i>
+                            تاريخ التحويل إلى تيلدا
+                        </label>
+                        <input type="date" class="payment-form-input" id="tildaTransferDate" required>
+                    </div>
+                    
+                    <div class="payment-form-group">
+                        <label class="payment-form-label">
+                            <i class="fas fa-hashtag"></i>
+                            رقم المرجع البنكي (اختياري)
+                        </label>
+                        <input type="text" class="payment-form-input" id="tildaBankReference" placeholder="أدخل رقم المرجع الموجود في إيصال التحويل">
+                    </div>
+                    
+                    <div class="payment-form-group">
+                        <label class="payment-form-label">
+                            <i class="fas fa-comment"></i>
+                            ملاحظات إضافية
+                        </label>
+                        <textarea class="payment-form-textarea" id="tildaTransferNotes" placeholder="أي ملاحظات إضافية حول عملية التحويل..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="payment-actions" style="margin-top: var(--spacing-xl);">
+                    <button class="payment-btn payment-btn-secondary" onclick="closeTildaBankModal()">
+                        <i class="fas fa-times"></i>
+                        إلغاء
+                    </button>
+                    <button class="payment-btn payment-btn-tilda" onclick="submitTildaBankTransfer()" id="submitTildaTransferBtn">
+                        <i class="fas fa-check-circle"></i>
+                        تأكيد إرفاق الإيصال
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tilda Payment Methods Modal -->
+    <div class="payment-modal-overlay" id="tildaMethodsModal">
+        <div class="payment-modal">
+            <div class="payment-modal-header">
+                <h3 class="payment-modal-title">
+                    <i class="fas fa-credit-card"></i>
+                    طرق الدفع عبر تيلدا
+                </h3>
+                <button class="payment-modal-close" onclick="closeTildaMethodsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="payment-modal-body">
+                <div class="privacy-notice" style="margin-bottom: var(--spacing-xl);">
+                    <div class="privacy-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="privacy-content">
+                        <h4>جميع طرق الدفع تحافظ على خصوصيتك</h4>
+                        <p>
+                            جميع طرق الدفع التالية تستخدم حساب تيلدا الخاص بالمشروع. لا نطلب أو نخزن أي بياناتك البنكية الشخصية.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="tilda-methods-grid">
+                    <div class="tilda-method selected" data-method="bank" onclick="selectTildaMethod('bank')">
+                        <div class="tilda-method-icon">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <div class="tilda-method-name">تحويل بنكي إلى تيلدا</div>
+                        <div class="tilda-method-description">التحويل من أي بنك مصري إلى حساب تيلدا</div>
+                        <div class="tilda-method-note">آمن - لا يحتاج بياناتك</div>
+                    </div>
+                    
+                    <div class="tilda-method" data-method="fawry" onclick="selectTildaMethod('fawry')">
+                        <div class="tilda-method-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div class="tilda-method-name">فوري / أمان</div>
+                        <div class="tilda-method-description">ربط الخدمات لشحن رصيد تيلدا</div>
+                        <div class="tilda-method-note">خصوصية كاملة</div>
+                    </div>
+                    
+                    <div class="tilda-method" data-method="tilda-transfer" onclick="selectTildaMethod('tilda-transfer')">
+                        <div class="tilda-method-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="tilda-method-name">تحويل من تيلدا آخر</div>
+                        <div class="tilda-method-description">استلام الأموال من حساب تيلدا آخر</div>
+                        <div class="tilda-method-note">تحويل مباشر بين حسابات تيلدا</div>
+                    </div>
+                    
+                    <div class="tilda-method" data-method="card-deposit" onclick="selectTildaMethod('card-deposit')">
+                        <div class="tilda-method-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="tilda-method-name">إيداع ببطاقة بنكية</div>
+                        <div class="tilda-method-description">Visa/Mastercard لشحن رصيد تيلدا</div>
+                        <div class="tilda-method-note">مدفوعات آمنة</div>
+                    </div>
+                </div>
+                
+                <div class="payment-timeline" style="margin-top: var(--spacing-xl);">
+                    <h4 class="timeline-title">
+                        <i class="fas fa-lock"></i>
+                        كيف يحافظ تيلدا على خصوصيتك؟
+                    </h4>
+                    <div class="timeline-items">
+                        <div class="timeline-item completed">
+                            <div class="timeline-content">
+                                <div class="timeline-text">لا نطلب بياناتك البنكية</div>
+                                <div class="timeline-description">
+                                    جميع المدفوعات تتم إلى حساب تيلدا الخاص بالمشروع
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item completed">
+                            <div class="timeline-content">
+                                <div class="timeline-text">بطاقة المشروع فقط</div>
+                                <div class="timeline-description">
+                                    البطاقة المسجلة لدينا هي بطاقة تيلدا الخاصة بالمشروع
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item current">
+                            <div class="timeline-content">
+                                <div class="timeline-text">معاملات آمنة</div>
+                                <div class="timeline-description">
+                                    جميع المعاملات تتم عبر منصة تيلدا الآمنة
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="payment-actions" style="margin-top: var(--spacing-xl);">
+                    <button class="payment-btn payment-btn-secondary" onclick="closeTildaMethodsModal()">
+                        <i class="fas fa-times"></i>
+                        إغلاق
+                    </button>
+                    <button class="payment-btn payment-btn-tilda" onclick="proceedWithTildaPayment()">
+                        <i class="fas fa-check-circle"></i>
+                        متابعة مع الطريقة المحددة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Success Modal -->
+    <div class="payment-modal-overlay" id="paymentSuccessModal">
+        <div class="payment-modal">
+            <div class="payment-modal-header">
+                <h3 class="payment-modal-title">
+                    <i class="fas fa-check-circle"></i>
+                    تمت عملية الدفع عبر تيلدا بنجاح
+                </h3>
+                <button class="payment-modal-close" onclick="closePaymentSuccessModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="payment-modal-body">
+                <div class="payment-success" id="paymentSuccessContent">
+                    <!-- سيتم ملؤها ديناميكيًا -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== GLOBAL STATE =====
+        let paymentsData = {
+            pendingPayments: [],
+            completedPayments: [],
+            overduePayments: [],
+            transactionHistory: [],
+            currentPayment: null,
+            selectedTildaMethod: 'bank',
+            studentInfo: {
+                name: "مستخدم",
+                email: "",
+                phone: "",
+                balance: 0
+            }
+        };
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('%c💰 ProVance Payment System with Tilda', 'color: #00a2ff; font-size: 24px; font-weight: bold;');
+            
+            // Load all data from localStorage
+            loadAllDataFromLocalStorage();
+            
+            // Initialize the page
+            initializePaymentsPage();
+            
+            // Check for pending payments alert from profile
+            checkProfilePaymentAlert();
+        });
+
+        function loadAllDataFromLocalStorage() {
+            // Load payments data
+            const savedPaymentsData = localStorage.getItem('proVancePaymentsData');
+            if (savedPaymentsData) {
+                try {
+                    const parsedData = JSON.parse(savedPaymentsData);
+                    paymentsData.pendingPayments = Array.isArray(parsedData.pendingPayments) ? parsedData.pendingPayments : [];
+                    paymentsData.completedPayments = Array.isArray(parsedData.completedPayments) ? parsedData.completedPayments : [];
+                    paymentsData.overduePayments = Array.isArray(parsedData.overduePayments) ? parsedData.overduePayments : [];
+                    paymentsData.transactionHistory = Array.isArray(parsedData.transactionHistory) ? parsedData.transactionHistory : [];
+                } catch (e) {
+                    console.error('Error parsing payments data:', e);
+                }
+            }
+            
+            // Load student info from profile if exists
+            const savedStudentInfo = localStorage.getItem('studentPersonalInfo');
+            if (savedStudentInfo) {
+                try {
+                    const personalInfo = JSON.parse(savedStudentInfo);
+                    if (personalInfo.fullName) {
+                        paymentsData.studentInfo.name = personalInfo.fullName;
+                        document.querySelector('.prof-user-name').textContent = personalInfo.fullName;
+                        document.getElementById('headerAvatarText').textContent = personalInfo.fullName.charAt(0);
+                    }
+                    if (personalInfo.email) paymentsData.studentInfo.email = personalInfo.email;
+                    if (personalInfo.phone) paymentsData.studentInfo.phone = personalInfo.phone;
+                } catch (e) {
+                    console.error('Error parsing student info:', e);
+                }
+            }
+            
+            // Load pending payments from profile page
+            const pendingPaymentsFromProfile = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
+            if (Array.isArray(pendingPaymentsFromProfile) && pendingPaymentsFromProfile.length > 0) {
+                pendingPaymentsFromProfile.forEach(payment => {
+                    // Check if payment already exists in pendingPayments
+                    const exists = paymentsData.pendingPayments.some(p => p.id === payment.id);
+                    if (!exists) {
+                        const newPayment = {
+                            id: payment.id || Date.now(),
+                            company: payment.company || 'شركة غير محددة',
+                            training: payment.qrTitle || 'تدريب غير محدد',
+                            amount: payment.amount || 0,
+                            paidAmount: payment.paidAmount || 0,
+                            remainingAmount: (payment.amount || 0) - (payment.paidAmount || 0),
+                            status: (payment.paidAmount || 0) > 0 ? "partial" : "pending",
+                            attendanceCount: payment.currentAttendance || 0,
+                            requiredAttendance: payment.requiredAttendance || 0,
+                            startDate: payment.startDate || '',
+                            endDate: payment.endDate || '',
+                            deadline: payment.deadline || '',
+                            daysRemaining: payment.daysRemaining || 0,
+                            qrType: payment.qrType || 'training',
+                            qrTitle: payment.qrTitle || 'تدريب'
+                        };
+                        paymentsData.pendingPayments.push(newPayment);
+                    }
+                });
+                
+                // Save updated data
+                saveToLocalStorage();
+            }
+        }
+
+        function initializePaymentsPage() {
+            // Calculate and display summary
+            updateSummaryCards();
+            
+            // Display pending payments
+            filterPayments('pending');
+            
+            // Setup event listeners
+            setupPaymentEventListeners();
+        }
+
+        function updateSummaryCards() {
+            // Calculate totals from localStorage data
+            const totalPending = paymentsData.pendingPayments.reduce((sum, p) => sum + (p.remainingAmount || 0), 0);
+            const totalOverdue = paymentsData.overduePayments.reduce((sum, p) => sum + (p.remainingAmount || 0), 0);
+            const totalPaid = paymentsData.completedPayments.reduce((sum, p) => sum + (p.paidAmount || 0), 0);
+            const totalAmount = totalPending + totalOverdue + totalPaid;
+            
+            // Update DOM
+            document.getElementById('totalPendingAmount').textContent = formatCurrency(totalPending);
+            document.getElementById('totalOverdueAmount').textContent = formatCurrency(totalOverdue);
+            document.getElementById('totalPaidAmount').textContent = formatCurrency(totalPaid);
+            document.getElementById('totalAmount').textContent = formatCurrency(totalAmount);
+            
+            // Update counts
+            document.getElementById('pendingCount').textContent = `${paymentsData.pendingPayments.length} فاتورة`;
+            document.getElementById('overdueCount').textContent = `${paymentsData.overduePayments.length} فاتورة`;
+            document.getElementById('paidCount').textContent = `${paymentsData.completedPayments.length} فواتير`;
+            
+            const allTrainings = [...paymentsData.pendingPayments, ...paymentsData.overduePayments, ...paymentsData.completedPayments];
+            document.getElementById('totalTrainings').textContent = `${allTrainings.length} تدريبات`;
+            
+            // Calculate average cost
+            const averageCost = allTrainings.length > 0 ? 
+                Math.round(allTrainings.reduce((sum, p) => sum + (p.amount || 0), 0) / allTrainings.length) : 0;
+            document.getElementById('averageCost').textContent = formatCurrency(averageCost);
+            
+            // Find nearest deadline
+            const pendingWithDeadlines = paymentsData.pendingPayments.filter(p => p.deadline);
+            if (pendingWithDeadlines.length > 0) {
+                const nearest = pendingWithDeadlines.reduce((prev, curr) => {
+                    const prevDate = parseDate(prev.deadline);
+                    const currDate = parseDate(curr.deadline);
+                    return currDate < prevDate ? curr : prev;
+                });
+                document.getElementById('nearestDeadline').textContent = nearest.deadline || '-';
+            } else {
+                document.getElementById('nearestDeadline').textContent = '-';
+            }
+            
+            // Find last payment date
+            if (paymentsData.completedPayments.length > 0) {
+                const lastPayment = paymentsData.completedPayments.reduce((prev, curr) => {
+                    const prevDate = parseDate(prev.paymentDate);
+                    const currDate = parseDate(curr.paymentDate);
+                    return currDate > prevDate ? curr : prev;
+                });
+                document.getElementById('lastPaymentDate').textContent = lastPayment.paymentDate || '-';
+            } else {
+                document.getElementById('lastPaymentDate').textContent = '-';
+            }
+            
+            // Calculate overdue days
+            if (paymentsData.overduePayments.length > 0) {
+                const overdueDays = paymentsData.overduePayments[0].daysOverdue || 0;
+                document.getElementById('overdueDays').textContent = `${overdueDays} أيام`;
+            } else {
+                document.getElementById('overdueDays').textContent = '0 أيام';
+            }
+            
+            // Show/hide alert banner
+            if (totalPending + totalOverdue > 0) {
+                document.getElementById('paymentAlertBanner').style.display = 'flex';
+                document.getElementById('paymentAlertBannerText').textContent = 
+                    `لديك ${paymentsData.pendingPayments.length + paymentsData.overduePayments.length} فواتير معلقة بمبلغ إجمالي ${formatCurrency(totalPending + totalOverdue)} - يمكنك سدادها عبر تيلدا مع الحفاظ على خصوصيتك`;
+            } else {
+                document.getElementById('paymentAlertBanner').style.display = 'none';
+            }
+        }
+
+        function parseDate(dateString) {
+            if (!dateString) return new Date(0);
+            try {
+                const parts = dateString.split('/');
+                if (parts.length === 3) {
+                    return new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+                return new Date(dateString);
+            } catch (e) {
+                return new Date(0);
+            }
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('ar-SA', {
+                style: 'decimal',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount) + ' ريال';
+        }
+
+        // ===== TILDA PAYMENT SYSTEM FUNCTIONS =====
+        function showTildaPaymentInfo() {
+            document.querySelector('.tilda-info-card').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showTildaMethodsModal() {
+            document.getElementById('tildaMethodsModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTildaMethodsModal() {
+            document.getElementById('tildaMethodsModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function selectTildaMethod(method) {
+            paymentsData.selectedTildaMethod = method;
+            
+            document.querySelectorAll('.tilda-method').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.querySelector(`.tilda-method[data-method="${method}"]`).classList.add('selected');
+        }
+
+        function proceedWithTildaPayment() {
+            const method = paymentsData.selectedTildaMethod;
+            closeTildaMethodsModal();
+            
+            switch(method) {
+                case 'bank':
+                    showTildaBankModal();
+                    break;
+                case 'fawry':
+                    showToast('سيتم توجيهك إلى صفحة فوري/أمان لشحن رصيد تيلدا', 'info');
+                    break;
+                case 'tilda-transfer':
+                    showToast('يمكنك تحويل المبلغ من حساب تيلدا الخاص بك إلى حساب المشروع', 'info');
+                    break;
+                case 'card-deposit':
+                    showToast('سيتم توجيهك إلى صفحة الدفع ببطاقة الائتمان عبر تيلدا', 'info');
+                    break;
+            }
+        }
+
+        function showTildaBankModal() {
+            if (paymentsData.currentPayment) {
+                const amount = paymentsData.currentPayment.remainingAmount || 0;
+                document.getElementById('tildaTransferAmount').textContent = formatCurrency(amount);
+                document.getElementById('tildaBankModal').dataset.paymentId = paymentsData.currentPayment.id;
+                document.getElementById('tildaBankModal').dataset.paymentAmount = amount;
+            }
+            
+            document.getElementById('tildaBankModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tildaTransferDate').value = today;
+        }
+
+        function closeTildaBankModal() {
+            document.getElementById('tildaBankModal').classList.remove('active');
+            document.body.style.overflow = '';
+            
+            const receiptUpload = document.getElementById('tildaReceiptUpload');
+            if (receiptUpload) receiptUpload.value = '';
+            
+            const transferDate = document.getElementById('tildaTransferDate');
+            if (transferDate) transferDate.value = '';
+            
+            const bankReference = document.getElementById('tildaBankReference');
+            if (bankReference) bankReference.value = '';
+            
+            const transferNotes = document.getElementById('tildaTransferNotes');
+            if (transferNotes) transferNotes.value = '';
+        }
+
+        function handleTildaReceiptUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+            if (!validTypes.includes(file.type)) {
+                showToast('نوع الملف غير مدعوم. يرجى رفع صورة أو ملف PDF', 'error');
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('حجم الملف كبير جداً. الحد الأقصى 10MB', 'error');
+                return;
+            }
+            
+            const uploadArea = event.target.parentElement.querySelector('.file-upload');
+            if (uploadArea) {
+                uploadArea.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="color: var(--success); font-size: 2rem; margin-bottom: var(--spacing-sm);">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div style="color: var(--text-primary); font-weight: 600; margin-bottom: var(--spacing-xs);">
+                            تم رفع إيصال التحويل إلى تيلدا
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                            ${file.name}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            showToast('تم رفع إيصال التحويل إلى تيلدا بنجاح', 'success');
+        }
+
+        function submitTildaBankTransfer() {
+            const paymentId = parseInt(document.getElementById('tildaBankModal').dataset.paymentId);
+            const amount = parseInt(document.getElementById('tildaBankModal').dataset.paymentAmount);
+            const transferDate = document.getElementById('tildaTransferDate').value;
+            const receiptUpload = document.getElementById('tildaReceiptUpload');
+            
+            if (!transferDate) {
+                showToast('يرجى إدخال تاريخ التحويل', 'error');
+                return;
+            }
+            
+            if (!receiptUpload.files || receiptUpload.files.length === 0) {
+                showToast('يرجى رفع إيصال التحويل إلى تيلدا', 'error');
+                return;
+            }
+            
+            const allPayments = [
+                ...paymentsData.pendingPayments,
+                ...paymentsData.overduePayments,
+                ...paymentsData.completedPayments
+            ];
+            const payment = allPayments.find(p => p.id === paymentId);
+            
+            if (!payment) {
+                showToast('لم يتم العثور على بيانات الدفع', 'error');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitTildaTransferBtn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التسجيل...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                const reference = `TILDA-BANK-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+                
+                payment.paidAmount = (payment.paidAmount || 0) + amount;
+                payment.remainingAmount = (payment.amount || 0) - payment.paidAmount;
+                payment.status = payment.remainingAmount === 0 ? 'paid' : 'partial';
+                payment.paymentDate = new Date().toLocaleDateString('en-GB');
+                payment.paymentMethod = 'تحويل بنكي إلى تيلدا';
+                
+                const transaction = {
+                    id: Date.now(),
+                    date: new Date().toLocaleDateString('en-GB'),
+                    description: `تحويل بنكي إلى تيلدا - ${payment.training || 'تدريب'}`,
+                    amount: amount,
+                    paymentMethod: 'تحويل بنكي إلى تيلدا',
+                    status: 'completed',
+                    reference: reference,
+                    bankReference: document.getElementById('tildaBankReference').value || '',
+                    notes: document.getElementById('tildaTransferNotes').value || ''
+                };
+                
+                paymentsData.transactionHistory.unshift(transaction);
+                
+                if (payment.status === 'paid') {
+                    paymentsData.pendingPayments = paymentsData.pendingPayments.filter(p => p.id !== payment.id);
+                    paymentsData.overduePayments = paymentsData.overduePayments.filter(p => p.id !== payment.id);
+                    paymentsData.completedPayments.push(payment);
+                    
+                    clearPendingPaymentFromStorage(payment.company);
+                }
+                
+                saveToLocalStorage();
+                updateSummaryCards();
+                filterPayments('pending');
+                
+                showPaymentSuccess(payment, amount, reference, 'tilda-bank');
+                closeTildaBankModal();
+                
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 2000);
+        }
+
+        // ===== PAYMENT CARDS RENDERING =====
+        function filterPayments(filterType) {
+            document.querySelectorAll('.payment-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            let filteredPayments = [];
+            switch(filterType) {
+                case 'pending':
+                    filteredPayments = [...paymentsData.pendingPayments];
+                    break;
+                case 'overdue':
+                    filteredPayments = [...paymentsData.overduePayments];
+                    break;
+                case 'paid':
+                    filteredPayments = [...paymentsData.completedPayments];
+                    break;
+                case 'all':
+                    filteredPayments = [
+                        ...paymentsData.pendingPayments,
+                        ...paymentsData.overduePayments,
+                        ...paymentsData.completedPayments
+                    ];
+                    break;
+            }
+            
+            renderPaymentCards(filteredPayments);
+        }
+
+        function renderPaymentCards(payments) {
+            const container = document.getElementById('paymentCardsContainer');
+            const noPaymentsMessage = document.getElementById('noPaymentsMessage');
+            
+            if (!Array.isArray(payments) || payments.length === 0) {
+                container.innerHTML = '';
+                noPaymentsMessage.style.display = 'block';
+                return;
+            }
+            
+            noPaymentsMessage.style.display = 'none';
+            container.innerHTML = '';
+            
+            payments.forEach(payment => {
+                const card = document.createElement('div');
+                card.className = `payment-card ${payment.status || 'pending'}`;
+                card.setAttribute('data-id', payment.id);
+                
+                let statusText = '';
+                let statusClass = '';
+                let actionButton = '';
+                
+                switch(payment.status) {
+                    case 'pending':
+                        statusText = 'معلقة';
+                        statusClass = 'status-pending';
+                        actionButton = `
+                            <button class="payment-btn payment-btn-tilda" onclick="openPaymentModal(${payment.id})">
+                                <i class="fas fa-money-bill-wave"></i>
+                                سداد عبر تيلدا
+                            </button>
+                        `;
+                        break;
+                    case 'overdue':
+                        statusText = 'متأخرة';
+                        statusClass = 'status-overdue';
+                        actionButton = `
+                            <button class="payment-btn payment-btn-tilda" onclick="openPaymentModal(${payment.id})">
+                                <i class="fas fa-exclamation-circle"></i>
+                                سداد فوري عبر تيلدا
+                            </button>
+                        `;
+                        break;
+                    case 'paid':
+                        statusText = 'مكتملة';
+                        statusClass = 'status-paid';
+                        actionButton = `
+                            <button class="payment-btn payment-btn-secondary" onclick="viewPaymentReceipt(${payment.id})">
+                                <i class="fas fa-receipt"></i>
+                                عرض الإيصال
+                            </button>
+                        `;
+                        break;
+                    case 'partial':
+                        statusText = 'جزئي';
+                        statusClass = 'status-partial';
+                        actionButton = `
+                            <button class="payment-btn payment-btn-tilda" onclick="openPaymentModal(${payment.id})">
+                                <i class="fas fa-money-bill-wave"></i>
+                                سداد الباقي عبر تيلدا
+                            </button>
+                        `;
+                        break;
+                    default:
+                        statusText = 'معلقة';
+                        statusClass = 'status-pending';
+                        actionButton = `
+                            <button class="payment-btn payment-btn-tilda" onclick="openPaymentModal(${payment.id})">
+                                <i class="fas fa-money-bill-wave"></i>
+                                سداد عبر تيلدا
+                            </button>
+                        `;
+                }
+                
+                const progressPercent = ((payment.paidAmount || 0) / (payment.amount || 1)) * 100;
+                
+                card.innerHTML = `
+                    <div class="payment-header">
+                        <div class="payment-info">
+                            <h3 class="payment-company">${payment.company || 'شركة غير محددة'}</h3>
+                            <p class="payment-training">${payment.training || 'تدريب غير محدد'}</p>
+                            <div class="payment-period">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>${payment.startDate || '-'} - ${payment.endDate || '-'}</span>
+                            </div>
+                        </div>
+                        <span class="payment-status ${statusClass}">${statusText}</span>
+                    </div>
+                    
+                    <div class="payment-stats">
+                        <div class="payment-stat">
+                            <div class="payment-stat-value">${formatCurrency(payment.amount || 0)}</div>
+                            <div class="payment-stat-label">إجمالي المبلغ</div>
+                        </div>
+                        <div class="payment-stat">
+                            <div class="payment-stat-value">${formatCurrency(payment.paidAmount || 0)}</div>
+                            <div class="payment-stat-label">المبلغ المدفوع</div>
+                        </div>
+                        <div class="payment-stat">
+                            <div class="payment-stat-value">${formatCurrency(payment.remainingAmount || payment.amount || 0)}</div>
+                            <div class="payment-stat-label">المبلغ المتبقي</div>
+                        </div>
+                        <div class="payment-stat">
+                            <div class="payment-stat-value">${payment.attendanceCount || 0}/${payment.requiredAttendance || 0}</div>
+                            <div class="payment-stat-label">مرات الحضور</div>
+                        </div>
+                    </div>
+                    
+                    ${payment.status !== 'paid' ? `
+                    <div style="margin: var(--spacing-md) 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: var(--spacing-xs);">
+                            <span style="color: var(--text-secondary); font-size: 0.9rem;">معدل السداد</span>
+                            <span style="color: var(--text-primary); font-weight: 600;">${Math.round(progressPercent)}%</span>
+                        </div>
+                        <div style="height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-full); overflow: hidden;">
+                            <div style="height: 100%; background: linear-gradient(90deg, var(--tilda-primary) 0%, var(--tilda-secondary) 100%); width: ${progressPercent}%; border-radius: var(--radius-full);"></div>
+                        </div>
+                    </div>
+                    
+                    ${payment.deadline ? `
+                    <div class="deadline-warning" style="margin: var(--spacing-md) 0;">
+                        <div class="deadline-warning-icon">
+                            <i class="fas fa-calendar-times"></i>
+                        </div>
+                        <div class="deadline-warning-content">
+                            <div class="deadline-warning-title">الموعد النهائي للسداد</div>
+                            <div class="deadline-warning-text">
+                                ${(payment.daysRemaining || 0) > 0 ? 
+                                    `متبقي ${payment.daysRemaining} يوم حتى ${payment.deadline}` : 
+                                    `تجاوز الموعد ب ${Math.abs(payment.daysRemaining || 0)} يوم`}
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ` : ''}
+                    
+                    <div class="payment-actions">
+                        ${actionButton}
+                        <button class="payment-btn payment-btn-secondary" onclick="viewPaymentDetails(${payment.id})">
+                            <i class="fas fa-info-circle"></i>
+                            التفاصيل
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // ===== PAYMENT MODAL FUNCTIONS =====
+        function openPaymentModal(paymentId) {
+            const allPayments = [
+                ...paymentsData.pendingPayments,
+                ...paymentsData.overduePayments,
+                ...paymentsData.completedPayments
+            ];
+            paymentsData.currentPayment = allPayments.find(p => p.id === paymentId);
+            
+            if (!paymentsData.currentPayment) return;
+            
+            document.getElementById('paymentModalTitle').textContent = 
+                `سداد مدفوعات ${paymentsData.currentPayment.company || 'غير محدد'} عبر تيلدا`;
+            
+            renderPaymentForm();
+            document.getElementById('paymentModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+            document.body.style.overflow = '';
+            paymentsData.currentPayment = null;
+        }
+
+        function renderPaymentForm() {
+            const payment = paymentsData.currentPayment;
+            const container = document.getElementById('paymentFormContainer');
+            const remainingAmount = payment.remainingAmount || payment.amount || 0;
+            const minAmount = Math.ceil(remainingAmount / 2);
+            
+            container.innerHTML = `
+                <div class="privacy-notice" style="margin-bottom: var(--spacing-xl);">
+                    <div class="privacy-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="privacy-content">
+                        <h4>خصوصية كاملة - لا نطلب بياناتك البنكية</h4>
+                        <p>
+                            جميع طرق الدفع تستخدم حساب تيلدا الخاص بالمشروع. لا نطلب أو نخزن أي بياناتك البنكية الشخصية.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="payment-timeline">
+                    <h4 class="timeline-title">
+                        <i class="fas fa-info-circle"></i>
+                        تفاصيل الدفع عبر تيلدا
+                    </h4>
+                    <div class="timeline-items">
+                        <div class="timeline-item completed">
+                            <div class="timeline-content">
+                                <div class="timeline-text">مسح رمز QR</div>
+                                <div class="timeline-description">
+                                    تم مسح رمز QR ${payment.attendanceCount || 0} مرات لهذا التدريب
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item ${(payment.paidAmount || 0) > 0 ? 'completed' : 'current'}">
+                            <div class="timeline-content">
+                                <div class="timeline-text">الدفعة الأولى</div>
+                                <div class="timeline-description">
+                                    ${(payment.paidAmount || 0) > 0 ? 
+                                        `تم الدفع: ${formatCurrency(payment.paidAmount || 0)} عبر تيلدا` : 
+                                        'لم يتم الدفع بعد'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item ${payment.status === 'paid' ? 'completed' : 'pending'}">
+                            <div class="timeline-content">
+                                <div class="timeline-text">إتمام الدفع عبر تيلدا</div>
+                                <div class="timeline-description">
+                                    ${payment.status === 'paid' ? 
+                                        'تم إتمام الدفع عبر تيلدا بنجاح' : 
+                                        'مطلوب إتمام الدفع قبل انتهاء التدريب'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="receipt-details">
+                    <div class="receipt-row">
+                        <div class="receipt-label">الشركة</div>
+                        <div class="receipt-value">${payment.company || 'غير محدد'}</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">التدريب</div>
+                        <div class="receipt-value">${payment.training || 'غير محدد'}</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">إجمالي المبلغ</div>
+                        <div class="receipt-value">${formatCurrency(payment.amount || 0)}</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">المدفوع عبر تيلدا</div>
+                        <div class="receipt-value">${formatCurrency(payment.paidAmount || 0)}</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">المتبقي للدفع عبر تيلدا</div>
+                        <div class="receipt-value text-success">${formatCurrency(remainingAmount)}</div>
+                    </div>
+                    ${payment.deadline ? `
+                    <div class="receipt-row">
+                        <div class="receipt-label">الموعد النهائي</div>
+                        <div class="receipt-value ${(payment.daysRemaining || 0) < 0 ? 'text-error' : 'text-warning'}">
+                            ${payment.deadline} ${(payment.daysRemaining || 0) > 0 ? `(متبقي ${payment.daysRemaining} يوم)` : `(متأخر ${Math.abs(payment.daysRemaining || 0)} يوم)`}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="payment-form">
+                    <div class="payment-form-group">
+                        <label class="payment-form-label">
+                            <i class="fas fa-money-bill-wave"></i>
+                            مبلغ الدفع عبر تيلدا
+                        </label>
+                        <div class="payment-amount-input">
+                            <span class="currency">ريال</span>
+                            <input type="number" 
+                                   class="payment-form-input" 
+                                   id="paymentAmount" 
+                                   min="${minAmount}" 
+                                   max="${remainingAmount}"
+                                   value="${Math.min(remainingAmount, minAmount)}"
+                                   step="1"
+                                   required>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 0.9rem; margin-top: var(--spacing-xs);">
+                            الحد الأدنى: ${formatCurrency(minAmount)} (نصف المبلغ)
+                        </div>
+                    </div>
+                    
+                    <div class="payment-actions" style="margin-top: var(--spacing-xl);">
+                        <button class="payment-btn payment-btn-secondary" onclick="closePaymentModal()">
+                            <i class="fas fa-times"></i>
+                            إلغاء
+                        </button>
+                        <button class="payment-btn payment-btn-tilda" onclick="showTildaMethodsModal()">
+                            <i class="fas fa-credit-card"></i>
+                            اختيار طريقة الدفع عبر تيلدا
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showPaymentSuccess(payment, amount, reference, method) {
+            const successContent = document.getElementById('paymentSuccessContent');
+            
+            let methodName = '';
+            switch(method) {
+                case 'tilda-bank':
+                    methodName = 'تحويل بنكي إلى تيلدا';
+                    break;
+                case 'fawry':
+                    methodName = 'فوري عبر تيلدا';
+                    break;
+                case 'card':
+                    methodName = 'بطاقة ائتمان عبر تيلدا';
+                    break;
+                default:
+                    methodName = 'تيلدا';
+            }
+            
+            successContent.innerHTML = `
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 class="success-title">تمت عملية الدفع عبر تيلدا بنجاح!</h3>
+                <p class="success-message">
+                    تم تسجيل دفعة بقيمة <strong>${formatCurrency(amount)}</strong> عبر تيلدا بنجاح.
+                    سيتم تحديث حالة التدريب تلقائياً في نظام ProVance.
+                </p>
+                
+                <div class="privacy-notice" style="margin: var(--spacing-xl) 0;">
+                    <div class="privacy-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="privacy-content">
+                        <h4>تم الحفاظ على خصوصيتك</h4>
+                        <p>
+                            جميع المعاملات تمت عبر حساب تيلدا الخاص بالمشروع. لم يتم كشف أي بيانات بنكية شخصية.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="receipt-details">
+                    <div class="receipt-row">
+                        <div class="receipt-label">الشركة</div>
+                        <div class="receipt-value">${payment.company || 'غير محدد'}</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">التدريب</div>
+                        <div class="receipt-value">${payment.training || 'غير محدد'}</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">المبلغ المدفوع</div>
+                        <div class="receipt-value">${formatCurrency(amount)}</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">طريقة الدفع</div>
+                        <div class="receipt-value">${methodName}</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">رقم المرجع</div>
+                        <div class="receipt-value">${reference}</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">المبلغ المتبقي</div>
+                        <div class="receipt-value">${formatCurrency(payment.remainingAmount || 0)}</div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">تاريخ الدفع</div>
+                        <div class="receipt-value">${new Date().toLocaleDateString('en-GB')}</div>
+                    </div>
+                </div>
+                
+                <div class="payment-actions" style="margin-top: var(--spacing-xl);">
+                    <button class="payment-btn payment-btn-secondary" onclick="closePaymentSuccessModal()">
+                        <i class="fas fa-times"></i>
+                        إغلاق
+                    </button>
+                    <button class="payment-btn payment-btn-tilda" onclick="downloadReceipt('${reference}')">
+                        <i class="fas fa-download"></i>
+                        تحميل إيصال تيلدا
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('paymentSuccessModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePaymentSuccessModal() {
+            document.getElementById('paymentSuccessModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ===== OTHER PAYMENT FUNCTIONS =====
+        function viewPaymentDetails(paymentId) {
+            const allPayments = [
+                ...paymentsData.pendingPayments,
+                ...paymentsData.overduePayments,
+                ...paymentsData.completedPayments
+            ];
+            const payment = allPayments.find(p => p.id === paymentId);
+            
+            if (!payment) return;
+            
+            openPaymentModal(paymentId);
+        }
+
+        function viewPaymentReceipt(paymentId) {
+            const payment = paymentsData.completedPayments.find(p => p.id === paymentId);
+            
+            if (!payment) {
+                showToast('لم يتم العثور على بيانات الإيصال', 'error');
+                return;
+            }
+            
+            const transaction = paymentsData.transactionHistory.find(t => 
+                t.description.includes(payment.training) || 
+                t.amount === payment.paidAmount
+            );
+            
+            if (transaction) {
+                showPaymentSuccess(payment, payment.paidAmount || 0, transaction.reference, 'tilda');
+            } else {
+                showToast('لم يتم العثور على تفاصيل المعاملة', 'error');
+            }
+        }
+
+        // ===== TRANSACTION HISTORY =====
+        function loadTransactionHistory() {
+            document.getElementById('transactionsSection').style.display = 'block';
+            document.getElementById('transactionsSection').scrollIntoView({ behavior: 'smooth' });
+            renderTransactionHistory();
+        }
+
+        function renderTransactionHistory() {
+            const tbody = document.getElementById('transactionsTableBody');
+            const noTransactionsMessage = document.getElementById('noTransactionsMessage');
+            
+            if (!Array.isArray(paymentsData.transactionHistory) || paymentsData.transactionHistory.length === 0) {
+                tbody.innerHTML = '';
+                noTransactionsMessage.style.display = 'block';
+                return;
+            }
+            
+            noTransactionsMessage.style.display = 'none';
+            tbody.innerHTML = '';
+            
+            paymentsData.transactionHistory.forEach(transaction => {
+                const row = document.createElement('tr');
+                
+                let statusClass = '';
+                let statusText = '';
+                
+                switch(transaction.status) {
+                    case 'completed':
+                        statusClass = 'transaction-success';
+                        statusText = 'مكتمل';
+                        break;
+                    case 'pending':
+                        statusClass = 'transaction-pending';
+                        statusText = 'معلق';
+                        break;
+                    case 'failed':
+                        statusClass = 'transaction-failed';
+                        statusText = 'فاشل';
+                        break;
+                    default:
+                        statusClass = 'transaction-success';
+                        statusText = 'مكتمل';
+                }
+                
+                row.innerHTML = `
+                    <td>${transaction.date || '-'}</td>
+                    <td>${transaction.description || 'بدون وصف'}</td>
+                    <td style="font-weight: 700; color: var(--text-primary);">${formatCurrency(transaction.amount || 0)}</td>
+                    <td>${transaction.paymentMethod || 'غير محدد'}</td>
+                    <td>
+                        <span class="transaction-status ${statusClass}">${statusText}</span>
+                    </td>
+                    <td style="font-family: monospace; color: var(--text-muted);">${transaction.reference || '-'}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function downloadTransactionHistory() {
+            showToast('جاري تحميل سجل معاملات تيلدا...', 'info');
+            
+            setTimeout(() => {
+                let csv = 'التاريخ,الوصف,المبلغ,طريقة الدفع,الحالة,رقم المرجع\n';
+                paymentsData.transactionHistory.forEach(t => {
+                    csv += `${t.date || ''},${t.description || ''},${t.amount || 0},${t.paymentMethod || ''},${t.status || ''},${t.reference || ''}\n`;
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `tilda_transactions_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+                
+                showToast('تم تحميل سجل معاملات تيلدا بنجاح', 'success');
+            }, 1000);
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        function setupPaymentEventListeners() {
+            // Add any additional event listeners here
+        }
+
+        function showPendingPayments() {
+            filterPayments('pending');
+            window.scrollTo({ top: document.querySelector('.payments-section').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        function checkProfilePaymentAlert() {
+            const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
+            if (Array.isArray(pendingPayments) && pendingPayments.length > 0) {
+                document.getElementById('paymentAlertBanner').style.display = 'flex';
+                const totalAmount = pendingPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                document.getElementById('paymentAlertBannerText').textContent = 
+                    `لديك ${pendingPayments.length} مدفوعات معلقة من صفحة البروفايل بمبلغ إجمالي ${formatCurrency(totalAmount)} - يمكنك سدادها بأمان عبر تيلدا`;
+            }
+        }
+
+        function clearPendingPaymentFromStorage(companyName) {
+            let pendingPayments = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
+            pendingPayments = pendingPayments.filter(p => p.company !== companyName);
+            localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
+            hideProfilePaymentAlert();
+        }
+
+        function hideProfilePaymentAlert() {
+            const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
+            if (pendingPayments.length === 0) {
+                document.getElementById('paymentAlertBanner').style.display = 'none';
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('proVancePaymentsData', JSON.stringify(paymentsData));
+        }
+
+        function downloadReceipt(reference) {
+            showToast(`جاري تحميل إيصال تيلدا ${reference}...`, 'info');
+            setTimeout(() => {
+                showToast('تم تحميل إيصال تيلدا بنجاح', 'success');
+            }, 1000);
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: var(--card-bg);
+                border-left: 4px solid ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--error)' : type === 'warning' ? 'var(--warning)' : 'var(--tilda-primary)'};
+                border-radius: var(--radius-md);
+                padding: 16px 20px;
+                max-width: 400px;
+                box-shadow: var(--shadow-lg);
+                animation: slideInRight 0.3s ease;
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            `;
+            
+            const icons = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-circle',
+                info: 'fas fa-info-circle',
+                warning: 'fas fa-exclamation-triangle'
+            };
+            
+            const colors = {
+                success: 'var(--success)',
+                error: 'var(--error)',
+                info: 'var(--tilda-primary)',
+                warning: 'var(--warning)'
+            };
+            
+            toast.innerHTML = `
+                <div style="color: ${colors[type]}; font-size: 20px;">
+                    <i class="${icons[type]}"></i>
+                </div>
+                <div style="flex: 1; color: var(--text-primary); font-weight: 600;">${message}</div>
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px;">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            if (!document.querySelector('#toast-styles')) {
+                const style = document.createElement('style');
+                style.id = 'toast-styles';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    
+                    @keyframes slideOutRight {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.animation = 'slideOutRight 0.3s ease';
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+
+        function toggleUserMenu() {
+            alert('قائمة المستخدم - سيتم تطويرها لاحقاً');
+        }
+    </script>
+</body>
+</html>

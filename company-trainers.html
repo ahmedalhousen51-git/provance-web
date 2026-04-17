@@ -1,0 +1,4347 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provance Control - نظام إدارة المتدربين</title>
+    
+    <!-- تحسينات التحميل -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --color-primary: #667eea;
+            --color-primary-dark: #5568d3;
+            --color-success: #11998e;
+            --color-warning: #f5576c;
+            --color-info: #17a2b8;
+            --color-purple: #9c27b0;
+            --color-orange: #ff9800;
+            --bg-ultra-dark: #0a0e27;
+            --bg-dark: #0f1419;
+            --bg-darker: #1a1f2e;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-bg-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --sidebar-width: 280px;
+            --header-height: 80px;
+            --border-radius: 16px;
+            --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-ultra-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            font-size: 16px;
+        }
+
+        /* Loading Indicator */
+        #loading {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            background: var(--bg-ultra-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: var(--glass-border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+
+        .loading-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--color-primary);
+            transition: width 0.3s ease;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--glass-border);
+            z-index: 1000;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s var(--transition-smooth);
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .sidebar-brand-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sidebar-brand-text h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            margin-bottom: 5px;
+        }
+
+        .sidebar-brand-text p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Navigation */
+        .nav-menu {
+            padding: 20px 0;
+            flex-grow: 1;
+        }
+
+        .nav-section-title {
+            padding: 12px 20px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .nav-link-advanced {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s var(--transition-smooth);
+            margin: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .nav-link-advanced:hover {
+            background: var(--glass-bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-link-advanced.active {
+            background: rgba(102, 126, 234, 0.15);
+            color: var(--color-primary);
+        }
+
+        .nav-icon {
+            width: 20px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .nav-text {
+            flex: 1;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .collapsed .nav-text {
+            display: none;
+        }
+
+        .nav-badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .badge-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .badge-info {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid var(--glass-border);
+            margin-top: auto;
+        }
+
+        .logout-btn-advanced {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .logout-btn-advanced:hover {
+            background: var(--color-warning);
+            border-color: transparent;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-right: var(--sidebar-width);
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+            transition: all 0.4s var(--transition-smooth);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .main-content.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .sidebar.collapsed + .main-content {
+            margin-right: 70px;
+        }
+
+        /* Header */
+        .header-advanced {
+            height: var(--header-height);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .sidebar-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--color-primary);
+            transform: rotate(90deg);
+        }
+
+        .page-title-advanced {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-profile-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-profile-header:hover {
+            background: var(--glass-bg-hover);
+        }
+
+        .user-avatar-small {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .user-info-header {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name-header {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .user-role-header {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Page Container */
+        .page-container {
+            padding: 25px;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            transition: all 0.3s ease;
+            margin-bottom: 25px;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--color-primary);
+        }
+
+        .card-title i {
+            width: 40px;
+            height: 40px;
+            background: var(--color-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 25px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.4s var(--transition-smooth);
+            width: 200px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(17, 153, 142, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-button:hover::before {
+            opacity: 1;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-5px);
+            border-color: var(--color-primary);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button.active {
+            background: rgba(102, 126, 234, 0.15);
+            border-color: var(--color-primary);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .nav-button.active::before {
+            opacity: 1;
+        }
+
+        .nav-button-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-button.create .nav-button-icon {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .nav-button.records .nav-button-icon {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .nav-button-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-button-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-button-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--color-success);
+            color: white;
+            border-radius: 10px;
+            padding: 3px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            z-index: 2;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-darker);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .btn-info {
+            background: var(--color-info);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--glass-bg-hover);
+            border-color: var(--color-primary);
+        }
+
+        /* Trainees Grid */
+        .trainees-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .trainee-card {
+            background: var(--bg-darker);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .trainee-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .trainee-card.excellent {
+            border-left: 5px solid var(--color-success);
+        }
+
+        .trainee-card.good {
+            border-left: 5px solid var(--color-primary);
+        }
+
+        .trainee-card.average {
+            border-left: 5px solid var(--color-orange);
+        }
+
+        .trainee-card.poor {
+            border-left: 5px solid var(--color-warning);
+        }
+
+        .trainee-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .trainee-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .trainee-info {
+            flex: 1;
+        }
+
+        .trainee-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .trainee-position {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .trainee-details {
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .trainee-detail {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .trainee-detail .label {
+            color: var(--text-secondary);
+        }
+
+        .trainee-detail .value {
+            font-weight: 600;
+        }
+
+        .trainee-stats {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: space-between;
+        }
+
+        .trainee-stat {
+            text-align: center;
+            flex: 1;
+        }
+
+        .trainee-stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .trainee-stat-value.success {
+            color: var(--color-success);
+        }
+
+        .trainee-stat-value.warning {
+            color: var(--color-warning);
+        }
+
+        .trainee-stat-value.primary {
+            color: var(--color-primary);
+        }
+
+        .trainee-stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .trainee-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-active {
+            background: rgba(17, 153, 142, 0.2);
+            color: var(--color-success);
+        }
+
+        .status-inactive {
+            background: rgba(245, 87, 108, 0.2);
+            color: var(--color-warning);
+        }
+
+        .status-pending {
+            background: rgba(102, 126, 234, 0.2);
+            color: var(--color-primary);
+        }
+
+        /* Search Container */
+        .search-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .search-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .search-form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .search-actions {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .search-results-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        .search-clear-filters {
+            background: transparent;
+            border: none;
+            color: var(--color-warning);
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .search-clear-filters:hover {
+            background: rgba(245, 87, 108, 0.1);
+        }
+
+        /* Performance Reports Container */
+        .performance-reports-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .performance-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .performance-tab {
+            padding: 15px 25px;
+            background: var(--bg-darker);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .performance-tab.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .performance-tab:hover:not(.active) {
+            background: var(--glass-bg-hover);
+            transform: translateY(-2px);
+        }
+
+        .performance-section {
+            display: none;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .performance-section.active {
+            display: block;
+        }
+
+        .performance-section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Star Rating Styles */
+        .star-rating {
+            display: flex;
+            gap: 8px;
+            margin: 15px 0;
+            direction: ltr;
+            justify-content: center;
+        }
+
+        .star {
+            font-size: 2rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .star:hover,
+        .star.active {
+            color: gold;
+            transform: scale(1.2);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .star-rating-label {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .rating-value-display {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 10px;
+            color: var(--color-primary);
+        }
+
+        /* Progress Bar */
+        .section-progress {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--glass-border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--color-primary);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Question Navigation */
+        .question-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .question-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .question-number-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-darker);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .question-number-btn:hover {
+            background: var(--glass-bg-hover);
+            transform: scale(1.1);
+        }
+
+        .question-number-btn.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .question-number-btn.answered {
+            background: var(--color-success);
+            color: white;
+            border-color: var(--color-success);
+        }
+
+        /* Task Reports Container */
+        .task-reports-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .task-form {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .task-item {
+            background: var(--bg-darker);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Recommendations Container */
+        .recommendations-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .recommendation-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .recommendation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .recommendation-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .recommendation-description {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .recommendation-match {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .match-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-darker);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .match-fill {
+            height: 100%;
+            background: var(--color-primary);
+            border-radius: 10px;
+        }
+
+        .match-percentage {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .recommendation-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .company-recommendation-form {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        /* Trainee Details Container */
+        .trainee-details-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-ultra-dark);
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .trainee-details-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .trainee-details-title {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .trainee-details-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .trainee-details-close {
+            background: var(--color-warning);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .trainee-details-close:hover {
+            transform: rotate(90deg);
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .trainee-details-content {
+            padding: 40px;
+        }
+
+        .trainee-options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .trainee-option-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .trainee-option-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--color-primary);
+        }
+
+        .trainee-option-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .trainee-option-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+        }
+
+        .trainee-option-description {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* Notification System */
+        .notification-toast {
+            position: fixed;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--color-success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        @keyframes slideIn {
+            from { top: 80px; opacity: 0; }
+            to { top: 120px; opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { top: 120px; opacity: 1; }
+            to { top: 80px; opacity: 0; }
+        }
+
+        /* Report Send Buttons */
+        .report-send-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Reports History Container */
+        .reports-history-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .reports-history-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .report-history-tab {
+            padding: 15px 25px;
+            background: var(--bg-darker);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .report-history-tab.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .report-history-tab:hover:not(.active) {
+            background: var(--glass-bg-hover);
+            transform: translateY(-2px);
+        }
+
+        .report-history-item {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .report-history-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .report-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .report-history-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .report-history-date {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .report-history-content {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .report-history-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .report-history-type {
+            background: var(--color-info);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        .report-history-status {
+            background: var(--color-success);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        .report-history-status.pending {
+            background: var(--color-warning);
+        }
+
+        /* File Upload Area */
+        .drop-zone {
+            border: 2px dashed var(--color-primary);
+            padding: 40px;
+            text-align: center;
+            border-radius: 15px;
+            cursor: pointer;
+            background: rgba(102, 126, 234, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: var(--color-success);
+        }
+
+        .drop-zone i {
+            font-size: 40px;
+            color: var(--color-primary);
+            margin-bottom: 10px;
+        }
+
+        /* Task Mode Toggle */
+        .task-mode-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: rgba(0,0,0,0.2);
+            padding: 8px;
+            border-radius: 12px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .mode-btn.active {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .sidebar.collapsed + .main-content {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .header-advanced {
+                padding: 0 15px;
+            }
+            
+            .page-container {
+                padding: 15px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-buttons-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-button {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .trainees-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .trainee-actions {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .search-form {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .search-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .performance-tabs {
+                flex-direction: column;
+            }
+            
+            .task-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .task-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .trainee-options-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .recommendations-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .report-send-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Indicator -->
+    <div id="loading">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 style="color: var(--color-primary); margin-bottom: 10px;">جاري تحميل نظام المتدربين</h3>
+            <div class="loading-progress">
+                <div class="loading-progress-bar" id="loadingBar"></div>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">الرجاء الانتظار...</p>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="mainSidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <i class="fas fa-rocket"></i>
+            </div>
+            
+            <div class="sidebar-brand-text">
+                <h2>PROVANCE</h2>
+                <p>نظام إدارة التدريب</p>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="nav-menu">
+            <div class="nav-section-title">القائمة الرئيسية</div>
+            
+            <a class="nav-link-advanced" href="company-requests-control.html">
+                <div class="nav-icon"><i class="fas fa-cogs"></i></div>
+                <span class="nav-text">طلبات الأقسام</span>
+            </a>
+            
+            <a class="nav-link-advanced" href="company-dashboard.html">
+                <div class="nav-icon"><i class="fas fa-home"></i></div>
+                <span class="nav-text">لوحة التحكم</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-QR Code.html">
+                <div class="nav-icon"><i class="fas fa-qrcode"></i></div>
+                <span class="nav-text">نظام QR</span>
+            </a>
+
+            <a class="nav-link-advanced active" href="company-trainers.html">
+                <div class="nav-icon"><i class="fas fa-users"></i></div>
+                <span class="nav-text">المتدربين</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-interviews.html">
+                <div class="nav-icon"><i class="fas fa-handshake"></i></div>
+                <span class="nav-text">المقابلات</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-profile.html">
+                <div class="nav-icon"><i class="fas fa-building"></i></div>
+                <span class="nav-text">الملف الشخصي</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-batches.html">
+                <div class="nav-icon"><i class="fas fa-layer-group"></i></div>
+                <span class="nav-text">إدارة الدفعات</span>
+            </a>
+
+            <div class="nav-section-title">التقارير والتحليلات</div>
+
+            <a class="nav-link-advanced" href="company-departments.html">
+                <div class="nav-icon"><i class="fas fa-sitemap"></i></div>
+                <span class="nav-text">تحليل الأقسام</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-notifications.html">
+                <div class="nav-icon"><i class="fas fa-bell"></i></div>
+                <span class="nav-text">الإشعارات</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <button class="logout-btn-advanced" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header-advanced">
+            <div class="header-left">
+                <div class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </div>
+                
+                <div>
+                    <div class="page-title-advanced">
+                        <div class="page-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <span>نظام إدارة المتدربين</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="user-profile-header" onclick="toggleUserMenu()">
+                    <div class="user-avatar-small">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="user-info-header">
+                        <div class="user-name-header">شركة التقنية</div>
+                        <div class="user-role-header">مدير الموارد البشرية</div>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Container -->
+        <div class="page-container">
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons-container">
+                <div class="nav-button create active" onclick="showTrainersSection('create')">
+                    <div class="nav-button-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="nav-button-title">إضافة متدرب جديد</div>
+                    <div class="nav-button-desc">إضافة متدرب جديد ببيانات متكاملة</div>
+                </div>
+                
+                <div class="nav-button records" onclick="showTrainersSection('records')">
+                    <div class="nav-button-badge" id="recordsBadge">0</div>
+                    <div class="nav-button-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="nav-button-title">سجل المتدربين</div>
+                    <div class="nav-button-desc">عرض وإدارة جميع المتدربين المسجلين</div>
+                </div>
+            </div>
+
+            <!-- Create Trainer Section -->
+            <div id="create-section" class="content-section active">
+                <div class="glass-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-plus"></i>
+                        إضافة متدرب جديد
+                    </h3>
+
+                    <form id="trainerForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">اسم المتدرب</label>
+                                <input type="text" id="trainerName" class="form-input" 
+                                       placeholder="الاسم الكامل للمتدرب" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">البريد الإلكتروني</label>
+                                <input type="email" id="trainerEmail" class="form-input" 
+                                       placeholder="البريد الإلكتروني" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">رقم الهاتف</label>
+                                <input type="tel" id="trainerPhone" class="form-input" 
+                                       placeholder="رقم الهاتف">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">التخصص</label>
+                                <select id="trainerSpecialty" class="form-select" required>
+                                    <option value="">اختر التخصص...</option>
+                                    <option value="it">تقنية المعلومات</option>
+                                    <option value="design">التصميم الجرافيكي</option>
+                                    <option value="marketing">التسويق الرقمي</option>
+                                    <option value="management">الإدارة</option>
+                                    <option value="engineering">الهندسة</option>
+                                    <option value="finance">المالية</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">تاريخ البدء</label>
+                                <input type="date" id="startDate" class="form-input" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">تاريخ الانتهاء</label>
+                                <input type="date" id="endDate" class="form-input" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">ملاحظات إضافية</label>
+                            <textarea id="trainerNotes" class="form-textarea" 
+                                      placeholder="ملاحظات إضافية (اختياري)"></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i>
+                                إضافة المتدرب
+                            </button>
+                            <button type="reset" class="btn btn-outline">
+                                <i class="fas fa-redo"></i>
+                                إعادة تعيين
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Records Section -->
+            <div id="records-section" class="content-section" style="display: none;">
+                <!-- Search Section -->
+                <div class="search-container">
+                    <div class="search-header">
+                        <h3>
+                            <i class="fas fa-search"></i>
+                            بحث المتدربين
+                        </h3>
+                    </div>
+                    
+                    <div class="search-form">
+                        <div class="search-form-group">
+                            <label class="search-label">بحث بالاسم</label>
+                            <input type="text" id="searchName" class="form-input" placeholder="ابحث باسم المتدرب...">
+                        </div>
+                        
+                        <div class="search-form-group">
+                            <label class="search-label">التخصص</label>
+                            <select id="searchSpecialty" class="form-select">
+                                <option value="all">جميع التخصصات</option>
+                                <option value="it">تقنية المعلومات</option>
+                                <option value="design">التصميم الجرافيكي</option>
+                                <option value="marketing">التسويق الرقمي</option>
+                                <option value="management">الإدارة</option>
+                            </select>
+                        </div>
+                        
+                        <div class="search-form-group">
+                            <label class="search-label">حالة المتدرب</label>
+                            <select id="searchStatus" class="form-select">
+                                <option value="all">جميع الحالات</option>
+                                <option value="active">نشط</option>
+                                <option value="inactive">غير نشط</option>
+                                <option value="completed">مكتمل</option>
+                            </select>
+                        </div>
+                        
+                        <div class="search-actions">
+                            <button class="btn btn-outline btn-small" onclick="resetSearch()">
+                                <i class="fas fa-redo"></i>
+                                إعادة تعيين
+                            </button>
+                            <button class="btn btn-primary btn-small" onclick="performSearch()">
+                                <i class="fas fa-search"></i>
+                                بحث
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="search-results-info" id="searchResultsInfo" style="display: none;">
+                        <span id="searchResultsText">تم العثور على <strong>0</strong> نتيجة</span>
+                        <button class="search-clear-filters" onclick="resetSearch()">
+                            <i class="fas fa-times"></i>
+                            مسح المرشحات
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Trainees Grid -->
+                <div class="glass-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-users"></i>
+                        قائمة المتدربين
+                    </h3>
+
+                    <div class="trainees-grid" id="traineesGrid">
+                        <!-- سيتم ملؤها ديناميكيًا -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Trainee Details Container -->
+    <div class="trainee-details-container" id="traineeDetailsContainer">
+        <div class="trainee-details-header">
+            <div class="trainee-details-title">
+                <div class="trainee-details-avatar" id="traineeDetailsAvatar">
+                    <!-- Avatar will be set dynamically -->
+                </div>
+                <div>
+                    <h2 id="traineeDetailsName">اسم المتدرب</h2>
+                    <p id="traineeDetailsPosition">المنصب - القسم</p>
+                </div>
+            </div>
+            <button class="trainee-details-close" onclick="closeTraineeDetails()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="trainee-details-content">
+            <!-- Trainee Options Grid -->
+            <div class="trainee-options-grid" id="traineeOptionsGrid">
+                <div class="trainee-option-card" onclick="showPerformanceReports()">
+                    <div class="trainee-option-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 class="trainee-option-title">تقارير الأداء</h3>
+                    <p class="trainee-option-description">
+                        نظام تقييم متقدم لتقييم سلوكيات ومهارات المتدرب (45 سؤالاً)
+                    </p>
+                </div>
+
+                <div class="trainee-option-card" onclick="showTaskReports()">
+                    <div class="trainee-option-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3 class="trainee-option-title">تقارير المهام</h3>
+                    <p class="trainee-option-description">
+                        تسجيل وإدارة المهام اليومية مع إمكانية تحميل التقارير الخارجية
+                    </p>
+                </div>
+
+                <div class="trainee-option-card" onclick="showRecommendations()">
+                    <div class="trainee-option-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h3 class="trainee-option-title">التوصيات</h3>
+                    <p class="trainee-option-description">
+                        التقييمات المهنية والتوصيات من قبل الشركة
+                    </p>
+                </div>
+
+                <div class="trainee-option-card" onclick="showReportsHistory()">
+                    <div class="trainee-option-icon" style="background: var(--color-info);">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3 class="trainee-option-title">سجل التقارير</h3>
+                    <p class="trainee-option-description">
+                        عرض جميع التقارير المرسلة للمتدرب وتتبع حالتها
+                    </p>
+                </div>
+
+                <div class="trainee-option-card" onclick="sendAllReports()" style="border-color: var(--color-success);">
+                    <div class="trainee-option-icon" style="background: var(--color-success);">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <h3 class="trainee-option-title">إرسال التقارير</h3>
+                    <p class="trainee-option-description">
+                        إرسال جميع التقارير إلى المتدرب (الأداء، المهام، التوصيات)
+                    </p>
+                </div>
+            </div>
+
+            <!-- Performance Reports Section -->
+            <div class="performance-reports-container" id="performanceReportsContainer">
+                <h2 style="font-size: 2rem; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-chart-bar" style="color: var(--color-primary);"></i>
+                    تقارير الأداء - <span id="performanceTraineeName">اسم المتدرب</span>
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 30px;">
+                    نظام تقييم متقدم يقيم أداء المتدرب عبر أبعاد متعددة (45 سؤالاً مقسمة على 3 أقسام)
+                </p>
+
+                <div class="performance-tabs">
+                    <div class="performance-tab active" data-section="general">السلوك العام (15 سؤالاً)</div>
+                    <div class="performance-tab" data-section="professional">السلوك المهني (15 سؤالاً)</div>
+                    <div class="performance-tab" data-section="personality">السمات الشخصية (15 سؤالاً)</div>
+                </div>
+
+                <!-- General Behavior Section -->
+                <div class="performance-section active" id="generalSection">
+                    <h3 class="performance-section-title">
+                        <i class="fas fa-user"></i> السلوك العام (General Behavior)
+                    </h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">تركز هذه الأسئلة على الانضباط، الاندماج الثقافي، والذكاء الاجتماعي.</p>
+                    
+                    <!-- Progress Bar -->
+                    <div class="section-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="generalProgressFill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span>التقدم</span>
+                            <span id="generalProgressText">0/15</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Question Card -->
+                    <div class="glass-card">
+                        <div class="question-number" id="generalQuestionNumber">السؤال 1 من 15</div>
+                        <div class="question-text" id="generalQuestionText" style="font-size: 1.2rem; margin: 20px 0;">
+                            هل يظهر المتدرب التزاماً تاماً بمواعيد الحضور والانصراف والاجتماعات؟
+                        </div>
+                        
+                        <div class="star-rating" id="generalStarRating">
+                            <div class="star" data-value="1"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="2"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="3"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="4"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="5"><i class="fas fa-star"></i></div>
+                        </div>
+                        
+                        <div class="star-rating-label">قيم من 1 (الأدنى) إلى 5 (الأعلى)</div>
+                        <div class="rating-value-display" id="generalRatingValue">لم يتم التقييم بعد</div>
+                        
+                        <!-- Question Navigation Numbers -->
+                        <div class="question-numbers" id="generalQuestionNumbers">
+                            <!-- سيتم ملؤها ديناميكيًا -->
+                        </div>
+                        
+                        <div class="question-navigation">
+                            <button class="btn btn-outline" onclick="previousQuestion('general')">
+                                <i class="fas fa-arrow-right"></i> السؤال السابق
+                            </button>
+                            <button class="btn btn-primary" onclick="nextQuestion('general')">
+                                السؤال التالي <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="report-send-buttons">
+                        <button class="btn btn-outline" onclick="saveSectionProgress('general')">
+                            <i class="fas fa-save"></i> حفظ تقدم القسم
+                        </button>
+                        <button class="btn btn-success" onclick="sendPerformanceReports()">
+                            <i class="fas fa-paper-plane"></i> إرسال تقارير الأداء
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Professional Performance Section -->
+                <div class="performance-section" id="professionalSection">
+                    <h3 class="performance-section-title">
+                        <i class="fas fa-tools"></i> السلوك المهني (Professional Performance)
+                    </h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">تركز هذه الأسئلة على الإنتاجية، الجودة، والقدرات التقنية التي تحدد التخصص.</p>
+                    
+                    <!-- Progress Bar -->
+                    <div class="section-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="professionalProgressFill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span>التقدم</span>
+                            <span id="professionalProgressText">0/15</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Question Card -->
+                    <div class="glass-card">
+                        <div class="question-number" id="professionalQuestionNumber">السؤال 1 من 15</div>
+                        <div class="question-text" id="professionalQuestionText" style="font-size: 1.2rem; margin: 20px 0;">
+                            ما مدى دقة المتدرب في تسليم المهام دون أخطاء إملائية أو فنية متكررة؟
+                        </div>
+                        
+                        <div class="star-rating" id="professionalStarRating">
+                            <div class="star" data-value="1"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="2"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="3"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="4"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="5"><i class="fas fa-star"></i></div>
+                        </div>
+                        
+                        <div class="star-rating-label">قيم من 1 (الأدنى) إلى 5 (الأعلى)</div>
+                        <div class="rating-value-display" id="professionalRatingValue">لم يتم التقييم بعد</div>
+                        
+                        <!-- Question Navigation Numbers -->
+                        <div class="question-numbers" id="professionalQuestionNumbers">
+                            <!-- سيتم ملؤها ديناميكيًا -->
+                        </div>
+                        
+                        <div class="question-navigation">
+                            <button class="btn btn-outline" onclick="previousQuestion('professional')">
+                                <i class="fas fa-arrow-right"></i> السؤال السابق
+                            </button>
+                            <button class="btn btn-primary" onclick="nextQuestion('professional')">
+                                السؤال التالي <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="report-send-buttons">
+                        <button class="btn btn-outline" onclick="saveSectionProgress('professional')">
+                            <i class="fas fa-save"></i> حفظ تقدم القسم
+                        </button>
+                        <button class="btn btn-outline" onclick="previousSection('general')">
+                            <i class="fas fa-arrow-right"></i> العودة للقسم السابق
+                        </button>
+                        <button class="btn btn-success" onclick="sendPerformanceReports()">
+                            <i class="fas fa-paper-plane"></i> إرسال تقارير الأداء
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Personality Traits Section -->
+                <div class="performance-section" id="personalitySection">
+                    <h3 class="performance-section-title">
+                        <i class="fas fa-brain"></i> السمات الشخصية (Personality Traits)
+                    </h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">هذه الأسئلة هي المحرك الأساسي لتحديد هل المتدرب "قائد، مطور، مصمم، أم مدير مشروع".</p>
+                    
+                    <!-- Progress Bar -->
+                    <div class="section-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="personalityProgressFill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span>التقدم</span>
+                            <span id="personalityProgressText">0/15</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Question Card -->
+                    <div class="glass-card">
+                        <div class="question-number" id="personalityQuestionNumber">السؤال 1 من 15</div>
+                        <div class="question-text" id="personalityQuestionText" style="font-size: 1.2rem; margin: 20px 0;">
+                            هل يميل المتدرب للمبادرة وطرح أفكار تطويرية (تفكير ريادي)؟
+                        </div>
+                        
+                        <div class="star-rating" id="personalityStarRating">
+                            <div class="star" data-value="1"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="2"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="3"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="4"><i class="fas fa-star"></i></div>
+                            <div class="star" data-value="5"><i class="fas fa-star"></i></div>
+                        </div>
+                        
+                        <div class="star-rating-label">قيم من 1 (الأدنى) إلى 5 (الأعلى)</div>
+                        <div class="rating-value-display" id="personalityRatingValue">لم يتم التقييم بعد</div>
+                        
+                        <!-- Question Navigation Numbers -->
+                        <div class="question-numbers" id="personalityQuestionNumbers">
+                            <!-- سيتم ملؤها ديناميكيًا -->
+                        </div>
+                        
+                        <div class="question-navigation">
+                            <button class="btn btn-outline" onclick="previousQuestion('personality')">
+                                <i class="fas fa-arrow-right"></i> السؤال السابق
+                            </button>
+                            <button class="btn btn-primary" onclick="nextQuestion('personality')">
+                                السؤال التالي <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="report-send-buttons">
+                        <button class="btn btn-outline" onclick="saveSectionProgress('personality')">
+                            <i class="fas fa-save"></i> حفظ تقدم القسم
+                        </button>
+                        <button class="btn btn-outline" onclick="previousSection('professional')">
+                            <i class="fas fa-arrow-right"></i> العودة للقسم السابق
+                        </button>
+                        <button class="btn btn-success" onclick="generateRecommendations()">
+                            <i class="fas fa-star"></i> توليد التوصيات
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Reports Section -->
+            <div class="task-reports-container" id="taskReportsContainer">
+                <h2 style="font-size: 2rem; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-tasks" style="color: var(--color-primary);"></i>
+                    تقارير المهام - <span id="taskTraineeName">اسم المتدرب</span>
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 30px;">
+                    إدارة المهام اليومية والتقارير مع إمكانية تحميل الملفات الخارجية
+                </p>
+
+                <div class="task-form">
+                    <div class="task-management-pro" style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label class="form-label"><i class="fas fa-file-alt"></i> عنوان التقرير</label>
+                                <input type="text" id="proTaskTitle" class="form-input" placeholder="مثلاً: تقرير المتابعة التقنية - الأسبوع 4">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label"><i class="fas fa-calendar-day"></i> تاريخ الإنجاز</label>
+                                <input type="date" id="proTaskDate" class="form-input">
+                            </div>
+                        </div>
+
+                        <div class="task-mode-toggle">
+                            <button type="button" class="mode-btn active" id="btnManualMode" onclick="setTaskMode('manual')">
+                                <i class="fas fa-pen-fancy"></i> توثيق يدوي
+                            </button>
+                            <button type="button" class="mode-btn" id="btnUploadMode" onclick="setTaskMode('upload')">
+                                <i class="fas fa-upload"></i> رفع ملف من الجهاز
+                            </button>
+                        </div>
+
+                        <div id="manualInputArea">
+                            <textarea id="proTaskContent" class="form-textarea" style="height: 200px; font-size: 14px; background: rgba(0,0,0,0.1);" placeholder="اكتب تفاصيل التقرير، النتائج المحققة، والتوصيات..."></textarea>
+                        </div>
+
+                        <div id="uploadInputArea" style="display: none;">
+                            <div class="drop-zone" onclick="document.getElementById('proFileHandle').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p style="margin: 0; font-weight: 500;">اسحب التقرير هنا أو اضغط للاختيار</p>
+                                <span id="fileNameDisplay" style="display: block; margin-top: 10px; color: var(--color-success); font-size: 13px;"></span>
+                                <input type="file" id="proFileHandle" style="display: none;" onchange="updateFileStatus()">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px;">
+                            <button type="button" class="btn btn-primary" onclick="saveTraineeTask()" style="height: 45px;">
+                                <i class="fas fa-save"></i> حفظ المهمة
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="exportTaskReport()" style="height: 45px;">
+                                <i class="fas fa-file-export"></i> تحميل كملف تقرير
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasks List -->
+                <div class="task-list" id="taskList">
+                    <!-- سيتم ملؤها ديناميكيًا -->
+                </div>
+
+                <div class="report-send-buttons">
+                    <button class="btn btn-success" onclick="sendTaskReports()">
+                        <i class="fas fa-paper-plane"></i> إرسال تقارير المهام
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recommendations Section -->
+            <div class="recommendations-container" id="recommendationsContainer">
+                <h2 style="font-size: 2rem; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-star" style="color: var(--color-primary);"></i>
+                    التوصيات - <span id="recommendationsTraineeName">اسم المتدرب</span>
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 30px;">
+                    التقييمات المهنية والتوصيات من قبل الشركة بناءً على تقييم الأداء
+                </p>
+
+                <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;">التوصيات والترشيحات</h3>
+                
+                <div class="recommendations-grid" id="recommendationsGrid">
+                    <!-- Recommendations will be dynamically generated here -->
+                </div>
+                
+                <div class="company-recommendation-form">
+                    <h4 style="font-size: 1.2rem; font-weight: 700; margin: 25px 0 15px; color: var(--color-primary);">إضافة توصية جديدة</h4>
+                    
+                    <div class="form-group">
+                        <label class="form-label">المجال المقترح</label>
+                        <input type="text" class="form-input" id="newRecommendationField" placeholder="أدخل المجال المقترح...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">سبب التوصية</label>
+                        <textarea class="form-textarea" id="newRecommendationReason" placeholder="أدخل سبب التوصية..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">مؤشر المناسبة</label>
+                        <input type="range" min="0" max="100" value="50" class="form-input" id="matchPercentageSlider">
+                        <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                            <span style="font-size: 0.8rem; color: var(--text-secondary)">منخفض</span>
+                            <span style="font-size: 0.9rem; font-weight: 600;" id="matchPercentageValue">50%</span>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary)">مرتفع</span>
+                        </div>
+                    </div>
+                    
+                    <div class="report-send-buttons">
+                        <button class="btn btn-primary" onclick="addNewRecommendation()">
+                            <i class="fas fa-plus"></i> إضافة التوصية
+                        </button>
+                        <button class="btn btn-success" onclick="sendRecommendations()">
+                            <i class="fas fa-paper-plane"></i> إرسال التوصيات
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports History Section -->
+            <div class="reports-history-container" id="reportsHistoryContainer">
+                <h2 style="font-size: 2rem; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-history" style="color: var(--color-primary);"></i>
+                    سجل التقارير - <span id="reportsHistoryTraineeName">اسم المتدرب</span>
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 30px;">
+                    جميع التقارير المرسلة للمتدرب عبر النظام
+                </p>
+
+                <div class="reports-history-tabs">
+                    <div class="report-history-tab active" onclick="filterReportsByType('all')">جميع التقارير</div>
+                    <div class="report-history-tab" onclick="filterReportsByType('performance')">تقارير الأداء</div>
+                    <div class="report-history-tab" onclick="filterReportsByType('tasks')">تقارير المهام</div>
+                    <div class="report-history-tab" onclick="filterReportsByType('recommendations')">التوصيات</div>
+                </div>
+
+                <div class="reports-list" id="reportsList">
+                    <!-- سيتم ملؤها ديناميكيًا -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== GLOBAL STATE =====
+        let trainers = [];
+        let currentTrainee = null;
+        let searchFilters = {
+            name: '',
+            specialty: 'all',
+            status: 'all'
+        };
+        let isSearchActive = false;
+
+        // Question navigation state
+        let currentQuestionIndices = {
+            general: 0,
+            professional: 0,
+            personality: 0
+        };
+        
+        // Store question answers
+        let questionAnswers = {
+            general: {},
+            professional: {},
+            personality: {}
+        };
+
+        // Store current trainee's tasks
+        let currentTraineeTasks = [];
+
+        // Store user recommendations
+        let userRecommendations = [];
+
+        // Store reports history
+        let reportsHistory = [];
+
+        // Departments Data
+        const departments = {
+            'it': { name: 'تقنية المعلومات', color: '#667eea', icon: '💻' },
+            'design': { name: 'التصميم الجرافيكي', color: '#ec4899', icon: '🎨' },
+            'marketing': { name: 'التسويق الرقمي', color: '#10b981', icon: '📊' },
+            'management': { name: 'الإدارة', color: '#f59e0b', icon: '👔' },
+            'finance': { name: 'المالية', color: '#8b5cf6', icon: '💰' },
+            'engineering': { name: 'الهندسة', color: '#3b82f6', icon: '⚙️' },
+            'sales': { name: 'المبيعات', color: '#ef4444', icon: '📈' }
+        };
+
+        // تخصصات المقابلات إلى تخصصات المتدربين
+        const specialtyMapping = {
+            'هندسة البرمجيات': 'it',
+            'علوم الحاسب': 'it',
+            'نظم المعلومات': 'it',
+            'هندسة الشبكات': 'it',
+            'أمن المعلومات': 'it',
+            'تطوير تطبيقات الجوال': 'it',
+            'علوم البيانات': 'it',
+            'تصميم تجربة المستخدم': 'design',
+            'التسويق الرقمي': 'marketing',
+            'إدارة نظم المعلومات': 'management',
+            'الذكاء الاصطناعي': 'engineering'
+        };
+
+        // ===== PERFORMANCE QUESTIONS (45 QUESTIONS) =====
+        const performanceQuestions = {
+            general: [
+                {
+                    id: 1,
+                    text: "هل يظهر المتدرب التزاماً تاماً بمواعيد الحضور والانصراف والاجتماعات؟",
+                    category: "الانضباط والالتزام"
+                },
+                {
+                    id: 2,
+                    text: "ما مدى تقبل المتدرب للنقد البناء وتعديل سلوكه بناءً عليه؟",
+                    category: "التطوير الذاتي"
+                },
+                {
+                    id: 3,
+                    text: "هل يبادر المتدرب بمساعدة زملائه دون انتظار طلب رسمي؟",
+                    category: "العمل الجماعي"
+                },
+                {
+                    id: 4,
+                    text: "هل يلتزم المتدرب بالزي الرسمي وبروتوكولات التواصل المعتمدة في الشركة؟",
+                    category: "الاحترافية"
+                },
+                {
+                    id: 5,
+                    text: "ما مستوى مرونة المتدرب عند تغيير المهام أو الأولويات بشكل مفاجئ؟",
+                    category: "المرونة"
+                },
+                {
+                    id: 6,
+                    text: "هل يحترم المتدرب التسلسل الهرمي والقوانين الداخلية للمؤسسة؟",
+                    category: "الاحترام التنظيمي"
+                },
+                {
+                    id: 7,
+                    text: "ما مدى قدرة المتدرب على إدارة الصراعات البسيطة مع زملائه بحكمة؟",
+                    category: "حل النزاعات"
+                },
+                {
+                    id: 8,
+                    text: "هل يظهر المتدرب شغفاً حقيقياً وفضولاً للتعلم عن تاريخ ورؤية الشركة؟",
+                    category: "الانتماء المؤسسي"
+                },
+                {
+                    id: 9,
+                    text: "ما مدى صدق وشفافية المتدرب عند ارتكاب الأخطاء أو مواجهة تأخير؟",
+                    category: "النزاهة"
+                },
+                {
+                    id: 10,
+                    text: "هل يحافظ المتدرب على بيئة عمل نظيفة ومنظمة (رقمياً وفيزيائياً)؟",
+                    category: "التنظيم"
+                },
+                {
+                    id: 11,
+                    text: "ما مدى قدرة المتدرب على بناء علاقات مهنية إيجابية مع مختلف الأقسام؟",
+                    category: "العلاقات المهنية"
+                },
+                {
+                    id: 12,
+                    text: "هل يمتلك المتدرب مهارات استماع فعالة قبل مقاطعة الحديث أو الرد؟",
+                    category: "الاتصال"
+                },
+                {
+                    id: 13,
+                    text: "ما مستوى اتزان المتدرب الانفعالي في المواقف التي تتطلب صبراً؟",
+                    category: "الذكاء العاطفي"
+                },
+                {
+                    id: 14,
+                    text: "هل يشارك المتدرب في الفعاليات الجماعية أو المناقشات غير الرسمية بفعالية؟",
+                    category: "المشاركة المجتمعية"
+                },
+                {
+                    id: 15,
+                    text: "ما مدى وعي المتدرب بتأثير لغة جسده وأسلوبه على الآخرين؟",
+                    category: "الوعي الاجتماعي"
+                }
+            ],
+            professional: [
+                {
+                    id: 1,
+                    text: "ما مدى دقة المتدرب في تسليم المهام دون أخطاء إملائية أو فنية متكررة؟",
+                    category: "الدقة والجودة"
+                },
+                {
+                    id: 2,
+                    text: "هل يمتلك المتدرب مهارة ترتيب الأولويات وإنجاز المهام العاجلة أولاً؟",
+                    category: "إدارة الوقت"
+                },
+                {
+                    id: 3,
+                    text: "ما مستوى قدرة المتدرب على البحث المستقل عن حلول قبل سؤال المشرف؟",
+                    category: "المبادرة"
+                },
+                {
+                    id: 4,
+                    text: "هل يلتزم المتدرب بالمعايير التقنية (Coding Standards/Design Guidelines) المتبعة؟",
+                    category: "الامتثال للمعايير"
+                },
+                {
+                    id: 5,
+                    text: "ما مدى سرعة استيعاب المتدرب للبرمجيات أو الأدوات التقنية الجديدة؟",
+                    category: "التعلم السريع"
+                },
+                {
+                    id: 6,
+                    text: "هل يستطيع المتدرب العمل تحت الضغط مع الحفاظ على جودة المخرجات؟",
+                    category: "التحمل تحت الضغط"
+                },
+                {
+                    id: 7,
+                    text: "ما مدى قدرة المتدرب على تقديم تقارير دورية واضحة عن تقدمه في العمل؟",
+                    category: "التواصل المهني"
+                },
+                {
+                    id: 8,
+                    text: "هل يمتلك المتدرب مهارات تحليلية تمكنه من تفكيك المشكلات الكبيرة لمهام صغيرة؟",
+                    category: "التحليل"
+                },
+                {
+                    id: 9,
+                    text: "ما مستوى اهتمام المتدرب بالتفاصيل الدقيقة التي قد يغفل عنها الآخرون؟",
+                    category: "الاهتمام بالتفاصيل"
+                },
+                {
+                    id: 10,
+                    text: "هل يظهر المتدرب قدرة على التنبؤ بالمخاطر أو المشكلات قبل وقوعها؟",
+                    category: "التفكير الاستباقي"
+                },
+                {
+                    id: 11,
+                    text: "ما مدى التزام المتدرب بتوثيق (Documentation) الخطوات التي قام بها؟",
+                    category: "التوثيق"
+                },
+                {
+                    id: 12,
+                    text: "هل يمتلك المتدرب مهارة تلخيص المعلومات المعقدة وتبسيطها للآخرين؟",
+                    category: "التلخيص والتبسيط"
+                },
+                {
+                    id: 13,
+                    text: "ما مستوى كفاءة المتدرب في استخدام أدوات إدارة المهام (مثل Jira أو Trello)؟",
+                    category: "الكفاءة التقنية"
+                },
+                {
+                    id: 14,
+                    text: "هل يسعى المتدرب لزيادة جودة العمل بما يتجاوز سقف التوقعات المطلوب؟",
+                    category: "التفوق"
+                },
+                {
+                    id: 15,
+                    text: "ما مدى قدرة المتدرب على التعلم من الأخطاء التقنية وعدم تكرارها؟",
+                    category: "التعلم من الأخطاء"
+                }
+            ],
+            personality: [
+                {
+                    id: 1,
+                    text: "هل يميل المتدرب للمبادرة وطرح أفكار تطويرية (تفكير ريادي)؟",
+                    category: "الريادة"
+                },
+                {
+                    id: 2,
+                    text: "ما مدى قدرة المتدرب على التفكير خارج الصندوق لحل المشكلات المزمنة؟",
+                    category: "الإبداع"
+                },
+                {
+                    id: 3,
+                    text: "هل يفضل المتدرب العمل الفردي العميق أم العمل الجماعي التفاعلي؟",
+                    category: "أسلوب العمل"
+                },
+                {
+                    id: 4,
+                    text: "ما مستوى ثقة المتدرب بنفسه عند عرض أفكاره أمام مجموعة؟",
+                    category: "الثقة بالنفس"
+                },
+                {
+                    id: 5,
+                    text: "هل يمتلك المتدرب سمة الصمود (Resilience) عند فشل مشروع أو مهمة؟",
+                    category: "الصمود"
+                },
+                {
+                    id: 6,
+                    text: "ما مدى فضول المتدرب المعرفي في مجالات خارج تخصصه المباشر؟",
+                    category: "الفضول المعرفي"
+                },
+                {
+                    id: 7,
+                    text: "هل يظهر المتدرب ميلاً لتنظيم وتوجيه الآخرين (سمة قيادية)؟",
+                    category: "القيادة"
+                },
+                {
+                    id: 8,
+                    text: "ما مدى اهتمام المتدرب بالجانب الجمالي والإبداعي في مخرجاته؟",
+                    category: "الجمالية والإبداع"
+                },
+                {
+                    id: 9,
+                    text: "هل يتسم المتدرب بالهدوء والتركيز العالي في البيئات المزدحمة؟",
+                    category: "الهدوء والتركيز"
+                },
+                {
+                    id: 10,
+                    text: "ما مدى تقبل المتدرب للمخاطرة المدروسة مقابل التمسك بالروتين الآمن؟",
+                    category: "تقبل المخاطرة"
+                },
+                {
+                    id: 11,
+                    text: "هل يمتلك المتدرب قدرة على إقناع الآخرين بوجهة نظره بمنطقية؟",
+                    category: "الإقناع"
+                },
+                {
+                    id: 12,
+                    text: "ما مدى وعي المتدرب بنقاط قوته وضعفه الشخصية (الوعي الذاتي)؟",
+                    category: "الوعي الذاتي"
+                },
+                {
+                    id: 13,
+                    text: "هل يظهر المتدرب صبراً في المهام الطويلة التي تتطلب نفساً طويلاً؟",
+                    category: "الصبر"
+                },
+                {
+                    id: 14,
+                    text: "ما مدى تعاطف المتدرب وفهمه لاحتياجات العملاء أو المستخدمين النهائيين؟",
+                    category: "التعاطف"
+                },
+                {
+                    id: 15,
+                    text: "هل يمتلك المتدرب طموحاً واضحاً وخطة مرسومة لمستقبله المهني؟",
+                    category: "الطموح والتخطيط"
+                }
+            ]
+        };
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('نظام إدارة المتدربين - التهيئة...');
+            
+            // تحديث شريط التحميل
+            updateLoadingProgress(30);
+            
+            // تحميل البيانات
+            setTimeout(() => {
+                loadTrainers();
+                renderTrainersGrid();
+                updateRecordsBadge();
+                
+                // إعداد نموذج إضافة متدرب
+                document.getElementById('trainerForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    addTrainer();
+                });
+                
+                // إعداد التاريخ الافتراضي
+                const today = new Date();
+                const nextMonth = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+                document.getElementById('startDate').value = today.toISOString().split('T')[0];
+                document.getElementById('endDate').value = nextMonth.toISOString().split('T')[0];
+                
+                // إعداد البحث
+                document.getElementById('searchName').addEventListener('keyup', function(event) {
+                    if (event.key === 'Enter') performSearch();
+                });
+                
+                // إعداد عناصر التوصيات
+                const matchSlider = document.getElementById('matchPercentageSlider');
+                if (matchSlider) {
+                    matchSlider.addEventListener('input', function() {
+                        document.getElementById('matchPercentageValue').textContent = this.value + '%';
+                    });
+                }
+                
+                // إعداد أدوات التقييم
+                setupPerformanceTabs();
+                
+                updateLoadingProgress(100);
+                
+                // إخفاء مؤشر التحميل بعد 500 مللي ثانية
+                setTimeout(() => {
+                    hideLoadingIndicator();
+                }, 500);
+                
+            }, 300);
+        });
+
+        // ===== LOADING INDICATOR FUNCTIONS =====
+        function updateLoadingProgress(percent) {
+            const loadingBar = document.getElementById('loadingBar');
+            if (loadingBar) {
+                loadingBar.style.width = percent + '%';
+            }
+        }
+
+        function hideLoadingIndicator() {
+            const loadingIndicator = document.getElementById('loading');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('hidden');
+            }
+            
+            if (mainContent) {
+                mainContent.classList.add('loaded');
+            }
+            
+            // إزالة المؤشر من DOM بعد الانتهاء من التحريك
+            setTimeout(() => {
+                if (loadingIndicator && loadingIndicator.parentNode) {
+                    loadingIndicator.style.display = 'none';
+                }
+            }, 500);
+        }
+
+        // ===== STORAGE =====
+        function loadTrainers() {
+            try {
+                const saved = localStorage.getItem('provance_trainers');
+                if (saved) {
+                    trainers = JSON.parse(saved);
+                    console.log(`تم تحميل ${trainers.length} متدرب من التخزين`);
+                }
+                
+                // تحميل بيانات المقابلات المقبولة
+                loadAcceptedStudentsFromInterviews();
+                
+            } catch (error) {
+                console.error('خطأ في تحميل بيانات المتدربين:', error);
+                loadSampleTrainers();
+            }
+        }
+
+        function loadAcceptedStudentsFromInterviews() {
+            try {
+                // جلب بيانات المقابلات من التخزين المحلي
+                const interviewData = localStorage.getItem('provance_interview_students');
+                
+                if (!interviewData) {
+                    console.log('لا توجد بيانات مقابلات في التخزين');
+                    return;
+                }
+                
+                const interviewStudents = JSON.parse(interviewData);
+                
+                // فلترة الطلاب المقبولين فقط
+                const acceptedStudents = interviewStudents.filter(student => 
+                    student.decision === 'accepted'
+                );
+                
+                console.log(`تم العثور على ${acceptedStudents.length} طالب مقبول من المقابلات`);
+                
+                if (acceptedStudents.length === 0) {
+                    console.log('لا توجد طلاب مقبولين في المقابلات');
+                    return;
+                }
+                
+                // تحويل بيانات المقابلات إلى تنسيق بيانات المتدربين
+                const newTrainers = acceptedStudents.map(student => {
+                    // التعيين بين تخصصات المقابلات وتخصصات المتدربين
+                    const mappedSpecialty = specialtyMapping[student.specialty] || 'it';
+                    
+                    // إنشاء بريد إلكتروني افتراضي
+                    const email = `${student.name.replace(/\s+/g, '.').toLowerCase()}@provance.com`;
+                    
+                    // إنشاء رقم هاتف افتراضي
+                    const phone = `+9665${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
+                    
+                    // استخدام تاريخ بدء التدريب من بيانات القبول، أو تاريخ اليوم كافتراضي
+                    const startDate = student.trainingStartDate || new Date().toISOString().split('T')[0];
+                    
+                    // حساب تاريخ الانتهاء (6 أشهر بعد تاريخ البدء)
+                    const endDate = new Date(startDate);
+                    endDate.setMonth(endDate.getMonth() + 6);
+                    
+                    return {
+                        id: student.id || 'TRN-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                        name: student.name,
+                        email: email,
+                        phone: phone,
+                        specialty: mappedSpecialty,
+                        startDate: startDate,
+                        endDate: endDate.toISOString().split('T')[0],
+                        notes: student.acceptNotes || 'تم قبوله من المقابلة - ' + student.specialty,
+                        performance: Math.floor(Math.random() * 30) + 70,
+                        attendance: Math.floor(Math.random() * 25) + 75,
+                        tasks: 0,
+                        status: 'active',
+                        avatar: student.name.charAt(0),
+                        source: 'interview',
+                        interviewData: {
+                            decisionDate: student.decisionDate,
+                            decisionBy: student.decisionBy,
+                            interviewTime: student.interviewTime,
+                            attendanceTime: student.attendanceTime
+                        },
+                        // إضافة سجل المهام والتقارير
+                        tasksHistory: [],
+                        reportsHistory: []
+                    };
+                });
+                
+                // تجنب التكرار - التحقق من عدم وجود متدربين بنفس الاسم
+                newTrainers.forEach(newTrainer => {
+                    const exists = trainers.some(existingTrainer => 
+                        existingTrainer.name === newTrainer.name
+                    );
+                    
+                    if (!exists) {
+                        trainers.push(newTrainer);
+                    }
+                });
+                
+                // حفظ البيانات المحدثة
+                saveTrainers();
+                
+                console.log(`تمت إضافة ${newTrainers.length} متدرب جديد من المقابلات`);
+                
+                if (newTrainers.length > 0) {
+                    showNotification(`تم تحميل ${newTrainers.length} متدرب من المقابلات المقبولة`, 'success');
+                }
+                
+            } catch (error) {
+                console.error('خطأ في تحميل بيانات المقابلات:', error);
+            }
+        }
+
+        function saveTrainers() {
+            try {
+                localStorage.setItem('provance_trainers', JSON.stringify(trainers));
+                console.log(`تم حفظ ${trainers.length} متدرب في التخزين`);
+            } catch (error) {
+                console.error('خطأ في حفظ بيانات المتدربين:', error);
+            }
+        }
+
+        function loadSampleTrainers() {
+            const sampleTrainers = [
+                { 
+                    id: 'TRN-001',
+                    name: 'أحمد محمد',
+                    email: 'ahmed@provance.com',
+                    phone: '+966501234567',
+                    specialty: 'it',
+                    startDate: '2024-01-15',
+                    endDate: '2024-06-15',
+                    notes: 'متدرب متميز في تطوير الويب',
+                    performance: 92,
+                    attendance: 95,
+                    tasks: 18,
+                    status: 'active',
+                    avatar: 'أ',
+                    tasksHistory: [],
+                    reportsHistory: []
+                }
+            ];
+            
+            trainers = sampleTrainers;
+            saveTrainers();
+        }
+
+        // ===== TRAINER MANAGEMENT =====
+        function addTrainer() {
+            const formData = {
+                id: 'TRN-' + Date.now(),
+                name: document.getElementById('trainerName').value,
+                email: document.getElementById('trainerEmail').value,
+                phone: document.getElementById('trainerPhone').value,
+                specialty: document.getElementById('trainerSpecialty').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                notes: document.getElementById('trainerNotes').value,
+                performance: Math.floor(Math.random() * 30) + 70,
+                attendance: Math.floor(Math.random() * 25) + 75,
+                tasks: 0,
+                status: 'active',
+                avatar: document.getElementById('trainerName').value.charAt(0),
+                source: 'manual',
+                tasksHistory: [],
+                reportsHistory: []
+            };
+
+            // التحقق من البيانات المطلوبة
+            if (!formData.name || !formData.email || !formData.specialty) {
+                showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+
+            // إضافة المتدرب
+            trainers.unshift(formData);
+            saveTrainers();
+            
+            // تحديث الواجهة
+            renderTrainersGrid();
+            updateRecordsBadge();
+            
+            // إعادة تعيين النموذج
+            document.getElementById('trainerForm').reset();
+            
+            // عرض إشعار النجاح
+            showNotification('تم إضافة المتدرب بنجاح!', 'success');
+            
+            // التبديل إلى قسم السجلات
+            showTrainersSection('records');
+        }
+
+        function renderTrainersGrid() {
+            const grid = document.getElementById('traineesGrid');
+            if (!grid) return;
+            
+            const trainersToDisplay = getFilteredTrainers();
+            
+            if (trainersToDisplay.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i class="fas fa-users"></i>
+                        <h3>لا يوجد متدربين</h3>
+                        <p>${isSearchActive ? 'لم يتم العثور على متدربين يتطابقون مع معايير البحث' : 'لم يتم إضافة أي متدربين بعد'}</p>
+                        ${!isSearchActive ? `
+                        <button class="btn btn-primary" onclick="loadAcceptedStudentsFromInterviews(); renderTrainersGrid();" style="margin-top: 15px;">
+                            <i class="fas fa-sync-alt"></i> تحميل المتدربين من المقابلات
+                        </button>
+                        ` : ''}
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = trainersToDisplay.map(trainer => {
+                const department = departments[trainer.specialty] || departments['it'];
+                let cardClass = 'trainee-card';
+                
+                // تحديد فئة البطاقة بناءً على الأداء
+                if (trainer.performance >= 90) cardClass += ' excellent';
+                else if (trainer.performance >= 80) cardClass += ' good';
+                else if (trainer.performance >= 70) cardClass += ' average';
+                else cardClass += ' poor';
+                
+                let statusBadge = '';
+                if (trainer.status === 'active') {
+                    statusBadge = `<span class="status-badge status-active"><i class="fas fa-check-circle"></i> نشط</span>`;
+                } else if (trainer.status === 'completed') {
+                    statusBadge = `<span class="status-badge status-active"><i class="fas fa-graduation-cap"></i> مكتمل</span>`;
+                } else {
+                    statusBadge = `<span class="status-badge status-inactive"><i class="fas fa-times-circle"></i> غير نشط</span>`;
+                }
+                
+                // إضافة علامة مصدر البيانات
+                const sourceBadge = trainer.source === 'interview' ? 
+                    `<span class="badge-success" style="position: absolute; top: 10px; left: 10px; padding: 3px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; background: var(--color-success);">من المقابلة</span>` : '';
+                
+                // عد التقارير المرسلة
+                const reportsCount = trainer.reportsHistory ? trainer.reportsHistory.length : 0;
+                
+                return `
+                    <div class="${cardClass}" onclick="openTraineeDetails('${trainer.id}')">
+                        ${sourceBadge}
+                        <div class="trainee-header">
+                            <div class="trainee-avatar">${trainer.avatar}</div>
+                            <div class="trainee-info">
+                                <div class="trainee-name">${trainer.name}</div>
+                                <div class="trainee-position">${department.name}</div>
+                                ${statusBadge}
+                            </div>
+                        </div>
+                        
+                        <div class="trainee-details">
+                            <div class="trainee-detail">
+                                <span class="label">البريد الإلكتروني:</span>
+                                <span class="value">${trainer.email}</span>
+                            </div>
+                            <div class="trainee-detail">
+                                <span class="label">تاريخ البدء:</span>
+                                <span class="value">${formatDate(trainer.startDate)}</span>
+                            </div>
+                            <div class="trainee-detail">
+                                <span class="label">تاريخ الانتهاء:</span>
+                                <span class="value">${formatDate(trainer.endDate)}</span>
+                            </div>
+                            ${trainer.source === 'interview' && trainer.interviewData ? `
+                            <div class="trainee-detail">
+                                <span class="label" style="color: var(--color-info);">تاريخ المقابلة:</span>
+                                <span class="value" style="color: var(--color-info);">${formatDate(trainer.interviewData.interviewTime)}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="trainee-stats">
+                            <div class="trainee-stat">
+                                <div class="trainee-stat-value success">${trainer.performance}%</div>
+                                <div class="trainee-stat-label">الأداء</div>
+                            </div>
+                            <div class="trainee-stat">
+                                <div class="trainee-stat-value primary">${trainer.attendance}%</div>
+                                <div class="trainee-stat-label">الحضور</div>
+                            </div>
+                            <div class="trainee-stat">
+                                <div class="trainee-stat-value warning">${trainer.tasks || 0}</div>
+                                <div class="trainee-stat-label">المهام</div>
+                            </div>
+                            <div class="trainee-stat">
+                                <div class="trainee-stat-value info">${reportsCount}</div>
+                                <div class="trainee-stat-label">التقارير</div>
+                            </div>
+                        </div>
+                        
+                        <div class="trainee-actions">
+                            <button class="btn btn-outline btn-small" onclick="event.stopPropagation(); editTrainer('${trainer.id}')">
+                                <i class="fas fa-edit"></i> تعديل
+                            </button>
+                            <button class="btn btn-outline btn-small" onclick="event.stopPropagation(); deleteTrainer('${trainer.id}')">
+                                <i class="fas fa-trash"></i> حذف
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getFilteredTrainers() {
+            if (!isSearchActive) {
+                return trainers;
+            }
+            
+            return trainers.filter(trainer => {
+                // Name search filter
+                if (searchFilters.name) {
+                    const searchTerm = searchFilters.name.toLowerCase();
+                    const matchesName = trainer.name.toLowerCase().includes(searchTerm);
+                    
+                    if (!matchesName) {
+                        return false;
+                    }
+                }
+                
+                // Specialty filter
+                if (searchFilters.specialty !== 'all' && trainer.specialty !== searchFilters.specialty) {
+                    return false;
+                }
+                
+                // Status filter
+                if (searchFilters.status !== 'all' && trainer.status !== searchFilters.status) {
+                    return false;
+                }
+                
+                return true;
+            });
+        }
+
+        function editTrainer(id) {
+            const trainer = trainers.find(t => t.id === id);
+            if (!trainer) {
+                showNotification('لم يتم العثور على المتدرب', 'error');
+                return;
+            }
+            
+            // ملء النموذج ببيانات المتدرب
+            document.getElementById('trainerName').value = trainer.name;
+            document.getElementById('trainerEmail').value = trainer.email;
+            document.getElementById('trainerPhone').value = trainer.phone;
+            document.getElementById('trainerSpecialty').value = trainer.specialty;
+            document.getElementById('startDate').value = trainer.startDate;
+            document.getElementById('endDate').value = trainer.endDate;
+            document.getElementById('trainerNotes').value = trainer.notes;
+            
+            // حذف المتدرب القديم
+            deleteTrainer(id, false);
+            
+            // التبديل إلى قسم الإنشاء
+            showTrainersSection('create');
+            
+            showNotification('يمكنك الآن تعديل بيانات المتدرب', 'info');
+        }
+
+        function deleteTrainer(id, showAlert = true) {
+            if (showAlert && !confirm('هل أنت متأكد من حذف هذا المتدرب؟')) {
+                return;
+            }
+            
+            trainers = trainers.filter(trainer => trainer.id !== id);
+            saveTrainers();
+            renderTrainersGrid();
+            updateRecordsBadge();
+            
+            if (showAlert) {
+                showNotification('تم حذف المتدرب بنجاح', 'success');
+            }
+        }
+
+        // ===== SEARCH SYSTEM =====
+        function performSearch() {
+            // Get search values
+            searchFilters.name = document.getElementById('searchName').value.trim();
+            searchFilters.specialty = document.getElementById('searchSpecialty').value;
+            searchFilters.status = document.getElementById('searchStatus').value;
+            
+            isSearchActive = true;
+            
+            // Render filtered results
+            renderTrainersGrid();
+            
+            // Show search results info
+            const searchResultsInfo = document.getElementById('searchResultsInfo');
+            const searchResultsText = document.getElementById('searchResultsText');
+            const filteredTrainers = getFilteredTrainers();
+            
+            searchResultsText.innerHTML = `تم العثور على <strong>${filteredTrainers.length}</strong> نتيجة`;
+            searchResultsInfo.style.display = 'flex';
+        }
+
+        function resetSearch() {
+            // Reset search inputs
+            document.getElementById('searchName').value = '';
+            document.getElementById('searchSpecialty').value = 'all';
+            document.getElementById('searchStatus').value = 'all';
+            
+            // Reset filters
+            searchFilters = {
+                name: '',
+                specialty: 'all',
+                status: 'all'
+            };
+            
+            isSearchActive = false;
+            
+            // Hide search results info
+            document.getElementById('searchResultsInfo').style.display = 'none';
+            
+            // Render all trainers
+            renderTrainersGrid();
+        }
+
+        // ===== TRAINEE DETAILS SYSTEM =====
+        function openTraineeDetails(traineeId) {
+            const trainee = trainers.find(t => t.id === traineeId);
+            if (!trainee) {
+                showNotification('لم يتم العثور على بيانات المتدرب', 'error');
+                return;
+            }
+            
+            currentTrainee = trainee;
+            
+            // Update trainee details
+            document.getElementById('traineeDetailsName').textContent = trainee.name;
+            document.getElementById('traineeDetailsPosition').textContent = `${departments[trainee.specialty].name}`;
+            document.getElementById('traineeDetailsAvatar').innerHTML = trainee.avatar;
+            
+            // Update section titles
+            document.getElementById('performanceTraineeName').textContent = trainee.name;
+            document.getElementById('taskTraineeName').textContent = trainee.name;
+            document.getElementById('recommendationsTraineeName').textContent = trainee.name;
+            document.getElementById('reportsHistoryTraineeName').textContent = trainee.name;
+            
+            // Initialize performance questions
+            initializePerformanceQuestions();
+            
+            // Load trainee's specific data
+            loadTraineeTasks();
+            loadTraineeRecommendations();
+            loadReportsHistory();
+            
+            // Show trainee details container
+            document.getElementById('traineeDetailsContainer').style.display = 'block';
+            
+            // Reset to options grid
+            showTraineeOptions();
+        }
+
+        function closeTraineeDetails() {
+            document.getElementById('traineeDetailsContainer').style.display = 'none';
+            currentTrainee = null;
+        }
+
+        function showTraineeOptions() {
+            document.getElementById('performanceReportsContainer').style.display = 'none';
+            document.getElementById('taskReportsContainer').style.display = 'none';
+            document.getElementById('recommendationsContainer').style.display = 'none';
+            document.getElementById('reportsHistoryContainer').style.display = 'none';
+            document.getElementById('traineeOptionsGrid').style.display = 'grid';
+        }
+
+        function showPerformanceReports() {
+            document.getElementById('traineeOptionsGrid').style.display = 'none';
+            document.getElementById('performanceReportsContainer').style.display = 'block';
+            document.getElementById('taskReportsContainer').style.display = 'none';
+            document.getElementById('recommendationsContainer').style.display = 'none';
+            document.getElementById('reportsHistoryContainer').style.display = 'none';
+        }
+
+        function showTaskReports() {
+            document.getElementById('traineeOptionsGrid').style.display = 'none';
+            document.getElementById('performanceReportsContainer').style.display = 'none';
+            document.getElementById('taskReportsContainer').style.display = 'block';
+            document.getElementById('recommendationsContainer').style.display = 'none';
+            document.getElementById('reportsHistoryContainer').style.display = 'none';
+            
+            // تحميل مهام المتدرب الحالي
+            loadTraineeTasks();
+        }
+
+        function showRecommendations() {
+            document.getElementById('traineeOptionsGrid').style.display = 'none';
+            document.getElementById('performanceReportsContainer').style.display = 'none';
+            document.getElementById('taskReportsContainer').style.display = 'none';
+            document.getElementById('recommendationsContainer').style.display = 'block';
+            document.getElementById('reportsHistoryContainer').style.display = 'none';
+        }
+
+        function showReportsHistory() {
+            document.getElementById('traineeOptionsGrid').style.display = 'none';
+            document.getElementById('performanceReportsContainer').style.display = 'none';
+            document.getElementById('taskReportsContainer').style.display = 'none';
+            document.getElementById('recommendationsContainer').style.display = 'none';
+            document.getElementById('reportsHistoryContainer').style.display = 'block';
+            
+            // تحميل سجل التقارير
+            loadReportsHistory();
+        }
+
+        // ===== PERFORMANCE EVALUATION SYSTEM =====
+        function setupPerformanceTabs() {
+            const tabs = document.querySelectorAll('.performance-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    switchPerformanceSection(section);
+                });
+            });
+        }
+
+        function initializePerformanceQuestions() {
+            // Reset question indices
+            currentQuestionIndices = {
+                general: 0,
+                professional: 0,
+                personality: 0
+            };
+            
+            // Reset answers
+            questionAnswers = {
+                general: {},
+                professional: {},
+                personality: {}
+            };
+            
+            // Load first question for each section
+            loadQuestion('general');
+            loadQuestion('professional');
+            loadQuestion('personality');
+            
+            // Show general section by default
+            switchPerformanceSection('general');
+        }
+
+        function loadQuestion(section) {
+            const questions = performanceQuestions[section];
+            const question = questions[currentQuestionIndices[section]];
+            const questionNumber = document.getElementById(`${section}QuestionNumber`);
+            const questionText = document.getElementById(`${section}QuestionText`);
+            const ratingValue = document.getElementById(`${section}RatingValue`);
+            
+            if (!question || !questionNumber || !questionText || !ratingValue) return;
+            
+            // Update question card
+            questionNumber.textContent = `السؤال ${currentQuestionIndices[section] + 1} من ${questions.length}`;
+            questionText.textContent = question.text;
+            
+            // Reset stars
+            const starRating = document.getElementById(`${section}StarRating`);
+            if (starRating) {
+                const stars = starRating.querySelectorAll('.star');
+                stars.forEach(star => {
+                    star.classList.remove('active');
+                    
+                    // Remove existing event listeners
+                    const newStar = star.cloneNode(true);
+                    star.parentNode.replaceChild(newStar, star);
+                });
+                
+                // Re-select stars after cloning
+                const newStars = document.getElementById(`${section}StarRating`).querySelectorAll('.star');
+                newStars.forEach(star => {
+                    star.addEventListener('click', function() {
+                        const value = parseInt(this.getAttribute('data-value'));
+                        
+                        // Update stars appearance
+                        newStars.forEach(s => {
+                            if (parseInt(s.getAttribute('data-value')) <= value) {
+                                s.classList.add('active');
+                            } else {
+                                s.classList.remove('active');
+                            }
+                        });
+                        
+                        // Update rating display
+                        ratingValue.textContent = `التقييم: ${value}/5`;
+                        
+                        // Store the answer
+                        questionAnswers[section][question.id] = value;
+                        
+                        // Update progress
+                        updateProgress(section);
+                        
+                        // Update question number buttons
+                        updateQuestionNumberButtons(section);
+                    });
+                });
+            }
+            
+            // Load existing answer if available
+            if (questionAnswers[section][question.id]) {
+                const value = questionAnswers[section][question.id];
+                ratingValue.textContent = `التقييم: ${value}/5`;
+                
+                // Update stars appearance
+                const stars = starRating.querySelectorAll('.star');
+                stars.forEach(star => {
+                    if (parseInt(star.getAttribute('data-value')) <= value) {
+                        star.classList.add('active');
+                    } else {
+                        star.classList.remove('active');
+                    }
+                });
+            } else {
+                ratingValue.textContent = 'لم يتم التقييم بعد';
+            }
+            
+            // Update progress
+            updateProgress(section);
+            
+            // Update question number buttons
+            updateQuestionNumberButtons(section);
+        }
+
+        function updateProgress(section) {
+            const questions = performanceQuestions[section];
+            const answeredCount = Object.keys(questionAnswers[section]).length;
+            const progressPercentage = (answeredCount / questions.length) * 100;
+            
+            // Update progress bar
+            const progressFill = document.getElementById(`${section}ProgressFill`);
+            const progressText = document.getElementById(`${section}ProgressText`);
+            
+            if (progressFill) {
+                progressFill.style.width = `${progressPercentage}%`;
+            }
+            
+            if (progressText) {
+                progressText.textContent = `${answeredCount}/${questions.length}`;
+            }
+        }
+
+        function updateQuestionNumberButtons(section) {
+            const container = document.getElementById(`${section}QuestionNumbers`);
+            if (!container) return;
+            
+            const questions = performanceQuestions[section];
+            container.innerHTML = '';
+            
+            for (let i = 0; i < questions.length; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'question-number-btn';
+                btn.textContent = i + 1;
+                
+                if (i === currentQuestionIndices[section]) {
+                    btn.classList.add('active');
+                }
+                
+                if (questionAnswers[section][questions[i].id]) {
+                    btn.classList.add('answered');
+                }
+                
+                btn.addEventListener('click', function() {
+                    currentQuestionIndices[section] = i;
+                    loadQuestion(section);
+                });
+                
+                container.appendChild(btn);
+            }
+        }
+
+        function nextQuestion(section) {
+            const questions = performanceQuestions[section];
+            const newIndex = currentQuestionIndices[section] + 1;
+            
+            if (newIndex < questions.length) {
+                currentQuestionIndices[section] = newIndex;
+                loadQuestion(section);
+            } else if (section === 'general') {
+                // إذا كان هذا القسم الأخير في السلوك العام، انتقل إلى القسم المهني
+                switchPerformanceSection('professional');
+            } else if (section === 'professional') {
+                // إذا كان هذا القسم الأخير في السلوك المهني، انتقل إلى السمات الشخصية
+                switchPerformanceSection('personality');
+            }
+        }
+
+        function previousQuestion(section) {
+            const newIndex = currentQuestionIndices[section] - 1;
+            
+            if (newIndex >= 0) {
+                currentQuestionIndices[section] = newIndex;
+                loadQuestion(section);
+            } else if (section === 'professional') {
+                // إذا كنا في السؤال الأول من القسم المهني، ارجع إلى القسم العام
+                switchPerformanceSection('general');
+                currentQuestionIndices.general = performanceQuestions.general.length - 1;
+                loadQuestion('general');
+            } else if (section === 'personality') {
+                // إذا كنا في السؤال الأول من السمات الشخصية، ارجع إلى القسم المهني
+                switchPerformanceSection('professional');
+                currentQuestionIndices.professional = performanceQuestions.professional.length - 1;
+                loadQuestion('professional');
+            }
+        }
+
+        function switchPerformanceSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.performance-section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            
+            // Deactivate all tabs
+            document.querySelectorAll('.performance-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Activate selected section and tab
+            document.getElementById(`${section}Section`).classList.add('active');
+            document.querySelector(`[data-section="${section}"]`).classList.add('active');
+            
+            // Load current question for this section
+            loadQuestion(section);
+        }
+
+        function previousSection(section) {
+            if (section === 'professional') {
+                switchPerformanceSection('general');
+            } else if (section === 'personality') {
+                switchPerformanceSection('professional');
+            }
+        }
+
+        function saveSectionProgress(section) {
+            const answeredCount = Object.keys(questionAnswers[section]).length;
+            const totalQuestions = performanceQuestions[section].length;
+            
+            showNotification(`تم حفظ ${answeredCount} من أصل ${totalQuestions} سؤالاً في قسم ${section}`, 'success');
+            
+            // تخزين التقدم في localStorage
+            if (currentTrainee) {
+                const progressKey = `progress_${currentTrainee.id}_${section}`;
+                localStorage.setItem(progressKey, JSON.stringify({
+                    answers: questionAnswers[section],
+                    currentIndex: currentQuestionIndices[section],
+                    lastUpdated: new Date().toISOString()
+                }));
+            }
+        }
+
+        // ===== TASK MANAGEMENT SYSTEM =====
+        function loadTraineeTasks() {
+            if (!currentTrainee) return;
+            
+            // تحميل مهام المتدرب من بياناته
+            currentTraineeTasks = currentTrainee.tasksHistory || [];
+            
+            // تحديث واجهة المهام
+            renderTraineeTasks();
+        }
+
+        function renderTraineeTasks() {
+            const container = document.getElementById('taskList');
+            if (!container) return;
+            
+            if (currentTraineeTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-tasks"></i>
+                        <h3>لا توجد مهام مسجلة بعد</h3>
+                        <p>ابدأ بإضافة أول مهمة للمتدرب</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = currentTraineeTasks.map((task, index) => {
+                const date = new Date(task.date || task.createdAt);
+                const formattedDate = date.toLocaleDateString('ar-EG');
+                
+                return `
+                    <div class="task-item">
+                        <div class="task-info">
+                            <div class="task-title">${task.title || 'مهمة بدون عنوان'}</div>
+                            <div class="task-meta">
+                                <div><i class="fas fa-calendar-alt"></i> ${formattedDate}</div>
+                                <div><i class="fas fa-user"></i> ${task.createdBy || 'المشرف'}</div>
+                                ${task.fileName ? `<div><i class="fas fa-file"></i> ${task.fileName}</div>` : ''}
+                            </div>
+                            ${task.description ? `<div style="margin-top: 10px; color: var(--text-secondary);">${task.description}</div>` : ''}
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn btn-outline btn-small" onclick="editTraineeTask(${index})">
+                                <i class="fas fa-edit"></i> تعديل
+                            </button>
+                            <button class="btn btn-warning btn-small" onclick="deleteTraineeTask(${index})">
+                                <i class="fas fa-trash"></i> حذف
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // حالة الوضع الحالي
+        let currentTaskMode = 'manual';
+
+        // التبديل بين اليدوي والرفع بشياكة
+        function setTaskMode(mode) {
+            currentTaskMode = mode;
+            const manual = document.getElementById('manualInputArea');
+            const upload = document.getElementById('uploadInputArea');
+            const btnM = document.getElementById('btnManualMode');
+            const btnU = document.getElementById('btnUploadMode');
+
+            if (mode === 'manual') {
+                manual.style.display = 'block';
+                upload.style.display = 'none';
+                btnM.classList.add('active');
+                btnU.classList.remove('active');
+            } else {
+                manual.style.display = 'none';
+                upload.style.display = 'block';
+                btnU.classList.add('active');
+                btnM.classList.remove('active');
+            }
+        }
+
+        // تحديث اسم الملف عند الاختيار
+        function updateFileStatus() {
+            const file = document.getElementById('proFileHandle').files[0];
+            if (file) {
+                document.getElementById('fileNameDisplay').textContent = "تم اختيار: " + file.name + " (" + (file.size/1024).toFixed(1) + " KB)";
+            }
+        }
+
+        // وظيفة التحميل كملف للجهاز (Export)
+        function exportTaskReport() {
+            const title = document.getElementById('proTaskTitle').value || 'تقرير_إنجاز';
+            const content = document.getElementById('proTaskContent').value;
+            const date = document.getElementById('proTaskDate').value || new Date().toISOString().split('T')[0];
+
+            if (currentTaskMode === 'manual' && content) {
+                const fullReport = `
+=========================================
+      نظام PROVANCE لإدارة التدريب
+=========================================
+عنوان المهمة: ${title}
+تاريخ التوثيق: ${date}
+المتدرب: ${currentTrainee.name}
+-----------------------------------------
+محتوى التقرير:
+${content}
+-----------------------------------------
+تم استخراج هذا الملف آلياً كسجل رسمي.
+                `;
+                
+                const blob = new Blob([fullReport], { type: 'text/plain;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${title}_${currentTrainee.name}.txt`;
+                link.click();
+                showNotification('تم تحميل الملف بنجاح', 'success');
+            } else {
+                showNotification('يرجى كتابة محتوى لتصديره أولاً', 'warning');
+            }
+        }
+
+        // وظيفة حفظ المهمة في النظام
+        function saveTraineeTask() {
+            if (!currentTrainee) {
+                showNotification('يرجى اختيار متدرب أولاً', 'error');
+                return;
+            }
+
+            const title = document.getElementById('proTaskTitle').value;
+            const date = document.getElementById('proTaskDate').value || new Date().toISOString().split('T')[0];
+            
+            if (!title) {
+                showNotification('يرجى إدخال عنوان للمهمة', 'warning');
+                return;
+            }
+
+            const newTask = {
+                id: 'TASK-' + Date.now(),
+                title: title,
+                date: date,
+                createdAt: new Date().toISOString(),
+                createdBy: 'مدير التدريب',
+                type: currentTaskMode,
+                description: currentTaskMode === 'manual' ? document.getElementById('proTaskContent').value : 'ملف مرفوع',
+                fileName: currentTaskMode === 'upload' ? document.getElementById('proFileHandle').files[0]?.name : null
+            };
+
+            // إضافة المهمة إلى قائمة مهام المتدرب
+            currentTraineeTasks.unshift(newTask);
+            
+            // تحديث بيانات المتدرب
+            if (!currentTrainee.tasksHistory) currentTrainee.tasksHistory = [];
+            currentTrainee.tasksHistory.unshift(newTask);
+            
+            // زيادة عدد المهام
+            currentTrainee.tasks = (currentTrainee.tasks || 0) + 1;
+            
+            // حفظ التغييرات
+            saveTrainers();
+            
+            // تحديث الواجهة
+            renderTraineeTasks();
+            
+            // إعادة تعيين النموذج
+            document.getElementById('proTaskTitle').value = '';
+            document.getElementById('proTaskDate').value = '';
+            document.getElementById('proTaskContent').value = '';
+            document.getElementById('proFileHandle').value = '';
+            document.getElementById('fileNameDisplay').textContent = '';
+            
+            showNotification('تم حفظ المهمة بنجاح', 'success');
+        }
+
+        function editTraineeTask(index) {
+            const task = currentTraineeTasks[index];
+            if (!task) return;
+            
+            // Fill form with existing data
+            document.getElementById('proTaskTitle').value = task.title;
+            document.getElementById('proTaskDate').value = task.date;
+            document.getElementById('proTaskContent').value = task.description || '';
+            
+            // Set mode based on task type
+            setTaskMode(task.type === 'upload' ? 'upload' : 'manual');
+            
+            // Remove the old task
+            currentTraineeTasks.splice(index, 1);
+            if (currentTrainee.tasksHistory) {
+                currentTrainee.tasksHistory.splice(index, 1);
+            }
+            
+            // Reload tasks
+            renderTraineeTasks();
+            
+            showNotification('يمكنك الآن تعديل المهمة', 'info');
+        }
+
+        function deleteTraineeTask(index) {
+            if (!confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
+            
+            currentTraineeTasks.splice(index, 1);
+            if (currentTrainee.tasksHistory) {
+                currentTrainee.tasksHistory.splice(index, 1);
+            }
+            
+            // تقليل عدد المهام
+            currentTrainee.tasks = Math.max(0, (currentTrainee.tasks || 1) - 1);
+            
+            saveTrainers();
+            renderTraineeTasks();
+            showNotification('تم حذف المهمة بنجاح', 'success');
+        }
+
+        // ===== RECOMMENDATIONS SYSTEM =====
+        function loadTraineeRecommendations() {
+            if (!currentTrainee) return;
+            
+            // تحميل توصيات المتدرب من البيانات المحفوظة
+            const savedRecs = localStorage.getItem(`recommendations_${currentTrainee.id}`);
+            userRecommendations = savedRecs ? JSON.parse(savedRecs) : [];
+            
+            // عرض التوصيات
+            renderRecommendations();
+        }
+
+        function generateRecommendations() {
+            if (!currentTrainee) return;
+            
+            // تحليل نتائج التقييم لتوليد توصيات ذكية
+            const performanceSummary = calculatePerformanceSummary();
+            
+            // إضافة توصيات ذكية بناءً على النتائج
+            const smartRecommendations = generateSmartRecommendations(performanceSummary);
+            
+            userRecommendations = [...smartRecommendations];
+            
+            // حفظ التوصيات
+            localStorage.setItem(`recommendations_${currentTrainee.id}`, JSON.stringify(userRecommendations));
+            
+            // عرض التوصيات
+            renderRecommendations();
+            
+            // الانتقال إلى قسم التوصيات
+            showRecommendations();
+            
+            showNotification('تم توليد التوصيات الذكية بنجاح', 'success');
+        }
+
+        function generateSmartRecommendations(performanceSummary) {
+            const recommendations = [];
+            
+            // تحليل نتائج الأقسام
+            const { sectionScores } = performanceSummary;
+            
+            // توصيات بناءً على قسم السلوك العام
+            if (sectionScores.general.average < 70) {
+                recommendations.push({
+                    id: 'REC-GEN-001',
+                    field: 'تدريب على المهارات السلوكية',
+                    reason: 'نتائج تقييم السلوك العام تشير إلى الحاجة لتحسين المهارات السلوكية والانضباط الوظيفي',
+                    match: 90
+                });
+            } else if (sectionScores.general.average > 85) {
+                recommendations.push({
+                    id: 'REC-GEN-002',
+                    field: 'تطوير مهارات القيادة',
+                    reason: 'يظهر المتدرب تميزاً في السلوك العام مما يؤهله لتطوير مهارات القيادة',
+                    match: 85
+                });
+            }
+            
+            // توصيات بناءً على قسم السلوك المهني
+            if (sectionScores.professional.average < 70) {
+                recommendations.push({
+                    id: 'REC-PRO-001',
+                    field: 'تدريب تقني متخصص',
+                    reason: 'نتائج تقييم السلوك المهني تشير إلى الحاجة لتحسين المهارات التقنية والمهنية',
+                    match: 88
+                });
+            } else if (sectionScores.professional.average > 85) {
+                recommendations.push({
+                    id: 'REC-PRO-002',
+                    field: 'مشاريع متقدمة في التخصص',
+                    reason: 'يظهر المتدرب تميزاً في الأداء المهني مما يؤهله لمشاريع أكثر تقدماً',
+                    match: 92
+                });
+            }
+            
+            // توصيات بناءً على قسم السمات الشخصية
+            if (sectionScores.personality.average < 70) {
+                recommendations.push({
+                    id: 'REC-PER-001',
+                    field: 'تدريب على المهارات الشخصية',
+                    reason: 'نتائج تقييم السمات الشخصية تشير إلى الحاجة لتحسين المهارات الشخصية',
+                    match: 85
+                });
+            } else if (sectionScores.personality.average > 85) {
+                recommendations.push({
+                    id: 'REC-PER-002',
+                    field: 'مناصب تتطلب إبداعاً وريادة',
+                    reason: 'يظهر المتدرب سمات شخصية متميزة تؤهله لمناصب إبداعية وريادية',
+                    match: 95
+                });
+            }
+            
+            // توصية عامة بناءً على النتيجة الإجمالية
+            if (performanceSummary.overallScore > 90) {
+                recommendations.push({
+                    id: 'REC-OVER-001',
+                    field: 'برنامج المواهب الواعدة',
+                    reason: 'المتدرب حاصل على تقييم ممتاز ويوصى بضمه لبرنامج المواهب الواعدة في الشركة',
+                    match: 98
+                });
+            }
+            
+            // توصية افتراضية
+            recommendations.push({
+                id: 'REC-DEF-001',
+                field: 'استمرارية التطوير المهني',
+                reason: 'مواصلة التطوير المهني من خلال الدورات التدريبية وورش العمل المتخصصة',
+                match: 80
+            });
+            
+            return recommendations;
+        }
+
+        function renderRecommendations() {
+            const container = document.getElementById('recommendationsGrid');
+            if (!container) return;
+            
+            if (userRecommendations.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i class="fas fa-star"></i>
+                        <h3>لا توجد توصيات بعد</h3>
+                        <p>انقر على زر "توليد التوصيات" في قسم تقارير الأداء</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = userRecommendations.map((rec, index) => {
+                let matchColor = 'var(--color-primary)';
+                if (rec.match >= 80) matchColor = 'var(--color-success)';
+                else if (rec.match >= 60) matchColor = 'var(--color-primary)';
+                else matchColor = 'var(--color-orange)';
+                
+                return `
+                    <div class="recommendation-card">
+                        <div class="recommendation-header">
+                            <div class="recommendation-title">${rec.field}</div>
+                        </div>
+                        <div class="recommendation-description">${rec.reason}</div>
+                        <div class="recommendation-match">
+                            <div class="match-bar">
+                                <div class="match-fill" style="width: ${rec.match}%; background: ${matchColor}"></div>
+                            </div>
+                            <div class="match-percentage">${rec.match}% توافق</div>
+                        </div>
+                        <div class="recommendation-actions">
+                            <button class="btn btn-outline btn-small" onclick="editRecommendation(${index})">
+                                <i class="fas fa-edit"></i> تعديل
+                            </button>
+                            <button class="btn btn-warning btn-small" onclick="deleteRecommendation(${index})">
+                                <i class="fas fa-trash"></i> حذف
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addNewRecommendation() {
+            const field = document.getElementById('newRecommendationField').value;
+            const reason = document.getElementById('newRecommendationReason').value;
+            const match = document.getElementById('matchPercentageSlider').value;
+            
+            if (!field || !reason) {
+                showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+            
+            const newRecommendation = {
+                id: 'REC-' + Date.now(),
+                field: field,
+                reason: reason,
+                match: parseInt(match)
+            };
+            
+            userRecommendations.push(newRecommendation);
+            
+            // حفظ التوصيات
+            localStorage.setItem(`recommendations_${currentTrainee.id}`, JSON.stringify(userRecommendations));
+            
+            // تحديث الواجهة
+            renderRecommendations();
+            
+            // Reset form
+            document.getElementById('newRecommendationField').value = '';
+            document.getElementById('newRecommendationReason').value = '';
+            document.getElementById('matchPercentageSlider').value = '50';
+            document.getElementById('matchPercentageValue').textContent = '50%';
+            
+            showNotification('تم إضافة التوصية بنجاح', 'success');
+        }
+
+        function editRecommendation(index) {
+            const rec = userRecommendations[index];
+            
+            // Fill form with existing data
+            document.getElementById('newRecommendationField').value = rec.field;
+            document.getElementById('newRecommendationReason').value = rec.reason;
+            document.getElementById('matchPercentageSlider').value = rec.match;
+            document.getElementById('matchPercentageValue').textContent = rec.match + '%';
+            
+            // Remove the old recommendation
+            userRecommendations.splice(index, 1);
+            
+            // حفظ التغييرات
+            localStorage.setItem(`recommendations_${currentTrainee.id}`, JSON.stringify(userRecommendations));
+            
+            // تحديث الواجهة
+            renderRecommendations();
+            
+            showNotification('يمكنك الآن تعديل التوصية', 'info');
+        }
+
+        function deleteRecommendation(index) {
+            if (!confirm('هل أنت متأكد من حذف هذه التوصية؟')) return;
+            
+            userRecommendations.splice(index, 1);
+            
+            // حفظ التغييرات
+            localStorage.setItem(`recommendations_${currentTrainee.id}`, JSON.stringify(userRecommendations));
+            
+            // تحديث الواجهة
+            renderRecommendations();
+            
+            showNotification('تم حذف التوصية بنجاح', 'success');
+        }
+
+        // ===== REPORTS HISTORY SYSTEM =====
+        function loadReportsHistory() {
+            if (!currentTrainee) return;
+            
+            // تحميل سجل التقارير من بيانات المتدرب
+            reportsHistory = currentTrainee.reportsHistory || [];
+            
+            // عرض جميع التقارير
+            filterReportsByType('all');
+        }
+
+        function filterReportsByType(type) {
+            const tabs = document.querySelectorAll('.report-history-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // تحديد التبويب النشط
+            if (type === 'all') {
+                document.querySelector('[onclick="filterReportsByType(\'all\')"]').classList.add('active');
+            } else if (type === 'performance') {
+                document.querySelector('[onclick="filterReportsByType(\'performance\')"]').classList.add('active');
+            } else if (type === 'tasks') {
+                document.querySelector('[onclick="filterReportsByType(\'tasks\')"]').classList.add('active');
+            } else if (type === 'recommendations') {
+                document.querySelector('[onclick="filterReportsByType(\'recommendations\')"]').classList.add('active');
+            }
+            
+            // فلترة التقارير حسب النوع
+            const filteredReports = type === 'all' 
+                ? reportsHistory 
+                : reportsHistory.filter(report => report.type === type);
+            
+            // عرض التقارير المفلترة
+            displayReportsHistory(filteredReports);
+        }
+
+        function displayReportsHistory(reports) {
+            const container = document.getElementById('reportsList');
+            if (!container) return;
+            
+            if (reports.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <h3>لا توجد تقارير مرسلة بعد</h3>
+                        <p>قم بإرسال تقرير أولاً لظهوره هنا</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = reports.map((report, index) => {
+                const date = new Date(report.date || report.sentDate);
+                const formattedDate = date.toLocaleDateString('ar-EG', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                let typeText = '';
+                let typeColor = '';
+                
+                switch(report.type) {
+                    case 'performance':
+                        typeText = 'تقرير الأداء';
+                        typeColor = 'var(--color-primary)';
+                        break;
+                    case 'tasks':
+                        typeText = 'تقارير المهام';
+                        typeColor = 'var(--color-success)';
+                        break;
+                    case 'recommendations':
+                        typeText = 'التوصيات';
+                        typeColor = 'var(--color-info)';
+                        break;
+                    default:
+                        typeText = 'تقرير';
+                        typeColor = 'var(--color-orange)';
+                }
+                
+                return `
+                    <div class="report-history-item">
+                        <div class="report-history-header">
+                            <div class="report-history-title">${report.title || typeText}</div>
+                            <div class="report-history-date">${formattedDate}</div>
+                        </div>
+                        <div class="report-history-content">
+                            ${report.description || 'تقرير مرسل من قبل المشرف'}
+                        </div>
+                        <div class="report-history-meta">
+                            <span class="report-history-type" style="background: ${typeColor}">${typeText}</span>
+                            <span class="report-history-status ${report.status === 'sent' ? '' : 'pending'}">
+                                ${report.status === 'sent' ? 'تم الإرسال' : 'معلق'}
+                            </span>
+                            <span style="color: var(--text-secondary);">
+                                <i class="fas fa-user"></i> ${report.sentBy || 'المشرف'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addReportToHistory(type, title, description) {
+            if (!currentTrainee) return;
+            
+            const newReport = {
+                id: 'REP-' + Date.now(),
+                type: type,
+                title: title,
+                description: description,
+                date: new Date().toISOString(),
+                sentBy: 'مدير التدريب',
+                status: 'sent'
+            };
+            
+            // إضافة التقرير إلى سجل التقارير
+            reportsHistory.unshift(newReport);
+            
+            // تحديث بيانات المتدرب
+            if (!currentTrainee.reportsHistory) currentTrainee.reportsHistory = [];
+            currentTrainee.reportsHistory.unshift(newReport);
+            
+            // حفظ التغييرات
+            saveTrainers();
+            
+            // تحديث سجل التقارير إذا كان مفتوحاً
+            if (document.getElementById('reportsHistoryContainer').style.display === 'block') {
+                loadReportsHistory();
+            }
+            
+            return newReport;
+        }
+
+        // ===== REPORT SENDING SYSTEM =====
+        function sendPerformanceReports() {
+            if (!currentTrainee) {
+                showNotification('يرجى اختيار متدرب أولاً', 'error');
+                return;
+            }
+
+            // جمع بيانات تقارير الأداء
+            const performanceData = {
+                general: getSectionAnswers('general'),
+                professional: getSectionAnswers('professional'),
+                personality: getSectionAnswers('personality'),
+                sentDate: new Date().toISOString(),
+                sentBy: 'مدير التدريب',
+                summary: calculatePerformanceSummary()
+            };
+
+            // إضافة التقرير إلى السجل
+            const report = addReportToHistory(
+                'performance',
+                'تقرير تقييم الأداء',
+                `تقرير أداء كامل يحتوي على ${performanceData.summary.totalAnswered} سؤالاً من أصل 45`
+            );
+
+            // تخزين البيانات في localStorage (سيمكن المتدرب من الوصول إليها)
+            const reportsKey = `company_reports_${currentTrainee.id}`;
+            const existingReports = JSON.parse(localStorage.getItem(reportsKey)) || {};
+            existingReports.performance = performanceData;
+            localStorage.setItem(reportsKey, JSON.stringify(existingReports));
+
+            showNotification('تم إرسال تقارير الأداء بنجاح', 'success');
+            
+            // تحديث عد المهام
+            if (currentTrainee) {
+                currentTrainee.tasks = (currentTrainee.tasks || 0) + 1;
+                saveTrainers();
+            }
+        }
+
+        function calculatePerformanceSummary() {
+            let totalScore = 0;
+            let totalQuestions = 0;
+            
+            // حساب متوسط النقاط لكل قسم
+            const sections = ['general', 'professional', 'personality'];
+            const sectionScores = {};
+            
+            sections.forEach(section => {
+                const answers = questionAnswers[section];
+                const questions = performanceQuestions[section];
+                let sectionTotal = 0;
+                let answeredCount = 0;
+                
+                questions.forEach(q => {
+                    if (answers[q.id]) {
+                        sectionTotal += answers[q.id];
+                        answeredCount++;
+                    }
+                });
+                
+                if (answeredCount > 0) {
+                    const average = (sectionTotal / (answeredCount * 5)) * 100;
+                    sectionScores[section] = {
+                        average: Math.round(average),
+                        answered: answeredCount,
+                        total: questions.length
+                    };
+                    totalScore += sectionTotal;
+                    totalQuestions += answeredCount;
+                } else {
+                    sectionScores[section] = {
+                        average: 0,
+                        answered: 0,
+                        total: questions.length
+                    };
+                }
+            });
+            
+            // حساب النتيجة الإجمالية
+            const overallAverage = totalQuestions > 0 ? (totalScore / (totalQuestions * 5)) * 100 : 0;
+            
+            return {
+                overallScore: Math.round(overallAverage),
+                sectionScores: sectionScores,
+                totalAnswered: totalQuestions,
+                totalQuestions: 45
+            };
+        }
+
+        function sendTaskReports() {
+            if (!currentTrainee) {
+                showNotification('يرجى اختيار متدرب أولاً', 'error');
+                return;
+            }
+
+            if (currentTraineeTasks.length === 0) {
+                showNotification('لا توجد مهام لإرسالها', 'warning');
+                return;
+            }
+
+            // جمع بيانات تقارير المهام
+            const taskData = {
+                tasks: currentTraineeTasks.map(task => ({
+                    title: task.title,
+                    date: task.date,
+                    description: task.description,
+                    type: task.type,
+                    fileName: task.fileName,
+                    supervisor: task.createdBy
+                })),
+                sentDate: new Date().toISOString(),
+                sentBy: 'مدير التدريب',
+                totalTasks: currentTraineeTasks.length
+            };
+
+            // إضافة التقرير إلى السجل
+            const report = addReportToHistory(
+                'tasks',
+                'تقرير المهام المنجزة',
+                `تقرير يحتوي على ${currentTraineeTasks.length} مهمة منجزة`
+            );
+
+            // تخزين البيانات
+            const reportsKey = `company_reports_${currentTrainee.id}`;
+            const existingReports = JSON.parse(localStorage.getItem(reportsKey)) || {};
+            existingReports.tasks = taskData;
+            localStorage.setItem(reportsKey, JSON.stringify(existingReports));
+
+            showNotification(`تم إرسال ${currentTraineeTasks.length} مهمة بنجاح`, 'success');
+        }
+
+        function sendRecommendations() {
+            if (!currentTrainee) {
+                showNotification('يرجى اختيار متدرب أولاً', 'error');
+                return;
+            }
+
+            if (userRecommendations.length === 0) {
+                showNotification('لا توجد توصيات لإرسالها', 'warning');
+                return;
+            }
+
+            // جمع بيانات التوصيات
+            const recommendationsData = {
+                recommendations: userRecommendations.map(rec => ({
+                    field: rec.field,
+                    reason: rec.reason,
+                    match: rec.match,
+                    status: 'pending',
+                    approvedBy: '',
+                    approvalDate: ''
+                })),
+                sentDate: new Date().toISOString(),
+                sentBy: 'مدير التدريك',
+                totalRecommendations: userRecommendations.length
+            };
+
+            // إضافة التقرير إلى السجل
+            const report = addReportToHistory(
+                'recommendations',
+                'تقرير التوصيات المهنية',
+                `تقرير يحتوي على ${userRecommendations.length} توصية مهنية`
+            );
+
+            // تخزين البيانات
+            const reportsKey = `company_reports_${currentTrainee.id}`;
+            const existingReports = JSON.parse(localStorage.getItem(reportsKey)) || {};
+            existingReports.recommendations = recommendationsData;
+            localStorage.setItem(reportsKey, JSON.stringify(existingReports));
+
+            showNotification(`تم إرسال ${userRecommendations.length} توصية بنجاح`, 'success');
+        }
+
+        function sendAllReports() {
+            if (!currentTrainee) {
+                showNotification('يرجى اختيار متدرب أولاً', 'error');
+                return;
+            }
+
+            // إرسال جميع التقارير
+            let reportsSent = 0;
+            
+            // إرسال تقرير الأداء إذا كان هناك إجابات
+            const totalAnswered = Object.keys(questionAnswers.general).length + 
+                                 Object.keys(questionAnswers.professional).length + 
+                                 Object.keys(questionAnswers.personality).length;
+            
+            if (totalAnswered > 0) {
+                sendPerformanceReports();
+                reportsSent++;
+            }
+            
+            // إرسال تقرير المهام إذا كان هناك مهام
+            if (currentTraineeTasks.length > 0) {
+                sendTaskReports();
+                reportsSent++;
+            }
+            
+            // إرسال التوصيات إذا كانت موجودة
+            if (userRecommendations.length > 0) {
+                sendRecommendations();
+                reportsSent++;
+            }
+            
+            if (reportsSent > 0) {
+                showNotification(`تم إرسال ${reportsSent} تقارير بنجاح!`, 'success');
+            } else {
+                showNotification('لا توجد تقارير لإرسالها', 'warning');
+            }
+        }
+
+        function getSectionAnswers(section) {
+            const questions = performanceQuestions[section];
+            return questions.map((q, index) => {
+                const answer = questionAnswers[section][q.id] || 0;
+                return {
+                    id: q.id,
+                    text: q.text,
+                    rating: answer,
+                    feedback: `التقييم: ${answer}/5`,
+                    category: q.category
+                };
+            });
+        }
+
+        // ===== NOTIFICATION SYSTEM =====
+        function showNotification(message, type) {
+            // إزالة أي إشعارات سابقة
+            const existingNotification = document.querySelector('.notification-toast');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // تحديد لون الإشعار حسب النوع
+            let backgroundColor = 'var(--color-success)';
+            if (type === 'error') backgroundColor = 'var(--color-warning)';
+            else if (type === 'info') backgroundColor = 'var(--color-info)';
+            else if (type === 'warning') backgroundColor = 'var(--color-orange)';
+            
+            // إنشاء الإشعار
+            const notification = document.createElement('div');
+            notification.className = `notification-toast ${type}`;
+            notification.style.backgroundColor = backgroundColor;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : type === 'info' ? 'info-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            // إضافة الأنميشن
+            notification.style.animation = 'slideIn 0.3s ease';
+            
+            document.body.appendChild(notification);
+            
+            // إزالة الإشعار بعد 3 ثواني
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // ===== NAVIGATION =====
+        function showTrainersSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(sec => sec.style.display = 'none');
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected section
+            const sectionElement = document.getElementById(`${section}-section`);
+            if (sectionElement) {
+                sectionElement.style.display = 'block';
+            }
+
+            // Add active class to selected button
+            document.querySelector(`.nav-button.${section}`).classList.add('active');
+        }
+
+        function updateRecordsBadge() {
+            const badge = document.getElementById('recordsBadge');
+            if (badge) badge.textContent = trainers.length;
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mainSidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function toggleUserMenu() {
+            showNotification('قائمة المستخدم - سيتم تطويرها لاحقًا', 'info');
+        }
+
+        function logout() {
+            if (confirm('هل تريد تسجيل الخروج؟')) {
+                showNotification('جارٍ تسجيل الخروج...', 'info');
+                setTimeout(() => {
+                    window.location.href = 'company-login.html';
+                }, 1500);
+            }
+        }
+
+        // ===== HELPER FUNCTIONS =====
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('ar-EG', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            } catch (e) {
+                return 'تاريخ غير صالح';
+            }
+        }
+
+        // تعيين الوضع الافتراضي عند الفتح
+        document.addEventListener('DOMContentLoaded', function() {
+            setTaskMode('manual');
+        });
+    </script>
+</body>
+</html>

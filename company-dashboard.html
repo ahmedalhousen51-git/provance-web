@@ -1,0 +1,2457 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provance Control - نظام إدارة التدريب الذكي</title>
+    
+    <!-- تحسينات التحميل -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --color-primary: #667eea;
+            --color-primary-dark: #5568d3;
+            --color-success: #11998e;
+            --color-warning: #f5576c;
+            --color-info: #17a2b8;
+            --color-purple: #9c27b0;
+            --color-orange: #ff9800;
+            --bg-ultra-dark: #0a0e27;
+            --bg-dark: #0f1419;
+            --bg-darker: #1a1f2e;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-bg-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --sidebar-width: 280px;
+            --header-height: 80px;
+            --border-radius: 16px;
+            --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-ultra-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            font-size: 16px;
+        }
+
+        /* Loading Indicator */
+        #loading {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            background: var(--bg-ultra-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: var(--glass-border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+
+        .loading-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--color-primary);
+            transition: width 0.3s ease;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--glass-border);
+            z-index: 1000;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s var(--transition-smooth);
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .sidebar-brand-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sidebar-brand-text h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            margin-bottom: 5px;
+        }
+
+        .sidebar-brand-text p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Navigation */
+        .nav-menu {
+            padding: 20px 0;
+            flex-grow: 1;
+        }
+
+        .nav-section-title {
+            padding: 12px 20px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .nav-link-advanced {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s var(--transition-smooth);
+            margin: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .nav-link-advanced:hover {
+            background: var(--glass-bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-link-advanced.active {
+            background: rgba(102, 126, 234, 0.15);
+            color: var(--color-primary);
+        }
+
+        .nav-icon {
+            width: 20px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .nav-text {
+            flex: 1;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .collapsed .nav-text {
+            display: none;
+        }
+
+        .nav-badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .badge-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .badge-info {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid var(--glass-border);
+            margin-top: auto;
+        }
+
+        .logout-btn-advanced {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .logout-btn-advanced:hover {
+            background: var(--color-warning);
+            border-color: transparent;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-right: var(--sidebar-width);
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+            transition: all 0.4s var(--transition-smooth);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .main-content.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .sidebar.collapsed + .main-content {
+            margin-right: 70px;
+        }
+
+        /* Header */
+        .header-advanced {
+            height: var(--header-height);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .sidebar-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--color-primary);
+            transform: rotate(90deg);
+        }
+
+        .page-title-advanced {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-profile-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-profile-header:hover {
+            background: var(--glass-bg-hover);
+        }
+
+        .user-avatar-small {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .user-info-header {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name-header {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .user-role-header {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Page Container */
+        .page-container {
+            padding: 25px;
+        }
+
+        /* Dashboard Specific Styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border-color: var(--color-primary);
+        }
+
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .stat-icon.primary {
+            background: var(--color-primary);
+        }
+
+        .stat-icon.success {
+            background: var(--color-success);
+        }
+
+        .stat-icon.warning {
+            background: var(--color-warning);
+        }
+
+        .stat-icon.info {
+            background: var(--color-info);
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .stat-change.positive {
+            color: var(--color-success);
+        }
+
+        .stat-change.negative {
+            color: var(--color-warning);
+        }
+
+        /* Charts Container */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--color-primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* Recent Activity */
+        .activity-list {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+        }
+
+        .activity-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--color-primary);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-item:hover {
+            background: var(--glass-bg-hover);
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Upcoming Interviews */
+        .interviews-list {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .interview-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .interview-item:last-child {
+            border-bottom: none;
+        }
+
+        .interview-item:hover {
+            background: var(--glass-bg-hover);
+        }
+
+        .interview-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .interview-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .interview-details {
+            flex: 1;
+        }
+
+        .interview-name {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .interview-position {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .interview-time {
+            text-align: right;
+        }
+
+        .interview-date {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .interview-status {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .status-scheduled {
+            background: rgba(17, 153, 142, 0.2);
+            color: var(--color-success);
+        }
+
+        .status-pending {
+            background: rgba(102, 126, 234, 0.2);
+            color: var(--color-primary);
+        }
+
+        /* Training Applications Section - الجديد */
+        .applications-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--color-primary);
+        }
+
+        /* شريط البحث الجديد */
+        .search-bar {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            background: var(--bg-darker);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 5px 15px;
+        }
+        .search-bar i {
+            color: var(--text-secondary);
+            margin-left: 10px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 10px 0;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+        }
+        .search-bar input::placeholder {
+            color: var(--text-secondary);
+        }
+        /* رسالة عدم وجود نتائج */
+        .no-results {
+            grid-column: 1/-1;
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .applications-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .application-card {
+            background: var(--bg-darker);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .application-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .application-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .application-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .application-info {
+            flex: 1;
+        }
+
+        .application-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .application-position {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .application-details {
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+        }
+
+        .detail-value {
+            font-weight: 600;
+        }
+
+        .application-status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .status-pending {
+            background: rgba(102, 126, 234, 0.2);
+            color: var(--color-primary);
+        }
+
+        .status-accepted {
+            background: rgba(17, 153, 142, 0.2);
+            color: var(--color-success);
+        }
+
+        .status-rejected {
+            background: rgba(245, 87, 108, 0.2);
+            color: var(--color-warning);
+        }
+
+        .application-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-darker);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--glass-border);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-darker);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .btn-info {
+            background: var(--color-info);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--glass-bg-hover);
+            border-color: var(--color-primary);
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.85rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .sidebar.collapsed + .main-content {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .header-advanced {
+                padding: 0 15px;
+            }
+            
+            .page-container {
+                padding: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+            
+            .applications-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .application-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Indicator -->
+    <div id="loading">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <h3 style="color: var(--color-primary); margin-bottom: 10px;">جاري تحميل نظام التدريب</h3>
+            <div class="loading-progress">
+                <div class="loading-progress-bar" id="loadingBar"></div>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">الرجاء الانتظار...</p>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="mainSidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <i class="fas fa-rocket"></i>
+            </div>
+            
+            <div class="sidebar-brand-text">
+                <h2>PROVANCE</h2>
+                <p>نظام إدارة التدريب</p>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="nav-menu">
+            <div class="nav-section-title">القائمة الرئيسية</div>
+            
+            <a class="nav-link-advanced" href="company-requests-control.html">
+                <div class="nav-icon"><i class="fas fa-cogs"></i></div>
+                <span class="nav-text">طلبات الأقسام</span>
+            </a>
+            
+            <a class="nav-link-advanced active" href="company-dashboard.html">
+                <div class="nav-icon"><i class="fas fa-home"></i></div>
+                <span class="nav-text">لوحة التحكم</span>
+                <span class="nav-badge badge-info" id="applicationsBadge">0</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-QR Code.html">
+                <div class="nav-icon"><i class="fas fa-qrcode"></i></div>
+                <span class="nav-text">نظام QR</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-trainers.html">
+                <div class="nav-icon"><i class="fas fa-users"></i></div>
+                <span class="nav-text">المتدربين</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-interviews.html">
+                <div class="nav-icon"><i class="fas fa-handshake"></i></div>
+                <span class="nav-text">المقابلات</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-profile.html">
+                <div class="nav-icon"><i class="fas fa-building"></i></div>
+                <span class="nav-text">الملف الشخصي</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-batches.html">
+                <div class="nav-icon"><i class="fas fa-layer-group"></i></div>
+                <span class="nav-text">إدارة الدفعات</span>
+            </a>
+
+            <div class="nav-section-title">التقارير والتحليلات</div>
+
+            <a class="nav-link-advanced" href="company-departments.html">
+                <div class="nav-icon"><i class="fas fa-sitemap"></i></div>
+                <span class="nav-text">تحليل الأقسام</span>
+            </a>
+
+            <a class="nav-link-advanced" href="company-notifications.html">
+                <div class="nav-icon"><i class="fas fa-bell"></i></div>
+                <span class="nav-text">الإشعارات</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <button class="logout-btn-advanced" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header-advanced">
+            <div class="header-left">
+                <div class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </div>
+                
+                <div>
+                    <div class="page-title-advanced">
+                        <div class="page-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <span>لوحة التحكم الرئيسية</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="user-profile-header" onclick="toggleUserMenu()">
+                    <div class="user-avatar-small">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="user-info-header">
+                        <div class="user-name-header">شركة التقنية المتطورة</div>
+                        <div class="user-role-header">مدير الموارد البشرية</div>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Container -->
+        <div class="page-container">
+            <!-- Welcome Section -->
+            <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.05) 100%); border: 2px solid var(--color-primary); border-radius: var(--border-radius); padding: 30px; margin-bottom: 30px;">
+                <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);">
+                        👋
+                    </div>
+                    <div style="flex: 1;">
+                        <h1 style="font-size: 2rem; font-weight: 900; margin-bottom: 10px; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                            مرحباً بك في بروفانس 
+                        </h1>
+                        <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 20px;">
+                            نظام إدارة التدريب المتقدم المدعوم بالذكاء الاصطناعي 🧠
+                        </p>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="window.location.href='company-trainers.html'">
+                                <i class="fas fa-users"></i> إدارة المتدرّبين
+                            </button>
+                            <button class="btn btn-success" onclick="window.location.href='company-interviews.html'">
+                                <i class="fas fa-handshake"></i> إدارة المقابلات
+                            </button>
+                            <button class="btn btn-outline" onclick="window.location.href='company-QR Code.html'">
+                                <i class="fas fa-qrcode"></i> نظام QR Code
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card" onclick="window.location.href='company-trainers.html'">
+                    <div class="stat-icon primary">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalTrainees">0</div>
+                        <div class="stat-label">إجمالي المتدرّبين</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> +0% هذا الشهر
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card" onclick="window.location.href='company-interviews.html'">
+                    <div class="stat-icon success">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalInterviews">0</div>
+                        <div class="stat-label">المقابلات المجدولة</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> +0 جديد
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card" onclick="window.location.href='company-departments.html'">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalDepartments">8</div>
+                        <div class="stat-label">الأقسام النشطة</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> +1 جديد
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card" onclick="window.location.href='company-notifications.html'">
+                    <div class="stat-icon info">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="unreadNotifications">0</div>
+                        <div class="stat-label">إشعارات غير مقروءة</div>
+                        <div class="stat-change negative">
+                            <i class="fas fa-arrow-down"></i> -0 اليوم
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Applications Section - الجديد مع شريط البحث -->
+            <div class="applications-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="fas fa-file-alt"></i>
+                        طلبات التدريب المتقدمين
+                        <span class="nav-badge badge-info" id="applicationsCount">0</span>
+                    </h3>
+                    <button class="btn btn-outline btn-small" onclick="refreshApplications()">
+                        <i class="fas fa-sync-alt"></i>
+                        تحديث
+                    </button>
+                </div>
+                
+                <!-- شريط البحث الجديد -->
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchApplications" placeholder="ابحث باسم المتقدم..." oninput="filterApplications(this.value)">
+                </div>
+                
+                <div class="applications-grid" id="applicationsGrid">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+                <!-- عنصر لعرض رسالة عدم وجود نتائج البحث -->
+                <div id="noResultsMessage" class="no-results" style="display: none;">لا توجد نتائج تطابق بحثك</div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-line"></i>
+                        أداء المتدرّبين
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-pie"></i>
+                        توزيع التخصصات
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="specialtiesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-list">
+                <h3 class="activity-title">
+                    <i class="fas fa-clock"></i>
+                    النشاطات الحديثة
+                </h3>
+                
+                <div id="recentActivities">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </div>
+
+            <!-- Upcoming Interviews -->
+            <div class="interviews-list">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 class="activity-title" style="margin: 0;">
+                        <i class="fas fa-calendar-alt"></i>
+                        المقابلات القادمة
+                    </h3>
+                    <button class="btn btn-outline" onclick="window.location.href='company-interviews.html'">
+                        <i class="fas fa-eye"></i> عرض الكل
+                    </button>
+                </div>
+                
+                <div id="upcomingInterviews">
+                    <!-- سيتم ملؤها ديناميكياً -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Accept Application Modal -->
+    <div class="modal-overlay" id="acceptModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">قبول طلب التدريب</h3>
+                <button class="modal-close" onclick="closeAcceptModal()">&times;</button>
+            </div>
+            
+            <div id="acceptForm">
+                <div class="form-group">
+                    <label class="form-label">اسم المتدرب</label>
+                    <input type="text" id="acceptStudentName" class="form-input" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">التخصص</label>
+                    <input type="text" id="acceptStudentField" class="form-input" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">موعد المقابلة *</label>
+                    <div style="position: relative;">
+                        <i class="fas fa-calendar-alt" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                        <input type="datetime-local" id="interviewDate" class="form-input" required style="padding-right: 15px; padding-left: 40px;">
+                    </div>
+                    <small style="color: var(--text-secondary); font-size: 0.8rem;">اختر التاريخ والوقت المناسب للمقابلة</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">ملاحظات إضافية (اختياري)</label>
+                    <textarea id="acceptNotes" class="form-textarea" placeholder="ملاحظات إضافية للطالب..."></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                    <button class="btn btn-success" onclick="confirmAcceptApplication()">
+                        <i class="fas fa-check"></i>
+                        تأكيد القبول وموعد المقابلة
+                    </button>
+                    <button class="btn btn-outline" onclick="closeAcceptModal()">
+                        <i class="fas fa-times"></i>
+                        إلغاء
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Application Modal -->
+    <div class="modal-overlay" id="rejectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">رفض طلب التدريب</h3>
+                <button class="modal-close" onclick="closeRejectModal()">&times;</button>
+            </div>
+            
+            <div id="rejectForm">
+                <div class="form-group">
+                    <label class="form-label">اسم المتدرب</label>
+                    <input type="text" id="rejectStudentName" class="form-input" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">التخصص</label>
+                    <input type="text" id="rejectStudentField" class="form-input" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">سبب الرفض *</label>
+                    <textarea id="rejectionReason" class="form-textarea" placeholder="اكتب سبب رفض الطلب..." required></textarea>
+                    <small style="color: var(--text-secondary); font-size: 0.8rem;">اكتب سبب رفض الطلب (سيتم إرساله للطالب)</small>
+                </div>
+                
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                    <button class="btn btn-warning" onclick="confirmRejectApplication()">
+                        <i class="fas fa-times"></i>
+                        تأكيد الرفض
+                    </button>
+                    <button class="btn btn-outline" onclick="closeRejectModal()">
+                        <i class="fas fa-times"></i>
+                        إلغاء
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="confirmationTitle">تأكيد العملية</h3>
+                <button class="modal-close" onclick="closeConfirmationModal()">&times;</button>
+            </div>
+            
+            <div style="padding: 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="width: 70px; height: 70px; border-radius: 50%; background: var(--color-success); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 20px; color: white;">
+                        <i class="fas fa-check" id="confirmationIcon"></i>
+                    </div>
+                    <div id="confirmationMessage" style="font-size: 1.1rem;"></div>
+                </div>
+                
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button class="btn btn-outline" onclick="closeConfirmationModal()">
+                        <i class="fas fa-times"></i>
+                        إغلاق
+                    </button>
+                    <button class="btn btn-success" id="confirmActionBtn" onclick="proceedAfterConfirmation()">
+                        <i class="fas fa-check"></i>
+                        متابعة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== GLOBAL STATE =====
+        let dashboardData = {
+            totalTrainees: 0,
+            totalInterviews: 0,
+            totalDepartments: 8,
+            unreadNotifications: 0,
+            performanceData: [85, 92, 78, 90, 88, 95, 82],
+            specialtiesData: [35, 25, 20, 15, 5],
+            applications: []
+        };
+
+        let currentApplication = null;
+        let pendingAction = null; // 'accept' or 'reject'
+        let confirmationCallback = null;
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('لوحة التحكم - التهيئة...');
+            
+            // تحديث شريط التحميل
+            updateLoadingProgress(30);
+            
+            // تحميل البيانات
+            setTimeout(() => {
+                // تحديث البيانات
+                updateDashboardStats();
+                loadApplications();
+                
+                // إنشاء الرسوم البيانية
+                createCharts();
+                
+                // تحميل النشاطات والمقابلات القادمة
+                loadRecentActivities();
+                loadUpcomingInterviews();
+                
+                updateLoadingProgress(100);
+                
+                // إخفاء مؤشر التحميل بعد 500 مللي ثانية
+                setTimeout(() => {
+                    hideLoadingIndicator();
+                }, 500);
+                
+            }, 300);
+
+            // تعيين توقيت المقابلة الافتراضي (بعد 3 أيام من اليوم)
+            const today = new Date();
+            const threeDaysLater = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+            threeDaysLater.setHours(10, 0, 0, 0);
+            const formattedDateTime = threeDaysLater.toISOString().slice(0, 16);
+            document.getElementById('interviewDate').value = formattedDateTime;
+            
+            // تحديث كل 30 ثانية لمراقبة الطلبات الجديدة
+            setInterval(checkForNewApplications, 30000);
+        });
+
+        // ===== LOADING INDICATOR FUNCTIONS =====
+        function updateLoadingProgress(percent) {
+            const loadingBar = document.getElementById('loadingBar');
+            if (loadingBar) {
+                loadingBar.style.width = percent + '%';
+            }
+        }
+
+        function hideLoadingIndicator() {
+            const loadingIndicator = document.getElementById('loading');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('hidden');
+            }
+            
+            if (mainContent) {
+                mainContent.classList.add('loaded');
+            }
+            
+            // إزالة المؤشر من DOM بعد الانتهاء من التحريك
+            setTimeout(() => {
+                if (loadingIndicator && loadingIndicator.parentNode) {
+                    loadingIndicator.style.display = 'none';
+                }
+            }, 500);
+        }
+
+        // ===== DASHBOARD FUNCTIONS =====
+        function updateDashboardStats() {
+            // تحديث الإحصائيات
+            document.getElementById('totalTrainees').textContent = dashboardData.totalTrainees;
+            document.getElementById('totalInterviews').textContent = dashboardData.totalInterviews;
+            document.getElementById('totalDepartments').textContent = dashboardData.totalDepartments;
+            document.getElementById('unreadNotifications').textContent = dashboardData.unreadNotifications;
+        }
+
+        function createCharts() {
+            // إنشاء مخطط أداء المتدرّبين
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            new Chart(performanceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4', 'الأسبوع 5', 'الأسبوع 6', 'الأسبوع 7'],
+                    datasets: [{
+                        label: 'معدل الأداء %',
+                        data: dashboardData.performanceData,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#ffffff',
+                                font: {
+                                    family: 'Tajawal',
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 70,
+                            max: 100,
+                            ticks: {
+                                color: '#a0aec0',
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#a0aec0'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // إنشاء مخطط توزيع التخصصات
+            const specialtiesCtx = document.getElementById('specialtiesChart').getContext('2d');
+            new Chart(specialtiesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['تقنية المعلومات', 'التصميم', 'التسويق', 'الإدارة', 'المالية'],
+                    datasets: [{
+                        data: dashboardData.specialtiesData,
+                        backgroundColor: [
+                            '#667eea',
+                            '#ec4899',
+                            '#10b981',
+                            '#f59e0b',
+                            '#8b5cf6'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#0a0e27'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                color: '#ffffff',
+                                font: {
+                                    family: 'Tajawal',
+                                    size: 12
+                                },
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function loadRecentActivities() {
+            const activitiesContainer = document.getElementById('recentActivities');
+            if (!activitiesContainer) return;
+            
+            // نشاطات افتراضية
+            activitiesContainer.innerHTML = `
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--color-success);">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">تم إضافة متدرّب جديد: أحمد محمد</div>
+                        <div class="activity-time">منذ 2 ساعة</div>
+                    </div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--color-primary);">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">تم جدولة مقابلة مع فاطمة عبدالله</div>
+                        <div class="activity-time">منذ 4 ساعات</div>
+                    </div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--color-warning);">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">تم إكمال 3 مهام تدريبية</div>
+                        <div class="activity-time">منذ 6 ساعات</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadUpcomingInterviews() {
+            const interviewsContainer = document.getElementById('upcomingInterviews');
+            if (!interviewsContainer) return;
+            
+            // الحصول على المقابلات القادمة من التخزين
+            try {
+                const savedInterviews = localStorage.getItem('provance_interview_students');
+                let interviews = [];
+                if (savedInterviews) {
+                    interviews = JSON.parse(savedInterviews);
+                }
+                
+                // تصفية المقابلات القادمة (بعد الوقت الحالي)
+                const now = new Date();
+                const upcoming = interviews.filter(i => {
+                    const interviewTime = new Date(i.interviewTime);
+                    return interviewTime > now && i.status === 'pending';
+                }).sort((a, b) => new Date(a.interviewTime) - new Date(b.interviewTime)).slice(0, 5);
+                
+                if (upcoming.length === 0) {
+                    interviewsContainer.innerHTML = `
+                        <div class="empty-state" style="padding: 20px;">
+                            <i class="fas fa-calendar-check"></i>
+                            <p>لا توجد مقابلات قادمة</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                interviewsContainer.innerHTML = upcoming.map(interview => `
+                    <div class="interview-item">
+                        <div class="interview-info">
+                            <div class="interview-avatar">${interview.name.charAt(0)}</div>
+                            <div class="interview-details">
+                                <div class="interview-name">${interview.name}</div>
+                                <div class="interview-position">${interview.specialty}</div>
+                            </div>
+                        </div>
+                        <div class="interview-time">
+                            <div class="interview-date">${formatDateTime(interview.interviewTime)}</div>
+                            <span class="interview-status status-scheduled">مجدولة</span>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('خطأ في تحميل المقابلات القادمة:', error);
+                interviewsContainer.innerHTML = `
+                    <div class="empty-state" style="padding: 20px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>خطأ في تحميل البيانات</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ===== APPLICATIONS MANAGEMENT =====
+        function loadApplications() {
+            try {
+                // الحصول على جميع طلبات التدريب من التخزين المحلي
+                const savedApplications = localStorage.getItem('studentApplications');
+                let allApplications = [];
+                
+                if (savedApplications) {
+                    allApplications = JSON.parse(savedApplications);
+                }
+                
+                // الحصول على اسم الشركة الحالية (من الهيدر)
+                const currentCompanyName = document.querySelector('.user-name-header').textContent.trim();
+                
+                // تصفية الطلبات الخاصة بالشركة الحالية (مقارنة مرنة)
+                dashboardData.applications = allApplications.filter(app => 
+                    app.company === currentCompanyName || 
+                    app.company === "شركة التقنية" ||
+                    app.company === "شركة التقنية المتطورة" ||
+                    app.company.includes("التقنية")
+                );
+                
+                // تحديث إحصائيات المتدربين والمقابلات بناءً على الطلبات
+                const acceptedApplications = dashboardData.applications.filter(app => app.status === 'accepted');
+                dashboardData.totalTrainees = acceptedApplications.length;
+                dashboardData.totalInterviews = acceptedApplications.filter(app => app.interviewDate).length;
+                
+                // تحديث الواجهة
+                renderApplications();
+                updateApplicationsCount();
+                updateDashboardStats();
+                
+                console.log(`تم تحميل ${dashboardData.applications.length} طلب تدريب للشركة: ${currentCompanyName}`);
+            } catch (error) {
+                console.error('خطأ في تحميل الطلبات:', error);
+                showNotification('خطأ في تحميل طلبات التدريب', 'error');
+            }
+        }
+
+        function checkForNewApplications() {
+            // التحقق من وجود طلبات جديدة
+            const savedApplications = localStorage.getItem('studentApplications');
+            if (!savedApplications) return;
+            
+            const allApplications = JSON.parse(savedApplications);
+            const currentCompanyName = document.querySelector('.user-name-header').textContent.trim();
+            
+            const companyApplications = allApplications.filter(app => 
+                app.company === currentCompanyName || 
+                app.company === "شركة التقنية" ||
+                app.company === "شركة التقنية المتطورة" ||
+                app.company.includes("التقنية")
+            );
+            
+            // التحقق إذا كان هناك طلبات جديدة
+            if (companyApplications.length > dashboardData.applications.length) {
+                loadApplications();
+                showNotification(`لديك ${companyApplications.length - dashboardData.applications.length} طلب تدريب جديد`, 'info');
+            }
+        }
+
+        function renderApplications() {
+            const grid = document.getElementById('applicationsGrid');
+            if (!grid) return;
+            
+            if (dashboardData.applications.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i class="fas fa-file-alt"></i>
+                        <h3>لا توجد طلبات تدريب</h3>
+                        <p>لم يتقدم أي طالب على تدريب في شركتك بعد</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // ترتيب الطلبات حسب التاريخ (الأحدث أولاً)
+            const sortedApplications = [...dashboardData.applications].sort((a, b) => {
+                return new Date(b.applicationTime || b.date) - new Date(a.applicationTime || a.date);
+            });
+            
+            grid.innerHTML = sortedApplications.map(application => {
+                let statusClass = 'status-pending';
+                let statusText = 'قيد المراجعة';
+                
+                if (application.status === 'accepted') {
+                    statusClass = 'status-accepted';
+                    statusText = 'مقبول';
+                } else if (application.status === 'rejected') {
+                    statusClass = 'status-rejected';
+                    statusText = 'مرفوض';
+                }
+                
+                // استخراج اسم الطالب من بيانات الطلب أو استخدام الاسم المخزن
+                const studentName = application.studentName || 
+                                   (application.studentData ? application.studentData.name : 'طالب') ||
+                                   application.name ||
+                                   'متدرب';
+                
+                return `
+                    <div class="application-card" data-name="${studentName.toLowerCase()}">
+                        <div class="application-header">
+                            <div class="application-avatar">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <div class="application-info">
+                                <div class="application-name">${studentName}</div>
+                                <div class="application-position">${application.title || 'تدريب'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="application-details">
+                            <div class="detail-item">
+                                <span class="detail-label">التخصص:</span>
+                                <span class="detail-value">${application.field || application.fields ? application.fields[0] : 'غير محدد'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">الفرع:</span>
+                                <span class="detail-value">${application.branch || 'غير محدد'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">الراتب:</span>
+                                <span class="detail-value">${application.salary || application.price || 'غير محدد'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">المدة:</span>
+                                <span class="detail-value">${application.duration || 'غير محدد'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">تاريخ التقديم:</span>
+                                <span class="detail-value">${formatDate(application.applicationTime || application.date)}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="application-status ${statusClass}">${statusText}</div>
+                        
+                        ${application.status === 'pending' ? `
+                        <div class="application-actions">
+                            <button class="btn btn-success btn-small" style="flex: 1;" onclick="openAcceptModal('${application.id}')">
+                                <i class="fas fa-check"></i>
+                                قبول
+                            </button>
+                            <button class="btn btn-warning btn-small" style="flex: 1;" onclick="openRejectModal('${application.id}')">
+                                <i class="fas fa-times"></i>
+                                رفض
+                            </button>
+                        </div>
+                        ` : ''}
+                        
+                        ${application.status === 'accepted' && application.interviewDate ? `
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(17, 153, 142, 0.1); border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;">موعد المقابلة:</div>
+                            <div style="font-weight: 700;">${formatDateTime(application.interviewDate)}</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${application.status === 'rejected' && application.rejectionReason ? `
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(245, 87, 108, 0.1); border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;">سبب الرفض:</div>
+                            <div>${application.rejectionReason}</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${application.message ? `
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 8px;">
+                            <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;">رسالة الطالب:</div>
+                            <div>${application.message}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            // بعد إعادة الرسم، نقوم بإعادة تطبيق الفلترة إذا كان هناك نص في شريط البحث
+            const searchInput = document.getElementById('searchApplications');
+            if (searchInput && searchInput.value.trim() !== '') {
+                filterApplications(searchInput.value);
+            }
+        }
+
+        function updateApplicationsCount() {
+            const pendingCount = dashboardData.applications.filter(app => app.status === 'pending').length;
+            const totalCount = dashboardData.applications.length;
+            
+            document.getElementById('applicationsCount').textContent = totalCount;
+            document.getElementById('applicationsBadge').textContent = pendingCount;
+        }
+
+        function refreshApplications() {
+            loadApplications();
+            loadUpcomingInterviews();
+            showNotification('تم تحديث قائمة الطلبات', 'success');
+        }
+
+        // دالة الفلترة الجديدة
+        function filterApplications(searchText) {
+            const cards = document.querySelectorAll('.application-card');
+            const noResults = document.getElementById('noResultsMessage');
+            let visibleCount = 0;
+            
+            searchText = searchText.trim().toLowerCase();
+            
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name') || '';
+                if (name.includes(searchText) || searchText === '') {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // إظهار أو إخفاء رسالة عدم وجود نتائج
+            if (noResults) {
+                if (visibleCount === 0 && searchText !== '') {
+                    noResults.style.display = 'block';
+                } else {
+                    noResults.style.display = 'none';
+                }
+            }
+        }
+
+        function openAcceptModal(applicationId) {
+            const application = dashboardData.applications.find(app => app.id == applicationId);
+            if (!application) {
+                showNotification('لم يتم العثور على الطلب', 'error');
+                return;
+            }
+            
+            currentApplication = application;
+            const studentName = application.studentName || 
+                              (application.studentData ? application.studentData.name : 'طالب') ||
+                              application.name ||
+                              'متدرب';
+            
+            document.getElementById('acceptStudentName').value = studentName;
+            document.getElementById('acceptStudentField').value = application.field || application.fields ? application.fields[0] : 'غير محدد';
+            
+            // تعيين موعد افتراضي (بعد 3 أيام من اليوم)
+            const today = new Date();
+            const threeDaysLater = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+            threeDaysLater.setHours(10, 0, 0, 0);
+            const formattedDateTime = threeDaysLater.toISOString().slice(0, 16);
+            document.getElementById('interviewDate').value = formattedDateTime;
+            document.getElementById('acceptNotes').value = '';
+            
+            document.getElementById('acceptModal').classList.add('active');
+        }
+
+        function closeAcceptModal() {
+            document.getElementById('acceptModal').classList.remove('active');
+            currentApplication = null;
+        }
+
+        function openRejectModal(applicationId) {
+            const application = dashboardData.applications.find(app => app.id == applicationId);
+            if (!application) {
+                showNotification('لم يتم العثور على الطلب', 'error');
+                return;
+            }
+            
+            currentApplication = application;
+            const studentName = application.studentName || 
+                              (application.studentData ? application.studentData.name : 'طالب') ||
+                              application.name ||
+                              'متدرب';
+            
+            document.getElementById('rejectStudentName').value = studentName;
+            document.getElementById('rejectStudentField').value = application.field || application.fields ? application.fields[0] : 'غير محدد';
+            document.getElementById('rejectionReason').value = '';
+            
+            document.getElementById('rejectModal').classList.add('active');
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').classList.remove('active');
+            currentApplication = null;
+        }
+
+        function confirmAcceptApplication() {
+            if (!currentApplication) return;
+            
+            const interviewDate = document.getElementById('interviewDate').value;
+            const acceptNotes = document.getElementById('acceptNotes').value;
+            
+            if (!interviewDate) {
+                showNotification('يجب اختيار موعد المقابلة', 'error');
+                return;
+            }
+            
+            // التحقق من أن التاريخ في المستقبل
+            const selectedDate = new Date(interviewDate);
+            const now = new Date();
+            
+            if (selectedDate <= now) {
+                showNotification('يجب اختيار موعد مستقبلي للمقابلة', 'error');
+                return;
+            }
+            
+            pendingAction = 'accept';
+            
+            const studentName = document.getElementById('acceptStudentName').value;
+            
+            showConfirmationModal(
+                'تأكيد قبول الطلب',
+                `هل أنت متأكد من قبول طلب ${studentName}؟ سيتم إرسال إشعار بالموعد الجديد للطالب.`,
+                function() {
+                    acceptApplication(interviewDate, acceptNotes);
+                }
+            );
+        }
+
+        function confirmRejectApplication() {
+            if (!currentApplication) return;
+            
+            const rejectionReason = document.getElementById('rejectionReason').value.trim();
+            
+            if (!rejectionReason) {
+                showNotification('يجب كتابة سبب الرفض', 'error');
+                return;
+            }
+            
+            pendingAction = 'reject';
+            
+            const studentName = document.getElementById('rejectStudentName').value;
+            
+            showConfirmationModal(
+                'تأكيد رفض الطلب',
+                `هل أنت متأكد من رفض طلب ${studentName}؟ سيتم إرسال إشعار الرفض للطالب.`,
+                function() {
+                    rejectApplication(rejectionReason);
+                }
+            );
+        }
+
+        function acceptApplication(interviewDate, acceptNotes) {
+            try {
+                // تحديث حالة الطلب في التخزين المحلي
+                const savedApplications = localStorage.getItem('studentApplications');
+                if (!savedApplications) {
+                    showNotification('لا توجد بيانات طلبات', 'error');
+                    return;
+                }
+                
+                let allApplications = JSON.parse(savedApplications);
+                const appIndex = allApplications.findIndex(app => app.id == currentApplication.id);
+                
+                if (appIndex !== -1) {
+                    // تحديث بيانات الطلب
+                    allApplications[appIndex].status = 'accepted';
+                    allApplications[appIndex].interviewDate = interviewDate;
+                    allApplications[appIndex].acceptNotes = acceptNotes;
+                    allApplications[appIndex].decisionDate = new Date().toISOString();
+                    allApplications[appIndex].decisionBy = document.querySelector('.user-name-header').textContent;
+                    allApplications[appIndex].decisionTime = new Date().toLocaleString('ar-EG');
+                    
+                    // حفظ التحديثات
+                    localStorage.setItem('studentApplications', JSON.stringify(allApplications));
+                    
+                    // إضافة الطالب إلى قائمة المقابلات
+                    addToInterviewsList(allApplications[appIndex], interviewDate, acceptNotes);
+                    
+                    // تحديث البيانات المحلية
+                    loadApplications();
+                    loadUpcomingInterviews();
+                    
+                    // تحديث إحصاءات المقابلات
+                    dashboardData.totalInterviews += 1;
+                    updateDashboardStats();
+                    
+                    // إغلاق النافذة
+                    closeAcceptModal();
+                    
+                    // عرض رسالة تأكيد
+                    showNotification('تم قبول الطلب وإضافة موعد المقابلة', 'success');
+                    
+                    // إضافة نشاط
+                    addActivity(`تم قبول طلب ${allApplications[appIndex].studentName || 'الطالب'} وتحديد موعد المقابلة`);
+                    
+                    // إرسال إشعار للطالب (محاكاة)
+                    sendStudentNotification(
+                        allApplications[appIndex].studentId || 'unknown',
+                        'قبول الطلب',
+                        `تم قبول طلبك للتدريب في ${allApplications[appIndex].company}. موعد المقابلة: ${formatDateTime(interviewDate)}`
+                    );
+                }
+            } catch (error) {
+                console.error('خطأ في قبول الطلب:', error);
+                showNotification('حدث خطأ أثناء قبول الطلب', 'error');
+            }
+        }
+
+        function rejectApplication(rejectionReason) {
+            try {
+                // تحديث حالة الطلب في التخزين المحلي
+                const savedApplications = localStorage.getItem('studentApplications');
+                if (!savedApplications) {
+                    showNotification('لا توجد بيانات طلبات', 'error');
+                    return;
+                }
+                
+                let allApplications = JSON.parse(savedApplications);
+                const appIndex = allApplications.findIndex(app => app.id == currentApplication.id);
+                
+                if (appIndex !== -1) {
+                    // تحديث بيانات الطلب
+                    allApplications[appIndex].status = 'rejected';
+                    allApplications[appIndex].rejectionReason = rejectionReason;
+                    allApplications[appIndex].decisionDate = new Date().toISOString();
+                    allApplications[appIndex].decisionBy = document.querySelector('.user-name-header').textContent;
+                    allApplications[appIndex].decisionTime = new Date().toLocaleString('ar-EG');
+                    
+                    // حفظ التحديثات
+                    localStorage.setItem('studentApplications', JSON.stringify(allApplications));
+                    
+                    // تحديث البيانات المحلية
+                    loadApplications();
+                    
+                    // إغلاق النافذة
+                    closeRejectModal();
+                    
+                    // عرض رسالة تأكيد
+                    showNotification('تم رفض الطلب بنجاح', 'success');
+                    
+                    // إضافة نشاط
+                    addActivity(`تم رفض طلب ${allApplications[appIndex].studentName || 'الطالب'} للتدريب`);
+                    
+                    // إرسال إشعار للطالب (محاكاة)
+                    sendStudentNotification(
+                        allApplications[appIndex].studentId || 'unknown',
+                        'رفض الطلب',
+                        `تم رفض طلبك للتدريب في ${allApplications[appIndex].company}. السبب: ${rejectionReason}`
+                    );
+                }
+            } catch (error) {
+                console.error('خطأ في رفض الطلب:', error);
+                showNotification('حدث خطأ أثناء رفض الطلب', 'error');
+            }
+        }
+
+        function addToInterviewsList(application, interviewDate, acceptNotes) {
+            try {
+                // الحصول على بيانات المقابلات الحالية
+                const savedInterviews = localStorage.getItem('provance_interview_students');
+                let interviews = [];
+                
+                if (savedInterviews) {
+                    interviews = JSON.parse(savedInterviews);
+                }
+                
+                // استخراج اسم الطالب
+                const studentName = application.studentName || 
+                                  (application.studentData ? application.studentData.name : 'طالب') ||
+                                  application.name ||
+                                  'متدرب';
+                
+                // إنشاء سجل مقابلة جديد
+                const newInterview = {
+                    id: 'INT-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                    name: studentName,
+                    specialty: application.field || application.fields ? application.fields[0] : 'غير محدد',
+                    interviewTime: interviewDate,
+                    attendanceTime: null,
+                    status: 'pending',
+                    decision: 'pending',
+                    qrCode: 'QR-' + Date.now(),
+                    receivedAt: new Date().toISOString(),
+                    qrType: 'interview',
+                    applicationId: application.id,
+                    applicationTitle: application.title,
+                    applicationCompany: application.company,
+                    acceptNotes: acceptNotes,
+                    isNew: true,
+                    fromApplication: true,
+                    // معلومات إضافية
+                    studentLevel: application.studentLevel || 'غير محدد',
+                    branch: application.branch || 'غير محدد',
+                    salary: application.salary || application.price || 'غير محدد',
+                    duration: application.duration || 'غير محدد'
+                };
+                
+                // إضافة المقابلة إلى القائمة
+                interviews.unshift(newInterview);
+                
+                // حفظ البيانات
+                localStorage.setItem('provance_interview_students', JSON.stringify(interviews));
+                
+                console.log('تمت إضافة المقابلة إلى قائمة المقابلات:', newInterview);
+                
+                // إرسال إشعار تحديث لصفحة المقابلات
+                window.postMessage({
+                    type: 'NEW_INTERVIEW_ADDED',
+                    interview: newInterview
+                }, '*');
+                
+            } catch (error) {
+                console.error('خطأ في إضافة المقابلة:', error);
+                showNotification('تم قبول الطلب ولكن حدث خطأ في إضافة المقابلة', 'warning');
+            }
+        }
+
+        // ===== HELPER FUNCTIONS =====
+        function addActivity(message) {
+            const activitiesContainer = document.getElementById('recentActivities');
+            if (!activitiesContainer) return;
+            
+            const activityItem = document.createElement('div');
+            activityItem.className = 'activity-item';
+            activityItem.innerHTML = `
+                <div class="activity-icon" style="background: var(--color-success);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-text">${message}</div>
+                    <div class="activity-time">الآن</div>
+                </div>
+            `;
+            
+            // إضافة النشاط في البداية
+            activitiesContainer.insertBefore(activityItem, activitiesContainer.firstChild);
+            
+            // الاحتفاظ فقط بـ 10 نشاطات
+            const allActivities = activitiesContainer.querySelectorAll('.activity-item');
+            if (allActivities.length > 10) {
+                activitiesContainer.removeChild(allActivities[allActivities.length - 1]);
+            }
+        }
+
+        function sendStudentNotification(studentId, title, message) {
+            // محاكاة إرسال إشعار للطالب
+            console.log(`إشعار للطالب ${studentId}: ${title} - ${message}`);
+            
+            // في التطبيق الحقيقي، هنا نرسل إشعار للطالب عبر نظام الإشعارات
+            // يمكن استخدام localStorage لمحاكاة النظام
+            try {
+                const notifications = JSON.parse(localStorage.getItem('student_notifications') || '[]');
+                notifications.unshift({
+                    id: Date.now(),
+                    studentId: studentId,
+                    title: title,
+                    message: message,
+                    time: new Date().toISOString(),
+                    read: false
+                });
+                localStorage.setItem('student_notifications', JSON.stringify(notifications));
+            } catch (error) {
+                console.error('خطأ في إرسال الإشعار:', error);
+            }
+        }
+
+        // ===== CONFIRMATION MODAL =====
+        function showConfirmationModal(title, message, callback, type = 'info') {
+            document.getElementById('confirmationTitle').textContent = title;
+            document.getElementById('confirmationMessage').textContent = message;
+            
+            const icon = document.getElementById('confirmationIcon');
+            const iconContainer = icon.parentElement;
+            
+            if (type === 'success') {
+                iconContainer.style.background = 'var(--color-success)';
+                icon.className = 'fas fa-check';
+                document.getElementById('confirmActionBtn').style.display = 'none';
+            } else {
+                iconContainer.style.background = 'var(--color-primary)';
+                icon.className = 'fas fa-question-circle';
+                document.getElementById('confirmActionBtn').style.display = 'inline-flex';
+            }
+            
+            confirmationCallback = callback;
+            document.getElementById('confirmationModal').classList.add('active');
+        }
+
+        function closeConfirmationModal() {
+            document.getElementById('confirmationModal').classList.remove('active');
+            confirmationCallback = null;
+        }
+
+        function proceedAfterConfirmation() {
+            if (confirmationCallback) {
+                confirmationCallback();
+            }
+            closeConfirmationModal();
+        }
+
+        // ===== HELPER FUNCTIONS =====
+        function formatDate(dateString) {
+            if (!dateString) return 'غير محدد';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('ar-EG', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            } catch (e) {
+                return 'تاريخ غير صالح';
+            }
+        }
+
+        function formatDateTime(dateTimeString) {
+            if (!dateTimeString) return 'غير محدد';
+            try {
+                const date = new Date(dateTimeString);
+                return date.toLocaleString('ar-EG', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return 'تاريخ/وقت غير صالح';
+            }
+        }
+
+        // ===== NAVIGATION FUNCTIONS =====
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mainSidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function toggleUserMenu() {
+            showNotification('قائمة المستخدم - سيتم تطويرها لاحقًا', 'info');
+        }
+
+        function logout() {
+            if (confirm('هل تريد تسجيل الخروج؟')) {
+                showNotification('جارٍ تسجيل الخروج...', 'info');
+                setTimeout(() => {
+                    window.location.href = 'company-login.html';
+                }, 1500);
+            }
+        }
+
+        // ===== NOTIFICATION SYSTEM =====
+        function showNotification(message, type) {
+            // إزالة أي إشعارات سابقة
+            const existingNotification = document.querySelector('.notification-toast');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // تحديد لون الإشعار حسب النوع
+            let backgroundColor = 'var(--color-success)';
+            if (type === 'error') backgroundColor = 'var(--color-warning)';
+            else if (type === 'info') backgroundColor = 'var(--color-info)';
+            else if (type === 'warning') backgroundColor = 'var(--color-orange)';
+            
+            // إنشاء الإشعار
+            const notification = document.createElement('div');
+            notification.className = `notification-toast ${type}`;
+            notification.style.position = 'fixed';
+            notification.style.top = '120px';
+            notification.style.left = '50%';
+            notification.style.transform = 'translateX(-50%)';
+            notification.style.backgroundColor = backgroundColor;
+            notification.style.color = 'white';
+            notification.style.padding = '15px 25px';
+            notification.style.borderRadius = '10px';
+            notification.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+            notification.style.zIndex = '10000';
+            notification.style.fontWeight = '600';
+            notification.style.display = 'flex';
+            notification.style.alignItems = 'center';
+            notification.style.gap = '10px';
+            notification.style.animation = 'slideIn 0.3s ease';
+            notification.style.maxWidth = '90%';
+            notification.style.textAlign = 'center';
+            
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : type === 'info' ? 'info-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // إزالة الإشعار بعد 3 ثواني
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // تعريف الأنيميشن للإشعارات
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { top: 80px; opacity: 0; }
+                to { top: 120px; opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { top: 120px; opacity: 1; }
+                to { top: 80px; opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

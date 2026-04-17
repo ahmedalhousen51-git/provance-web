@@ -1,0 +1,3713 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProVance - إدارة الشركات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+            --secondary: #00D9FF;
+            --secondary-dark: #00A8CC;
+            --accent: #FF6B9D;
+            --success: #51cf66;
+            --warning: #ffd700;
+            --error: #ff6b6b;
+            --info: #4da7f7;
+            --penalty: #ff9800;
+            --expired: #888888;
+            --bg-dark: #0a0c1f;
+            --bg-secondary: #15132e;
+            --bg-card: #1a1838;
+            --bg-input: rgba(255, 255, 255, 0.05);
+            --text-primary: #ffffff;
+            --text-secondary: #b8b5c9;
+            --border: rgba(255, 255, 255, 0.1);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.4);
+            --shadow-xl: 0 30px 80px rgba(0, 0, 0, 0.5);
+            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            --gradient-penalty: linear-gradient(135deg, var(--penalty) 0%, #ff5722 100%);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            padding: var(--spacing-lg) 0;
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar-header {
+            padding: 0 var(--spacing-lg) var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .admin-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .admin-logo {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .admin-brand h1 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .admin-profile:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .admin-info {
+            flex: 1;
+        }
+
+        .admin-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .admin-role {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Navigation */
+        .sidebar-nav {
+            padding: var(--spacing-md) 0;
+        }
+
+        .nav-section {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .nav-title {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 var(--spacing-lg);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .nav-links {
+            list-style: none;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: 0.9rem var(--spacing-lg);
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+            border-right: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--primary);
+            border-right-color: var(--primary);
+        }
+
+        .nav-link i {
+            width: 22px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .nav-link span {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .nav-badge {
+            margin-right: auto;
+            background: var(--gradient-primary);
+            color: white;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-right: 280px;
+            padding: var(--spacing-lg);
+            min-height: 100vh;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Header */
+        .content-header {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .page-title h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-action {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .btn-refresh {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-refresh:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-export {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Stats */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .stat-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+        }
+
+        .stat-icon.pending {
+            background: rgba(255, 215, 0, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .stat-icon.approved {
+            background: rgba(81, 207, 102, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(81, 207, 102, 0.2);
+        }
+
+        .stat-icon.rejected {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .stat-icon.total {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .stat-icon.penalized {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--penalty);
+            border: 1px solid rgba(255, 152, 0, 0.2);
+        }
+
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Filter */
+        .filter-section {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid var(--border);
+        }
+
+        .filter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .filter-header h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .table-info {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            padding: 0.85rem var(--spacing-md);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .search-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .search-box i {
+            color: var(--text-secondary);
+            margin-left: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .search-box input {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.95rem;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Table */
+        .table-container {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--border);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+
+        .table-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            text-align: right;
+            padding: 1.2rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            border-bottom: 2px solid var(--border);
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .data-table td {
+            padding: 1.2rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .data-table tr:hover {
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .info-cell {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-md);
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .info-details h4 {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+
+        .info-details p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Status */
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .status-pending {
+            background: rgba(255, 215, 0, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .status-approved {
+            background: rgba(81, 207, 102, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(81, 207, 102, 0.2);
+        }
+
+        .status-rejected {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        /* العقوبات في الجدول */
+        .penalties-cell {
+            max-width: 300px;
+            font-size: 0.9rem;
+        }
+
+        .penalty-summary {
+            background: rgba(255, 152, 0, 0.1);
+            border-right: 3px solid var(--penalty);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .penalty-summary.expired {
+            background: rgba(128, 128, 128, 0.1);
+            border-right-color: var(--expired);
+            opacity: 0.7;
+        }
+
+        .penalty-summary:last-child {
+            margin-bottom: 0;
+        }
+
+        .penalty-reason {
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+
+        .penalty-details {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .penalty-type-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: rgba(255, 152, 0, 0.2);
+            color: var(--penalty);
+            margin-left: 0.5rem;
+        }
+
+        .penalty-amount {
+            color: var(--penalty);
+            font-weight: 700;
+        }
+
+        /* Actions */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-table {
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-view {
+            background: rgba(77, 167, 247, 0.1);
+            color: var(--info);
+            border: 1px solid rgba(77, 167, 247, 0.2);
+        }
+
+        .btn-view:hover {
+            background: var(--info);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(77, 167, 247, 0.3);
+        }
+
+        .btn-approve {
+            background: rgba(81, 207, 102, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(81, 207, 102, 0.2);
+        }
+
+        .btn-approve:hover {
+            background: var(--success);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(81, 207, 102, 0.3);
+        }
+
+        .btn-reject {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .btn-reject:hover {
+            background: var(--error);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        /* زر العقاب */
+        .btn-penalty {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--penalty);
+            border: 1px solid rgba(255, 152, 0, 0.2);
+        }
+
+        .btn-penalty:hover {
+            background: var(--penalty);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-empty {
+            padding: 0.75rem 1.5rem;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .btn-empty:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: var(--spacing-lg);
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            width: 95%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 2px solid var(--primary);
+            box-shadow: var(--shadow-xl);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: var(--bg-card);
+            z-index: 100;
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+
+        .modal-header h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal-close {
+            background: var(--bg-input);
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+        }
+
+        .modal-close:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Company Tabs */
+        .company-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            font-size: 0.95rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Info Sections */
+        .info-section {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--border);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-header i {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .info-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            text-align: left;
+            max-width: 250px;
+            word-break: break-word;
+            font-weight: 500;
+        }
+
+        /* العقوبات والإنذارات */
+        .penalty-item {
+            background: rgba(255, 152, 0, 0.05);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            border: 1px solid rgba(255, 152, 0, 0.2);
+        }
+
+        .penalty-item.expired {
+            background: rgba(128, 128, 128, 0.05);
+            border-color: rgba(128, 128, 128, 0.2);
+            opacity: 0.7;
+        }
+
+        .warning-item {
+            background: rgba(255, 215, 0, 0.05);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .warning-item.expired {
+            background: rgba(128, 128, 128, 0.05);
+            border-color: rgba(128, 128, 128, 0.2);
+            opacity: 0.7;
+        }
+
+        .penalty-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .penalty-type {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .penalty-type.penalty {
+            background: rgba(255, 152, 0, 0.2);
+            color: var(--penalty);
+        }
+
+        .penalty-type.warning {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .penalty-date {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .penalty-reason {
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .penalty-amount {
+            color: var(--penalty);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .penalty-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .penalty-status.pending {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .penalty-status.paid {
+            background: rgba(81, 207, 102, 0.2);
+            color: var(--success);
+        }
+
+        .penalty-status.overdue {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--error);
+        }
+
+        .penalty-status.expired {
+            background: rgba(128, 128, 128, 0.2);
+            color: var(--expired);
+        }
+
+        .no-penalties {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .add-penalty-btn {
+            margin-top: var(--spacing-md);
+            width: 100%;
+        }
+
+        /* الصورة في المودال */
+        .company-logo-section {
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            background: rgba(139, 92, 246, 0.05);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+        }
+
+        .company-logo-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .company-logo {
+            width: 120px;
+            height: 120px;
+            border-radius: var(--radius-lg);
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+
+        .no-logo {
+            width: 120px;
+            height: 120px;
+            border-radius: var(--radius-lg);
+            background: var(--bg-input);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--border);
+            color: var(--text-secondary);
+        }
+
+        .company-logo-section h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .company-logo-section p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: flex-end;
+            padding: var(--spacing-lg);
+            border-top: 1px solid var(--border);
+            position: sticky;
+            bottom: 0;
+            background: var(--bg-card);
+            border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        }
+
+        /* Penalty Form */
+        .penalty-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: var(--transition);
+            outline: none;
+            font-family: inherit;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+            background: var(--bg-card);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        /* Notification */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .notification {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            box-shadow: var(--shadow-lg);
+            animation: notificationSlideIn 0.3s ease;
+            border-right: 4px solid var(--primary);
+        }
+
+        @keyframes notificationSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .notification.success {
+            border-right-color: var(--success);
+        }
+
+        .notification.error {
+            border-right-color: var(--error);
+        }
+
+        .notification.info {
+            border-right-color: var(--info);
+        }
+
+        .notification.warning {
+            border-right-color: var(--warning);
+        }
+
+        .notification.penalty {
+            border-right-color: var(--penalty);
+        }
+
+        /* Auto Return Notification */
+        .auto-return-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-xl);
+            z-index: 10000;
+            animation: slideInUp 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            max-width: 400px;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .auto-return-notification .icon {
+            font-size: 1.5rem;
+        }
+
+        .auto-return-notification .message {
+            flex: 1;
+        }
+
+        .auto-return-notification .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .menu-toggle {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .stats-overview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filter-controls {
+                flex-direction: column;
+            }
+            
+            .search-box {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: var(--spacing-md);
+            }
+            
+            .content-header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                align-items: flex-start;
+            }
+            
+            .stats-overview {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+            
+            .company-logo {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .no-logo {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .auto-return-notification {
+                left: 20px;
+                right: 20px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .company-tabs {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                text-align: right;
+                border-bottom: 1px solid var(--border);
+                border-right: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="admin-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="admin-brand">
+                    <div class="admin-logo">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h1>ProVance</h1>
+                </div>
+                
+                <div class="admin-profile">
+                    <div class="admin-avatar" id="adminAvatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="admin-info">
+                        <div class="admin-name" id="adminName">المسؤول</div>
+                        <div class="admin-role" id="adminRole">مدير النظام</div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-title">القائمة الرئيسية</div>
+                    <ul class="nav-links">
+                        <li>
+                            <a href="admin-dashboard.html" class="nav-link">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>لوحة التحكم</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link active">
+                                <i class="fas fa-building"></i>
+                                <span>إدارة الشركات</span>
+                                <span class="nav-badge" id="pendingBadge">0</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="admin-trainees.html" class="nav-link">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>إدارة المتدربين</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="internships.html" class="nav-link">
+                                <i class="fas fa-briefcase"></i>
+                                <span>التدريبات</span>
+                            </a>
+                            </li>
+
+                                 <a href="admin-notification.html" class="nav-link">
+                                <i class="fas fa-bell"></i>
+                                <span>إدارة الإشعارات</span>
+                            </a>
+                        <li>
+                    </ul>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-title">إعدادات النظام</div>
+                    <ul class="nav-links">
+                        <li>
+                            <a href="settings.html" class="nav-link">
+                                <i class="fas fa-cog"></i>
+                                <span>الإعدادات</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="index.html" class="nav-link" id="logoutBtn">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>تسجيل الخروج</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="content-header">
+                <div class="page-title">
+                    <h1>إدارة طلبات الشركات</h1>
+                    <p>مراجعة واعتماد طلبات تسجيل الشركات الجديدة</p>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="btn-action btn-refresh" id="refreshCompaniesBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        تحديث
+                    </button>
+                    <button class="btn-action btn-export" id="exportCompaniesBtn">
+                        <i class="fas fa-download"></i>
+                        تصدير البيانات
+                    </button>
+                </div>
+            </header>
+            
+            <section class="stats-overview">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="pendingCompanies">0</div>
+                            <div class="stat-label">طلبات قيد المراجعة</div>
+                        </div>
+                        <div class="stat-icon pending">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="approvedCompanies">0</div>
+                            <div class="stat-label">طلبات معتمدة</div>
+                        </div>
+                        <div class="stat-icon approved">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="rejectedCompanies">0</div>
+                            <div class="stat-label">طلبات مرفوضة</div>
+                        </div>
+                        <div class="stat-icon rejected">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="totalCompaniesList">0</div>
+                            <div class="stat-label">إجمالي الطلبات</div>
+                        </div>
+                        <div class="stat-icon total">
+                            <i class="fas fa-list"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="penalizedCompanies">0</div>
+                            <div class="stat-label">شركات عليها عقوبات</div>
+                        </div>
+                        <div class="stat-icon penalized">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="filter-section">
+                <div class="filter-header">
+                    <h3>تصفية الطلبات</h3>
+                    <div class="table-info">
+                        <span id="companiesCount">0</span> طلب موجود
+                    </div>
+                </div>
+                
+                <div class="filter-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchCompaniesInput" placeholder="ابحث عن شركة بالاسم أو البريد الإلكتروني...">
+                    </div>
+                    
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">الكل</button>
+                        <button class="filter-btn" data-filter="pending">قيد المراجعة</button>
+                        <button class="filter-btn" data-filter="approved">معتمدة</button>
+                        <button class="filter-btn" data-filter="rejected">مرفوضة</button>
+                        <button class="filter-btn" data-filter="penalties">مع عقوبات</button>
+                    </div>
+                </div>
+            </section>
+            
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">قائمة طلبات الشركات</h3>
+                    <div class="table-controls">
+                        <button class="btn-action btn-export" onclick="addSampleCompanies()">
+                            <i class="fas fa-plus"></i>
+                            إضافة بيانات تجريبية
+                        </button>
+                    </div>
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الشركة</th>
+                            <th>المجال</th>
+                            <th>الموقع</th>
+                            <th>تاريخ الطلب</th>
+                            <th>الحالة</th>
+                            <th style="width: 300px;">العقوبات</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="companiesTableBody">
+                        <!-- سيتم ملؤها ديناميكياً -->
+                    </tbody>
+                </table>
+                
+                <div class="empty-state" id="companiesEmptyState" style="display: none;">
+                    <i class="fas fa-building"></i>
+                    <h3>لا توجد طلبات لعرضها</h3>
+                    <p>لم يتم تسجيل أي طلبات جديدة حتى الآن</p>
+                    <button class="btn-empty" onclick="addSampleCompanies()">
+                        <i class="fas fa-plus"></i>
+                        إضافة بيانات تجريبية
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Company Details Modal -->
+    <div class="modal-overlay" id="companyDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalCompanyName">تفاصيل طلب الشركة</h2>
+                <button class="modal-close" id="companyModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- قسم عرض الصورة -->
+                <div class="company-logo-section" id="companyLogoSection">
+                    <div class="company-logo-container" id="companyLogoContainer">
+                        <!-- سيتم ملؤها ديناميكياً -->
+                    </div>
+                    <h4 id="logoTitle">شعار الشركة</h4>
+                    <p id="logoStatus">لم تقم الشركة بتحميل شعار</p>
+                </div>
+                
+                <div class="company-tabs" id="companyTabs">
+                    <button class="tab-btn active" data-tab="basic">المعلومات الأساسية</button>
+                    <button class="tab-btn" data-tab="contact">معلومات الاتصال</button>
+                    <button class="tab-btn" data-tab="training">المجالات التدريبية</button>
+                    <button class="tab-btn" data-tab="requirements">متطلبات التدريب</button>
+                    <button class="tab-btn" data-tab="branches">الفروع</button>
+                    <button class="tab-btn" data-tab="penalties">العقوبات والإنذارات</button>
+                    <button class="tab-btn" data-tab="review">المراجعة</button>
+                </div>
+                
+                <div id="tabContents">
+                    <div class="tab-content active" id="basicTab">
+                        <div class="info-section">
+                            <div class="info-header">
+                                <i class="fas fa-building"></i>
+                                <h3>معلومات الشركة الأساسية</h3>
+                            </div>
+                            <div class="info-grid" id="basicInfoGrid">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="contactTab">
+                        <div class="info-section">
+                            <div class="info-header">
+                                <i class="fas fa-address-card"></i>
+                                <h3>معلومات الاتصال</h3>
+                            </div>
+                            <div class="info-grid" id="contactInfoGrid">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="trainingTab">
+                        <div class="info-section">
+                            <div class="info-header">
+                                <i class="fas fa-graduation-cap"></i>
+                                <h3>المجالات التدريبية</h3>
+                            </div>
+                            <div id="trainingInfoGrid">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="requirementsTab">
+                        <div class="info-section">
+                            <div class="info-header">
+                                <i class="fas fa-tools"></i>
+                                <h3>متطلبات التدريب</h3>
+                            </div>
+                            <div class="info-grid" id="requirementsInfoGrid">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="branchesTab">
+                        <div class="info-section">
+                            <div class="info-header">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <h3>الفروع المتاحة للتدريب</h3>
+                            </div>
+                            <div id="branchesInfoGrid">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="penaltiesTab">
+                        <div class="info-section">
+                            <div class="info-header">
+                                <i class="fas fa-gavel"></i>
+                                <h3>العقوبات والإنذارات</h3>
+                            </div>
+                            <div id="penaltiesList">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </div>
+                            <button class="btn-table btn-penalty add-penalty-btn" onclick="showPenaltyModal()">
+                                <i class="fas fa-plus"></i>
+                                إضافة عقوبة/إنذار جديد
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="reviewTab">
+                        <div class="info-section">
+                            <div class="info-header">
+                                <i class="fas fa-history"></i>
+                                <h3>سجل المراجعة</h3>
+                            </div>
+                            <div class="info-grid" id="reviewInfoGrid">
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-table btn-penalty" onclick="showPenaltyModal()">
+                    <i class="fas fa-gavel"></i>
+                    عقاب الشركة
+                </button>
+                <button class="btn-table btn-reject" id="rejectCompanyBtn">
+                    <i class="fas fa-times"></i>
+                    رفض الطلب
+                </button>
+                <button class="btn-table btn-approve" id="approveCompanyBtn">
+                    <i class="fas fa-check"></i>
+                    اعتماد الطلب
+                </button>
+                <button class="btn-table btn-view" id="closeCompanyModalBtn">
+                    <i class="fas fa-times"></i>
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reject Company Modal -->
+    <div class="modal-overlay" id="rejectCompanyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-times-circle"></i> رفض طلب الشركة</h2>
+                <button class="modal-close" id="rejectModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="rejectForm" class="penalty-form">
+                    <div class="form-group">
+                        <label for="rejectReason" class="form-label">سبب الرفض</label>
+                        <textarea id="rejectReason" class="form-textarea" rows="4" placeholder="أدخل سبب رفض طلب الشركة..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="notifyCompany" checked>
+                            <span>إرسال إشعار للشركة</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-table btn-view" onclick="closeRejectModal()">إلغاء</button>
+                <button class="btn-table btn-reject" onclick="confirmRejectCompany()">رفض الطلب</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Approve Company Modal -->
+    <div class="modal-overlay" id="approveCompanyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-check-circle"></i> اعتماد طلب الشركة</h2>
+                <button class="modal-close" id="approveModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="approveForm" class="penalty-form">
+                    <div class="form-group">
+                        <label for="trainingPrice" class="form-label">سعر التدريب الإجمالي (المجموع الكلي)</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" id="trainingPrice" class="form-input" min="0" step="0.01" placeholder="أدخل سعر التدريب الإجمالي" required>
+                            <select id="trainingCurrency" class="form-select" style="width: 150px;">
+                                <option value="EGP">جنيه مصري (EGP)</option>
+                                <option value="USD">دولار أمريكي (USD)</option>
+                                <option value="EUR">يورو (EUR)</option>
+                                <option value="SAR">ريال سعودي (SAR)</option>
+                                <option value="other">عملة أخرى</option>
+                            </select>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">
+                            سعر التدريب الإجمالي الذي ستحدده هنا سيظهر للشركة والمتدربين
+                        </p>
+                    </div>
+                    
+                    <div class="form-group" id="otherCurrencyGroup" style="display: none;">
+                        <label for="otherCurrency" class="form-label">حدد العملة</label>
+                        <input type="text" id="otherCurrency" class="form-input" placeholder="أدخل اسم العملة">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trainingNotes" class="form-label">ملاحظات إضافية (اختياري)</label>
+                        <textarea id="trainingNotes" class="form-textarea" rows="3" placeholder="أي ملاحظات إضافية حول الاعتماد..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="notifyCompanyApprove" checked>
+                            <span>إرسال إشعار للشركة بالاعتماد</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-table btn-view" onclick="closeApproveModal()">إلغاء</button>
+                <button class="btn-table btn-approve" onclick="confirmApproveCompany()">اعتماد الطلب</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Penalty Modal -->
+    <div class="modal-overlay" id="penaltyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-gavel"></i> إضافة عقوبة/إنذار للشركة</h2>
+                <button class="modal-close" id="penaltyModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="penaltyForm" class="penalty-form">
+                    <div class="form-group">
+                        <label for="penaltyType" class="form-label">نوع العقوبة</label>
+                        <select id="penaltyType" class="form-select" required>
+                            <option value="">اختر نوع العقوبة</option>
+                            <option value="warning">إنذار</option>
+                            <option value="fine">غرامة مالية</option>
+                            <option value="suspension">تعليق مؤقت</option>
+                            <option value="termination">إنهاء التعاقد</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="penaltyAmountGroup" style="display: none;">
+                        <label for="penaltyAmount" class="form-label">قيمة الغرامة</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" id="penaltyAmount" class="form-input" min="0" step="0.01" placeholder="أدخل قيمة الغرامة">
+                            <select id="penaltyCurrency" class="form-select" style="width: 150px;">
+                                <option value="SAR">ريال سعودي (SAR)</option>
+                                <option value="EGP">جنيه مصري (EGP)</option>
+                                <option value="USD">دولار أمريكي (USD)</option>
+                                <option value="EUR">يورو (EUR)</option>
+                                <option value="AED">درهم إماراتي (AED)</option>
+                                <option value="KWD">دينار كويتي (KWD)</option>
+                                <option value="QAR">ريال قطري (QAR)</option>
+                                <option value="BHD">دينار بحريني (BHD)</option>
+                                <option value="other">عملة أخرى</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="otherPenaltyCurrencyGroup" style="display: none;">
+                        <label for="otherPenaltyCurrency" class="form-label">حدد العملة</label>
+                        <input type="text" id="otherPenaltyCurrency" class="form-input" placeholder="أدخل اسم العملة">
+                    </div>
+                    
+                    <div class="form-group" id="penaltyDurationGroup" style="display: none;">
+                        <label for="penaltyDuration" class="form-label">مدة التعليق (بالأيام)</label>
+                        <input type="number" id="penaltyDuration" class="form-input" min="1" placeholder="أدخل عدد الأيام">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="penaltyReason" class="form-label">سبب العقوبة/الإنذار</label>
+                        <textarea id="penaltyReason" class="form-textarea" rows="4" placeholder="أدخل سبب العقوبة/الإنذار..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="penaltyDeadline" class="form-label">موعد السداد/التصحيح (اختياري)</label>
+                        <input type="date" id="penaltyDeadline" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="notifyCompanyPenalty" checked>
+                            <span>إرسال إشعار للشركة</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-table btn-view" onclick="closePenaltyModal()">إلغاء</button>
+                <button class="btn-table btn-penalty" onclick="confirmPenalty()">إضافة العقوبة</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script>
+        // حالة التطبيق
+        const appState = {
+            companies: {
+                data: [],
+                filteredData: [],
+                currentFilter: 'all',
+                selectedCompanyId: null,
+                searchQuery: ''
+            }
+        };
+
+        // عناصر DOM
+        const elements = {
+            sidebar: document.getElementById('sidebar'),
+            menuToggle: document.getElementById('menuToggle'),
+            adminName: document.getElementById('adminName'),
+            adminRole: document.getElementById('adminRole'),
+            adminAvatar: document.getElementById('adminAvatar'),
+            pendingBadge: document.getElementById('pendingBadge'),
+            
+            pendingCompanies: document.getElementById('pendingCompanies'),
+            approvedCompanies: document.getElementById('approvedCompanies'),
+            rejectedCompanies: document.getElementById('rejectedCompanies'),
+            totalCompaniesList: document.getElementById('totalCompaniesList'),
+            penalizedCompanies: document.getElementById('penalizedCompanies'),
+            companiesCount: document.getElementById('companiesCount'),
+            searchCompaniesInput: document.getElementById('searchCompaniesInput'),
+            companiesTableBody: document.getElementById('companiesTableBody'),
+            companiesEmptyState: document.getElementById('companiesEmptyState'),
+            
+            companyDetailsModal: document.getElementById('companyDetailsModal'),
+            companyLogoSection: document.getElementById('companyLogoSection'),
+            companyLogoContainer: document.getElementById('companyLogoContainer'),
+            logoTitle: document.getElementById('logoTitle'),
+            logoStatus: document.getElementById('logoStatus'),
+            rejectCompanyModal: document.getElementById('rejectCompanyModal'),
+            approveCompanyModal: document.getElementById('approveCompanyModal'),
+            penaltyModal: document.getElementById('penaltyModal'),
+            notificationContainer: document.getElementById('notificationContainer')
+        };
+
+        // تهيئة التطبيق
+        function initApp() {
+            updateAdminInfo();
+            setupEventListeners();
+            loadCompaniesData();
+            
+            // بدء الفحص الدوري للعقوبات المنتهية (كل دقيقة)
+            setInterval(checkExpiredPenalties, 60000);
+        }
+
+        // تحديث معلومات المسؤول
+        function updateAdminInfo() {
+            const adminName = localStorage.getItem('adminName') || 'المسؤول';
+            const adminRole = localStorage.getItem('adminRole') || 'مدير النظام';
+            
+            elements.adminName.textContent = adminName;
+            elements.adminRole.textContent = adminRole;
+            
+            const firstChar = adminName.charAt(0);
+            elements.adminAvatar.innerHTML = `<span>${firstChar}</span>`;
+        }
+
+        // تحميل بيانات الشركات
+        function loadCompaniesData() {
+            try {
+                let companies = [];
+                
+                // تحميل بيانات تسجيل الشركات
+                const registrationData = JSON.parse(localStorage.getItem('registration_state')) || {};
+                if (registrationData.formData) {
+                    const companyData = {
+                        id: 'comp-1',
+                        companyInfo: registrationData.formData.companyInfo || {},
+                        contactInfo: registrationData.formData.contactInfo || {},
+                        trainingInfo: registrationData.formData.trainingInfo || {},
+                        trainingDetails: registrationData.formData.trainingDetails || {},
+                        contract: registrationData.formData.contract || {},
+                        status: 'pending',
+                        registeredAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    companies.push(companyData);
+                }
+                
+                // تحميل بيانات الشركات المخزنة
+                const storedCompanies = JSON.parse(localStorage.getItem('companiesData')) || [];
+                if (storedCompanies.length > 0) {
+                    companies = [...companies, ...storedCompanies];
+                }
+                
+                // إذا لم تكن هناك بيانات، نضيف بيانات تجريبية
+                if (companies.length === 0) {
+                    companies = getSampleCompaniesData();
+                    localStorage.setItem('companiesData', JSON.stringify(companies));
+                }
+                
+                appState.companies.data = companies;
+                appState.companies.filteredData = [...companies];
+                
+                // التحقق من العقوبات المنتهية عند التحميل
+                checkExpiredPenalties();
+                
+                updateCompaniesStats();
+                displayCompanies();
+                updatePendingBadge();
+                
+            } catch (error) {
+                console.error('خطأ في تحميل بيانات الشركات:', error);
+                showNotification('حدث خطأ في تحميل بيانات الشركات', 'error');
+            }
+        }
+
+        // بيانات تجريبية للشركات
+        function getSampleCompaniesData() {
+            return [
+                {
+                    id: 'comp-1',
+                    companyInfo: {
+                        name: 'شركة التقنية المتقدمة',
+                        field: 'تكنولوجيا المعلومات',
+                        location: 'الرياض، السعودية',
+                        email: 'tech@advanced.com',
+                        website: 'https://www.advanced-tech.com',
+                        bio: 'شركة رائدة في مجال تطوير البرمجيات والذكاء الاصطناعي.',
+                        employeesCount: '51-200',
+                        exactEmployeeCount: '180',
+                        hasMultipleBranches: 'yes',
+                        branchesCount: 5,
+                        logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjIwIiB2aWV3Qm94PSIwIDAgMTIwIDEyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI1NSIgZmlsbD0iIzhiNWNmNiIvPjxwYXRoIGQ9Ik00MCA0MGg0MHY0MEg0MFY2MFoiIGZpbGw9IndoaXRlIi8+PC9zdmc+'
+                    },
+                    contactInfo: {
+                        primaryPhone: '+966501234567',
+                        secondaryPhone: '+966502345678',
+                        whatsappNumber: '+966503456789',
+                        inquiryEmail: 'contact@advanced.com',
+                        linkedinUrl: 'https://linkedin.com/company/advanced-tech',
+                        facebookUrl: 'https://facebook.com/advancedtech'
+                    },
+                    trainingInfo: {
+                        fields: ['تطوير الويب', 'الذكاء الاصطناعي', 'تحليل البيانات'],
+                        traineeType: 'first-time',
+                        details: {
+                            'تطوير الويب': {
+                                duration: '2-months',
+                                count: '5',
+                                supervisor: 'أحمد محمد',
+                                minSalary: '3000',
+                                maxSalary: '5000',
+                                currency: 'EGP',
+                                knowledgeBenefits: 'تعلم تطوير تطبيقات الويب المتقدمة',
+                                financialBenefits: 'مكافأة نهاية التدريب',
+                                trainingRequirements: 'معرفة أساسيات البرمجة، HTML، CSS'
+                            }
+                        }
+                    },
+                    trainingDetails: {
+                        maxResponseDays: '7',
+                        maxResponseAfterInterview: '3',
+                        equipment: 'yes',
+                        requiredItems: '',
+                        isStartup: false
+                    },
+                    branchLocations: [
+                        { fullAddress: 'الرياض - حي العليا - شارع الملك فهد' },
+                        { fullAddress: 'جدة - حي الشرفية - شارع الأمير سلطان' }
+                    ],
+                    penalties: [
+                        {
+                            id: 'pen-1',
+                            type: 'warning',
+                            reason: 'تأخر في تقديم تقارير التدريب الشهرية',
+                            date: '2024-01-20',
+                            status: 'active',
+                            notified: true
+                        },
+                        {
+                            id: 'pen-2',
+                            type: 'fine',
+                            amount: 5000,
+                            currency: 'SAR',
+                            reason: 'عدم توفير المعدات المطلوبة للمتدربين',
+                            date: '2024-02-15',
+                            deadline: '2024-03-15',
+                            status: 'pending',
+                            notified: true
+                        },
+                        {
+                            id: 'pen-3',
+                            type: 'suspension',
+                            duration: 30,
+                            reason: 'عدم الالتزام ببروتوكولات التدريب المعتمدة',
+                            date: '2024-02-20',
+                            status: 'active',
+                            notified: true,
+                            endDate: '2024-03-21'
+                        }
+                    ],
+                    contract: {
+                        agreed: true,
+                        agreedAt: new Date().toISOString()
+                    },
+                    status: 'approved',
+                    registeredAt: '2024-01-15T10:30:00Z',
+                    approvedAt: '2024-01-12T09:15:00Z',
+                    trainingPrice: 15000,
+                    trainingCurrency: 'EGP',
+                    trainingNotes: 'تم اعتماد الشركة وسعر التدريب شامل جميع الخدمات',
+                    updatedAt: '2024-02-20T09:15:00Z',
+                    suspended: true,
+                    suspendedUntil: '2024-03-21'
+                },
+                {
+                    id: 'comp-2',
+                    companyInfo: {
+                        name: 'شركة الحلول الذكية',
+                        field: 'تطوير البرمجيات',
+                        location: 'جدة، السعودية',
+                        email: 'info@smartsolutions.com',
+                        website: 'https://www.smartsolutions.com',
+                        bio: 'متخصصون في تطوير حلول البرمجيات المخصصة للشركات.',
+                        employeesCount: '11-50',
+                        exactEmployeeCount: '35',
+                        hasMultipleBranches: 'no',
+                        logo: null
+                    },
+                    contactInfo: {
+                        primaryPhone: '+966502345678',
+                        inquiryEmail: 'contact@smartsolutions.com'
+                    },
+                    trainingInfo: {
+                        fields: ['تطوير تطبيقات الجوال', 'قواعد البيانات'],
+                        traineeType: 'once-trained',
+                        details: {
+                            'تطوير تطبيقات الجوال': {
+                                duration: '3-weeks',
+                                count: '3',
+                                supervisor: 'سارة أحمد',
+                                minSalary: '2500',
+                                maxSalary: '4000',
+                                currency: 'EGP',
+                                knowledgeBenefits: 'تعلم تطوير تطبيقات الجوال',
+                                financialBenefits: 'بدل مواصلات',
+                                trainingRequirements: 'معرفة أساسيات البرمجة'
+                            }
+                        }
+                    },
+                    trainingDetails: {
+                        maxResponseDays: '5',
+                        maxResponseAfterInterview: '2',
+                        equipment: 'no',
+                        requiredItems: 'لابتوب شخصي، سماعات رأس',
+                        isStartup: true
+                    },
+                    penalties: [
+                        {
+                            id: 'pen-4',
+                            type: 'fine',
+                            amount: 3000,
+                            currency: 'USD',
+                            reason: 'عدم الالتزام بمواعيد المقابلات المحددة',
+                            date: '2024-01-25',
+                            status: 'paid',
+                            notified: true
+                        },
+                        {
+                            id: 'pen-5',
+                            type: 'warning',
+                            reason: 'تقييمات متدربين سلبية',
+                            date: '2024-02-10',
+                            status: 'active',
+                            notified: true
+                        }
+                    ],
+                    contract: {
+                        agreed: true,
+                        agreedAt: new Date().toISOString()
+                    },
+                    status: 'approved',
+                    registeredAt: '2024-01-10T14:20:00Z',
+                    approvedAt: '2024-01-12T09:15:00Z',
+                    trainingPrice: 12000,
+                    trainingCurrency: 'EGP',
+                    trainingNotes: 'شركة ناشئة لديها برنامج تدريبي متميز',
+                    updatedAt: '2024-02-10T09:15:00Z'
+                },
+                {
+                    id: 'comp-3',
+                    companyInfo: {
+                        name: 'مؤسسة الرؤية المستقبلية',
+                        field: 'التسويق الرقمي',
+                        location: 'الدمام، السعودية',
+                        email: 'info@futurevision.com',
+                        website: 'https://www.futurevision.com',
+                        bio: 'متخصصون في التسويق الرقمي وتحسين محركات البحث.',
+                        employeesCount: '1-10',
+                        exactEmployeeCount: '8',
+                        hasMultipleBranches: 'no',
+                        logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNjAiIGN5PSI2MCIgcj0iNTUiIGZpbGw9IiMwMEQ5RkYiLz48cGF0aCBkPSJNNzUgNDVINTB2MzBoMjV2LTMwWiIgZmlsbD0id2hpdGUiLz48L3N2Zz4='
+                    },
+                    contactInfo: {
+                        primaryPhone: '+966503456789',
+                        inquiryEmail: 'support@futurevision.com'
+                    },
+                    trainingInfo: {
+                        fields: ['التسويق الرقمي', 'إدارة وسائل التواصل الاجتماعي'],
+                        traineeType: 'first-time',
+                        details: {
+                            'التسويق الرقمي': {
+                                duration: '1-month',
+                                count: '4',
+                                supervisor: 'خالد سليمان',
+                                minSalary: '2000',
+                                maxSalary: '3500',
+                                currency: 'EGP',
+                                knowledgeBenefits: 'تعلم استراتيجيات التسويق الرقمي',
+                                financialBenefits: '',
+                                trainingRequirements: 'معرفة أساسيات التسويق'
+                            }
+                        }
+                    },
+                    trainingDetails: {
+                        maxResponseDays: '10',
+                        maxResponseAfterInterview: '5',
+                        equipment: 'yes',
+                        requiredItems: '',
+                        isStartup: false
+                    },
+                    penalties: [],
+                    contract: {
+                        agreed: true,
+                        agreedAt: new Date().toISOString()
+                    },
+                    status: 'approved',
+                    registeredAt: '2024-01-05T11:45:00Z',
+                    approvedAt: '2024-01-08T16:30:00Z',
+                    trainingPrice: 8000,
+                    trainingCurrency: 'EGP',
+                    updatedAt: '2024-01-08T16:30:00Z'
+                },
+                {
+                    id: 'comp-4',
+                    companyInfo: {
+                        name: 'شركة التطوير التقني',
+                        field: 'البرمجيات',
+                        location: 'الرياض، السعودية',
+                        email: 'info@techdev.com',
+                        website: 'https://www.techdev.com',
+                        bio: 'شركة متخصصة في تطوير تطبيقات المؤسسات.',
+                        employeesCount: '201-500',
+                        exactEmployeeCount: '350',
+                        hasMultipleBranches: 'yes',
+                        branchesCount: 3,
+                        logo: null
+                    },
+                    contactInfo: {
+                        primaryPhone: '+966504567890',
+                        inquiryEmail: 'contact@techdev.com'
+                    },
+                    trainingInfo: {
+                        fields: ['تطوير البرمجيات', 'اختبار الجودة'],
+                        traineeType: 'twice-trained',
+                        details: {
+                            'تطوير البرمجيات': {
+                                duration: '2.5-months',
+                                count: '8',
+                                supervisor: 'محمد علي',
+                                minSalary: '4000',
+                                maxSalary: '6000',
+                                currency: 'EGP',
+                                knowledgeBenefits: 'تعلم منهجيات تطوير البرمجيات الحديثة',
+                                financialBenefits: 'تأمين صحي، بدل انتقال',
+                                trainingRequirements: 'خبرة في البرمجة'
+                            }
+                        }
+                    },
+                    trainingDetails: {
+                        maxResponseDays: '3',
+                        maxResponseAfterInterview: '1',
+                        equipment: 'yes',
+                        requiredItems: '',
+                        isStartup: false
+                    },
+                    penalties: [
+                        {
+                            id: 'pen-6',
+                            type: 'termination',
+                            reason: 'مخالفات متكررة وعدم التزام بعقد الشراكة',
+                            date: '2024-02-05',
+                            status: 'active',
+                            notified: true
+                        }
+                    ],
+                    contract: {
+                        agreed: true,
+                        agreedAt: new Date().toISOString()
+                    },
+                    status: 'rejected',
+                    registeredAt: '2024-01-20T09:15:00Z',
+                    rejectedAt: '2024-01-22T14:30:00Z',
+                    rejectionReason: 'تجاوزات خطيرة في النظام',
+                    updatedAt: '2024-02-05T10:00:00Z'
+                }
+            ];
+        }
+
+        // تحديث إحصائيات الشركات
+        function updateCompaniesStats() {
+            const companies = appState.companies.data;
+            
+            const pending = companies.filter(c => c.status === 'pending').length;
+            const approved = companies.filter(c => c.status === 'approved').length;
+            const rejected = companies.filter(c => c.status === 'rejected').length;
+            const penalized = companies.filter(c => c.penalties && c.penalties.length > 0).length;
+            const total = companies.length;
+            
+            elements.pendingCompanies.textContent = pending;
+            elements.approvedCompanies.textContent = approved;
+            elements.rejectedCompanies.textContent = rejected;
+            elements.penalizedCompanies.textContent = penalized;
+            elements.totalCompaniesList.textContent = total;
+            elements.pendingBadge.textContent = pending;
+        }
+
+        // التحقق من العقوبات المنتهية
+        function checkExpiredPenalties() {
+            const now = new Date();
+            let updated = false;
+            let autoReturnedCompanies = [];
+
+            appState.companies.data.forEach(company => {
+                if (company.penalties && company.penalties.length > 0) {
+                    let hasActiveSuspension = false;
+                    
+                    company.penalties.forEach(penalty => {
+                        if (penalty.status === 'active' && penalty.endDate) {
+                            const endDate = new Date(penalty.endDate);
+                            
+                            if (now >= endDate) {
+                                // العقوبة انتهت
+                                penalty.status = 'expired';
+                                penalty.expiredAt = now.toISOString();
+                                updated = true;
+                                
+                                // إذا كانت العقوبة هي تعليق مؤقت، نعيد الشركة للعمل
+                                if (penalty.type === 'suspension') {
+                                    hasActiveSuspension = false;
+                                    
+                                    // تسجيل الشركة التي تمت إعادتها
+                                    autoReturnedCompanies.push({
+                                        companyName: company.companyInfo.name,
+                                        penaltyReason: penalty.reason
+                                    });
+                                }
+                            } else if (penalty.type === 'suspension' && penalty.status === 'active') {
+                                // لا تزال العقوبة نشطة
+                                hasActiveSuspension = true;
+                            }
+                        }
+                    });
+                    
+                    // تحديث حالة التعليق للشركة
+                    if (company.suspended && !hasActiveSuspension) {
+                        delete company.suspended;
+                        delete company.suspendedUntil;
+                        updated = true;
+                    } else if (!company.suspended && hasActiveSuspension) {
+                        // يجب أن تكون الشركة معلقة لكنها ليست كذلك
+                        const activeSuspension = company.penalties.find(p => 
+                            p.type === 'suspension' && p.status === 'active' && p.endDate
+                        );
+                        
+                        if (activeSuspension) {
+                            company.suspended = true;
+                            company.suspendedUntil = activeSuspension.endDate;
+                            updated = true;
+                        }
+                    }
+                }
+            });
+
+            if (updated) {
+                saveCompaniesData();
+                filterCompanies();
+                updateCompaniesStats();
+                
+                // إذا كان هناك شركات تمت إعادتها، نعرض إشعار
+                if (autoReturnedCompanies.length > 0) {
+                    showAutoReturnNotification(autoReturnedCompanies);
+                }
+            }
+        }
+
+        // حساب تاريخ انتهاء العقوبة
+        function calculatePenaltyEndDate(duration) {
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + parseInt(duration));
+            return endDate.toISOString().split('T')[0];
+        }
+
+        // عرض إشعار العودة التلقائية
+        function showAutoReturnNotification(companies) {
+            // إزالة أي إشعارات سابقة
+            const existingNotification = document.querySelector('.auto-return-notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = 'auto-return-notification';
+            
+            let message = '';
+            if (companies.length === 1) {
+                message = `تمت إعادة شركة ${companies[0].companyName} تلقائياً بعد انتهاء فترة التعليق`;
+            } else {
+                message = `تمت إعادة ${companies.length} شركات تلقائياً بعد انتهاء فترات التعليق`;
+            }
+            
+            notification.innerHTML = `
+                <div class="icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="message">${message}</div>
+                <button class="close-btn" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // إزالة الإشعار تلقائياً بعد 10 ثوانٍ
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 10000);
+        }
+
+        // عرض الشركات في الجدول
+        function displayCompanies() {
+            const companies = appState.companies.filteredData;
+            const tbody = elements.companiesTableBody;
+            const emptyState = elements.companiesEmptyState;
+            
+            tbody.innerHTML = '';
+            
+            if (companies.length === 0) {
+                emptyState.style.display = 'block';
+                elements.companiesCount.textContent = '0';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            elements.companiesCount.textContent = companies.length;
+            
+            companies.forEach(company => {
+                const row = createCompanyRow(company);
+                tbody.appendChild(row);
+            });
+        }
+
+        // إنشاء صف للشركة
+        function createCompanyRow(company) {
+            const row = document.createElement('tr');
+            const companyInfo = company.companyInfo || {};
+            const date = new Date(company.registeredAt);
+            
+            const formattedDate = date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            
+            const firstChar = companyInfo.name ? companyInfo.name.charAt(0) : '?';
+            
+            let statusText = '';
+            let statusClass = '';
+            switch (company.status) {
+                case 'pending':
+                    statusText = 'قيد المراجعة';
+                    statusClass = 'status-pending';
+                    break;
+                case 'approved':
+                    if (company.suspended) {
+                        statusText = 'معلقة مؤقتاً';
+                        statusClass = 'status-pending';
+                    } else {
+                        statusText = 'معتمدة';
+                        statusClass = 'status-approved';
+                    }
+                    break;
+                case 'rejected':
+                    statusText = 'مرفوضة';
+                    statusClass = 'status-rejected';
+                    break;
+                default:
+                    statusText = 'قيد المراجعة';
+                    statusClass = 'status-pending';
+            }
+            
+            // إنشاء خلية العقوبات
+            let penaltiesCell = '';
+            if (company.penalties && company.penalties.length > 0) {
+                const recentPenalties = company.penalties.slice(-2);
+                
+                penaltiesCell = '<div class="penalties-cell">';
+                recentPenalties.forEach(penalty => {
+                    const penaltyTypeText = getPenaltyTypeText(penalty.type);
+                    const penaltyDate = new Date(penalty.date).toLocaleDateString('en-US');
+                    const isExpired = penalty.status === 'expired';
+                    
+                    penaltiesCell += `
+                        <div class="penalty-summary ${isExpired ? 'expired' : ''}">
+                            <div class="penalty-reason">${penalty.reason}</div>
+                            <div class="penalty-details">
+                                <div>
+                                    <span>${penaltyTypeText}</span>
+                                    ${penalty.amount ? `<span class="penalty-amount"> - ${penalty.amount.toLocaleString()} ${getCurrencyText(penalty.currency, penalty.otherCurrency)}</span>` : ''}
+                                    ${penalty.duration ? `<span> - ${penalty.duration} يوم</span>` : ''}
+                                </div>
+                                <div>تاريخ: ${penaltyDate}</div>
+                                ${penalty.endDate ? `<div>ينتهي: ${new Date(penalty.endDate).toLocaleDateString('en-US')}</div>` : ''}
+                                ${isExpired ? '<div style="color: var(--expired);">تمت العودة التلقائية</div>' : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                if (company.penalties.length > 2) {
+                    penaltiesCell += `<div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem;">+ ${company.penalties.length - 2} عقوبة أخرى</div>`;
+                }
+                
+                penaltiesCell += '</div>';
+            } else {
+                penaltiesCell = '<div style="color: var(--text-secondary); text-align: center;">لا توجد عقوبات</div>';
+            }
+            
+            row.innerHTML = `
+                <td>
+                    <div class="info-cell">
+                        <div class="avatar">${firstChar}</div>
+                        <div class="info-details">
+                            <h4>${companyInfo.name || 'غير محدد'}</h4>
+                            <p>${companyInfo.email || 'لا يوجد بريد إلكتروني'}</p>
+                        </div>
+                    </div>
+                </td>
+                <td>${companyInfo.field || 'غير محدد'}</td>
+                <td>${companyInfo.location || 'غير محدد'}</td>
+                <td>${formattedDate}</td>
+                <td>
+                    <span class="status-badge ${statusClass}">${statusText}</span>
+                </td>
+                <td>${penaltiesCell}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-table btn-view" onclick="viewCompanyDetails('${company.id}')">
+                            <i class="fas fa-eye"></i>
+                            عرض
+                        </button>
+                        ${company.status === 'pending' ? `
+                            <button class="btn-table btn-approve" onclick="showApproveModal('${company.id}')">
+                                <i class="fas fa-check"></i>
+                                اعتماد
+                            </button>
+                            <button class="btn-table btn-reject" onclick="showRejectModal('${company.id}')">
+                                <i class="fas fa-times"></i>
+                                رفض
+                            </button>
+                        ` : ''}
+                        ${company.status === 'approved' && !company.suspended ? `
+                            <button class="btn-table btn-penalty" onclick="showPenaltyModalForCompany('${company.id}')">
+                                <i class="fas fa-gavel"></i>
+                                عقاب
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+
+        // تصفية الشركات
+        function filterCompanies() {
+            const searchQuery = elements.searchCompaniesInput.value.toLowerCase();
+            const filter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
+            
+            appState.companies.searchQuery = searchQuery;
+            appState.companies.currentFilter = filter;
+            
+            let filtered = [...appState.companies.data];
+            
+            if (searchQuery) {
+                filtered = filtered.filter(company => {
+                    const companyInfo = company.companyInfo || {};
+                    const name = companyInfo.name?.toLowerCase() || '';
+                    const email = companyInfo.email?.toLowerCase() || '';
+                    const field = companyInfo.field?.toLowerCase() || '';
+                    const location = companyInfo.location?.toLowerCase() || '';
+                    
+                    return name.includes(searchQuery) || 
+                           email.includes(searchQuery) || 
+                           field.includes(searchQuery) || 
+                           location.includes(searchQuery);
+                });
+            }
+            
+            if (filter !== 'all') {
+                if (filter === 'penalties') {
+                    filtered = filtered.filter(company => company.penalties && company.penalties.length > 0);
+                } else if (filter === 'suspended') {
+                    filtered = filtered.filter(company => company.suspended);
+                } else {
+                    filtered = filtered.filter(company => company.status === filter);
+                }
+            }
+            
+            appState.companies.filteredData = filtered;
+            displayCompanies();
+        }
+
+        // دوال إدارة الشركات
+        window.viewCompanyDetails = function(companyId) {
+            const company = appState.companies.data.find(c => c.id === companyId);
+            if (!company) {
+                showNotification('لم يتم العثور على بيانات الشركة', 'error');
+                return;
+            }
+            
+            appState.companies.selectedCompanyId = companyId;
+            displayCompanyDetails(company);
+        };
+
+        function displayCompanyDetails(company) {
+            const companyInfo = company.companyInfo || {};
+            const contactInfo = company.contactInfo || {};
+            const trainingInfo = company.trainingInfo || {};
+            const trainingDetails = company.trainingDetails || {};
+            const branchLocations = company.branchLocations || [];
+            const contract = company.contract || {};
+            const penalties = company.penalties || [];
+            
+            document.getElementById('modalCompanyName').textContent = `تفاصيل: ${companyInfo.name}`;
+            
+            // عرض صورة الشركة
+            displayCompanyLogo(companyInfo.logo, companyInfo.name);
+            
+            // المعلومات الأساسية
+            const basicInfoGrid = document.getElementById('basicInfoGrid');
+            basicInfoGrid.innerHTML = `
+                <div class="info-item">
+                    <span class="info-label">اسم الشركة:</span>
+                    <span class="info-value">${companyInfo.name || 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">المجال الرئيسي:</span>
+                    <span class="info-value">${companyInfo.field || 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">الموقع:</span>
+                    <span class="info-value">${companyInfo.location || 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">البريد الإلكتروني:</span>
+                    <span class="info-value">${companyInfo.email || 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">الموقع الإلكتروني:</span>
+                    <span class="info-value">${companyInfo.website || 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">نبذة عن الشركة:</span>
+                    <span class="info-value">${companyInfo.bio || 'لا توجد نبذة'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">عدد الموظفين:</span>
+                    <span class="info-value">${getEmployeesCountText(companyInfo)}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">عدد الفروع:</span>
+                    <span class="info-value">${getBranchesCountText(companyInfo)}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">نوع الشركة:</span>
+                    <span class="info-value">${trainingDetails.isStartup ? 'شركة ناشئة (Startup)' : 'شركة قائمة'}</span>
+                </div>
+            `;
+            
+            // معلومات الاتصال
+            const contactInfoGrid = document.getElementById('contactInfoGrid');
+            contactInfoGrid.innerHTML = `
+                <div class="info-item">
+                    <span class="info-label">الهاتف الأساسي:</span>
+                    <span class="info-value">${contactInfo.primaryPhone || 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">الهاتف البديل:</span>
+                    <span class="info-value">${contactInfo.secondaryPhone || 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">واتساب:</span>
+                    <span class="info-value">${contactInfo.whatsappNumber || 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">بريد الاستفسارات:</span>
+                    <span class="info-value">${contactInfo.inquiryEmail || 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">لينكدإن:</span>
+                    <span class="info-value">${contactInfo.linkedinUrl || 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">فيسبوك:</span>
+                    <span class="info-value">${contactInfo.facebookUrl || 'غير محدد'}</span>
+                </div>
+            `;
+            
+            // المجالات التدريبية
+            const trainingInfoGrid = document.getElementById('trainingInfoGrid');
+            if (trainingInfo.fields && trainingInfo.fields.length > 0) {
+                let fieldsHTML = '';
+                const traineeTypeText = getTraineeTypeText(trainingInfo.traineeType);
+                
+                fieldsHTML += `
+                    <div class="info-item">
+                        <span class="info-label">نوع المتدربين:</span>
+                        <span class="info-value">${traineeTypeText}</span>
+                    </div>
+                `;
+                
+                trainingInfo.fields.forEach((field, index) => {
+                    const fieldDetails = trainingInfo.details?.[field] || {};
+                    const durationText = getDurationText(fieldDetails.duration);
+                    
+                    fieldsHTML += `
+                        <div class="info-section" style="margin-bottom: 1rem; background: rgba(139, 92, 246, 0.05);">
+                            <div class="info-header">
+                                <i class="fas fa-code"></i>
+                                <h4>${field} (المجال ${index + 1})</h4>
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">مدة التدريب:</span>
+                                    <span class="info-value">${durationText || 'غير محدد'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">عدد المتدربين:</span>
+                                    <span class="info-value">${fieldDetails.count || 'غير محدد'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">المشرف:</span>
+                                    <span class="info-value">${fieldDetails.supervisor || 'غير محدد'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">الراتب بعد التعيين:</span>
+                                    <span class="info-value">${getSalaryText(fieldDetails)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">الميزة المعرفية:</span>
+                                    <span class="info-value">${fieldDetails.knowledgeBenefits || 'غير محدد'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">الميزة المادية:</span>
+                                    <span class="info-value">${fieldDetails.financialBenefits || 'غير محدد'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">متطلبات التدريب:</span>
+                                    <span class="info-value">${fieldDetails.trainingRequirements || 'غير محدد'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                trainingInfoGrid.innerHTML = fieldsHTML;
+            } else {
+                trainingInfoGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">لا توجد مجالات تدريبية محددة</p>';
+            }
+            
+            // متطلبات التدريب
+            const requirementsInfoGrid = document.getElementById('requirementsInfoGrid');
+            requirementsInfoGrid.innerHTML = `
+                <div class="info-item">
+                    <span class="info-label">الحد الأقصى للرد على الطلبات:</span>
+                    <span class="info-value">${trainingDetails.maxResponseDays ? `${trainingDetails.maxResponseDays} أيام` : 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">الحد الأقصى للرد بعد المقابلة:</span>
+                    <span class="info-value">${trainingDetails.maxResponseAfterInterview ? `${trainingDetails.maxResponseAfterInterview} أيام` : 'غير محدد'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">توفر المعدات:</span>
+                    <span class="info-value">${getEquipmentText(trainingDetails.equipment)}</span>
+                </div>
+                ${trainingDetails.equipment === 'no' && trainingDetails.requiredItems ? `
+                <div class="info-item">
+                    <span class="info-label">متطلبات المتدرب:</span>
+                    <span class="info-value">${trainingDetails.requiredItems}</span>
+                </div>
+                ` : ''}
+            `;
+            
+            // الفروع
+            const branchesInfoGrid = document.getElementById('branchesInfoGrid');
+            if (branchLocations.length > 0) {
+                let branchesHTML = '';
+                branchLocations.forEach((branch, index) => {
+                    branchesHTML += `
+                        <div class="info-item">
+                            <span class="info-label">فرع ${index + 1}:</span>
+                            <span class="info-value">${branch.fullAddress || 'غير محدد'}</span>
+                        </div>
+                    `;
+                });
+                branchesInfoGrid.innerHTML = branchesHTML;
+            } else {
+                branchesInfoGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">لا توجد فروع متاحة للتدريب</p>';
+            }
+            
+            // العقوبات والإنذارات
+            displayPenalties(penalties);
+            
+            // سجل المراجعة
+            const reviewInfoGrid = document.getElementById('reviewInfoGrid');
+            const registeredDate = new Date(company.registeredAt);
+            const updatedDate = new Date(company.updatedAt);
+            
+            let currencyDisplay = '';
+            if (company.trainingCurrency) {
+                if (company.trainingCurrency === 'other' && company.otherCurrency) {
+                    currencyDisplay = company.otherCurrency;
+                } else {
+                    currencyDisplay = getCurrencyText(company.trainingCurrency);
+                }
+            }
+            
+            reviewInfoGrid.innerHTML = `
+                <div class="info-item">
+                    <span class="info-label">حالة الطلب:</span>
+                    <span class="info-value">
+                        <span class="status-badge ${getStatusClass(company.status)} ${company.suspended ? 'status-pending' : ''}">
+                            ${getStatusText(company.status)}${company.suspended ? ' (معلقة مؤقتاً)' : ''}
+                        </span>
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">تاريخ التسجيل:</span>
+                    <span class="info-value">${registeredDate.toLocaleDateString('en-US')}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">آخر تحديث:</span>
+                    <span class="info-value">${updatedDate.toLocaleDateString('en-US')}</span>
+                </div>
+                ${company.approvedAt ? `
+                <div class="info-item">
+                    <span class="info-label">تاريخ الاعتماد:</span>
+                    <span class="info-value">${new Date(company.approvedAt).toLocaleDateString('en-US')}</span>
+                </div>
+                ` : ''}
+                ${company.trainingPrice ? `
+                <div class="info-item">
+                    <span class="info-label">سعر التدريب الإجمالي:</span>
+                    <span class="info-value" style="color: var(--success); font-weight: 700;">
+                        ${company.trainingPrice.toLocaleString()} ${currencyDisplay}
+                    </span>
+                </div>
+                ` : ''}
+                ${company.trainingNotes ? `
+                <div class="info-item">
+                    <span class="info-label">ملاحظات الاعتماد:</span>
+                    <span class="info-value">${company.trainingNotes}</span>
+                </div>
+                ` : ''}
+                ${company.rejectedAt ? `
+                <div class="info-item">
+                    <span class="info-label">تاريخ الرفض:</span>
+                    <span class="info-value">${new Date(company.rejectedAt).toLocaleDateString('en-US')}</span>
+                </div>
+                ` : ''}
+                ${company.rejectionReason ? `
+                <div class="info-item">
+                    <span class="info-label">سبب الرفض:</span>
+                    <span class="info-value">${company.rejectionReason}</span>
+                </div>
+                ` : ''}
+                ${company.suspended && company.suspendedUntil ? `
+                <div class="info-item">
+                    <span class="info-label">معلقة حتى:</span>
+                    <span class="info-value" style="color: var(--warning);">${new Date(company.suspendedUntil).toLocaleDateString('en-US')}</span>
+                </div>
+                ` : ''}
+                <div class="info-item">
+                    <span class="info-label">الموافقة على العقد:</span>
+                    <span class="info-value">${contract.agreed ? 'نعم' : 'لا'}</span>
+                </div>
+                ${contract.agreedAt ? `
+                <div class="info-item">
+                    <span class="info-label">تاريخ الموافقة:</span>
+                    <span class="info-value">${new Date(contract.agreedAt).toLocaleDateString('en-US')}</span>
+                </div>
+                ` : ''}
+            `;
+            
+            elements.companyDetailsModal.classList.add('show');
+        }
+
+        // دالة لعرض صورة الشركة
+        function displayCompanyLogo(logoData, companyName) {
+            const logoContainer = elements.companyLogoContainer;
+            const logoStatus = elements.logoStatus;
+            
+            if (logoData && logoData.trim() !== '') {
+                logoContainer.innerHTML = `
+                    <img src="${logoData}" alt="شعار ${companyName}" class="company-logo">
+                `;
+                logoStatus.textContent = 'الشعار الذي حمّلته الشركة';
+                logoStatus.style.color = 'var(--success)';
+            } else {
+                logoContainer.innerHTML = `
+                    <div class="no-logo">
+                        <i class="fas fa-building" style="font-size: 2.5rem;"></i>
+                    </div>
+                `;
+                logoStatus.textContent = 'لم تقم الشركة بتحميل شعار';
+                logoStatus.style.color = 'var(--text-secondary)';
+            }
+        }
+
+        // دالة لعرض العقوبات
+        function displayPenalties(penalties) {
+            const penaltiesList = document.getElementById('penaltiesList');
+            
+            if (!penalties || penalties.length === 0) {
+                penaltiesList.innerHTML = `
+                    <div class="no-penalties">
+                        <i class="fas fa-gavel" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <h4>لا توجد عقوبات أو إنذارات</h4>
+                        <p>لم يتم إضافة أي عقوبات أو إنذارات لهذه الشركة</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let penaltiesHTML = '';
+            const now = new Date();
+            
+            penalties.forEach(penalty => {
+                const date = new Date(penalty.date);
+                const formattedDate = date.toLocaleDateString('en-US');
+                
+                let typeText = '';
+                let typeClass = '';
+                
+                switch (penalty.type) {
+                    case 'warning':
+                        typeText = 'إنذار';
+                        typeClass = 'warning';
+                        break;
+                    case 'fine':
+                        typeText = 'غرامة مالية';
+                        typeClass = 'penalty';
+                        break;
+                    case 'suspension':
+                        typeText = 'تعليق مؤقت';
+                        typeClass = 'penalty';
+                        break;
+                    case 'termination':
+                        typeText = 'إنهاء التعاقد';
+                        typeClass = 'penalty';
+                        break;
+                    default:
+                        typeText = 'عقوبة';
+                        typeClass = 'penalty';
+                }
+                
+                let statusText = '';
+                let statusClass = '';
+                
+                switch (penalty.status) {
+                    case 'active':
+                        statusText = 'نشط';
+                        statusClass = 'pending';
+                        break;
+                    case 'pending':
+                        statusText = 'معلق';
+                        statusClass = 'pending';
+                        break;
+                    case 'paid':
+                        statusText = 'مدفوع';
+                        statusClass = 'paid';
+                        break;
+                    case 'resolved':
+                        statusText = 'تم الحل';
+                        statusClass = 'paid';
+                        break;
+                    case 'overdue':
+                        statusText = 'متأخر';
+                        statusClass = 'overdue';
+                        break;
+                    case 'expired':
+                        statusText = 'منتهية';
+                        statusClass = 'expired';
+                        break;
+                    default:
+                        statusText = 'نشط';
+                        statusClass = 'pending';
+                }
+                
+                // التحقق من العقوبة المنتهية
+                let isExpired = penalty.status === 'expired';
+                let timeLeft = '';
+                
+                if (penalty.endDate && penalty.status === 'active') {
+                    const endDate = new Date(penalty.endDate);
+                    const timeDiff = endDate - now;
+                    
+                    if (timeDiff <= 0) {
+                        isExpired = true;
+                        statusText = 'منتهية';
+                        statusClass = 'expired';
+                    } else {
+                        const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                        timeLeft = ` (${daysLeft} يوم متبقي)`;
+                    }
+                }
+                
+                const currencyText = getCurrencyText(penalty.currency, penalty.otherCurrency);
+                
+                penaltiesHTML += `
+                    <div class="${penalty.type === 'warning' ? 'warning-item' : 'penalty-item'} ${isExpired ? 'expired' : ''}">
+                        <div class="penalty-header">
+                            <span class="penalty-type ${typeClass}">${typeText}</span>
+                            <span class="penalty-date">${formattedDate}</span>
+                        </div>
+                        <div class="penalty-reason">${penalty.reason}</div>
+                        ${penalty.amount ? `<div class="penalty-amount">قيمة الغرامة: ${penalty.amount.toLocaleString()} ${currencyText}</div>` : ''}
+                        ${penalty.duration ? `<div>مدة التعليق: ${penalty.duration} يوم</div>` : ''}
+                        ${penalty.endDate ? `<div>تاريخ الانتهاء: ${new Date(penalty.endDate).toLocaleDateString('en-US')}${timeLeft}</div>` : ''}
+                        ${penalty.deadline ? `<div>موعد السداد: ${new Date(penalty.deadline).toLocaleDateString('en-US')}</div>` : ''}
+                        <div class="penalty-status ${statusClass}">${statusText}</div>
+                        ${penalty.notified ? '<div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem;"><i class="fas fa-bell"></i> تم إرسال إشعار للشركة</div>' : ''}
+                        ${isExpired ? '<div style="color: var(--success); font-size: 0.85rem; margin-top: 0.5rem;"><i class="fas fa-check-circle"></i> تمت العودة التلقائية</div>' : ''}
+                    </div>
+                `;
+            });
+            
+            penaltiesList.innerHTML = penaltiesHTML;
+        }
+
+        // دوال مساعدة إضافية
+        function getPenaltyTypeText(type) {
+            const types = {
+                'warning': 'إنذار',
+                'fine': 'غرامة مالية',
+                'suspension': 'تعليق مؤقت',
+                'termination': 'إنهاء التعاقد'
+            };
+            return types[type] || type;
+        }
+
+        window.showApproveModal = function(companyId) {
+            appState.companies.selectedCompanyId = companyId;
+            
+            document.getElementById('trainingPrice').value = '';
+            document.getElementById('trainingCurrency').value = 'EGP';
+            document.getElementById('otherCurrency').value = '';
+            document.getElementById('trainingNotes').value = '';
+            document.getElementById('otherCurrencyGroup').style.display = 'none';
+            
+            elements.approveCompanyModal.classList.add('show');
+        };
+
+        function closeApproveModal() {
+            elements.approveCompanyModal.classList.remove('show');
+        }
+
+        function confirmApproveCompany() {
+            const price = document.getElementById('trainingPrice').value.trim();
+            const currency = document.getElementById('trainingCurrency').value;
+            const otherCurrency = document.getElementById('otherCurrency').value.trim();
+            const notes = document.getElementById('trainingNotes').value.trim();
+            
+            if (!price || isNaN(price) || parseFloat(price) <= 0) {
+                showNotification('يرجى إدخال سعر تدريب صحيح', 'error');
+                return;
+            }
+            
+            if (currency === 'other' && !otherCurrency) {
+                showNotification('يرجى تحديد العملة', 'error');
+                return;
+            }
+            
+            const companyIndex = appState.companies.data.findIndex(c => c.id === appState.companies.selectedCompanyId);
+            if (companyIndex !== -1) {
+                appState.companies.data[companyIndex].status = 'approved';
+                appState.companies.data[companyIndex].approvedAt = new Date().toISOString();
+                appState.companies.data[companyIndex].trainingPrice = parseFloat(price);
+                appState.companies.data[companyIndex].trainingCurrency = currency;
+                
+                if (currency === 'other') {
+                    appState.companies.data[companyIndex].otherCurrency = otherCurrency;
+                }
+                
+                if (notes) {
+                    appState.companies.data[companyIndex].trainingNotes = notes;
+                }
+                
+                appState.companies.data[companyIndex].updatedAt = new Date().toISOString();
+                
+                saveCompaniesData();
+                filterCompanies();
+                updateCompaniesStats();
+                
+                closeApproveModal();
+                closeCompanyModal();
+                
+                showNotification('تم اعتماد الشركة وتحديد سعر التدريب بنجاح', 'success');
+            }
+        };
+
+        window.showRejectModal = function(companyId) {
+            appState.companies.selectedCompanyId = companyId;
+            elements.rejectCompanyModal.classList.add('show');
+        };
+
+        function closeRejectModal() {
+            elements.rejectCompanyModal.classList.remove('show');
+            document.getElementById('rejectReason').value = '';
+        }
+
+        function confirmRejectCompany() {
+            const reason = document.getElementById('rejectReason').value.trim();
+            if (!reason) {
+                showNotification('يرجى إدخال سبب الرفض', 'error');
+                return;
+            }
+            
+            if (confirm('هل أنت متأكد من رفض طلب هذه الشركة؟')) {
+                const companyIndex = appState.companies.data.findIndex(c => c.id === appState.companies.selectedCompanyId);
+                if (companyIndex !== -1) {
+                    appState.companies.data[companyIndex].status = 'rejected';
+                    appState.companies.data[companyIndex].rejectionReason = reason;
+                    appState.companies.data[companyIndex].rejectedAt = new Date().toISOString();
+                    appState.companies.data[companyIndex].updatedAt = new Date().toISOString();
+                    
+                    saveCompaniesData();
+                    filterCompanies();
+                    updateCompaniesStats();
+                    
+                    closeCompanyModal();
+                    closeRejectModal();
+                    
+                    showNotification('تم رفض طلب الشركة بنجاح', 'success');
+                }
+            }
+        };
+
+        // دوال العقوبات والإنذارات
+        window.showPenaltyModalForCompany = function(companyId) {
+            appState.companies.selectedCompanyId = companyId;
+            showPenaltyModal();
+        };
+
+        window.showPenaltyModal = function() {
+            if (!appState.companies.selectedCompanyId) {
+                showNotification('يرجى اختيار شركة أولاً', 'error');
+                return;
+            }
+            
+            document.getElementById('penaltyType').value = '';
+            document.getElementById('penaltyReason').value = '';
+            document.getElementById('penaltyAmount').value = '';
+            document.getElementById('penaltyCurrency').value = 'SAR';
+            document.getElementById('otherPenaltyCurrency').value = '';
+            document.getElementById('penaltyDuration').value = '';
+            document.getElementById('penaltyDeadline').value = '';
+            document.getElementById('penaltyAmountGroup').style.display = 'none';
+            document.getElementById('otherPenaltyCurrencyGroup').style.display = 'none';
+            document.getElementById('penaltyDurationGroup').style.display = 'none';
+            
+            document.getElementById('penaltyType').addEventListener('change', function() {
+                const amountGroup = document.getElementById('penaltyAmountGroup');
+                const durationGroup = document.getElementById('penaltyDurationGroup');
+                
+                if (this.value === 'fine') {
+                    amountGroup.style.display = 'flex';
+                    durationGroup.style.display = 'none';
+                } else if (this.value === 'suspension') {
+                    amountGroup.style.display = 'none';
+                    durationGroup.style.display = 'flex';
+                } else {
+                    amountGroup.style.display = 'none';
+                    durationGroup.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('penaltyCurrency').addEventListener('change', function() {
+                const otherCurrencyGroup = document.getElementById('otherPenaltyCurrencyGroup');
+                if (this.value === 'other') {
+                    otherCurrencyGroup.style.display = 'flex';
+                } else {
+                    otherCurrencyGroup.style.display = 'none';
+                }
+            });
+            
+            elements.penaltyModal.classList.add('show');
+        };
+
+        function closePenaltyModal() {
+            elements.penaltyModal.classList.remove('show');
+        }
+
+        function confirmPenalty() {
+            const type = document.getElementById('penaltyType').value;
+            const reason = document.getElementById('penaltyReason').value.trim();
+            const amount = document.getElementById('penaltyAmount').value;
+            const currency = document.getElementById('penaltyCurrency').value;
+            const otherCurrency = document.getElementById('otherPenaltyCurrency').value.trim();
+            const duration = document.getElementById('penaltyDuration').value;
+            const deadline = document.getElementById('penaltyDeadline').value;
+            
+            if (!type || !reason) {
+                showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+            
+            if (type === 'fine' && (!amount || isNaN(amount) || parseFloat(amount) <= 0)) {
+                showNotification('يرجى إدخال قيمة الغرامة صحيحة', 'error');
+                return;
+            }
+            
+            if (type === 'suspension' && (!duration || isNaN(duration) || parseInt(duration) <= 0)) {
+                showNotification('يرجى إدخال مدة التعليق صحيحة', 'error');
+                return;
+            }
+            
+            if (type === 'fine' && currency === 'other' && !otherCurrency) {
+                showNotification('يرجى تحديد العملة', 'error');
+                return;
+            }
+            
+            const companyIndex = appState.companies.data.findIndex(c => c.id === appState.companies.selectedCompanyId);
+            if (companyIndex !== -1) {
+                const penalty = {
+                    id: 'pen-' + Date.now(),
+                    type: type,
+                    reason: reason,
+                    date: new Date().toISOString().split('T')[0],
+                    status: 'active',
+                    notified: document.getElementById('notifyCompanyPenalty').checked
+                };
+                
+                if (type === 'fine') {
+                    penalty.amount = parseFloat(amount);
+                    penalty.currency = currency;
+                    
+                    if (currency === 'other') {
+                        penalty.otherCurrency = otherCurrency;
+                    }
+                }
+                
+                if (type === 'suspension') {
+                    penalty.duration = parseInt(duration);
+                    penalty.endDate = calculatePenaltyEndDate(parseInt(duration));
+                    
+                    // تعليق الشركة مؤقتاً
+                    appState.companies.data[companyIndex].suspended = true;
+                    appState.companies.data[companyIndex].suspendedUntil = penalty.endDate;
+                }
+                
+                if (deadline) {
+                    penalty.deadline = deadline;
+                }
+                
+                // إضافة العقوبة للشركة
+                if (!appState.companies.data[companyIndex].penalties) {
+                    appState.companies.data[companyIndex].penalties = [];
+                }
+                appState.companies.data[companyIndex].penalties.push(penalty);
+                appState.companies.data[companyIndex].updatedAt = new Date().toISOString();
+                
+                saveCompaniesData();
+                
+                // تحديث العرض إذا كان مودال التفاصيل مفتوحاً
+                if (elements.companyDetailsModal.classList.contains('show')) {
+                    displayPenalties(appState.companies.data[companyIndex].penalties);
+                }
+                
+                // تحديث الجدول
+                filterCompanies();
+                updateCompaniesStats();
+                
+                closePenaltyModal();
+                showNotification('تم إضافة العقوبة/الإنذار بنجاح', 'penalty');
+                
+                if (type === 'suspension') {
+                    showNotification(`تم تعليق الشركة لمدة ${duration} يوم. ستتم إعادتها تلقائياً بعد انتهاء المدة.`, 'warning');
+                }
+            }
+        };
+
+        // دوال مساعدة
+        function getEmployeesCountText(companyInfo) {
+            if (!companyInfo.employeesCount) return 'غير محدد';
+            
+            switch (companyInfo.employeesCount) {
+                case '1-10': return '1-10 موظف';
+                case '11-50': return '11-50 موظف';
+                case '51-200': return '51-200 موظف';
+                case '201-500': return '201-500 موظف';
+                case 'more': 
+                    return companyInfo.exactEmployeeCount ? 
+                        `أكثر من 500 موظف (${companyInfo.exactEmployeeCount})` : 
+                        'أكثر من 500 موظف';
+                default: return companyInfo.employeesCount;
+            }
+        }
+
+        function getBranchesCountText(companyInfo) {
+            if (companyInfo.hasMultipleBranches === 'yes') {
+                return companyInfo.branchesCount ? `${companyInfo.branchesCount} فرع` : 'أكثر من فرع';
+            } else {
+                return 'فرع واحد فقط';
+            }
+        }
+
+        function getTraineeTypeText(traineeType) {
+            switch (traineeType) {
+                case 'first-time': return 'النظام الأول - متدرب لأول مرة';
+                case 'once-trained': return 'النظام الثاني - متدرب ذو خبرة';
+                case 'twice-trained': return 'النظام الثالث - متدرب متمرس (Training)';
+                default: return 'غير محدد';
+            }
+        }
+
+        function getDurationText(duration) {
+            const durations = {
+                '2-weeks': 'أسبوعين',
+                '3-weeks': '3 أسابيع',
+                '1-month': 'شهر واحد',
+                '1.5-months': 'شهر ونصف',
+                '2-months': 'شهرين',
+                '2.5-months': 'شهرين ونصف'
+            };
+            return durations[duration] || duration;
+        }
+
+        function getSalaryText(fieldDetails) {
+            if (!fieldDetails.minSalary && !fieldDetails.maxSalary) return 'غير محدد';
+            
+            const currencyText = getCurrencyText(fieldDetails.currency, fieldDetails.otherCurrency);
+            
+            if (fieldDetails.minSalary && fieldDetails.maxSalary) {
+                return `${fieldDetails.minSalary} - ${fieldDetails.maxSalary} ${currencyText}`;
+            } else if (fieldDetails.minSalary) {
+                return `من ${fieldDetails.minSalary} ${currencyText}`;
+            } else {
+                return `حتى ${fieldDetails.maxSalary} ${currencyText}`;
+            }
+        }
+
+        function getCurrencyText(currency, otherCurrency) {
+            const currencies = {
+                'EGP': 'جنيه مصري',
+                'USD': 'دولار أمريكي',
+                'EUR': 'يورو',
+                'SAR': 'ريال سعودي',
+                'AED': 'درهم إماراتي',
+                'KWD': 'دينار كويتي',
+                'QAR': 'ريال قطري',
+                'BHD': 'دينار بحريني',
+                'other': otherCurrency || 'عملة أخرى'
+            };
+            return currencies[currency] || currency;
+        }
+
+        function getEquipmentText(equipment) {
+            switch (equipment) {
+                case 'yes': return 'نعم، نوفر جميع المعدات';
+                case 'no': return 'لا، يحتاج المتدرب لإحضار معداته';
+                default: return 'غير محدد';
+            }
+        }
+
+        function getStatusClass(status) {
+            switch (status) {
+                case 'pending': return 'status-pending';
+                case 'approved': return 'status-approved';
+                case 'rejected': return 'status-rejected';
+                default: return 'status-pending';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'pending': return 'قيد المراجعة';
+                case 'approved': return 'معتمدة';
+                case 'rejected': return 'مرفوضة';
+                default: return 'قيد المراجعة';
+            }
+        }
+
+        function updatePendingBadge() {
+            const pendingCount = appState.companies.data.filter(c => c.status === 'pending').length;
+            elements.pendingBadge.textContent = pendingCount;
+        }
+
+        // حفظ البيانات
+        function saveCompaniesData() {
+            try {
+                localStorage.setItem('companiesData', JSON.stringify(appState.companies.data));
+                return true;
+            } catch (error) {
+                console.error('خطأ في حفظ بيانات الشركات:', error);
+                showNotification('حدث خطأ في حفظ البيانات', 'error');
+                return false;
+            }
+        }
+
+        // بيانات تجريبية
+        function addSampleCompanies() {
+            if (confirm('هل تريد إضافة بيانات تجريبية للشركات؟')) {
+                const sampleCompanies = getSampleCompaniesData();
+                const currentCompanies = JSON.parse(localStorage.getItem('companiesData')) || [];
+                
+                sampleCompanies.forEach(sample => {
+                    const exists = currentCompanies.some(c => c.id === sample.id);
+                    if (!exists) {
+                        currentCompanies.push(sample);
+                    }
+                });
+                
+                localStorage.setItem('companiesData', JSON.stringify(currentCompanies));
+                loadCompaniesData();
+                showNotification('تم إضافة بيانات تجريبية للشركات بنجاح', 'success');
+            }
+        }
+
+        // تصدير البيانات
+        function exportCompaniesData() {
+            const companies = appState.companies.filteredData;
+            
+            if (companies.length === 0) {
+                showNotification('لا توجد بيانات للتصدير', 'info');
+                return;
+            }
+            
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            
+            const headers = [
+                "اسم الشركة",
+                "المجال",
+                "البريد الإلكتروني",
+                "الموقع",
+                "عدد الموظفين",
+                "سعر التدريب",
+                "عملة السعر",
+                "حالة الطلب",
+                "تاريخ التسجيل",
+                "آخر تحديث",
+                "عدد العقوبات",
+                "أسباب العقوبات"
+            ];
+            
+            csvContent += headers.join(",") + "\n";
+            
+            companies.forEach(company => {
+                const companyInfo = company.companyInfo || {};
+                const registeredDate = new Date(company.registeredAt);
+                const updatedDate = new Date(company.updatedAt);
+                
+                let currency = '';
+                if (company.trainingCurrency) {
+                    if (company.trainingCurrency === 'other' && company.otherCurrency) {
+                        currency = company.otherCurrency;
+                    } else {
+                        currency = getCurrencyText(company.trainingCurrency);
+                    }
+                }
+                
+                const penaltyCount = company.penalties ? company.penalties.length : 0;
+                const penaltyReasons = company.penalties ? 
+                    company.penalties.map(p => p.reason).join('; ') : '';
+                
+                const row = [
+                    `"${companyInfo.name || ''}"`,
+                    `"${companyInfo.field || ''}"`,
+                    `"${companyInfo.email || ''}"`,
+                    `"${companyInfo.location || ''}"`,
+                    `"${getEmployeesCountText(companyInfo)}"`,
+                    `"${company.trainingPrice || 'غير محدد'}"`,
+                    `"${currency}"`,
+                    `"${getStatusText(company.status)}${company.suspended ? ' (معلقة)' : ''}"`,
+                    `"${registeredDate.toLocaleDateString('en-US')}"`,
+                    `"${updatedDate.toLocaleDateString('en-US')}"`,
+                    `"${penaltyCount}"`,
+                    `"${penaltyReasons}"`
+                ];
+                
+                csvContent += row.join(",") + "\n";
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `بيانات_الشركات_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('تم تصدير بيانات الشركات بنجاح', 'success');
+        }
+
+        // إغلاق المودالات
+        function closeCompanyModal() {
+            elements.companyDetailsModal.classList.remove('show');
+            appState.companies.selectedCompanyId = null;
+        }
+
+        // الإشعارات
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? 'fa-check-circle' : 
+                        type === 'error' ? 'fa-exclamation-circle' : 
+                        type === 'warning' ? 'fa-exclamation-triangle' :
+                        type === 'penalty' ? 'fa-gavel' : 'fa-info-circle';
+            
+            notification.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            elements.notificationContainer.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // إعداد مستمعي الأحداث
+        function setupEventListeners() {
+            elements.menuToggle.addEventListener('click', () => {
+                elements.sidebar.classList.toggle('active');
+            });
+            
+            document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+                    localStorage.removeItem('adminLoggedIn');
+                    localStorage.removeItem('userType');
+                    window.location.href = 'index.html';
+                }
+            });
+            
+            elements.searchCompaniesInput.addEventListener('input', debounce(filterCompanies, 300));
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => 
+                        b.classList.remove('active'));
+                    btn.classList.add('active');
+                    filterCompanies();
+                });
+            });
+            
+            document.getElementById('refreshCompaniesBtn')?.addEventListener('click', () => {
+                loadCompaniesData();
+                showNotification('تم تحديث بيانات الشركات', 'success');
+            });
+            
+            document.getElementById('exportCompaniesBtn')?.addEventListener('click', exportCompaniesData);
+            
+            document.getElementById('companyModalClose')?.addEventListener('click', closeCompanyModal);
+            document.getElementById('closeCompanyModalBtn')?.addEventListener('click', closeCompanyModal);
+            document.getElementById('rejectModalClose')?.addEventListener('click', closeRejectModal);
+            document.getElementById('approveModalClose')?.addEventListener('click', closeApproveModal);
+            document.getElementById('penaltyModalClose')?.addEventListener('click', closePenaltyModal);
+            
+            document.getElementById('approveCompanyBtn')?.addEventListener('click', () => {
+                if (appState.companies.selectedCompanyId) {
+                    showApproveModal(appState.companies.selectedCompanyId);
+                }
+            });
+            
+            document.getElementById('rejectCompanyBtn')?.addEventListener('click', () => {
+                if (appState.companies.selectedCompanyId) {
+                    showRejectModal(appState.companies.selectedCompanyId);
+                }
+            });
+            
+            document.querySelectorAll('#companyTabs .tab-btn').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('#companyTabs .tab-btn').forEach(t => 
+                        t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    document.querySelectorAll('#tabContents .tab-content').forEach(content => 
+                        content.classList.remove('active'));
+                    const tabId = tab.dataset.tab;
+                    document.getElementById(`${tabId}Tab`).classList.add('active');
+                });
+            });
+            
+            document.getElementById('trainingCurrency')?.addEventListener('change', function() {
+                const otherCurrencyGroup = document.getElementById('otherCurrencyGroup');
+                if (this.value === 'other') {
+                    otherCurrencyGroup.style.display = 'flex';
+                } else {
+                    otherCurrencyGroup.style.display = 'none';
+                }
+            });
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (elements.companyDetailsModal.classList.contains('show')) {
+                        closeCompanyModal();
+                    }
+                    if (elements.rejectCompanyModal.classList.contains('show')) {
+                        closeRejectModal();
+                    }
+                    if (elements.approveCompanyModal.classList.contains('show')) {
+                        closeApproveModal();
+                    }
+                    if (elements.penaltyModal.classList.contains('show')) {
+                        closePenaltyModal();
+                    }
+                }
+            });
+            
+            elements.companyDetailsModal?.addEventListener('click', (e) => {
+                if (e.target === elements.companyDetailsModal) {
+                    closeCompanyModal();
+                }
+            });
+            
+            elements.rejectCompanyModal?.addEventListener('click', (e) => {
+                if (e.target === elements.rejectCompanyModal) {
+                    closeRejectModal();
+                }
+            });
+            
+            elements.approveCompanyModal?.addEventListener('click', (e) => {
+                if (e.target === elements.approveCompanyModal) {
+                    closeApproveModal();
+                }
+            });
+            
+            elements.penaltyModal?.addEventListener('click', (e) => {
+                if (e.target === elements.penaltyModal) {
+                    closePenaltyModal();
+                }
+            });
+        }
+
+        // Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // تشغيل التطبيق
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProVance - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* الأنماط كما هي دون تغيير */
+        :root {
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+            --secondary: #00D9FF;
+            --secondary-dark: #00A8CC;
+            --accent: #FF6B9D;
+            --success: #51cf66;
+            --warning: #ffd700;
+            --error: #ff6b6b;
+            --info: #4da7f7;
+            --bg-dark: #0a0c1f;
+            --bg-secondary: #15132e;
+            --bg-card: #1a1838;
+            --bg-input: rgba(255, 255, 255, 0.05);
+            --text-primary: #ffffff;
+            --text-secondary: #b8b5c9;
+            --border: rgba(255, 255, 255, 0.1);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.4);
+            --shadow-xl: 0 30px 80px rgba(0, 0, 0, 0.5);
+            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            padding: var(--spacing-lg) 0;
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar-header {
+            padding: 0 var(--spacing-lg) var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .admin-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .admin-logo {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .admin-brand h1 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .admin-profile:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .admin-info {
+            flex: 1;
+        }
+
+        .admin-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .admin-role {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Navigation */
+        .sidebar-nav {
+            padding: var(--spacing-md) 0;
+        }
+
+        .nav-section {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .nav-title {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 var(--spacing-lg);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .nav-links {
+            list-style: none;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: 0.9rem var(--spacing-lg);
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+            border-right: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--primary);
+            border-right-color: var(--primary);
+        }
+
+        .nav-link i {
+            width: 22px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .nav-link span {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .nav-badge {
+            margin-right: auto;
+            background: var(--gradient-primary);
+            color: white;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-right: 280px;
+            padding: var(--spacing-lg);
+            min-height: 100vh;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Header */
+        .content-header {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .page-title h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-action {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .btn-refresh {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-refresh:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        /* Stats */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .stat-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+        }
+
+        .stat-icon.total {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .stat-icon.students {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .stat-icon.active {
+            background: rgba(0, 217, 255, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+        }
+
+        .stat-icon.approved {
+            background: rgba(81, 207, 102, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(81, 207, 102, 0.2);
+        }
+
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Table Container */
+        .table-container {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--border);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+
+        .table-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-empty {
+            padding: 0.75rem 1.5rem;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .btn-empty:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .menu-toggle {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .stats-overview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: var(--spacing-md);
+            }
+            
+            .content-header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                align-items: flex-start;
+            }
+            
+            .stats-overview {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="admin-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="admin-brand">
+                    <div class="admin-logo">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h1>ProVance</h1>
+                </div>
+                
+                <div class="admin-profile">
+                    <div class="admin-avatar" id="adminAvatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="admin-info">
+                        <div class="admin-name" id="adminName"></div> <!-- تم إزالة النص الافتراضي -->
+                        <div class="admin-role" id="adminRole"></div> <!-- تم إزالة النص الافتراضي -->
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-title">القائمة الرئيسية</div>
+                    <ul class="nav-links">
+                        <li>
+                            <a href="#" class="nav-link active">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>لوحة التحكم</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="admin-campany.html" class="nav-link">
+                                <i class="fas fa-building"></i>
+                                <span>إدارة الشركات</span>
+                                <span class="nav-badge" id="pendingBadge"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="admin-trainees.html" class="nav-link">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>إدارة المتدربين</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="internships.html" class="nav-link">
+                                <i class="fas fa-briefcase"></i>
+                                <span>التدريبات</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="admin-notification.html" class="nav-link">
+                                <i class="fas fa-bell"></i>
+                                <span>إدارة الإشعارات</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-title">إعدادات النظام</div>
+                    <ul class="nav-links">
+                        <li>
+                            <a href="settings.html" class="nav-link">
+                                <i class="fas fa-cog"></i>
+                                <span>الإعدادات</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="index.html" class="nav-link" id="logoutBtn">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>تسجيل الخروج</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="content-header">
+                <div class="page-title">
+                    <h1>لوحة التحكم الرئيسية</h1>
+                    <p id="welcomeMessage"></p> <!-- تم إزالة النص الترحيبي الثابت -->
+                </div>
+                
+                <div class="header-actions">
+                    <button class="btn-action btn-refresh" id="refreshDashboardBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        تحديث
+                    </button>
+                    <div class="date-display" style="color: var(--text-secondary); font-weight: 600;">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="currentDate"></span>
+                    </div>
+                </div>
+            </header>
+            
+            <section class="stats-overview">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="totalCompanies">0</div>
+                            <div class="stat-label">الشركات المسجلة</div>
+                        </div>
+                        <div class="stat-icon total">
+                            <i class="fas fa-building"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="totalTrainees">0</div>
+                            <div class="stat-label">المتدربين النشطين</div>
+                        </div>
+                        <div class="stat-icon students">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="activeInternships">0</div>
+                            <div class="stat-label">التدريبات النشطة</div>
+                        </div>
+                        <div class="stat-icon active">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-number" id="completedInternships">0</div>
+                            <div class="stat-label">التدريبات المكتملة</div>
+                        </div>
+                        <div class="stat-icon approved">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">النشاطات الحديثة</h3>
+                </div>
+                
+                <div class="empty-state">
+                    <i class="fas fa-chart-line"></i>
+                    <h3></h3> <!-- تم إزالة النص -->
+                    <p></p> <!-- تم إزالة النص -->
+                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                        <a href="admin-campany.html" class="btn-empty">
+                            <i class="fas fa-building"></i>
+                            إدارة الشركات
+                        </a>
+                        <a href="admin-trainees.html" class="btn-empty">
+                            <i class="fas fa-user-graduate"></i>
+                            إدارة المتدربين
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // تهيئة التطبيق - بدون أي بيانات وهمية
+        function initApp() {
+            updateAdminInfo(); // تعرض فراغ
+            updateCurrentDate(); // تعرض التاريخ الحقيقي
+            updateDashboardStats(); // تعرض 0
+            setupEventListeners();
+        }
+
+        // تحديث معلومات المسؤول - تعتمد على بيانات حقيقية من الخادم (نتركها فارغة حالياً)
+        function updateAdminInfo() {
+            // هنا يمكن جلب البيانات من Firebase أو أي مصدر حقيقي
+            // حالياً نتركها فارغة
+            document.getElementById('adminName').textContent = '';
+            document.getElementById('adminRole').textContent = '';
+            
+            // تعيين الصورة الرمزية بشكل افتراضي (بدون اسم)
+            document.getElementById('adminAvatar').innerHTML = '<i class="fas fa-user"></i>';
+        }
+
+        // تحديث التاريخ الحالي (بدون أية بيانات وهمية)
+        function updateCurrentDate() {
+            const now = new Date();
+            
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                calendar: 'gregory'
+            };
+            
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('ar-SA-u-nu-latn', options);
+        }
+
+        // تحديث إحصائيات لوحة التحكم - تعتمد على بيانات حقيقية (نعرض 0 افتراضياً)
+        function updateDashboardStats() {
+            // هنا يمكن جلب البيانات من Firebase واستبدال القيم
+            // حالياً نعرض 0 بدون أي بيانات وهمية
+            document.getElementById('totalCompanies').textContent = '0';
+            document.getElementById('totalTrainees').textContent = '0';
+            document.getElementById('pendingBadge').textContent = '0';
+            document.getElementById('activeInternships').textContent = '0';
+            document.getElementById('completedInternships').textContent = '0';
+            
+            // نص الترحيب - يمكن تحديثه لاحقاً من Firebase
+            document.getElementById('welcomeMessage').textContent = '';
+        }
+
+        // إعداد مستمعي الأحداث
+        function setupEventListeners() {
+            // تبديل القائمة الجانبية
+            document.getElementById('menuToggle').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('active');
+            });
+            
+            // تسجيل الخروج
+            document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+                    // هنا يمكن تنفيذ logout حقيقي مع Firebase
+                    window.location.href = 'index.html';
+                }
+            });
+            
+            // تحديث البيانات
+            document.getElementById('refreshDashboardBtn')?.addEventListener('click', () => {
+                updateDashboardStats(); // سيتم استدعاء الدالة التي تجلب البيانات الحقيقية لاحقاً
+                updateCurrentDate();
+                showNotification('تم تحديث البيانات', 'success');
+            });
+            
+            // إغلاق القائمة الجانبية عند النقر خارجها (لجوّال)
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 1200 && 
+                    !document.getElementById('sidebar').contains(e.target) && 
+                    !document.getElementById('menuToggle').contains(e.target) &&
+                    document.getElementById('sidebar').classList.contains('active')) {
+                    document.getElementById('sidebar').classList.remove('active');
+                }
+            });
+        }
+
+        // عرض إشعار (بقاء كما هو)
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                background: var(--bg-card);
+                border-radius: var(--radius-lg);
+                padding: var(--spacing-md);
+                display: flex;
+                align-items: center;
+                gap: var(--spacing-md);
+                box-shadow: var(--shadow-lg);
+                z-index: 10001;
+                border-right: 4px solid ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--error)' : 'var(--info)'};
+            `;
+            
+            const icon = type === 'success' ? 'fa-check-circle' : 
+                        type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+            
+            notification.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // تشغيل التطبيق
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

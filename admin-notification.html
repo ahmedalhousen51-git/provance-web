@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProVance - إرسال الإشعارات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+            --secondary: #00D9FF;
+            --secondary-dark: #00A8CC;
+            --accent: #FF6B9D;
+            --success: #51cf66;
+            --warning: #ffd700;
+            --error: #ff6b6b;
+            --info: #4da7f7;
+            --bg-dark: #0a0c1f;
+            --bg-secondary: #15132e;
+            --bg-card: #1a1838;
+            --bg-input: rgba(255, 255, 255, 0.05);
+            --text-primary: #ffffff;
+            --text-secondary: #b8b5c9;
+            --border: rgba(255, 255, 255, 0.1);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.4);
+            --shadow-xl: 0 30px 80px rgba(0, 0, 0, 0.5);
+            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            padding: var(--spacing-lg) 0;
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar-header {
+            padding: 0 var(--spacing-lg) var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .admin-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .admin-logo {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .admin-brand h1 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .admin-profile:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .admin-info {
+            flex: 1;
+        }
+
+        .admin-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .admin-role {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Navigation */
+        .sidebar-nav {
+            padding: var(--spacing-md) 0;
+        }
+
+        .nav-section {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .nav-title {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 var(--spacing-lg);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .nav-links {
+            list-style: none;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: 0.9rem var(--spacing-lg);
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+            border-right: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--primary);
+            border-right-color: var(--primary);
+        }
+
+        .nav-link i {
+            width: 22px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .nav-link span {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-right: 280px;
+            padding: var(--spacing-lg);
+            min-height: 100vh;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Header */
+        .content-header {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .page-title h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-action {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .btn-refresh {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-refresh:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        /* Tabs Navigation */
+        .tabs-navigation {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 0.9rem 2rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-btn i {
+            font-size: 1.1rem;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Notification Form */
+        .notification-form-container {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-header h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-header i {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        .notification-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .form-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-label i {
+            color: var(--primary);
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: var(--transition);
+            outline: none;
+            font-family: inherit;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+            background: var(--bg-card);
+        }
+
+        .form-textarea {
+            min-height: 150px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .form-select option {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        /* Recipient Selection */
+        .recipient-selection {
+            background: rgba(139, 92, 246, 0.05);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            border: 1px solid var(--border);
+        }
+
+        .recipient-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .recipient-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .recipient-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .recipient-option label {
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .recipient-option input[type="radio"]:checked + label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Selection Containers */
+        .selection-container {
+            display: none;
+        }
+
+        .selection-container.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Search Bar */
+        .search-container {
+            margin-bottom: 1rem;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 2.5rem 0.75rem 1rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        /* Company/Trainee Lists */
+        .list-container {
+            max-height: 250px;
+            overflow-y: auto;
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item:hover {
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: var(--radius-sm);
+        }
+
+        .list-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .item-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .item-info h4 {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .item-info p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Message Preview */
+        .message-preview-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--border);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .preview-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .preview-content {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            min-height: 100px;
+            border: 1px solid var(--border);
+        }
+
+        .preview-content p {
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: flex-end;
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-send {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 0.9rem 2rem;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-clear {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 0.9rem 2rem;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-clear:hover {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--error);
+            border-color: var(--error);
+        }
+
+        /* Notification History */
+        .notification-history {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .history-header h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .history-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .history-tab {
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .history-tab:hover, .history-tab.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            text-align: right;
+            padding: 1.2rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            border-bottom: 2px solid var(--border);
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .data-table td {
+            padding: 1.2rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .data-table tr:hover {
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .notification-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .type-info {
+            background: rgba(77, 167, 247, 0.1);
+            color: var(--info);
+            border: 1px solid rgba(77, 167, 247, 0.2);
+        }
+
+        .type-warning {
+            background: rgba(255, 215, 0, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .type-success {
+            background: rgba(81, 207, 102, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(81, 207, 102, 0.2);
+        }
+
+        .type-error {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Quick Stats */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.companies {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .stat-icon.trainees {
+            background: rgba(0, 217, 255, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+        }
+
+        .stat-details h3 {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-details p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .menu-toggle {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: var(--spacing-md);
+            }
+            
+            .content-header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                align-items: flex-start;
+            }
+            
+            .tabs-navigation {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                text-align: right;
+                border-bottom: 1px solid var(--border);
+                border-right: none;
+                justify-content: flex-end;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn-send, .btn-clear {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="admin-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="admin-brand">
+                    <div class="admin-logo">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h1>ProVance</h1>
+                </div>
+                
+                <div class="admin-profile">
+                    <div class="admin-avatar" id="adminAvatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="admin-info">
+                        <div class="admin-name" id="adminName">المسؤول</div>
+                        <div class="admin-role" id="adminRole">مدير النظام</div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-title">القائمة الرئيسية</div>
+                    <ul class="nav-links">
+                        <li>
+                            <a href="admin-dashboard.html" class="nav-link">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>لوحة التحكم</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="admin-campany.html" class="nav-link">
+                                <i class="fas fa-building"></i>
+                                <span>إدارة الشركات</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="admin-trainees.html" class="nav-link">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>إدارة المتدربين</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="internships.html" class="nav-link">
+                                <i class="fas fa-briefcase"></i>
+                                <span>التدريبات</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-title">الإشعارات</div>
+                    <ul class="nav-links">
+                        <li>
+                            <a href="#" class="nav-link active">
+                                <i class="fas fa-bell"></i>
+                                <span>إرسال الإشعارات</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-title">إعدادات النظام</div>
+                    <ul class="nav-links">
+                        <li>
+                            <a href="settings.html" class="nav-link">
+                                <i class="fas fa-cog"></i>
+                                <span>الإعدادات</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="index.html" class="nav-link" id="logoutBtn">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>تسجيل الخروج</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="content-header">
+                <div class="page-title">
+                    <h1>إرسال الإشعارات</h1>
+                    <p>إرسال إشعارات للشركات والمتدربين المسجلين في المنصة</p>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="btn-action btn-refresh" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        تحديث
+                    </button>
+                </div>
+            </header>
+            
+            <div class="quick-stats">
+                <div class="stat-card">
+                    <div class="stat-icon companies">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3 id="companiesCount">0</h3>
+                        <p>شركة مسجلة</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon trainees">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3 id="traineesCount">0</h3>
+                        <p>متدرب نشط</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon companies">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3 id="companyNotificationsCount">0</h3>
+                        <p>إشعارات للشركات</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon trainees">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3 id="traineeNotificationsCount">0</h3>
+                        <p>إشعارات للمتدربين</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tabs-navigation">
+                <button class="tab-btn active" data-tab="companies">
+                    <i class="fas fa-building"></i>
+                    إشعارات الشركات
+                </button>
+                <button class="tab-btn" data-tab="trainees">
+                    <i class="fas fa-user-graduate"></i>
+                    إشعارات المتدربين
+                </button>
+            </div>
+            
+            <!-- Companies Tab -->
+            <div class="tab-content active" id="companiesTab">
+                <div class="notification-form-container">
+                    <div class="form-header">
+                        <i class="fas fa-building"></i>
+                        <h2>إرسال إشعار للشركات</h2>
+                    </div>
+                    
+                    <form class="notification-form" id="companyNotificationForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-tag"></i>
+                                    نوع الإشعار
+                                </label>
+                                <select class="form-select" id="companyNotificationType" required>
+                                    <option value="">اختر نوع الإشعار</option>
+                                    <option value="info">إعلامي</option>
+                                    <option value="warning">تحذير</option>
+                                    <option value="success">نجاح</option>
+                                    <option value="error">خطأ</option>
+                                    <option value="announcement">إعلان</option>
+                                    <option value="reminder">تذكير</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-heading"></i>
+                                    عنوان الإشعار
+                                </label>
+                                <input type="text" class="form-input" id="companyNotificationTitle" 
+                                       placeholder="أدخل عنوان الإشعار" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-users"></i>
+                                جهة الاستقبال
+                            </label>
+                            <div class="recipient-selection">
+                                <div class="recipient-options">
+                                    <div class="recipient-option">
+                                        <input type="radio" id="allCompanies" name="companyRecipientType" value="all" checked>
+                                        <label for="allCompanies">جميع الشركات</label>
+                                    </div>
+                                    <div class="recipient-option">
+                                        <input type="radio" id="specificCompanies" name="companyRecipientType" value="specific">
+                                        <label for="specificCompanies">شركات محددة</label>
+                                    </div>
+                                    <div class="recipient-option">
+                                        <input type="radio" id="statusCompanies" name="companyRecipientType" value="status">
+                                        <label for="statusCompanies">حسب الحالة</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="selection-container" id="specificCompaniesContainer">
+                                    <div class="search-container">
+                                        <div class="search-box">
+                                            <input type="text" class="search-input" id="companySearch" 
+                                                   placeholder="ابحث عن شركة بالاسم أو البريد الإلكتروني...">
+                                            <div class="search-icon">
+                                                <i class="fas fa-search"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <label class="form-label" style="margin-top: 1rem; font-size: 0.9rem;">
+                                        اختر الشركات:
+                                    </label>
+                                    <div class="list-container" id="companyList">
+                                        <!-- سيتم ملؤها ديناميكياً -->
+                                    </div>
+                                </div>
+                                
+                                <div class="selection-container" id="statusCompaniesContainer">
+                                    <label class="form-label" style="margin-top: 1rem; font-size: 0.9rem;">
+                                        اختر حالة الشركات:
+                                    </label>
+                                    <select class="form-select" id="companyStatus" style="margin-top: 0.5rem;">
+                                        <option value="all">جميع الحالات</option>
+                                        <option value="pending">قيد المراجعة</option>
+                                        <option value="approved">معتمدة</option>
+                                        <option value="rejected">مرفوضة</option>
+                                        <option value="suspended">معلقة مؤقتاً</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-comment"></i>
+                                نص الإشعار
+                            </label>
+                            <textarea class="form-textarea" id="companyNotificationMessage" 
+                                      placeholder="اكتب نص الإشعار هنا..." required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-link"></i>
+                                رابط إضافي (اختياري)
+                            </label>
+                            <input type="url" class="form-input" id="companyNotificationLink" 
+                                   placeholder="https://example.com">
+                        </div>
+                        
+                        <div class="message-preview-container">
+                            <div class="preview-header">
+                                <h3>معاينة الإشعار</h3>
+                                <button type="button" class="btn-action btn-refresh" onclick="updateCompanyPreview()">
+                                    <i class="fas fa-sync-alt"></i>
+                                    تحديث المعاينة
+                                </button>
+                            </div>
+                            <div class="preview-content" id="companyNotificationPreview">
+                                <p>املأ النموذج لرؤية المعاينة...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn-clear" onclick="clearCompanyForm()">
+                                <i class="fas fa-trash"></i>
+                                مسح النموذج
+                            </button>
+                            <button type="submit" class="btn-send">
+                                <i class="fas fa-paper-plane"></i>
+                                إرسال الإشعار للشركات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Trainees Tab -->
+            <div class="tab-content" id="traineesTab">
+                <div class="notification-form-container">
+                    <div class="form-header">
+                        <i class="fas fa-user-graduate"></i>
+                        <h2>إرسال إشعار للمتدربين</h2>
+                    </div>
+                    
+                    <form class="notification-form" id="traineeNotificationForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-tag"></i>
+                                    نوع الإشعار
+                                </label>
+                                <select class="form-select" id="traineeNotificationType" required>
+                                    <option value="">اختر نوع الإشعار</option>
+                                    <option value="info">إعلامي</option>
+                                    <option value="warning">تحذير</option>
+                                    <option value="success">نجاح</option>
+                                    <option value="error">خطأ</option>
+                                    <option value="announcement">إعلان</option>
+                                    <option value="reminder">تذكير</option>
+                                    <option value="opportunity">فرصة تدريب</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-heading"></i>
+                                    عنوان الإشعار
+                                </label>
+                                <input type="text" class="form-input" id="traineeNotificationTitle" 
+                                       placeholder="أدخل عنوان الإشعار" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-users"></i>
+                                جهة الاستقبال
+                            </label>
+                            <div class="recipient-selection">
+                                <div class="recipient-options">
+                                    <div class="recipient-option">
+                                        <input type="radio" id="allTrainees" name="traineeRecipientType" value="all" checked>
+                                        <label for="allTrainees">جميع المتدربين</label>
+                                    </div>
+                                    <div class="recipient-option">
+                                        <input type="radio" id="specificTrainees" name="traineeRecipientType" value="specific">
+                                        <label for="specificTrainees">متدربين محددين</label>
+                                    </div>
+                                    <div class="recipient-option">
+                                        <input type="radio" id="statusTrainees" name="traineeRecipientType" value="status">
+                                        <label for="statusTrainees">حسب الحالة</label>
+                                    </div>
+                                    <div class="recipient-option">
+                                        <input type="radio" id="universityTrainees" name="traineeRecipientType" value="university">
+                                        <label for="universityTrainees">حسب الجامعة</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="selection-container" id="specificTraineesContainer">
+                                    <div class="search-container">
+                                        <div class="search-box">
+                                            <input type="text" class="search-input" id="traineeSearch" 
+                                                   placeholder="ابحث عن متدرب بالاسم أو البريد الإلكتروني أو الجامعة...">
+                                            <div class="search-icon">
+                                                <i class="fas fa-search"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <label class="form-label" style="margin-top: 1rem; font-size: 0.9rem;">
+                                        اختر المتدربين:
+                                    </label>
+                                    <div class="list-container" id="traineeList">
+                                        <!-- سيتم ملؤها ديناميكياً -->
+                                    </div>
+                                </div>
+                                
+                                <div class="selection-container" id="statusTraineesContainer">
+                                    <label class="form-label" style="margin-top: 1rem; font-size: 0.9rem;">
+                                        اختر حالة المتدربين:
+                                    </label>
+                                    <select class="form-select" id="traineeStatus" style="margin-top: 0.5rem;">
+                                        <option value="all">جميع الحالات</option>
+                                        <option value="active">نشط</option>
+                                        <option value="suspended">موقوف</option>
+                                        <option value="blocked">محظور</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="selection-container" id="universityTraineesContainer">
+                                    <label class="form-label" style="margin-top: 1rem; font-size: 0.9rem;">
+                                        اختر الجامعة:
+                                    </label>
+                                    <select class="form-select" id="universitySelect" style="margin-top: 0.5rem;">
+                                        <!-- سيتم ملؤها ديناميكياً -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-comment"></i>
+                                نص الإشعار
+                            </label>
+                            <textarea class="form-textarea" id="traineeNotificationMessage" 
+                                      placeholder="اكتب نص الإشعار هنا..." required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-link"></i>
+                                رابط إضافي (اختياري)
+                            </label>
+                            <input type="url" class="form-input" id="traineeNotificationLink" 
+                                   placeholder="https://example.com">
+                        </div>
+                        
+                        <div class="message-preview-container">
+                            <div class="preview-header">
+                                <h3>معاينة الإشعار</h3>
+                                <button type="button" class="btn-action btn-refresh" onclick="updateTraineePreview()">
+                                    <i class="fas fa-sync-alt"></i>
+                                    تحديث المعاينة
+                                </button>
+                            </div>
+                            <div class="preview-content" id="traineeNotificationPreview">
+                                <p>املأ النموذج لرؤية المعاينة...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn-clear" onclick="clearTraineeForm()">
+                                <i class="fas fa-trash"></i>
+                                مسح النموذج
+                            </button>
+                            <button type="submit" class="btn-send">
+                                <i class="fas fa-paper-plane"></i>
+                                إرسال الإشعار للمتدربين
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="notification-history">
+                <div class="history-header">
+                    <h2>سجل الإشعارات المرسلة</h2>
+                    <button class="btn-action btn-refresh" onclick="loadNotificationHistory()">
+                        <i class="fas fa-sync-alt"></i>
+                        تحديث
+                    </button>
+                </div>
+                
+                <div class="history-tabs">
+                    <button class="history-tab active" data-history="all">الكل</button>
+                    <button class="history-tab" data-history="companies">للشركات</button>
+                    <button class="history-tab" data-history="trainees">للمتدربين</button>
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>عنوان الإشعار</th>
+                            <th>النوع</th>
+                            <th>الجهة المستلمة</th>
+                            <th>عدد المستلمين</th>
+                            <th>حالة الإرسال</th>
+                        </tr>
+                    </thead>
+                    <tbody id="notificationHistoryTable">
+                        <!-- سيتم ملؤها ديناميكياً -->
+                    </tbody>
+                </table>
+                
+                <div class="empty-state" id="emptyHistory" style="display: none;">
+                    <i class="fas fa-bell-slash"></i>
+                    <h3>لا توجد إشعارات مرسلة</h3>
+                    <p>لم تقم بإرسال أي إشعارات بعد</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // حالة التطبيق
+        const appState = {
+            companies: [],
+            trainees: [],
+            universities: [],
+            filteredCompanies: [],
+            filteredTrainees: [],
+            selectedCompanies: new Set(),
+            selectedTrainees: new Set(),
+            notificationHistory: [],
+            currentHistoryTab: 'all'
+        };
+
+        // تهيئة التطبيق
+        function initApp() {
+            updateAdminInfo();
+            setupEventListeners();
+            loadData();
+            loadNotificationHistory();
+            updateCompanyPreview();
+            updateTraineePreview();
+        }
+
+        // تحديث معلومات المسؤول
+        function updateAdminInfo() {
+            const adminName = localStorage.getItem('adminName') || 'المسؤول';
+            const adminRole = localStorage.getItem('adminRole') || 'مدير النظام';
+            
+            document.getElementById('adminName').textContent = adminName;
+            document.getElementById('adminRole').textContent = adminRole;
+            
+            const firstChar = adminName.charAt(0);
+            document.getElementById('adminAvatar').innerHTML = `<span>${firstChar}</span>`;
+        }
+
+        // تحميل البيانات
+        function loadData() {
+            loadCompaniesData();
+            loadTraineesData();
+        }
+
+        // تحميل بيانات الشركات
+        function loadCompaniesData() {
+            try {
+                const companies = JSON.parse(localStorage.getItem('companiesData')) || getSampleCompanies();
+                appState.companies = companies;
+                appState.filteredCompanies = [...companies];
+                document.getElementById('companiesCount').textContent = companies.length;
+                displayCompaniesList();
+            } catch (error) {
+                console.error('خطأ في تحميل بيانات الشركات:', error);
+            }
+        }
+
+        // تحميل بيانات المتدربين
+        function loadTraineesData() {
+            try {
+                const trainees = JSON.parse(localStorage.getItem('traineesData')) || getSampleTrainees();
+                appState.trainees = trainees;
+                appState.filteredTrainees = [...trainees];
+                extractUniversities(trainees);
+                document.getElementById('traineesCount').textContent = trainees.filter(t => t.accountStatus === 'active').length;
+                displayTraineesList();
+                populateUniversitySelect();
+            } catch (error) {
+                console.error('خطأ في تحميل بيانات المتدربين:', error);
+            }
+        }
+
+        // بيانات تجريبية للشركات
+        function getSampleCompanies() {
+            return [
+                {
+                    id: 'comp-1',
+                    companyInfo: {
+                        name: 'شركة التقنية المتقدمة',
+                        email: 'tech@advanced.com'
+                    },
+                    status: 'approved'
+                },
+                {
+                    id: 'comp-2',
+                    companyInfo: {
+                        name: 'شركة الحلول الذكية',
+                        email: 'info@smartsolutions.com'
+                    },
+                    status: 'approved'
+                },
+                {
+                    id: 'comp-3',
+                    companyInfo: {
+                        name: 'مؤسسة الرؤية المستقبلية',
+                        email: 'info@futurevision.com'
+                    },
+                    status: 'pending'
+                },
+                {
+                    id: 'comp-4',
+                    companyInfo: {
+                        name: 'شركة التطوير التقني',
+                        email: 'info@techdev.com'
+                    },
+                    status: 'rejected'
+                },
+                {
+                    id: 'comp-5',
+                    companyInfo: {
+                        name: 'شركة البرمجيات المتكاملة',
+                        email: 'contact@integratedsoftware.com'
+                    },
+                    status: 'approved'
+                },
+                {
+                    id: 'comp-6',
+                    companyInfo: {
+                        name: 'مؤسسة التقنيات الحديثة',
+                        email: 'info@modern-tech.com'
+                    },
+                    status: 'pending'
+                }
+            ];
+        }
+
+        // بيانات تجريبية للمتدربين
+        function getSampleTrainees() {
+            return [
+                {
+                    id: 'trainee-1',
+                    personalInfo: {
+                        fullName: 'أحمد محمد علي',
+                        email: 'ahmed@example.com'
+                    },
+                    academicInfo: {
+                        university: 'جامعة الملك سعود',
+                        major: 'هندسة الحاسب'
+                    },
+                    accountStatus: 'active'
+                },
+                {
+                    id: 'trainee-2',
+                    personalInfo: {
+                        fullName: 'سارة عبدالله أحمد',
+                        email: 'sara@example.com'
+                    },
+                    academicInfo: {
+                        university: 'جامعة الأميرة نورة',
+                        major: 'علوم الحاسب'
+                    },
+                    accountStatus: 'active'
+                },
+                {
+                    id: 'trainee-3',
+                    personalInfo: {
+                        fullName: 'خالد سعيد القحطاني',
+                        email: 'khaled@example.com'
+                    },
+                    academicInfo: {
+                        university: 'جامعة الملك عبدالعزيز',
+                        major: 'نظم المعلومات'
+                    },
+                    accountStatus: 'suspended'
+                },
+                {
+                    id: 'trainee-4',
+                    personalInfo: {
+                        fullName: 'فاطمة حسن محمد',
+                        email: 'fatima@example.com'
+                    },
+                    academicInfo: {
+                        university: 'جامعة الملك سعود',
+                        major: 'التسويق'
+                    },
+                    accountStatus: 'active'
+                },
+                {
+                    id: 'trainee-5',
+                    personalInfo: {
+                        fullName: 'محمد خالد العتيبي',
+                        email: 'mohammed@example.com'
+                    },
+                    academicInfo: {
+                        university: 'جامعة الملك فهد للبترول والمعادن',
+                        major: 'الهندسة الكهربائية'
+                    },
+                    accountStatus: 'active'
+                },
+                {
+                    id: 'trainee-6',
+                    personalInfo: {
+                        fullName: 'نورة سعد الغامدي',
+                        email: 'noura@example.com'
+                    },
+                    academicInfo: {
+                        university: 'جامعة الأميرة نورة',
+                        major: 'إدارة الأعمال'
+                    },
+                    accountStatus: 'active'
+                }
+            ];
+        }
+
+        // استخراج قائمة الجامعات
+        function extractUniversities(trainees) {
+            const universitySet = new Set();
+            trainees.forEach(trainee => {
+                if (trainee.academicInfo?.university) {
+                    universitySet.add(trainee.academicInfo.university);
+                }
+            });
+            appState.universities = Array.from(universitySet);
+        }
+
+        // عرض قائمة الشركات
+        function displayCompaniesList(filtered = true) {
+            const companyList = document.getElementById('companyList');
+            companyList.innerHTML = '';
+            
+            const companiesToDisplay = filtered ? appState.filteredCompanies : appState.companies;
+            
+            if (companiesToDisplay.length === 0) {
+                companyList.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        <i class="fas fa-building" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <p>لا توجد شركات تطابق بحثك</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            companiesToDisplay.forEach(company => {
+                const firstChar = company.companyInfo?.name ? company.companyInfo.name.charAt(0) : '?';
+                
+                const companyItem = document.createElement('div');
+                companyItem.className = 'list-item';
+                companyItem.innerHTML = `
+                    <input type="checkbox" id="company-${company.id}" value="${company.id}" 
+                           ${appState.selectedCompanies.has(company.id) ? 'checked' : ''}>
+                    <div class="item-avatar">${firstChar}</div>
+                    <div class="item-info">
+                        <h4>${company.companyInfo?.name || 'غير محدد'}</h4>
+                        <p>${company.companyInfo?.email || 'غير محدد'} - ${getStatusText(company.status)}</p>
+                    </div>
+                `;
+                
+                const checkbox = companyItem.querySelector('input');
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        appState.selectedCompanies.add(company.id);
+                    } else {
+                        appState.selectedCompanies.delete(company.id);
+                    }
+                });
+                
+                companyList.appendChild(companyItem);
+            });
+        }
+
+        // عرض قائمة المتدربين
+        function displayTraineesList(filtered = true) {
+            const traineeList = document.getElementById('traineeList');
+            traineeList.innerHTML = '';
+            
+            const traineesToDisplay = filtered ? appState.filteredTrainees : appState.trainees;
+            
+            if (traineesToDisplay.length === 0) {
+                traineeList.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        <i class="fas fa-user-graduate" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <p>لا توجد متدربين تطابق بحثك</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            traineesToDisplay.forEach(trainee => {
+                const firstChar = trainee.personalInfo?.fullName ? trainee.personalInfo.fullName.charAt(0) : '?';
+                
+                const traineeItem = document.createElement('div');
+                traineeItem.className = 'list-item';
+                traineeItem.innerHTML = `
+                    <input type="checkbox" id="trainee-${trainee.id}" value="${trainee.id}"
+                           ${appState.selectedTrainees.has(trainee.id) ? 'checked' : ''}>
+                    <div class="item-avatar">${firstChar}</div>
+                    <div class="item-info">
+                        <h4>${trainee.personalInfo?.fullName || 'غير محدد'}</h4>
+                        <p>${trainee.personalInfo?.email || 'غير محدد'} - ${trainee.academicInfo?.university || 'غير محدد'}</p>
+                    </div>
+                `;
+                
+                const checkbox = traineeItem.querySelector('input');
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        appState.selectedTrainees.add(trainee.id);
+                    } else {
+                        appState.selectedTrainees.delete(trainee.id);
+                    }
+                });
+                
+                traineeList.appendChild(traineeItem);
+            });
+        }
+
+        // تصفية قائمة الشركات
+        function filterCompanies(searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+            
+            if (!term) {
+                appState.filteredCompanies = [...appState.companies];
+                displayCompaniesList();
+                return;
+            }
+            
+            appState.filteredCompanies = appState.companies.filter(company => {
+                const name = company.companyInfo?.name?.toLowerCase() || '';
+                const email = company.companyInfo?.email?.toLowerCase() || '';
+                const status = getStatusText(company.status).toLowerCase();
+                
+                return name.includes(term) || 
+                       email.includes(term) || 
+                       status.includes(term);
+            });
+            
+            displayCompaniesList();
+        }
+
+        // تصفية قائمة المتدربين
+        function filterTrainees(searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+            
+            if (!term) {
+                appState.filteredTrainees = [...appState.trainees];
+                displayTraineesList();
+                return;
+            }
+            
+            appState.filteredTrainees = appState.trainees.filter(trainee => {
+                const name = trainee.personalInfo?.fullName?.toLowerCase() || '';
+                const email = trainee.personalInfo?.email?.toLowerCase() || '';
+                const university = trainee.academicInfo?.university?.toLowerCase() || '';
+                const major = trainee.academicInfo?.major?.toLowerCase() || '';
+                const status = getStatusText(trainee.accountStatus).toLowerCase();
+                
+                return name.includes(term) || 
+                       email.includes(term) || 
+                       university.includes(term) || 
+                       major.includes(term) || 
+                       status.includes(term);
+            });
+            
+            displayTraineesList();
+        }
+
+        // تعبئة قائمة الجامعات
+        function populateUniversitySelect() {
+            const universitySelect = document.getElementById('universitySelect');
+            universitySelect.innerHTML = '<option value="all">جميع الجامعات</option>';
+            
+            appState.universities.forEach(university => {
+                const option = document.createElement('option');
+                option.value = university;
+                option.textContent = university;
+                universitySelect.appendChild(option);
+            });
+        }
+
+        // تحميل سجل الإشعارات
+        function loadNotificationHistory() {
+            try {
+                const companyHistory = JSON.parse(localStorage.getItem('companyNotificationsHistory')) || [];
+                const traineeHistory = JSON.parse(localStorage.getItem('traineeNotificationsHistory')) || [];
+                appState.notificationHistory = [...companyHistory, ...traineeHistory].sort((a, b) => 
+                    new Date(b.date) - new Date(a.date)
+                );
+                
+                // تحديث الإحصائيات
+                document.getElementById('companyNotificationsCount').textContent = companyHistory.length;
+                document.getElementById('traineeNotificationsCount').textContent = traineeHistory.length;
+                
+                displayNotificationHistory();
+            } catch (error) {
+                console.error('خطأ في تحميل سجل الإشعارات:', error);
+            }
+        }
+
+        // عرض سجل الإشعارات
+        function displayNotificationHistory() {
+            const table = document.getElementById('notificationHistoryTable');
+            const emptyState = document.getElementById('emptyHistory');
+            
+            table.innerHTML = '';
+            
+            let filteredHistory = appState.notificationHistory;
+            
+            if (appState.currentHistoryTab === 'companies') {
+                filteredHistory = filteredHistory.filter(n => n.target === 'companies');
+            } else if (appState.currentHistoryTab === 'trainees') {
+                filteredHistory = filteredHistory.filter(n => n.target === 'trainees');
+            }
+            
+            if (filteredHistory.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            // عرض آخر 15 إشعار فقط
+            const recentNotifications = filteredHistory.slice(0, 15);
+            
+            recentNotifications.forEach(notification => {
+                const date = new Date(notification.date);
+                const formattedDate = date.toLocaleDateString('ar-SA') + ' ' + date.toLocaleTimeString('ar-SA');
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td><strong>${notification.title}</strong></td>
+                    <td>
+                        <span class="notification-type type-${notification.type}">
+                            <i class="fas fa-${getTypeIcon(notification.type)}"></i>
+                            ${getTypeText(notification.type)}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-${notification.target === 'companies' ? 'building' : 'user-graduate'}"></i>
+                            ${getRecipientText(notification.recipientType, notification.recipientDetails)}
+                        </div>
+                    </td>
+                    <td>${notification.target === 'companies' ? (notification.companiesCount || 0) : (notification.traineesCount || 0)}</td>
+                    <td>
+                        <span style="color: ${notification.status === 'sent' ? 'var(--success)' : 'var(--error)'}">
+                            <i class="fas fa-${notification.status === 'sent' ? 'check-circle' : 'exclamation-circle'}"></i>
+                            ${notification.status === 'sent' ? 'تم الإرسال' : 'فشل الإرسال'}
+                        </span>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        // تحديث معاينة إشعار الشركات
+        function updateCompanyPreview() {
+            const title = document.getElementById('companyNotificationTitle').value;
+            const message = document.getElementById('companyNotificationMessage').value;
+            const type = document.getElementById('companyNotificationType').value;
+            const link = document.getElementById('companyNotificationLink').value;
+            
+            let previewHTML = '';
+            
+            if (title || message) {
+                previewHTML = `
+                    <div style="margin-bottom: 1rem;">
+                        <h4 style="color: ${getTypeColor(type)}; margin-bottom: 0.5rem;">
+                            <i class="fas fa-${getTypeIcon(type)}"></i>
+                            ${title || 'عنوان الإشعار'}
+                        </h4>
+                        <p style="color: var(--text-primary); margin-bottom: 1rem;">
+                            ${message || 'نص الإشعار'}
+                        </p>
+                        ${link ? `
+                            <div style="background: rgba(139, 92, 246, 0.1); padding: 0.75rem; border-radius: var(--radius-sm); border-right: 3px solid var(--primary);">
+                                <p style="margin: 0; font-size: 0.9rem;">
+                                    <i class="fas fa-link"></i>
+                                    رابط إضافي: <a href="${link}" style="color: var(--primary); text-decoration: none;">${link}</a>
+                                </p>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); border-top: 1px solid var(--border); padding-top: 0.75rem;">
+                        <i class="fas fa-info-circle"></i>
+                        سيتم إرسال هذا الإشعار للشركات المحددة
+                    </div>
+                `;
+            } else {
+                previewHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 1rem;">املأ النموذج لرؤية المعاينة</p>';
+            }
+            
+            document.getElementById('companyNotificationPreview').innerHTML = previewHTML;
+        }
+
+        // تحديث معاينة إشعار المتدربين
+        function updateTraineePreview() {
+            const title = document.getElementById('traineeNotificationTitle').value;
+            const message = document.getElementById('traineeNotificationMessage').value;
+            const type = document.getElementById('traineeNotificationType').value;
+            const link = document.getElementById('traineeNotificationLink').value;
+            
+            let previewHTML = '';
+            
+            if (title || message) {
+                previewHTML = `
+                    <div style="margin-bottom: 1rem;">
+                        <h4 style="color: ${getTypeColor(type)}; margin-bottom: 0.5rem;">
+                            <i class="fas fa-${getTypeIcon(type)}"></i>
+                            ${title || 'عنوان الإشعار'}
+                        </h4>
+                        <p style="color: var(--text-primary); margin-bottom: 1rem;">
+                            ${message || 'نص الإشعار'}
+                        </p>
+                        ${link ? `
+                            <div style="background: rgba(139, 92, 246, 0.1); padding: 0.75rem; border-radius: var(--radius-sm); border-right: 3px solid var(--primary);">
+                                <p style="margin: 0; font-size: 0.9rem;">
+                                    <i class="fas fa-link"></i>
+                                    رابط إضافي: <a href="${link}" style="color: var(--primary); text-decoration: none;">${link}</a>
+                                </p>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); border-top: 1px solid var(--border); padding-top: 0.75rem;">
+                        <i class="fas fa-info-circle"></i>
+                        سيتم إرسال هذا الإشعار للمتدربين المحددين
+                    </div>
+                `;
+            } else {
+                previewHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 1rem;">املأ النموذج لرؤية المعاينة</p>';
+            }
+            
+            document.getElementById('traineeNotificationPreview').innerHTML = previewHTML;
+        }
+
+        // إرسال إشعار الشركات
+        function sendCompanyNotification() {
+            const title = document.getElementById('companyNotificationTitle').value.trim();
+            const message = document.getElementById('companyNotificationMessage').value.trim();
+            const type = document.getElementById('companyNotificationType').value;
+            const link = document.getElementById('companyNotificationLink').value.trim();
+            const recipientType = document.querySelector('input[name="companyRecipientType"]:checked').value;
+            
+            if (!title || !message || !type) {
+                showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+            
+            // تحديد الشركات المستلمة
+            let companies = [];
+            let recipientDetails = '';
+            
+            switch (recipientType) {
+                case 'all':
+                    companies = appState.companies;
+                    recipientDetails = 'جميع الشركات';
+                    break;
+                case 'specific':
+                    if (appState.selectedCompanies.size === 0) {
+                        showNotification('يرجى اختيار شركة واحدة على الأقل', 'error');
+                        return;
+                    }
+                    companies = appState.companies.filter(c => appState.selectedCompanies.has(c.id));
+                    recipientDetails = `${companies.length} شركة محددة`;
+                    break;
+                case 'status':
+                    const status = document.getElementById('companyStatus').value;
+                    companies = status === 'all' 
+                        ? appState.companies 
+                        : appState.companies.filter(c => c.status === status);
+                    recipientDetails = `شركات بحالة: ${getStatusText(status)}`;
+                    break;
+            }
+            
+            if (companies.length === 0) {
+                showNotification('لا توجد شركات تطابق معايير الاختيار', 'error');
+                return;
+            }
+            
+            // إنشاء سجل الإشعار
+            const notificationRecord = {
+                id: 'notif-' + Date.now(),
+                title: title,
+                message: message,
+                type: type,
+                link: link,
+                recipientType: recipientType,
+                recipientDetails: recipientDetails,
+                companiesCount: companies.length,
+                target: 'companies',
+                date: new Date().toISOString(),
+                status: 'sent'
+            };
+            
+            // حفظ في سجل الإشعارات
+            const companyHistory = JSON.parse(localStorage.getItem('companyNotificationsHistory')) || [];
+            companyHistory.push(notificationRecord);
+            localStorage.setItem('companyNotificationsHistory', JSON.stringify(companyHistory));
+            
+            // محاكاة إرسال الإشعارات
+            simulateNotificationSending(companies, notificationRecord, 'company');
+            
+            // تحديث العرض
+            loadNotificationHistory();
+            clearCompanyForm();
+            
+            showNotification(`تم إرسال الإشعار إلى ${companies.length} شركة`, 'success');
+        }
+
+        // إرسال إشعار المتدربين
+        function sendTraineeNotification() {
+            const title = document.getElementById('traineeNotificationTitle').value.trim();
+            const message = document.getElementById('traineeNotificationMessage').value.trim();
+            const type = document.getElementById('traineeNotificationType').value;
+            const link = document.getElementById('traineeNotificationLink').value.trim();
+            const recipientType = document.querySelector('input[name="traineeRecipientType"]:checked').value;
+            
+            if (!title || !message || !type) {
+                showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+            
+            // تحديد المتدربين المستلمين
+            let trainees = [];
+            let recipientDetails = '';
+            
+            switch (recipientType) {
+                case 'all':
+                    trainees = appState.trainees;
+                    recipientDetails = 'جميع المتدربين';
+                    break;
+                case 'specific':
+                    if (appState.selectedTrainees.size === 0) {
+                        showNotification('يرجى اختيار متدرب واحد على الأقل', 'error');
+                        return;
+                    }
+                    trainees = appState.trainees.filter(t => appState.selectedTrainees.has(t.id));
+                    recipientDetails = `${trainees.length} متدرب محدد`;
+                    break;
+                case 'status':
+                    const status = document.getElementById('traineeStatus').value;
+                    trainees = status === 'all' 
+                        ? appState.trainees 
+                        : appState.trainees.filter(t => t.accountStatus === status);
+                    recipientDetails = `متدربين بحالة: ${getStatusText(status)}`;
+                    break;
+                case 'university':
+                    const university = document.getElementById('universitySelect').value;
+                    trainees = university === 'all'
+                        ? appState.trainees
+                        : appState.trainees.filter(t => t.academicInfo?.university === university);
+                    recipientDetails = university === 'all' ? 'جميع الجامعات' : `جامعة ${university}`;
+                    break;
+            }
+            
+            if (trainees.length === 0) {
+                showNotification('لا توجد متدربين تطابق معايير الاختيار', 'error');
+                return;
+            }
+            
+            // إنشاء سجل الإشعار
+            const notificationRecord = {
+                id: 'notif-' + Date.now(),
+                title: title,
+                message: message,
+                type: type,
+                link: link,
+                recipientType: recipientType,
+                recipientDetails: recipientDetails,
+                traineesCount: trainees.length,
+                target: 'trainees',
+                date: new Date().toISOString(),
+                status: 'sent'
+            };
+            
+            // حفظ في سجل الإشعارات
+            const traineeHistory = JSON.parse(localStorage.getItem('traineeNotificationsHistory')) || [];
+            traineeHistory.push(notificationRecord);
+            localStorage.setItem('traineeNotificationsHistory', JSON.stringify(traineeHistory));
+            
+            // محاكاة إرسال الإشعارات
+            simulateNotificationSending(trainees, notificationRecord, 'trainee');
+            
+            // تحديث العرض
+            loadNotificationHistory();
+            clearTraineeForm();
+            
+            showNotification(`تم إرسال الإشعار إلى ${trainees.length} متدرب`, 'success');
+        }
+
+        // محاكاة إرسال الإشعارات
+        function simulateNotificationSending(recipients, notification, type) {
+            // في التطبيق الحقيقي، هنا سيتم إرسال الإشعارات فعلياً
+            // (إما عبر البريد الإلكتروني أو نظام الإشعارات الداخلي)
+            
+            recipients.forEach(recipient => {
+                if (type === 'company') {
+                    console.log(`إرسال إشعار إلى الشركة: ${recipient.companyInfo?.name} (${recipient.companyInfo?.email})`);
+                } else {
+                    console.log(`إرسال إشعار إلى المتدرب: ${recipient.personalInfo?.fullName} (${recipient.personalInfo?.email})`);
+                }
+            });
+        }
+
+        // مسح نموذج الشركات
+        function clearCompanyForm() {
+            document.getElementById('companyNotificationForm').reset();
+            document.getElementById('specificCompaniesContainer').classList.remove('show');
+            document.getElementById('statusCompaniesContainer').classList.remove('show');
+            document.getElementById('companySearch').value = '';
+            appState.selectedCompanies.clear();
+            appState.filteredCompanies = [...appState.companies];
+            displayCompaniesList(false);
+            updateCompanyPreview();
+        }
+
+        // مسح نموذج المتدربين
+        function clearTraineeForm() {
+            document.getElementById('traineeNotificationForm').reset();
+            document.getElementById('specificTraineesContainer').classList.remove('show');
+            document.getElementById('statusTraineesContainer').classList.remove('show');
+            document.getElementById('universityTraineesContainer').classList.remove('show');
+            document.getElementById('traineeSearch').value = '';
+            appState.selectedTrainees.clear();
+            appState.filteredTrainees = [...appState.trainees];
+            displayTraineesList(false);
+            updateTraineePreview();
+        }
+
+        // دوال مساعدة
+        function getTypeText(type) {
+            const types = {
+                'info': 'إعلامي',
+                'warning': 'تحذير',
+                'success': 'نجاح',
+                'error': 'خطأ',
+                'announcement': 'إعلان',
+                'reminder': 'تذكير',
+                'opportunity': 'فرصة تدريب'
+            };
+            return types[type] || type;
+        }
+
+        function getTypeIcon(type) {
+            const icons = {
+                'info': 'info-circle',
+                'warning': 'exclamation-triangle',
+                'success': 'check-circle',
+                'error': 'times-circle',
+                'announcement': 'bullhorn',
+                'reminder': 'bell',
+                'opportunity': 'briefcase'
+            };
+            return icons[type] || 'bell';
+        }
+
+        function getTypeColor(type) {
+            const colors = {
+                'info': 'var(--info)',
+                'warning': 'var(--warning)',
+                'success': 'var(--success)',
+                'error': 'var(--error)',
+                'announcement': 'var(--primary)',
+                'reminder': 'var(--secondary)',
+                'opportunity': '#FF6B9D'
+            };
+            return colors[type] || 'var(--primary)';
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'pending': return 'قيد المراجعة';
+                case 'approved': return 'معتمدة';
+                case 'rejected': return 'مرفوضة';
+                case 'suspended': return 'معلقة مؤقتاً';
+                case 'active': return 'نشط';
+                case 'blocked': return 'محظور';
+                case 'all': return 'الجميع';
+                default: return 'غير محدد';
+            }
+        }
+
+        function getRecipientText(recipientType, details) {
+            switch (recipientType) {
+                case 'all': return 'الكل';
+                case 'specific': return details;
+                case 'status': return details;
+                case 'university': return details;
+                default: return 'غير محدد';
+            }
+        }
+
+        // إعداد مستمعي الأحداث
+        function setupEventListeners() {
+            // تبديل القائمة الجانبية
+            document.getElementById('menuToggle').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('active');
+            });
+            
+            // تسجيل الخروج
+            document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+                    localStorage.removeItem('adminLoggedIn');
+                    localStorage.removeItem('userType');
+                    window.location.href = 'index.html';
+                }
+            });
+            
+            // تحديث البيانات
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                loadData();
+                loadNotificationHistory();
+                showNotification('تم تحديث البيانات', 'success');
+            });
+            
+            // تبديل التبويبات الرئيسية
+            document.querySelectorAll('.tab-btn').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(t => 
+                        t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    document.querySelectorAll('.tab-content').forEach(content => 
+                        content.classList.remove('active'));
+                    const tabId = tab.dataset.tab;
+                    document.getElementById(`${tabId}Tab`).classList.add('active');
+                });
+            });
+            
+            // تبديل تبويبات سجل الإشعارات
+            document.querySelectorAll('.history-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.history-tab').forEach(t => 
+                        t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    appState.currentHistoryTab = tab.dataset.history;
+                    displayNotificationHistory();
+                });
+            });
+            
+            // التحكم في عرض خيارات الاستقبال للشركات
+            document.querySelectorAll('input[name="companyRecipientType"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    document.getElementById('specificCompaniesContainer').classList.remove('show');
+                    document.getElementById('statusCompaniesContainer').classList.remove('show');
+                    
+                    if (e.target.value === 'specific') {
+                        document.getElementById('specificCompaniesContainer').classList.add('show');
+                        document.getElementById('companySearch').focus();
+                    } else if (e.target.value === 'status') {
+                        document.getElementById('statusCompaniesContainer').classList.add('show');
+                    }
+                });
+            });
+            
+            // البحث في قائمة الشركات
+            document.getElementById('companySearch').addEventListener('input', (e) => {
+                filterCompanies(e.target.value);
+            });
+            
+            // التحكم في عرض خيارات الاستقبال للمتدربين
+            document.querySelectorAll('input[name="traineeRecipientType"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    document.getElementById('specificTraineesContainer').classList.remove('show');
+                    document.getElementById('statusTraineesContainer').classList.remove('show');
+                    document.getElementById('universityTraineesContainer').classList.remove('show');
+                    
+                    if (e.target.value === 'specific') {
+                        document.getElementById('specificTraineesContainer').classList.add('show');
+                        document.getElementById('traineeSearch').focus();
+                    } else if (e.target.value === 'status') {
+                        document.getElementById('statusTraineesContainer').classList.add('show');
+                    } else if (e.target.value === 'university') {
+                        document.getElementById('universityTraineesContainer').classList.add('show');
+                    }
+                });
+            });
+            
+            // البحث في قائمة المتدربين
+            document.getElementById('traineeSearch').addEventListener('input', (e) => {
+                filterTrainees(e.target.value);
+            });
+            
+            // تحديث معاينة الإشعارات تلقائياً
+            document.getElementById('companyNotificationTitle').addEventListener('input', updateCompanyPreview);
+            document.getElementById('companyNotificationMessage').addEventListener('input', updateCompanyPreview);
+            document.getElementById('companyNotificationType').addEventListener('change', updateCompanyPreview);
+            document.getElementById('companyNotificationLink').addEventListener('input', updateCompanyPreview);
+            
+            document.getElementById('traineeNotificationTitle').addEventListener('input', updateTraineePreview);
+            document.getElementById('traineeNotificationMessage').addEventListener('input', updateTraineePreview);
+            document.getElementById('traineeNotificationType').addEventListener('change', updateTraineePreview);
+            document.getElementById('traineeNotificationLink').addEventListener('input', updateTraineePreview);
+            
+            // إرسال النماذج
+            document.getElementById('companyNotificationForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                sendCompanyNotification();
+            });
+            
+            document.getElementById('traineeNotificationForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                sendTraineeNotification();
+            });
+        }
+
+        // عرض إشعار
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                background: var(--bg-card);
+                border-radius: var(--radius-lg);
+                padding: var(--spacing-md);
+                display: flex;
+                align-items: center;
+                gap: var(--spacing-md);
+                box-shadow: var(--shadow-lg);
+                z-index: 10001;
+                border-right: 4px solid ${type === 'success' ? 'var(--success)' : 
+                                        type === 'error' ? 'var(--error)' : 
+                                        type === 'warning' ? 'var(--warning)' : 'var(--info)'};
+                animation: notificationSlideIn 0.3s ease;
+            `;
+            
+            const icon = type === 'success' ? 'fa-check-circle' : 
+                        type === 'error' ? 'fa-exclamation-circle' : 
+                        type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+            
+            notification.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // تشغيل التطبيق
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
