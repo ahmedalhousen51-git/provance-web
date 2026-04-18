@@ -60,37 +60,23 @@ function initializeDateInput() {
     const birthDateInput = document.getElementById('birthDate');
     if (!birthDateInput) return;
 
-    birthDateInput.type = 'text';
-    birthDateInput.setAttribute('inputmode', 'numeric');
-    birthDateInput.setAttribute('pattern', '[0-9/]*');
-    birthDateInput.setAttribute('dir', 'rtl');
-    birthDateInput.placeholder = 'يوم/شهر/سنة (مثال: 15/05/2000)';
+    // نحافظ على type="date" عشان يشتغل صح على الموبايل
+    birthDateInput.type = 'date';
 
-    birthDateInput.addEventListener('input', function(e) {
-        formatDateInput(e.target);
-        calculateAge();
-    });
-
-    birthDateInput.addEventListener('blur', calculateAge);
+    // نحدد الحد الأقصى والأدنى للتاريخ
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear() - CONFIG.minAge, today.getMonth(), today.getDate());
+    const minDate = new Date(today.getFullYear() - CONFIG.maxAge, today.getMonth(), today.getDate());
     
-    birthDateInput.addEventListener('keypress', function(e) {
-        const char = String.fromCharCode(e.keyCode || e.which);
-        if (!/[\d/]/.test(char) && e.keyCode !== 8) {
-            e.preventDefault();
-        }
-    });
+    birthDateInput.max = maxDate.toISOString().split('T')[0];
+    birthDateInput.min = minDate.toISOString().split('T')[0];
+
+    birthDateInput.addEventListener('change', calculateAge);
+    birthDateInput.addEventListener('input', calculateAge);
 }
 
 function formatDateInput(input) {
-    let value = input.value.replace(/[^0-9]/g, '');
-    
-    if (value.length > 2 && value.length <= 4) {
-        value = value.substring(0, 2) + '/' + value.substring(2);
-    } else if (value.length > 4) {
-        value = value.substring(0, 2) + '/' + value.substring(2, 4) + '/' + value.substring(4, 8);
-    }
-    
-    input.value = value;
+    // لا حاجة لها مع type='date'
 }
 
 // ============================================
@@ -110,23 +96,16 @@ function calculateAge() {
         return;
     }
     
-    let dateParts;
-    if (birthDate.includes('/')) {
-        dateParts = birthDate.split('/');
-    } else if (birthDate.includes('-')) {
-        dateParts = birthDate.split('-');
-    } else {
-        ageDisplay.textContent = 'العمر: -- سنة (استخدم يوم/شهر/سنة)';
-        ageDisplay.className = 'age-display age-invalid';
-        return;
-    }
+    // type="date" بيرجع YYYY-MM-DD
+    let dateParts = birthDate.split('-');
     
     if (dateParts.length === 3) {
-        const day = parseInt(dateParts[0]);
+        // YYYY-MM-DD
+        const year = parseInt(dateParts[0]);
         const month = parseInt(dateParts[1]);
-        const year = parseInt(dateParts[2]);
+        const day = parseInt(dateParts[2]);
         
-        if (isNaN(day) || isNaN(month) || isNaN(year) || day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > new Date().getFullYear()) {
+        if (isNaN(day) || isNaN(month) || isNaN(year)) {
             ageDisplay.textContent = 'العمر: -- سنة (تاريخ غير صحيح)';
             ageDisplay.className = 'age-display age-invalid';
             return;
@@ -134,7 +113,7 @@ function calculateAge() {
         
         const birthDateObj = new Date(year, month - 1, day);
         
-        if (isNaN(birthDateObj.getTime()) || birthDateObj.getDate() !== day || birthDateObj.getMonth() !== month - 1) {
+        if (isNaN(birthDateObj.getTime())) {
             ageDisplay.textContent = 'العمر: -- سنة (تاريخ غير صحيح)';
             ageDisplay.className = 'age-display age-invalid';
             return;
@@ -150,36 +129,36 @@ function calculateAge() {
         
         ageDisplay.textContent = `العمر: ${age} سنة`;
         
-        if (age < CONFIG.minAge) {
-            ageDisplay.className = 'age-display age-invalid';
-        } else if (age >= CONFIG.minAge && age <= CONFIG.maxAge) {
+        if (age >= CONFIG.minAge && age <= CONFIG.maxAge) {
             ageDisplay.className = 'age-display age-valid';
         } else {
             ageDisplay.className = 'age-display age-invalid';
         }
-    } else {
-        ageDisplay.textContent = 'العمر: -- سنة (استخدم يوم/شهر/سنة)';
-        ageDisplay.className = 'age-display age-invalid';
-    }
-}
+    } // إغلاق if (dateParts.length === 3)
+} // إغلاق calculateAge
 
 function calculateAgeFromDate(birthDate) {
     if (!birthDate) return 0;
     
-    let dateParts;
-    if (birthDate.includes('/')) {
-        dateParts = birthDate.split('/');
-    } else if (birthDate.includes('-')) {
-        dateParts = birthDate.split('-');
+    let year, month, day;
+    
+    if (birthDate.includes('-')) {
+        // YYYY-MM-DD من type="date"
+        const parts = birthDate.split('-');
+        if (parts.length !== 3) return 0;
+        year = parseInt(parts[0]);
+        month = parseInt(parts[1]);
+        day = parseInt(parts[2]);
+    } else if (birthDate.includes('/')) {
+        // DD/MM/YYYY (legacy)
+        const parts = birthDate.split('/');
+        if (parts.length !== 3) return 0;
+        day = parseInt(parts[0]);
+        month = parseInt(parts[1]);
+        year = parseInt(parts[2]);
     } else {
         return 0;
     }
-    
-    if (dateParts.length !== 3) return 0;
-    
-    const day = parseInt(dateParts[0]);
-    const month = parseInt(dateParts[1]);
-    const year = parseInt(dateParts[2]);
     
     if (isNaN(day) || isNaN(month) || isNaN(year)) return 0;
     
@@ -418,7 +397,9 @@ function showStep(step) {
     updateProgressDots();
     
     setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        window.scrollTo(0, 0);
     }, 100);
 }
 
