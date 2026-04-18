@@ -1111,70 +1111,118 @@ function showContractDetails() {
 }
 
 // ============================================
-// Form Submission
+// Supabase Setup
 // ============================================
-function handleFormSubmit(event) {
-    event.preventDefault();
-    
-    if (!validateCurrentStep()) {
-        return;
-    }
-    
-    const formData = {
-        personalInfo: {
-            fullName: getValue('fullName'),
-            email: getValue('email'),
-            birthDate: getValue('birthDate'),
-            age: calculateAgeFromDate(getValue('birthDate')),
-            phone: getValue('phone'),
-            address: getValue('address'),
-            photo: state.studentPhotoData
-        },
-        academicInfo: {
-            university: getValue('university'),
-            college: getValue('college'),
-            major: getValue('major'),
-            level: getValue('level'),
-            skills: getValue('skills')
-        },
-        contract: {
-            agreed: state.contractAgreed,
-            agreedAt: new Date().toISOString()
-        }
-    };
-    
-    state.formData = formData;
-    
-    showSuccessAnimation();
-    
-    console.log('Student Form Data:', formData);
-}
+const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
 
-function showSuccessAnimation() {
+// تحميل مكتبة Supabase
+(function loadSupabase() {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    script.onload = function() {
+        window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    };
+    document.head.appendChild(script);
+})();
+
+// ============================================
+// Form Submission - Supabase
+// ============================================
+async function handleFormSubmit(event) {
+    event.preventDefault();
+
+    if (!validateCurrentStep()) return;
+
     const submitBtn = document.getElementById('btnSubmit');
     if (submitBtn) {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري التسجيل...</span>';
         submitBtn.disabled = true;
-        
-        setTimeout(() => {
+    }
+
+    const email    = getValue('email');
+    const password = getValue('password');
+    const fullName = getValue('fullName');
+
+    if (!window.supabaseClient) {
+        showNotification('خطأ', 'يرجى الانتظار قليلاً وإعادة المحاولة', 'error');
+        if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; submitBtn.disabled = false; }
+        return;
+    }
+
+    try {
+        // 1. إنشاء الحساب في Supabase Auth
+        const { data: authData, error: authError } = await window.supabaseClient.auth.signUp({
+            email: email,
+            password: password
+        });
+
+        if (authError) {
+            let msg = 'حدث خطأ أثناء التسجيل';
+            if (authError.message.includes('already registered')) {
+                msg = 'هذا البريد الإلكتروني مسجل مسبقاً، يرجى تسجيل الدخول';
+            } else if (authError.message.includes('Password should be')) {
+                msg = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+            }
+            showNotification('خطأ في التسجيل', msg, 'error');
+            if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; submitBtn.disabled = false; }
+            return;
+        }
+
+        const userId = authData.user.id;
+
+        // 2. حفظ بيانات الطالب في جدول students
+        const { error: dbError } = await window.supabaseClient
+            .from('students')
+            .insert({
+                user_id:    userId,
+                full_name:  fullName,
+                email:      email,
+                birth_date: getValue('birthDate'),
+                phone:      getValue('phone'),
+                address:    getValue('address'),
+                university: getValue('university'),
+                college:    getValue('college'),
+                major:      getValue('major'),
+                level:      getValue('level'),
+                skills:     getValue('skills'),
+                photo:      state.studentPhotoData,
+                agreed_at:  new Date().toISOString()
+            });
+
+        if (dbError) {
+            // حتى لو في خطأ في حفظ البيانات، الحساب اتعمل
+            console.warn('DB Error:', dbError.message);
+        }
+
+        // 3. نجاح
+        if (submitBtn) {
             submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>تم التسجيل بنجاح!</span>';
             submitBtn.classList.add('success');
-            
-            showNotification(
-                'تم التسجيل بنجاح!',
-                'تم تسجيل حسابك في منصة ProVance بنجاح. سيتم التواصل معكم خلال 24 ساعة لتأكيد الحساب',
-                'success'
-            );
-            
-            setTimeout(() => {
-                localStorage.removeItem('provance_student_registration_state');
-            }, 1000);
-            
-            setTimeout(() => {
-                window.location.href = 'student-internship.html';
-            }, 2000);
-        }, 1500);
+        }
+
+        showNotification(
+            'تم التسجيل بنجاح! 🎉',
+            'تم إنشاء حسابك في منصة ProVance. تحقق من بريدك الإلكتروني لتأكيد الحساب',
+            'success'
+        );
+
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('userName', fullName);
+        localStorage.setItem('userType', 'student');
+
+        setTimeout(() => {
+            window.location.href = 'student-login.html';
+        }, 2500);
+
+    } catch (err) {
+        showNotification('خطأ في الاتصال', 'تحقق من الإنترنت وحاول مرة أخرى', 'error');
+        if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; submitBtn.disabled = false; }
     }
+}
+
+function showSuccessAnimation() {
+    // الدالة دي بقت جزء من handleFormSubmit
 }
 
 // ============================================
