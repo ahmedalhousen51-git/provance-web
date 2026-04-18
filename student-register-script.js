@@ -666,12 +666,25 @@ function previewPhoto(event) {
         const preview = document.getElementById('photoPreview');
         const placeholder = document.querySelector('.logo-placeholder');
         const removeBtn = document.getElementById('photoRemoveBtn');
+        const wrapper = document.querySelector('.logo-preview-wrapper');
         
         if (preview) {
             preview.src = e.target.result;
             preview.classList.add('show');
+            preview.style.display = 'block';
+            preview.style.width = '100%';
+            preview.style.height = '100%';
+            preview.style.objectFit = 'cover';
+            preview.style.position = 'relative';
+            preview.style.zIndex = '2';
         }
-        if (placeholder) placeholder.style.display = 'none';
+        if (placeholder) {
+            placeholder.style.display = 'none';
+            placeholder.style.visibility = 'hidden';
+        }
+        if (wrapper) {
+            wrapper.style.border = '3px solid var(--primary)';
+        }
         if (removeBtn) removeBtn.classList.remove('hidden');
     };
     
@@ -685,9 +698,20 @@ function removePhoto(event) {
     const placeholder = document.querySelector('.logo-placeholder');
     const removeBtn = document.getElementById('photoRemoveBtn');
     const fileInput = document.getElementById('studentPhoto');
+    const wrapper = document.querySelector('.logo-preview-wrapper');
     
-    if (preview) preview.classList.remove('show');
-    if (placeholder) placeholder.style.display = 'block';
+    if (preview) {
+        preview.classList.remove('show');
+        preview.style.display = 'none';
+        preview.src = '';
+    }
+    if (placeholder) {
+        placeholder.style.display = 'block';
+        placeholder.style.visibility = 'visible';
+    }
+    if (wrapper) {
+        wrapper.style.border = '';
+    }
     if (removeBtn) removeBtn.classList.add('hidden');
     if (fileInput) fileInput.value = '';
     state.studentPhotoData = null;
