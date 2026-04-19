@@ -661,18 +661,39 @@ function previewPhoto(event) {
     const reader = new FileReader();
     
     reader.onload = function(e) {
-        state.studentPhotoData = e.target.result;
-        
-        const preview = document.getElementById('photoPreview');
-        const placeholder = document.querySelector('.logo-placeholder');
-        const removeBtn = document.getElementById('photoRemoveBtn');
-        
-        if (preview) {
-            preview.src = e.target.result;
-            preview.classList.add('show');
-        }
-        if (placeholder) placeholder.style.display = 'none';
-        if (removeBtn) removeBtn.classList.remove('hidden');
+        // ضغط الصورة لتسريع الظهور والحفظ
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX = 400;
+            let w = img.width, h = img.height;
+            if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+            else { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            const compressed = canvas.toDataURL('image/jpeg', 0.8);
+            state.studentPhotoData = compressed;
+
+            const preview = document.getElementById('photoPreview');
+            const placeholder = document.querySelector('.logo-placeholder');
+            const removeBtn = document.getElementById('photoRemoveBtn');
+            const wrapper = document.querySelector('.logo-preview-wrapper');
+
+            if (preview) {
+                preview.src = compressed;
+                preview.classList.add('show');
+                preview.style.display = 'block';
+                preview.style.width = '100%';
+                preview.style.height = '100%';
+                preview.style.objectFit = 'cover';
+                preview.style.zIndex = '2';
+            }
+            if (placeholder) { placeholder.style.display = 'none'; placeholder.style.visibility = 'hidden'; }
+            if (wrapper) wrapper.style.border = '3px solid var(--primary)';
+            if (removeBtn) removeBtn.classList.remove('hidden');
+        };
+        img.src = e.target.result;
     };
     
     reader.readAsDataURL(file);
