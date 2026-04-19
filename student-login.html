@@ -385,367 +385,154 @@
         </div>
     </div>
 
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // ============================================
-        // Elements Selection
-        // ============================================
-        const loginForm = document.getElementById('studentLoginForm');
-        const submitBtn = document.querySelector('.submit-btn');
-        const togglePassword = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('password');
-        const googleBtn = document.getElementById('googleBtn');
+        const _sb = supabase.createClient(
+            'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
+        );
 
         // ============================================
-        // بيانات المستخدمين المسجلين
+        // Animations
         // ============================================
-        const registeredUsers = [
-            { email: 'student1@example.com', password: 'password123', name: 'أحمد محمد' },
-            { email: 'student2@example.com', password: 'password123', name: 'فاطمة أحمد' },
-            { email: 'admin@example.com', password: 'admin123', name: 'محمد علي' }
-        ];
+        const _style = document.createElement('style');
+        _style.textContent = `
+            @keyframes slideInRight { from{transform:translateX(400px);opacity:0} to{transform:translateX(0);opacity:1} }
+            @keyframes slideOutRight { from{transform:translateX(0);opacity:1} to{transform:translateX(400px);opacity:0} }
+            @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+        `;
+        document.head.appendChild(_style);
 
         // ============================================
-        // Toggle Password Visibility
+        // Helpers
         // ============================================
-        togglePassword.addEventListener('click', function() {
-            const type = passwordInput.getAttribute('type');
-            
-            if (type === 'password') {
-                passwordInput.setAttribute('type', 'text');
-                this.innerHTML = '<i class="fas fa-eye-slash"></i>';
-            } else {
-                passwordInput.setAttribute('type', 'password');
-                this.innerHTML = '<i class="fas fa-eye"></i>';
-            }
+        function validateEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+        function showError(id, msg) {
+            const el = document.getElementById(id + 'Error');
+            const inp = document.getElementById(id);
+            if (el) { el.textContent = msg; el.classList.add('show'); }
+            if (inp) { inp.style.borderColor = 'var(--error-color)'; inp.style.animation = 'shake 0.4s'; setTimeout(()=>inp.style.animation='',400); }
+        }
+        function hideError(id) {
+            const el = document.getElementById(id + 'Error');
+            const inp = document.getElementById(id);
+            if (el) el.classList.remove('show');
+            if (inp) inp.style.borderColor = '';
+        }
+        function showToast(msg, ok=true) {
+            const n = document.createElement('div');
+            n.style.cssText = `position:fixed;top:24px;right:24px;background:${ok?'linear-gradient(135deg,#51cf66,#37b24d)':'linear-gradient(135deg,#ff6b6b,#ee5a52)'};color:#fff;padding:14px 22px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:99999;display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;animation:slideInRight .4s ease`;
+            n.innerHTML = `<i class="fas fa-${ok?'check-circle':'exclamation-triangle'}"></i><span>${msg}</span>`;
+            document.body.appendChild(n);
+            setTimeout(()=>{ n.style.animation='slideOutRight .4s ease'; setTimeout(()=>n.remove(),400); }, 3500);
+        }
+
+        // ============================================
+        // Toggle Password
+        // ============================================
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const inp = document.getElementById('password');
+            const isPass = inp.type === 'password';
+            inp.type = isPass ? 'text' : 'password';
+            this.innerHTML = `<i class="fas fa-eye${isPass?'-slash':''}"></i>`;
         });
 
         // ============================================
-        // Form Validation
+        // Login Form - Supabase
         // ============================================
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-
-        function showError(inputId, message) {
-            const errorElement = document.getElementById(inputId + 'Error');
-            const inputElement = document.getElementById(inputId);
-            
-            errorElement.textContent = message;
-            errorElement.classList.add('show');
-            inputElement.style.borderColor = 'var(--error-color)';
-        }
-
-        function hideError(inputId) {
-            const errorElement = document.getElementById(inputId + 'Error');
-            const inputElement = document.getElementById(inputId);
-            
-            errorElement.classList.remove('show');
-            inputElement.style.borderColor = 'var(--border-color)';
-        }
-
-        // ============================================
-        // Form Submit
-        // ============================================
-        loginForm.addEventListener('submit', function(e) {
+        document.getElementById('studentLoginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const rememberMe = document.getElementById('rememberMe').checked;
-            
-            // Reset errors
-            hideError('email');
-            hideError('password');
-            
-            // Validate
-            let isValid = true;
-            
-            if (!email) {
-                showError('email', 'البريد الإلكتروني مطلوب');
-                isValid = false;
-            } else if (!validateEmail(email)) {
-                showError('email', 'البريد الإلكتروني غير صحيح');
-                isValid = false;
+
+            hideError('email'); hideError('password');
+            let valid = true;
+            if (!email) { showError('email','البريد الإلكتروني مطلوب'); valid=false; }
+            else if (!validateEmail(email)) { showError('email','البريد الإلكتروني غير صحيح'); valid=false; }
+            if (!password) { showError('password','كلمة المرور مطلوبة'); valid=false; }
+            else if (password.length < 6) { showError('password','كلمة المرور 6 أحرف على الأقل'); valid=false; }
+            if (!valid) return;
+
+            const btn = document.querySelector('.submit-btn');
+            btn.classList.add('loading'); btn.disabled = true;
+
+            const { data, error } = await _sb.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                let msg = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+                if (error.message.includes('Email not confirmed')) msg = 'يرجى تأكيد بريدك الإلكتروني أولاً';
+                if (error.message.includes('Too many')) msg = 'محاولات كثيرة، انتظر قليلاً';
+                showError('email', msg); showError('password', msg);
+                btn.classList.remove('loading'); btn.disabled = false;
+                return;
             }
-            
-            if (!password) {
-                showError('password', 'كلمة المرور مطلوبة');
-                isValid = false;
-            } else if (password.length < 6) {
-                showError('password', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
-                isValid = false;
-            }
-            
-            if (!isValid) return;
-            
-            // Show loading
-            submitBtn.classList.add('loading');
-            submitBtn.disabled = true;
-            
-            // التحقق من صحة بيانات الدخول
-            const user = registeredUsers.find(u => u.email === email && u.password === password);
-            
-            if (user) {
-                // تخزين بيانات المستخدم
-                localStorage.setItem('userType', 'student');
-                localStorage.setItem('userEmail', email);
-                localStorage.setItem('userName', user.name);
-                localStorage.setItem('isLoggedIn', 'true');
-                if (rememberMe) {
-                    localStorage.setItem('rememberMe', 'true');
-                }
-                
-                // إعادة التوجيه
-                setTimeout(() => {
-                    window.location.href = 'student-internship.html';
-                }, 1000);
-            } else {
-                // إظهار خطأ في بيانات الدخول
-                showError('email', 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
-                showError('password', 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
-                
-                // إعادة تعيين الزر
-                submitBtn.classList.remove('loading');
-                submitBtn.disabled = false;
-            }
-        });
 
-        // ============================================
-        // Google Account Selection
-        // ============================================
-        function showGoogleAccountSelection() {
-            const modal = document.createElement('div');
-            modal.className = 'account-selection-modal';
-            modal.innerHTML = `
-                <div class="account-modal-content">
-                    <div class="modal-header">
-                        <h3>اختر حساب</h3>
-                        <p>لتسجيل الدخول إلى ProVance</p>
-                    </div>
-                    
-                    <div class="accounts-list">
-                        <div class="account-item" data-email="ahmedalhousen64@gmail.com" data-name="Ahmed Alhousen">
-                            <div class="account-avatar" style="background: #1a73e8;">A</div>
-                            <div class="account-info">
-                                <div class="account-name">Ahmed Alhousen</div>
-                                <div class="account-email">ahmedalhousen64@gmail.com</div>
-                            </div>
-                        </div>
-                        
-                        <div class="account-item" data-email="ahmedalhousen51@gmail.com" data-name="Ahmed alhousen">
-                            <div class="account-avatar" style="background: #ea4335;">A</div>
-                            <div class="account-info">
-                                <div class="account-name">Ahmed alhousen</div>
-                                <div class="account-email">ahmedalhousen51@gmail.com</div>
-                            </div>
-                        </div>
-                        
-                        <div class="account-item" data-email="saraalaa7608@gmail.com" data-name="Sara Allaa">
-                            <div class="account-avatar" style="background: #fbbc04;">S</div>
-                            <div class="account-info">
-                                <div class="account-name">Sara Allaa</div>
-                                <div class="account-email">saraalaa7608@gmail.com</div>
-                            </div>
-                        </div>
+            const { data: st } = await _sb.from('students').select('full_name').eq('user_id', data.user.id).single();
+            const name = st?.full_name || email.split('@')[0];
 
-                        <div class="account-item" data-email="student1@example.com" data-name="أحمد محمد">
-                            <div class="account-avatar" style="background: #34a853;">أ</div>
-                            <div class="account-info">
-                                <div class="account-name">أحمد محمد</div>
-                                <div class="account-email">student1@example.com</div>
-                            </div>
-                        </div>
-
-                        <div class="account-item" data-email="student2@example.com" data-name="فاطمة أحمد">
-                            <div class="account-avatar" style="background: #9c27b0;">ف</div>
-                            <div class="account-info">
-                                <div class="account-name">فاطمة أحمد</div>
-                                <div class="account-email">student2@example.com</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="modal-footer">
-                        <button class="add-account-btn" id="addGoogleAccount">
-                            استخدام حساب آخر
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // إضافة مستمعي الأحداث
-            modal.querySelectorAll('.account-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const email = this.getAttribute('data-email');
-                    const name = this.getAttribute('data-name');
-                    
-                    // التحقق مما إذا كان الحساب مسجل في النظام
-                    const userExists = registeredUsers.some(user => user.email === email);
-                    
-                    if (userExists) {
-                        completeSocialLogin('Google', email, name);
-                    } else {
-                        showErrorNotification('هذا الحساب غير مسجل في النظام. يرجى التسجيل أولاً.');
-                    }
-                    
-                    modal.remove();
-                });
-            });
-            
-            modal.querySelector('#addGoogleAccount').addEventListener('click', function() {
-                window.open('https://accounts.google.com', '_blank');
-                modal.remove();
-            });
-            
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-        }
-
-        // ============================================
-        // Complete Social Login
-        // ============================================
-        function completeSocialLogin(provider, email, name) {
-            // تخزين بيانات المستخدم
-            localStorage.setItem('userType', 'student');
+            localStorage.setItem('isLoggedIn','true');
             localStorage.setItem('userEmail', email);
             localStorage.setItem('userName', name);
-            localStorage.setItem('loginMethod', provider);
-            localStorage.setItem('isLoggedIn', 'true');
-            
-            // إظهار رسالة النجاح
-            showSuccessNotification(`تم تسجيل الدخول بنجاح باسم ${name}`);
-            
-            // إعادة التوجيه
-            setTimeout(() => {
-                window.location.href = 'student-internship.html';
-            }, 1500);
-        }
+            localStorage.setItem('userId', data.user.id);
+            if (rememberMe) localStorage.setItem('rememberMe','true');
+            else localStorage.removeItem('rememberMe');
 
-        // ============================================
-        // Success Notification
-        // ============================================
-        function showSuccessNotification(message) {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 30px;
-                right: 30px;
-                background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
-                color: white;
-                padding: 20px 30px;
-                border-radius: 15px;
-                box-shadow: 0 15px 50px rgba(81, 207, 102, 0.5);
-                z-index: 10000;
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                font-weight: 600;
-                animation: slideInRight 0.5s ease-out;
-            `;
-            
-            notification.innerHTML = `
-                <i class="fas fa-check-circle" style="font-size: 28px;"></i>
-                <span>${message}</span>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideOutRight 0.5s ease-out';
-                setTimeout(() => notification.remove(), 500);
-            }, 3000);
-        }
-
-        // ============================================
-        // Error Notification
-        // ============================================
-        function showErrorNotification(message) {
-            const notification = document.createElement('div');
-            notification.className = 'error-notification';
-            notification.innerHTML = `
-                <i class="fas fa-exclamation-triangle" style="font-size: 28px;"></i>
-                <span>${message}</span>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideOutRight 0.5s ease-out';
-                setTimeout(() => notification.remove(), 500);
-            }, 3000);
-        }
-
-        // ============================================
-        // Google Login Handler
-        // ============================================
-        googleBtn.addEventListener('click', function() {
-            showGoogleAccountSelection();
+            showToast(`أهلاً ${name}! جاري الدخول...`);
+            setTimeout(()=>{ window.location.href='student-internship.html'; }, 1500);
         });
 
         // ============================================
-        // Input Focus Effects
+        // Google Login - Supabase OAuth
         // ============================================
-        const inputs = document.querySelectorAll('.input-group input');
-
-        inputs.forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.style.transform = 'translateY(-2px)';
+        document.getElementById('googleBtn').addEventListener('click', async function() {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>جاري الاتصال...</span>';
+            const { error } = await _sb.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: 'https://ahmedalhousen51-git.github.io/provance-web/student-internship.html' }
             });
-            
-            input.addEventListener('blur', function() {
-                this.parentElement.style.transform = 'translateY(0)';
-            });
+            if (error) {
+                showToast('حدث خطأ، حاول مرة أخرى', false);
+                this.disabled = false;
+                this.innerHTML = '<i class="fab fa-google"></i><span>Google</span>';
+            }
         });
 
         // ============================================
-        // Page Load Animation
+        // Page Load
         // ============================================
-        window.addEventListener('load', () => {
-            document.body.style.opacity = '0';
-            setTimeout(() => {
-                document.body.style.transition = 'opacity 0.6s ease';
-                document.body.style.opacity = '1';
-            }, 100);
-        });
+        window.addEventListener('load', async () => {
+            document.body.style.opacity='0';
+            setTimeout(()=>{ document.body.style.transition='opacity .5s'; document.body.style.opacity='1'; },80);
 
-        // ============================================
-        // Check Remember Me on Page Load
-        // ============================================
-        window.addEventListener('load', function() {
-            const rememberMe = localStorage.getItem('rememberMe');
-            const savedEmail = localStorage.getItem('userEmail');
-            
-            if (rememberMe === 'true' && savedEmail) {
-                document.getElementById('email').value = savedEmail;
+            // لو مسجل دخول خليه يدخل مباشرة
+            const { data: { session } } = await _sb.auth.getSession();
+            if (session) { window.location.href='student-internship.html'; return; }
+
+            // تحميل الإيميل المحفوظ
+            if (localStorage.getItem('rememberMe')==='true' && localStorage.getItem('userEmail')) {
+                document.getElementById('email').value = localStorage.getItem('userEmail');
                 document.getElementById('rememberMe').checked = true;
             }
         });
 
-        // ============================================
-        // Real-time Validation
-        // ============================================
+        // Real-time validation
         document.getElementById('email').addEventListener('input', function() {
-            const email = this.value.trim();
-            if (email && !validateEmail(email)) {
-                showError('email', 'البريد الإلكتروني غير صحيح');
-            } else {
-                hideError('email');
-            }
+            if (this.value && !validateEmail(this.value)) showError('email','البريد الإلكتروني غير صحيح');
+            else hideError('email');
+        });
+        document.getElementById('password').addEventListener('input', function() {
+            if (this.value && this.value.length < 6) showError('password','كلمة المرور 6 أحرف على الأقل');
+            else hideError('password');
         });
 
-        document.getElementById('password').addEventListener('input', function() {
-            const password = this.value;
-            if (password && password.length < 6) {
-                showError('password', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
-            } else {
-                hideError('password');
-            }
+        // Focus effects
+        document.querySelectorAll('.input-group input').forEach(inp => {
+            inp.addEventListener('focus', ()=>inp.parentElement.style.transform='translateY(-2px)');
+            inp.addEventListener('blur',  ()=>inp.parentElement.style.transform='translateY(0)');
         });
     </script>
 </body>
