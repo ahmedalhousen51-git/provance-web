@@ -666,25 +666,12 @@ function previewPhoto(event) {
         const preview = document.getElementById('photoPreview');
         const placeholder = document.querySelector('.logo-placeholder');
         const removeBtn = document.getElementById('photoRemoveBtn');
-        const wrapper = document.querySelector('.logo-preview-wrapper');
         
         if (preview) {
             preview.src = e.target.result;
             preview.classList.add('show');
-            preview.style.display = 'block';
-            preview.style.width = '100%';
-            preview.style.height = '100%';
-            preview.style.objectFit = 'cover';
-            preview.style.position = 'relative';
-            preview.style.zIndex = '2';
         }
-        if (placeholder) {
-            placeholder.style.display = 'none';
-            placeholder.style.visibility = 'hidden';
-        }
-        if (wrapper) {
-            wrapper.style.border = '3px solid var(--primary)';
-        }
+        if (placeholder) placeholder.style.display = 'none';
         if (removeBtn) removeBtn.classList.remove('hidden');
     };
     
@@ -698,20 +685,9 @@ function removePhoto(event) {
     const placeholder = document.querySelector('.logo-placeholder');
     const removeBtn = document.getElementById('photoRemoveBtn');
     const fileInput = document.getElementById('studentPhoto');
-    const wrapper = document.querySelector('.logo-preview-wrapper');
     
-    if (preview) {
-        preview.classList.remove('show');
-        preview.style.display = 'none';
-        preview.src = '';
-    }
-    if (placeholder) {
-        placeholder.style.display = 'block';
-        placeholder.style.visibility = 'visible';
-    }
-    if (wrapper) {
-        wrapper.style.border = '';
-    }
+    if (preview) preview.classList.remove('show');
+    if (placeholder) placeholder.style.display = 'block';
     if (removeBtn) removeBtn.classList.add('hidden');
     if (fileInput) fileInput.value = '';
     state.studentPhotoData = null;
@@ -1111,119 +1087,86 @@ function showContractDetails() {
 }
 
 // ============================================
-// Supabase Setup
+// Supabase
 // ============================================
 const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
 
-// تحميل مكتبة Supabase
-(function loadSupabase() {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-    script.onload = function() {
-        window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    };
-    document.head.appendChild(script);
-})();
+function getSB() {
+    if (!window._sbReg) window._sbReg = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    return window._sbReg;
+}
 
 // ============================================
-// Form Submission - Supabase
+// Form Submission - Supabase حقيقي
 // ============================================
 async function handleFormSubmit(event) {
     event.preventDefault();
-
     if (!validateCurrentStep()) return;
 
-    const submitBtn = document.getElementById('btnSubmit');
-    if (submitBtn) {
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري التسجيل...</span>';
-        submitBtn.disabled = true;
-    }
+    const btn = document.getElementById('btnSubmit');
+    if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري التسجيل...</span>'; btn.disabled = true; }
 
     const email    = getValue('email');
     const password = getValue('password');
     const fullName = getValue('fullName');
 
-    if (!window.supabaseClient) {
-        showNotification('خطأ', 'يرجى الانتظار قليلاً وإعادة المحاولة', 'error');
-        if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; submitBtn.disabled = false; }
-        return;
-    }
-
     try {
-        // 1. إنشاء الحساب في Supabase Auth
-        const { data: authData, error: authError } = await window.supabaseClient.auth.signUp({
-            email: email,
-            password: password
-        });
+        const sb = getSB();
+
+        // 1. إنشاء الحساب
+        const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
 
         if (authError) {
             let msg = 'حدث خطأ أثناء التسجيل';
-            if (authError.message.includes('already registered')) {
+            if (authError.message.includes('already registered') || authError.message.includes('already been registered'))
                 msg = 'هذا البريد الإلكتروني مسجل مسبقاً، يرجى تسجيل الدخول';
-            } else if (authError.message.includes('Password should be')) {
+            else if (authError.message.includes('Password'))
                 msg = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
-            }
             showNotification('خطأ في التسجيل', msg, 'error');
-            if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; submitBtn.disabled = false; }
+            if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; btn.disabled = false; }
             return;
         }
 
         const userId = authData.user.id;
 
-        // 2. حفظ بيانات الطالب في جدول students
-        const { error: dbError } = await window.supabaseClient
-            .from('students')
-            .insert({
-                user_id:    userId,
-                full_name:  fullName,
-                email:      email,
-                birth_date: getValue('birthDate'),
-                phone:      getValue('phone'),
-                address:    getValue('address'),
-                university: getValue('university'),
-                college:    getValue('college'),
-                major:      getValue('major'),
-                level:      getValue('level'),
-                skills:     getValue('skills'),
-                photo:      state.studentPhotoData,
-                agreed_at:  new Date().toISOString()
-            });
+        // 2. حفظ بيانات الطالب
+        const { error: dbErr } = await sb.from('students').insert({
+            user_id:    userId,
+            full_name:  fullName,
+            email:      email,
+            birth_date: getValue('birthDate'),
+            phone:      getValue('phone'),
+            address:    getValue('address'),
+            university: getValue('university'),
+            college:    getValue('college'),
+            major:      getValue('major') || '',
+            level:      getValue('level'),
+            skills:     getValue('skills') || '',
+            photo:      state.studentPhotoData || '',
+            agreed_at:  new Date().toISOString()
+        });
 
-        if (dbError) {
-            // حتى لو في خطأ في حفظ البيانات، الحساب اتعمل
-            console.warn('DB Error:', dbError.message);
-        }
+        if (dbErr) console.warn('DB warning:', dbErr.message);
 
         // 3. نجاح
-        if (submitBtn) {
-            submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>تم التسجيل بنجاح!</span>';
-            submitBtn.classList.add('success');
-        }
+        if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> <span>تم التسجيل!</span>'; btn.classList.add('success'); }
 
-        showNotification(
-            'تم التسجيل بنجاح! 🎉',
-            'تم إنشاء حسابك في منصة ProVance. تحقق من بريدك الإلكتروني لتأكيد الحساب',
-            'success'
-        );
+        showNotification('تم التسجيل بنجاح! 🎉', 'يمكنك الآن تسجيل الدخول بإيميلك وكلمة مرورك', 'success');
 
         localStorage.setItem('userEmail', email);
         localStorage.setItem('userName', fullName);
-        localStorage.setItem('userType', 'student');
 
-        setTimeout(() => {
-            window.location.href = 'student-login.html';
-        }, 2500);
+        setTimeout(() => { window.location.href = 'student-login.html'; }, 2500);
 
     } catch (err) {
         showNotification('خطأ في الاتصال', 'تحقق من الإنترنت وحاول مرة أخرى', 'error');
-        if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; submitBtn.disabled = false; }
+        if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; btn.disabled = false; }
     }
 }
 
-function showSuccessAnimation() {
-    // الدالة دي بقت جزء من handleFormSubmit
-}
+function showSuccessAnimation() { /* legacy - not used */ }
+
 
 // ============================================
 // Enhanced Notification System
