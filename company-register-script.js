@@ -1908,11 +1908,32 @@ function validateStep6(silent = false) {
     const contractAgreement = document.getElementById('contractAgreement');
     
     if (!contractAgreement || !contractAgreement.checked) {
-        return showError(
-            'الموافقة على العقد مطلوبة',
-            'يجب الموافقة على شروط وأحكام عقد استخدام منصة Provance قبل إتمام التسجيل',
-            silent
-        );
+        // إظهار رسالة خطأ واضحة للمستخدم
+        if (!silent) {
+            notificationSystem.show(
+                'يجب الموافقة على العقد',
+                'برجاء قراءة الشروط والأحكام والموافقة عليها أولاً قبل إتمام التسجيل',
+                'error'
+            );
+            
+            // تمييز الـ checkbox بالأحمر
+            if (contractAgreement) {
+                contractAgreement.style.outline = '3px solid #ff6b6b';
+                contractAgreement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                    contractAgreement.style.outline = '';
+                }, 3000);
+            }
+        }
+        
+        // إعادة تفعيل زرار التسجيل لو كان مجمداً
+        const submitBtn = document.getElementById('btnSubmit');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>';
+        }
+        
+        return false;
     }
     
     return true;
@@ -3215,37 +3236,46 @@ function saveCompanyDataToSystem(companyData) {
         Logger.info(`إجمالي الشركات المسجلة: ${allCompanies.length}`);
 
         // ============================================================
-        // حفظ بيانات تسجيل الدخول بنفس format الـ login script
-        // عشان يقدر يلاقيهم لما يعمل login
+        // حفظ بيانات تسجيل الدخول بـ status=pending
+        // الشركة تحتاج موافقة الأدمن قبل الدخول
         // ============================================================
-        const password = document.getElementById('password') ? document.getElementById('password').value : '';
-        
-        let loginCompanies = JSON.parse(localStorage.getItem('companies') || '[]');
-        const existingLoginIndex = loginCompanies.findIndex(c => c.email === companyData.companyInfo.email);
-        
-        const loginRecord = {
-            id: companyProfile.id,
-            companyName: companyData.companyInfo.name,
-            email: companyData.companyInfo.email,
-            password: password,
-            field: companyData.companyInfo.field,
-            location: companyData.companyInfo.location,
-            logo: companyData.companyInfo.logo,
-            registeredAt: new Date().toISOString()
-        };
-        
-        if (existingLoginIndex !== -1) {
-            loginCompanies[existingLoginIndex] = loginRecord;
-        } else {
-            loginCompanies.push(loginRecord);
-        }
-        
-        localStorage.setItem('companies', JSON.stringify(loginCompanies));
-        Logger.info('تم حفظ بيانات تسجيل الدخول بنجاح');
+        try {
+            const passwordEl = document.getElementById('password');
+            const savedPassword = passwordEl ? passwordEl.value : '';
 
-        // 4. إنشاء تدريبات تلقائية بناءً على بيانات الشركة
-        const internships = createCompanyInternships(companyData);
-        Logger.info(`تم إنشاء ${internships.length} تدريب تلقائي`);
+            let loginCompanies = JSON.parse(localStorage.getItem('companies') || '[]');
+            const existingIdx = loginCompanies.findIndex(c => c.email === companyData.companyInfo.email);
+
+            const loginRecord = {
+                id: companyProfile.id,
+                companyName: companyData.companyInfo.name,
+                email: companyData.companyInfo.email,
+                password: savedPassword,
+                field: companyData.companyInfo.field,
+                location: companyData.companyInfo.location,
+                logo: companyData.companyInfo.logo,
+                registeredAt: new Date().toISOString(),
+                status: 'pending'
+            };
+
+            if (existingIdx !== -1) {
+                loginCompanies[existingIdx] = loginRecord;
+            } else {
+                loginCompanies.push(loginRecord);
+            }
+
+            localStorage.setItem('companies', JSON.stringify(loginCompanies));
+            Logger.info('تم حفظ بيانات الدخول - في انتظار موافقة الإدارة');
+        } catch(e) { Logger.warn('تحذير في حفظ بيانات الدخول:', e); }
+
+                // 4. إنشاء تدريبات تلقائية (محمي من الـ crash)
+        let internships = [];
+        try {
+            if (companyData.trainingInfo && companyData.trainingInfo.fields && companyData.trainingInfo.fields.length > 0) {
+                internships = createCompanyInternships(companyData);
+                Logger.info(`تم إنشاء ${internships.length} تدريب تلقائي`);
+            }
+        } catch(e) { Logger.warn('تحذير في إنشاء التدريبات:', e); }
 
         // 5. تحديث إحصائيات النظام
         updateSystemStats();
