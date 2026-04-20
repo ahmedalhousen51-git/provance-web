@@ -3142,13 +3142,25 @@
                 appState.companies.data[companyIndex].updatedAt = new Date().toISOString();
                 
                 saveCompaniesData();
+                
+                // ===== تحديث status في companies key عشان الـ login يشتغل =====
+                try {
+                    const approvedEmail = appState.companies.data[companyIndex].companyInfo?.email;
+                    const approvedId = appState.companies.data[companyIndex].id;
+                    let loginCompanies = JSON.parse(localStorage.getItem('companies') || '[]');
+                    const lIdx = loginCompanies.findIndex(c => c.email === approvedEmail || c.id === approvedId);
+                    if (lIdx !== -1) {
+                        loginCompanies[lIdx].status = 'approved';
+                        loginCompanies[lIdx].approvedAt = new Date().toISOString();
+                        localStorage.setItem('companies', JSON.stringify(loginCompanies));
+                    }
+                } catch(e) { console.warn('تحذير تحديث login companies:', e); }
+                
                 filterCompanies();
                 updateCompaniesStats();
-                
                 closeApproveModal();
                 closeCompanyModal();
-                
-                showNotification('تم اعتماد الشركة وتحديد سعر التدريب بنجاح', 'success');
+                showNotification('✅ تم اعتماد الشركة - يمكنها الآن تسجيل الدخول', 'success');
             }
         };
 
@@ -3178,13 +3190,25 @@
                     appState.companies.data[companyIndex].updatedAt = new Date().toISOString();
                     
                     saveCompaniesData();
+                    
+                    // ===== تحديث status في companies key عشان الـ login يشتغل =====
+                    try {
+                        const rejectedEmail = appState.companies.data[companyIndex].companyInfo?.email;
+                        const rejectedId = appState.companies.data[companyIndex].id;
+                        let loginCompanies = JSON.parse(localStorage.getItem('companies') || '[]');
+                        const lIdx = loginCompanies.findIndex(c => c.email === rejectedEmail || c.id === rejectedId);
+                        if (lIdx !== -1) {
+                            loginCompanies[lIdx].status = 'rejected';
+                            loginCompanies[lIdx].rejectionReason = reason;
+                            localStorage.setItem('companies', JSON.stringify(loginCompanies));
+                        }
+                    } catch(e) { console.warn('تحذير تحديث login companies:', e); }
+                    
                     filterCompanies();
                     updateCompaniesStats();
-                    
                     closeCompanyModal();
                     closeRejectModal();
-                    
-                    showNotification('تم رفض طلب الشركة بنجاح', 'success');
+                    showNotification('تم رفض طلب الشركة وإخطارها', 'success');
                 }
             }
         };
