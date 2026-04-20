@@ -418,6 +418,7 @@ loginForm.addEventListener('submit', function(e) {
     // Show loading state
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>جاري تسجيل الدخول...</span>';
     
     // Simulate API call
     setTimeout(() => {
@@ -430,10 +431,31 @@ loginForm.addEventListener('submit', function(e) {
         );
         
         if (company) {
-            // Login successful
+            // ===== التحقق من حالة الحساب =====
+            
+            // الحساب في انتظار موافقة الأدمن
+            if (company.status === 'pending') {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span class="btn-text">تسجيل الدخول</span><span class="btn-icon"><i class="fas fa-arrow-left"></i></span><span class="btn-loader"><i class="fas fa-spinner fa-spin"></i></span>';
+                showErrorNotification('⏳ طلبك قيد المراجعة - سيتم إخطارك بعد مراجعة الإدارة لطلبك');
+                loginForm.style.animation = 'none';
+                return;
+            }
+            
+            // الحساب مرفوض
+            if (company.status === 'rejected') {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span class="btn-text">تسجيل الدخول</span><span class="btn-icon"><i class="fas fa-arrow-left"></i></span><span class="btn-loader"><i class="fas fa-spinner fa-spin"></i></span>';
+                const reason = company.rejectionReason ? ` - السبب: ${company.rejectionReason}` : '';
+                showErrorNotification(`❌ تم رفض طلب تسجيل شركتك${reason}`);
+                return;
+            }
+
+            // الحساب معتمد - تسجيل دخول ناجح
             console.log('✅ Login successful:', company.companyName);
             
-            // Save current company session
             const sessionCompany = {
                 ...company,
                 lastLogin: new Date().toISOString()
@@ -441,7 +463,6 @@ loginForm.addEventListener('submit', function(e) {
             
             saveCompanySession(sessionCompany);
             
-            // Save email if remember me is checked
             if (rememberMe) {
                 localStorage.setItem('savedEmail', email);
                 localStorage.setItem('rememberMe', 'true');
@@ -450,7 +471,7 @@ loginForm.addEventListener('submit', function(e) {
                 localStorage.removeItem('rememberMe');
             }
             
-            showSuccessNotification(`مرحباً بك ${company.companyName}!`);
+            showSuccessNotification(`مرحباً بك ${company.companyName}! ✅`);
             
             setTimeout(() => {
                 window.location.href = 'company-dashboard.html';
@@ -466,7 +487,6 @@ loginForm.addEventListener('submit', function(e) {
             
             showErrorNotification('البريد الإلكتروني أو كلمة المرور غير صحيحة');
             
-            // Shake the form
             loginForm.style.animation = 'shake 0.5s';
             setTimeout(() => {
                 loginForm.style.animation = '';
