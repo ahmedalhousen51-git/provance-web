@@ -1962,11 +1962,160 @@
 
         function logout() {
             if (confirm('هل تريد تسجيل الخروج؟')) {
-                alert('جارٍ تسجيل الخروج...');
-                // إعادة التوجيه إلى صفحة تسجيل الدخول
-                window.location.href = 'company-login.html';
+                _profileSB.auth.signOut().then(() => {
+                    localStorage.clear();
+                    window.location.href = 'company-login.html';
+                });
             }
         }
     </script>
-</body>
-</html>
+
+    <!-- ✅ Supabase - يقرأ البيانات الحقيقية -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    const _profileSB = supabase.createClient(
+        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
+    );
+
+    // تحميل بيانات الشركة من Supabase
+    async function loadCompanyDataFromSupabase() {
+        try {
+            const { data: { session } } = await _profileSB.auth.getSession();
+            if (!session) {
+                window.location.href = 'company-login.html';
+                return;
+            }
+
+            const { data: company, error } = await _profileSB
+                .from('companies')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+
+            if (error || !company) {
+                console.warn('Company not found:', error?.message);
+                return;
+            }
+
+            if (company.status === 'pending') {
+                window.location.href = 'Company-pending.html';
+                return;
+            }
+            if (company.status === 'rejected') {
+                alert('تم رفض حساب شركتك. للاستفسار تواصل مع الإدارة.');
+                await _profileSB.auth.signOut();
+                window.location.href = 'company-login.html';
+                return;
+            }
+
+            // تحديث الـ UI بالبيانات الحقيقية
+            const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+            const setInput = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+
+            set('companyName',         company.company_name);
+            set('headerCompanyName',   company.company_name);
+            set('companyField',        company.company_field);
+            set('companyLocation',     company.company_location);
+            set('companyEmail',        company.email);
+            set('companyPhone',        company.primary_phone);
+            set('companyWebsite',      company.website);
+            set('companyDescription',  company.company_bio);
+            set('companyEmployees',    company.employees_count);
+            set('companyWhatsapp',     company.whatsapp);
+
+            // تحديث حقول التعديل
+            setInput('editCompanyName',        company.company_name);
+            setInput('editCompanyField',       company.company_field);
+            setInput('editCompanyEmail',       company.email);
+            setInput('editCompanyPhone',       company.primary_phone);
+            setInput('editCompanyLocation',    company.company_location);
+            setInput('editCompanyDescription', company.company_bio);
+            setInput('editEmployeesCount',     company.employees_count);
+            setInput('editWebsite',            company.website);
+            setInput('editLinkedin',           company.linkedin);
+
+            // عرض اللوجو
+            if (company.logo) {
+                const logoImg = document.getElementById('companyLogoImage');
+                const logoIcon = document.getElementById('companyLogoIcon');
+                if (logoImg) { logoImg.src = company.logo; logoImg.style.display = 'block'; }
+                if (logoIcon) logoIcon.style.display = 'none';
+            }
+
+            // عرض مجالات التدريب
+            try {
+                const fields = JSON.parse(company.training_fields || '[]');
+                if (fields.length > 0) displayTrainingFields(fields);
+            } catch(e) {}
+
+            // حفظ في localStorage للاستخدام في باقي الصفحات
+            localStorage.setItem('companyName',  company.company_name);
+            localStorage.setItem('companyEmail', company.email);
+            localStorage.setItem('userId',       session.user.id);
+
+        } catch (err) {
+            console.error('loadCompanyDataFromSupabase error:', err);
+        }
+    }
+
+    // تحديث بيانات الشركة في Supabase
+    async function saveProfileChanges() {
+        const { data: { session } } = await _profileSB.auth.getSession();
+        if (!session) return;
+
+        const name     = document.getElementById('editCompanyName')?.value.trim();
+        const field    = document.getElementById('editCompanyField')?.value.trim();
+        const phone    = document.getElementById('editCompanyPhone')?.value.trim();
+        const location = document.getElementById('editCompanyLocation')?.value.trim();
+        const bio      = document.getElementById('editCompanyDescription')?.value.trim();
+        const employees= document.getElementById('editEmployeesCount')?.value.trim();
+        const website  = document.getElementById('editWebsite')?.value.trim();
+        const linkedin = document.getElementById('editLinkedin')?.value.trim();
+
+        const { error } = await _profileSB
+            .from('companies')
+            .update({
+                company_name:     name,
+                company_field:    field,
+                primary_phone:    phone,
+                company_location: location,
+                company_bio:      bio,
+                employees_count:  employees,
+                website:          website,
+                linkedin:         linkedin
+            })
+            .eq('user_id', session.user.id);
+
+        if (error) {
+            showNotification('خطأ في حفظ البيانات: ' + error.message, 'error');
+        } else {
+            // تحديث الـ UI
+            const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+            set('companyName', name);
+            set('headerCompanyName', name);
+            set('companyField', field);
+            set('companyLocation', location);
+            showNotification('تم حفظ التغييرات بنجاح ✅', 'success');
+            // إغلاق المودال
+            const modal = document.getElementById('editModal') || document.querySelector('.modal');
+            if (modal) modal.style.display = 'none';
+        }
+    }
+
+    // تشغيل تحميل البيانات
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(loadCompanyDataFromSupabase, 300);
+    });
+
+    // override زرار الحفظ
+    document.addEventListener('DOMContentLoaded', function() {
+        const saveBtn = document.getElementById('saveChangesBtn') || document.querySelector('[onclick*="saveCompanyChanges"], [onclick*="saveProfile"]');
+        if (saveBtn) {
+            saveBtn.onclick = function(e) {
+                e.preventDefault();
+                saveProfileChanges();
+            };
+        }
+    });
+    </script>
