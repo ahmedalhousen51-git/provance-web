@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جاري مراجعة طلبك - ProVance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00D9FF;
+            --secondary: #7B2FF7;
+            --gradient: linear-gradient(135deg, #00D9FF 0%, #7B2FF7 100%);
+            --dark-bg: #0a0814;
+            --dark-secondary: #15111f;
+            --text-primary: #ffffff;
+            --text-secondary: #b8b5c9;
+            --success: #51cf66;
+            --warning: #ffd700;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* خلفية متحركة */
+        .bg-animation {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.12;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .shape-1 { width: 400px; height: 400px; background: var(--primary); top: -100px; right: -100px; }
+        .shape-2 { width: 350px; height: 350px; background: var(--secondary); bottom: -100px; left: -100px; animation-delay: 8s; }
+        .shape-3 { width: 300px; height: 300px; background: #FF6B9D; top: 50%; left: 50%; animation-delay: 14s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(60px, 60px); }
+            66% { transform: translate(-40px, 80px); }
+        }
+
+        /* الكارت الرئيسي */
+        .pending-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 50px 40px;
+            max-width: 560px;
+            width: 90%;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* أيقونة الساعة */
+        .icon-wrapper {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.1));
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 0 0 15px rgba(255, 215, 0, 0); }
+        }
+
+        .icon-wrapper i {
+            font-size: 50px;
+            color: var(--warning);
+        }
+
+        /* العنوان */
+        .pending-title {
+            font-size: 1.9rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .pending-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 35px;
+        }
+
+        /* معلومات الشركة */
+        .company-info {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 20px 25px;
+            margin-bottom: 30px;
+            text-align: right;
+        }
+
+        .company-info .label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .company-info .value {
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .company-info .email {
+            color: var(--primary);
+            font-size: 0.95rem;
+            direction: ltr;
+            text-align: left;
+        }
+
+        /* خطوات المراجعة */
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 35px;
+            text-align: right;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .step-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 16px;
+        }
+
+        .step-icon.done { background: rgba(81, 207, 102, 0.15); color: var(--success); }
+        .step-icon.pending { background: rgba(255, 215, 0, 0.15); color: var(--warning); }
+        .step-icon.waiting { background: rgba(184, 181, 201, 0.1); color: var(--text-secondary); }
+
+        .step-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .step-text strong { color: var(--text-primary); }
+
+        /* زرار العودة */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 30px;
+            background: var(--gradient);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3);
+        }
+
+        .btn-check {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 30px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-check:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        /* Footer */
+        .footer-note {
+            margin-top: 25px;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            line-height: 1.6;
+        }
+
+        .footer-note a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        @media (max-width: 480px) {
+            .pending-card { padding: 35px 20px; }
+            .pending-title { font-size: 1.5rem; }
+            .icon-wrapper { width: 90px; height: 90px; }
+            .icon-wrapper i { font-size: 40px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="pending-card">
+        <!-- أيقونة الانتظار -->
+        <div class="icon-wrapper">
+            <i class="fas fa-clock"></i>
+        </div>
+
+        <!-- العنوان -->
+        <h1 class="pending-title">طلبك قيد المراجعة</h1>
+        <p class="pending-subtitle">
+            تم استلام طلب تسجيل شركتك بنجاح.<br>
+            سيقوم فريق ProVance بمراجعة بياناتك والرد عليك في أقرب وقت ممكن.
+        </p>
+
+        <!-- معلومات الشركة -->
+        <div class="company-info" id="companyInfo">
+            <div class="label">اسم الشركة</div>
+            <div class="value" id="companyName">—</div>
+            <br>
+            <div class="label">البريد الإلكتروني</div>
+            <div class="value email" id="companyEmail">—</div>
+        </div>
+
+        <!-- خطوات المراجعة -->
+        <div class="steps">
+            <div class="step">
+                <div class="step-icon done"><i class="fas fa-check"></i></div>
+                <div class="step-text"><strong>تم استلام الطلب</strong> — تم حفظ بيانات شركتك بنجاح</div>
+            </div>
+            <div class="step">
+                <div class="step-icon pending"><i class="fas fa-clock"></i></div>
+                <div class="step-text"><strong>جاري المراجعة</strong> — فريقنا يراجع طلبك الآن</div>
+            </div>
+            <div class="step">
+                <div class="step-icon waiting"><i class="fas fa-envelope"></i></div>
+                <div class="step-text"><strong>الرد عليك</strong> — ستصلك رسالة بنتيجة المراجعة</div>
+            </div>
+        </div>
+
+        <!-- أزرار -->
+        <a href="index.html" class="btn-back">
+            <i class="fas fa-home"></i>
+            العودة للصفحة الرئيسية
+        </a>
+        <button class="btn-check" onclick="checkStatus()">
+            <i class="fas fa-sync-alt"></i>
+            التحقق من حالة الطلب
+        </button>
+
+        <div class="footer-note">
+            عند اعتماد طلبك يمكنك تسجيل الدخول من <a href="company-login.html">هنا</a>.<br>
+            للتواصل: <a href="mailto:support@provance.com">support@provance.com</a>
+        </div>
+    </div>
+
+    <script>
+        // عرض معلومات الشركة من localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const companies = JSON.parse(localStorage.getItem('companies') || '[]');
+                if (companies.length > 0) {
+                    const lastCompany = companies[companies.length - 1];
+                    const nameEl = document.getElementById('companyName');
+                    const emailEl = document.getElementById('companyEmail');
+                    if (nameEl && lastCompany.companyName) nameEl.textContent = lastCompany.companyName;
+                    if (emailEl && lastCompany.email) emailEl.textContent = lastCompany.email;
+                }
+            } catch(e) { console.warn(e); }
+        });
+
+        // التحقق من حالة الطلب
+        function checkStatus() {
+            try {
+                const companies = JSON.parse(localStorage.getItem('companies') || '[]');
+                if (companies.length === 0) {
+                    alert('لم يتم العثور على طلب مسجل.');
+                    return;
+                }
+                const last = companies[companies.length - 1];
+                const statusMap = {
+                    'pending': '⏳ طلبك لا يزال قيد المراجعة. شكراً لصبرك!',
+                    'approved': '✅ تم اعتماد طلبك! يمكنك الآن تسجيل الدخول.',
+                    'rejected': `❌ تم رفض طلبك.${last.rejectionReason ? ' السبب: ' + last.rejectionReason : ''}`
+                };
+                const msg = statusMap[last.status] || '⏳ طلبك قيد المراجعة.';
+                alert(msg);
+                if (last.status === 'approved') {
+                    window.location.href = 'company-login.html';
+                }
+            } catch(e) {
+                alert('حدث خطأ في التحقق من الحالة.');
+            }
+        }
+    </script>
+</body>
+</html>
