@@ -197,8 +197,22 @@
             const {data:co}=await _sb.from('companies').select('company_name,status').eq('user_id',data.user.id).single();
             
             if(!co){
-                // المستخدم مسجل لكن مش عنده شركة مسجلة
                 showErr('email','لم يتم العثور على حساب شركة. يرجى التسجيل أولاً');
+                btn.classList.remove('loading');btn.disabled=false;
+                await _sb.auth.signOut();
+                return;
+            }
+
+            if(co.status==='pending'){
+                localStorage.setItem('pendingCompanyName',co.company_name);
+                localStorage.setItem('pendingCompanyEmail',email);
+                showToast('طلبك لا يزال قيد المراجعة من الإدارة','warning');
+                setTimeout(()=>window.location.href='Company-pending.html',1500);
+                return;
+            }
+
+            if(co.status==='rejected'){
+                showErr('email','تم رفض حساب شركتك من قِبل الإدارة. للاستفسار تواصل على support@provance.com');
                 btn.classList.remove('loading');btn.disabled=false;
                 await _sb.auth.signOut();
                 return;
