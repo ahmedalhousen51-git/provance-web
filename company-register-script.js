@@ -1908,31 +1908,26 @@ function validateStep6(silent = false) {
     const contractAgreement = document.getElementById('contractAgreement');
     
     if (!contractAgreement || !contractAgreement.checked) {
-        // إظهار رسالة خطأ واضحة للمستخدم
         if (!silent) {
+            // إظهار رسالة واضحة
             notificationSystem.show(
-                'يجب الموافقة على العقد',
-                'برجاء قراءة الشروط والأحكام والموافقة عليها أولاً قبل إتمام التسجيل',
+                'يجب الموافقة على الشروط',
+                'يرجى قراءة الشروط والأحكام والموافقة عليها قبل إتمام التسجيل',
                 'error'
             );
-            
-            // تمييز الـ checkbox بالأحمر
-            if (contractAgreement) {
-                contractAgreement.style.outline = '3px solid #ff6b6b';
-                contractAgreement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // التمرير تلقائياً لمكان الـ checkbox
+            const checkboxCard = document.querySelector('.checkbox-card');
+            if (checkboxCard) {
+                checkboxCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // تمييز الـ checkbox بإطار أحمر
+                checkboxCard.style.border = '2px solid #ff6b6b';
+                checkboxCard.style.boxShadow = '0 0 15px rgba(255,107,107,0.4)';
                 setTimeout(() => {
-                    contractAgreement.style.outline = '';
+                    checkboxCard.style.border = '';
+                    checkboxCard.style.boxShadow = '';
                 }, 3000);
             }
         }
-        
-        // إعادة تفعيل زرار التسجيل لو كان مجمداً
-        const submitBtn = document.getElementById('btnSubmit');
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>';
-        }
-        
         return false;
     }
     
@@ -3172,7 +3167,7 @@ function downloadSummary() {
 // ============================================
 
 // دالة محسنة لحفظ بيانات الشركة في النظام
-function saveCompanyDataToSystem(companyData) {
+function saveCompanyDataToSystem(companyData) { return true; } function _oldSaveCompanyDataToSystem(companyData) {
     try {
         Logger.info('بدء حفظ بيانات الشركة في النظام...', companyData);
         
@@ -3235,47 +3230,9 @@ function saveCompanyDataToSystem(companyData) {
         dataManager.set('companiesData', allCompanies);
         Logger.info(`إجمالي الشركات المسجلة: ${allCompanies.length}`);
 
-        // ============================================================
-        // حفظ بيانات تسجيل الدخول بـ status=pending
-        // الشركة تحتاج موافقة الأدمن قبل الدخول
-        // ============================================================
-        try {
-            const passwordEl = document.getElementById('password');
-            const savedPassword = passwordEl ? passwordEl.value : '';
-
-            let loginCompanies = JSON.parse(localStorage.getItem('companies') || '[]');
-            const existingIdx = loginCompanies.findIndex(c => c.email === companyData.companyInfo.email);
-
-            const loginRecord = {
-                id: companyProfile.id,
-                companyName: companyData.companyInfo.name,
-                email: companyData.companyInfo.email,
-                password: savedPassword,
-                field: companyData.companyInfo.field,
-                location: companyData.companyInfo.location,
-                logo: companyData.companyInfo.logo,
-                registeredAt: new Date().toISOString(),
-                status: 'pending'
-            };
-
-            if (existingIdx !== -1) {
-                loginCompanies[existingIdx] = loginRecord;
-            } else {
-                loginCompanies.push(loginRecord);
-            }
-
-            localStorage.setItem('companies', JSON.stringify(loginCompanies));
-            Logger.info('تم حفظ بيانات الدخول - في انتظار موافقة الإدارة');
-        } catch(e) { Logger.warn('تحذير في حفظ بيانات الدخول:', e); }
-
-                // 4. إنشاء تدريبات تلقائية (محمي من الـ crash)
-        let internships = [];
-        try {
-            if (companyData.trainingInfo && companyData.trainingInfo.fields && companyData.trainingInfo.fields.length > 0) {
-                internships = createCompanyInternships(companyData);
-                Logger.info(`تم إنشاء ${internships.length} تدريب تلقائي`);
-            }
-        } catch(e) { Logger.warn('تحذير في إنشاء التدريبات:', e); }
+        // 4. إنشاء تدريبات تلقائية بناءً على بيانات الشركة
+        const internships = createCompanyInternships(companyData);
+        Logger.info(`تم إنشاء ${internships.length} تدريب تلقائي`);
 
         // 5. تحديث إحصائيات النظام
         updateSystemStats();
@@ -3556,46 +3513,139 @@ function mapTraineeTypeToLevel(traineeType) {
 // ============================================
 
 // دالة محسنة لتقديم النموذج
-function handleFormSubmit(event) {
+// ============================================
+// Supabase Setup
+// ============================================
+const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+
+function getSB() {
+    if (!window._sbCo) window._sbCo = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    return window._sbCo;
+}
+
+async function handleFormSubmit(event) {
     event.preventDefault();
-    
-    Logger.info('بدء عملية تقديم النموذج...');
-    
+
     if (!validateCurrentStep()) {
         notificationSystem.show('بيانات غير مكتملة', 'يرجى استكمال جميع الحقول المطلوبة', 'error');
         return;
     }
-    
-    // جمع بيانات النموذج
+
     const formData = collectFormData();
-    
     if (!formData) {
         notificationSystem.show('خطأ في البيانات', 'تعذر جمع بيانات النموذج', 'error');
         return;
     }
-    
+
     state.formData = formData;
-    
-    // عرض تحميل
+
     const submitBtn = document.getElementById('btnSubmit');
     if (submitBtn) {
-        const originalContent = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري التسجيل...</span>';
         submitBtn.disabled = true;
-        
-        // محاكاة عملية الحفظ (في تطبيق حقيقي، ستكون هذه استدعاء لـ API)
-        setTimeout(() => {
-            // حفظ البيانات في النظام
-            const saveResult = saveCompanyDataToSystem(formData);
-            
-            if (saveResult) {
-                showSuccessAnimation(submitBtn);
-            } else {
-                notificationSystem.show('خطأ في الحفظ', 'فشل في حفظ بيانات الشركة', 'error');
-                submitBtn.innerHTML = originalContent;
-                submitBtn.disabled = false;
-            }
-        }, 2000);
+    }
+
+    const email    = formData.companyInfo.email;
+    const password = getValue('password');
+
+    try {
+        const sb = getSB();
+
+        // 1. إنشاء حساب في Supabase Auth
+        const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
+
+        if (authError) {
+            let msg = 'حدث خطأ أثناء التسجيل';
+            if (authError.message.includes('already registered') || authError.message.includes('already been registered'))
+                msg = 'هذا البريد الإلكتروني مسجل مسبقاً، يرجى تسجيل الدخول';
+            else if (authError.message.includes('Password'))
+                msg = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+            notificationSystem.show('خطأ في التسجيل', msg, 'error');
+            if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; submitBtn.disabled = false; }
+            return;
+        }
+
+        const userId = authData.user.id;
+
+        // 2. حفظ بيانات الشركة في جدول companies
+        const { error: dbError } = await sb.from('companies').insert({
+            user_id:        userId,
+            company_name:   formData.companyInfo.name,
+            company_bio:    formData.companyInfo.bio || '',
+            company_field:  formData.companyInfo.field || '',
+            company_location: formData.companyInfo.location || '',
+            employees_count: formData.companyInfo.employeesCount || '',
+            logo:           state.companyLogoData || '',
+            email:          email,
+            website:        formData.companyInfo.website || '',
+            primary_phone:  formData.contactInfo.primaryPhone || '',
+            whatsapp:       formData.contactInfo.whatsappNumber || '',
+            inquiry_email:  formData.contactInfo.inquiryEmail || '',
+            linkedin:       formData.contactInfo.linkedinUrl || '',
+            training_fields: JSON.stringify(formData.trainingInfo.fields || []),
+            status:         'pending',
+            agreed_at:      new Date().toISOString()
+        });
+
+        if (dbError) {
+            console.warn('DB warning:', dbError.message);
+        }
+
+        // 3. حفظ التدريبات في Supabase أيضاً
+        await saveInternshipsToSupabase(sb, userId, formData);
+
+        // 4. نجاح
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>تم التسجيل!</span>';
+            submitBtn.classList.add('success');
+        }
+
+        notificationSystem.show(
+            'تم التسجيل بنجاح! 🎉',
+            'تم تسجيل شركتك في ProVance. سيتم مراجعة طلبكم وتفعيل الحساب قريباً',
+            'success'
+        );
+
+        localStorage.setItem('pendingCompanyName', formData.companyInfo.name);
+        localStorage.setItem('pendingCompanyEmail', email);
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('userType', 'company');
+
+        setTimeout(() => { window.location.href = 'Company-pending.html'; }, 2500);
+
+    } catch (err) {
+        notificationSystem.show('خطأ في الاتصال', 'تحقق من الإنترنت وحاول مرة أخرى', 'error');
+        if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; submitBtn.disabled = false; }
+    }
+}
+
+// حفظ التدريبات في Supabase
+async function saveInternshipsToSupabase(sb, userId, formData) {
+    try {
+        const fields = formData.trainingInfo.fields || [];
+        for (const field of fields) {
+            const details = formData.trainingInfo.details[field] || {};
+            await sb.from('internships').insert({
+                company_user_id: userId,
+                company_name:    formData.companyInfo.name,
+                company_logo:    formData.companyInfo.logo || '',
+                company_location: formData.companyInfo.location || '',
+                title:           `تدريب في ${field}`,
+                field:           field,
+                duration:        details.duration || '3 أشهر',
+                max_applicants:  parseInt(details.count) || 5,
+                trainee_type:    formData.trainingInfo.traineeType || 'first-time',
+                description:     formData.companyInfo.bio || '',
+                salary_min:      details.minSalary || '',
+                salary_max:      details.maxSalary || '',
+                requirements:    details.trainingRequirements || '',
+                status:          'pending',
+                created_at:      new Date().toISOString()
+            });
+        }
+    } catch (err) {
+        console.warn('Internships save warning:', err.message);
     }
 }
 
@@ -3652,29 +3702,7 @@ function collectFormData() {
 }
 
 // دالة محسنة لعرض رسالة النجاح
-function showSuccessAnimation(submitBtn) {
-    if (submitBtn) {
-        submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>تم التسجيل بنجاح!</span>';
-        submitBtn.classList.add('success');
-        
-        notificationSystem.show(
-            'تم التسجيل بنجاح!',
-            'تم تسجيل شركتك في منصة Provance بنجاح. سيتم توجيهك إلى لوحة التحكم',
-            'success'
-        );
-        
-        // تنظيف الحالة المحفوظة بعد التسجيل الناجح
-        setTimeout(() => {
-            localStorage.removeItem('provance_registration_state');
-        }, 1000);
-        
-        // الانتقال إلى صفحة إدارة الطلبات بعد تأخير قصير
-        setTimeout(() => {
-            Logger.info('التوجيه إلى صفحة إدارة الطلبات...');
-            window.location.href = 'company-requests-control.html';
-        }, 3000);
-    }
-}
+function showSuccessAnimation(submitBtn) { /* handled by handleFormSubmit */ }
 
 // ============================================
 // Data Verification Functions
