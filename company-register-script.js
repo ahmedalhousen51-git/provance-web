@@ -3527,10 +3527,7 @@ function getSB() {
 async function handleFormSubmit(event) {
     event.preventDefault();
 
-    if (!validateCurrentStep()) {
-        notificationSystem.show('بيانات غير مكتملة', 'يرجى استكمال جميع الحقول المطلوبة', 'error');
-        return;
-    }
+    if (!validateCurrentStep()) return;
 
     const formData = collectFormData();
     if (!formData) {
@@ -3541,6 +3538,8 @@ async function handleFormSubmit(event) {
     state.formData = formData;
 
     const submitBtn = document.getElementById('btnSubmit');
+    const resetBtn = () => { if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; submitBtn.disabled = false; } };
+
     if (submitBtn) {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري التسجيل...</span>';
         submitBtn.disabled = true;
@@ -3549,8 +3548,19 @@ async function handleFormSubmit(event) {
     const email    = formData.companyInfo.email;
     const password = getValue('password');
 
+    if (!email || !password) {
+        notificationSystem.show('خطأ', 'البريد الإلكتروني أو كلمة المرور غير موجودة', 'error');
+        resetBtn();
+        return;
+    }
+
     try {
         const sb = getSB();
+        if (!sb) {
+            notificationSystem.show('خطأ', 'مكتبة Supabase لم تتحمل بعد، أعد المحاولة', 'error');
+            resetBtn();
+            return;
+        }
 
         // 1. إنشاء حساب في Supabase Auth
         const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
@@ -3615,8 +3625,10 @@ async function handleFormSubmit(event) {
         setTimeout(() => { window.location.href = 'Company-pending.html'; }, 2500);
 
     } catch (err) {
-        notificationSystem.show('خطأ في الاتصال', 'تحقق من الإنترنت وحاول مرة أخرى', 'error');
-        if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; submitBtn.disabled = false; }
+        console.error('Registration error:', err);
+        const errMsg = err?.message || JSON.stringify(err) || 'خطأ في الاتصال';
+        notificationSystem.show('خطأ في التسجيل', errMsg, 'error');
+        resetBtn();
     }
 }
 
