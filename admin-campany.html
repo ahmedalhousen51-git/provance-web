@@ -3733,5 +3733,176 @@
         // تشغيل التطبيق
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
-</body>
-</html>
+
+    <!-- ✅ Supabase Override - يستبدل localStorage بـ Supabase الحقيقي -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    const _adminSB = supabase.createClient(
+        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
+    );
+
+    // ============================================
+    // تحميل بيانات الشركات من Supabase
+    // ============================================
+    async function loadCompaniesData() {
+        try {
+            const { data: companies, error } = await _adminSB
+                .from('companies')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Supabase error:', error);
+                showNotification('خطأ في تحميل بيانات الشركات: ' + error.message, 'error');
+                return;
+            }
+
+            // تحويل البيانات لنفس الشكل اللي يتوقعه الكود القديم
+            const formatted = (companies || []).map(c => ({
+                id: c.user_id,
+                _supabaseId: c.user_id,
+                companyInfo: {
+                    name:            c.company_name || '',
+                    field:           c.company_field || '',
+                    location:        c.company_location || '',
+                    email:           c.email || '',
+                    website:         c.website || '',
+                    bio:             c.company_bio || '',
+                    employeesCount:  c.employees_count || '',
+                    logo:            c.logo || null
+                },
+                contactInfo: {
+                    primaryPhone:  c.primary_phone || '',
+                    whatsappNumber: c.whatsapp || '',
+                    inquiryEmail:  c.inquiry_email || '',
+                    linkedinUrl:   c.linkedin || ''
+                },
+                trainingInfo: {
+                    fields: (() => { try { return JSON.parse(c.training_fields || '[]'); } catch(e){ return []; } })()
+                },
+                status:      c.status || 'pending',
+                registeredAt: c.created_at || new Date().toISOString(),
+                agreedAt:    c.agreed_at || '',
+                penalties:   []
+            }));
+
+            appState.companies.data = formatted;
+            appState.companies.filteredData = [...formatted];
+
+            updateCompaniesStats();
+            displayCompanies();
+            updatePendingBadge();
+
+        } catch (err) {
+            console.error('loadCompaniesData error:', err);
+            showNotification('حدث خطأ في تحميل البيانات', 'error');
+        }
+    }
+
+    // ============================================
+    // اعتماد شركة - Supabase
+    // ============================================
+    window.confirmApproveCompany = async function() {
+        const id = appState.companies.selectedCompanyId;
+        const company = appState.companies.data.find(c => c.id === id);
+        if (!company) return;
+
+        const price    = document.getElementById('trainingPrice')?.value || '';
+        const currency = document.getElementById('trainingCurrency')?.value || 'EGP';
+        const notes    = document.getElementById('trainingNotes')?.value || '';
+
+        try {
+            const { error } = await _adminSB
+                .from('companies')
+                .update({
+                    status:          'approved',
+                    training_price:  price,
+                    training_currency: currency,
+                    training_notes:  notes
+                })
+                .eq('user_id', id);
+
+            if (error) {
+                showNotification('خطأ في اعتماد الشركة: ' + error.message, 'error');
+                return;
+            }
+
+            // تحديث التدريبات المرتبطة
+            await _adminSB
+                .from('internships')
+                .update({ status: 'active' })
+                .eq('company_user_id', id);
+
+            // تحديث الـ UI
+            const idx = appState.companies.data.findIndex(c => c.id === id);
+            if (idx !== -1) {
+                appState.companies.data[idx].status = 'approved';
+                appState.companies.filteredData = [...appState.companies.data];
+            }
+
+            filterCompanies();
+            updateCompaniesStats();
+            closeApproveModal();
+            closeCompanyModal();
+            showNotification('✅ تم اعتماد الشركة - يمكنها الآن تسجيل الدخول', 'success');
+
+        } catch (err) {
+            showNotification('خطأ في الاتصال: ' + err.message, 'error');
+        }
+    };
+
+    // ============================================
+    // رفض شركة - Supabase
+    // ============================================
+    window.confirmRejectCompany = async function() {
+        const reason = document.getElementById('rejectReason')?.value.trim();
+        if (!reason) {
+            showNotification('يرجى إدخال سبب الرفض', 'error');
+            return;
+        }
+        if (!confirm('هل أنت متأكد من رفض طلب هذه الشركة؟')) return;
+
+        const id = appState.companies.selectedCompanyId;
+
+        try {
+            const { error } = await _adminSB
+                .from('companies')
+                .update({
+                    status:           'rejected',
+                    rejection_reason: reason
+                })
+                .eq('user_id', id);
+
+            if (error) {
+                showNotification('خطأ في رفض الشركة: ' + error.message, 'error');
+                return;
+            }
+
+            // تحديث الـ UI
+            const idx = appState.companies.data.findIndex(c => c.id === id);
+            if (idx !== -1) {
+                appState.companies.data[idx].status = 'rejected';
+                appState.companies.filteredData = [...appState.companies.data];
+            }
+
+            filterCompanies();
+            updateCompaniesStats();
+            closeCompanyModal();
+            closeRejectModal();
+            showNotification('تم رفض طلب الشركة', 'success');
+
+        } catch (err) {
+            showNotification('خطأ في الاتصال: ' + err.message, 'error');
+        }
+    };
+
+    // ============================================
+    // تحديث pending badge
+    // ============================================
+    function updatePendingBadge() {
+        const pending = appState.companies.data.filter(c => c.status === 'pending').length;
+        const badge = document.getElementById('pendingBadge');
+        if (badge) badge.textContent = pending > 0 ? pending : '';
+    }
+    </script>
