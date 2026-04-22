@@ -2022,10 +2022,14 @@
                     companies = [...companies, ...storedCompanies];
                 }
                 
-                // إذا لم تكن هناك بيانات، نضيف بيانات تجريبية
+                // لا نضيف بيانات تجريبية - نعرض الجدول فارغ
                 if (companies.length === 0) {
-                    companies = getSampleCompaniesData();
-                    localStorage.setItem('companiesData', JSON.stringify(companies));
+                    appState.companies.data = [];
+                    appState.companies.filteredData = [];
+                    updateCompaniesStats();
+                    displayCompanies();
+                    updatePendingBadge();
+                    return;
                 }
                 
                 appState.companies.data = companies;
@@ -3731,7 +3735,13 @@
         }
 
         // تشغيل التطبيق
-        document.addEventListener('DOMContentLoaded', initApp);
+        // تشغيل التطبيق
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAdminInfo();
+            setupEventListeners();
+            // loadCompaniesData سيتم استدعاؤها من Supabase override بعد تحميله
+            setInterval(checkExpiredPenalties, 60000);
+        });
     </script>
 
     <!-- ✅ Supabase Override - يستبدل localStorage بـ Supabase الحقيقي -->
@@ -3905,4 +3915,9 @@
         const badge = document.getElementById('pendingBadge');
         if (badge) badge.textContent = pending > 0 ? pending : '';
     }
+
+    // تشغيل تحميل البيانات من Supabase بعد تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(loadCompaniesData, 500);
+    });
     </script>
