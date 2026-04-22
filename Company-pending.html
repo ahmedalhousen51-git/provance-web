@@ -21,14 +21,16 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: var(--dark-bg);
             color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding: 20px 0;
         }
 
         /* خلفية متحركة */
@@ -316,43 +318,65 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // عرض معلومات الشركة من localStorage
+        const _sb = supabase.createClient(
+            'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
+        );
+
+        // عرض بيانات الشركة
         document.addEventListener('DOMContentLoaded', function() {
-            try {
-                const companies = JSON.parse(localStorage.getItem('companies') || '[]');
-                if (companies.length > 0) {
-                    const lastCompany = companies[companies.length - 1];
-                    const nameEl = document.getElementById('companyName');
-                    const emailEl = document.getElementById('companyEmail');
-                    if (nameEl && lastCompany.companyName) nameEl.textContent = lastCompany.companyName;
-                    if (emailEl && lastCompany.email) emailEl.textContent = lastCompany.email;
-                }
-            } catch(e) { console.warn(e); }
+            const name  = localStorage.getItem('pendingCompanyName') || '—';
+            const email = localStorage.getItem('pendingCompanyEmail') || '—';
+            const nameEl  = document.getElementById('companyName');
+            const emailEl = document.getElementById('companyEmail');
+            if (nameEl)  nameEl.textContent  = name;
+            if (emailEl) emailEl.textContent = email;
         });
 
-        // التحقق من حالة الطلب
-        function checkStatus() {
+        // التحقق من حالة الطلب من Supabase
+        async function checkStatus() {
+            const btn = document.querySelector('.btn-check');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...'; }
+
             try {
-                const companies = JSON.parse(localStorage.getItem('companies') || '[]');
-                if (companies.length === 0) {
-                    alert('لم يتم العثور على طلب مسجل.');
+                const { data: { session } } = await _sb.auth.getSession();
+
+                if (!session) {
+                    // محاول تسجيل الدخول بالبيانات المحفوظة
+                    alert('يرجى الانتظار حتى يتم مراجعة طلبك من الإدارة ثم تسجيل الدخول.');
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> التحقق من حالة الطلب'; }
                     return;
                 }
-                const last = companies[companies.length - 1];
-                const statusMap = {
-                    'pending': '⏳ طلبك لا يزال قيد المراجعة. شكراً لصبرك!',
-                    'approved': '✅ تم اعتماد طلبك! يمكنك الآن تسجيل الدخول.',
-                    'rejected': `❌ تم رفض طلبك.${last.rejectionReason ? ' السبب: ' + last.rejectionReason : ''}`
-                };
-                const msg = statusMap[last.status] || '⏳ طلبك قيد المراجعة.';
-                alert(msg);
-                if (last.status === 'approved') {
-                    window.location.href = 'company-login.html';
+
+                const { data: company } = await _sb
+                    .from('companies')
+                    .select('status, company_name')
+                    .eq('user_id', session.user.id)
+                    .single();
+
+                if (!company) {
+                    alert('لم يتم العثور على طلبك. يرجى التسجيل مجدداً.');
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> التحقق من حالة الطلب'; }
+                    return;
                 }
-            } catch(e) {
-                alert('حدث خطأ في التحقق من الحالة.');
+
+                if (company.status === 'approved') {
+                    alert(`✅ تم اعتماد طلب شركة "${company.company_name}"! يمكنك الآن تسجيل الدخول.`);
+                    window.location.href = 'company-login.html';
+                } else if (company.status === 'rejected') {
+                    alert('❌ تم رفض طلبك من قِبل الإدارة. للاستفسار تواصل معنا على support@provance.com');
+                    await _sb.auth.signOut();
+                    window.location.href = 'company-login.html';
+                } else {
+                    alert('⏳ طلبك لا يزال قيد المراجعة. شكراً لصبرك!');
+                }
+            } catch (e) {
+                alert('حدث خطأ في الاتصال. تحقق من الإنترنت وحاول مرة أخرى.');
             }
+
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> التحقق من حالة الطلب'; }
         }
     </script>
 </body>
