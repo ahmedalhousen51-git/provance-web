@@ -1909,17 +1909,14 @@ function validateStep6(silent = false) {
     
     if (!contractAgreement || !contractAgreement.checked) {
         if (!silent) {
-            // إظهار رسالة واضحة
             notificationSystem.show(
                 'يجب الموافقة على الشروط',
                 'يرجى قراءة الشروط والأحكام والموافقة عليها قبل إتمام التسجيل',
                 'error'
             );
-            // التمرير تلقائياً لمكان الـ checkbox
             const checkboxCard = document.querySelector('.checkbox-card');
             if (checkboxCard) {
                 checkboxCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // تمييز الـ checkbox بإطار أحمر
                 checkboxCard.style.border = '2px solid #ff6b6b';
                 checkboxCard.style.boxShadow = '0 0 15px rgba(255,107,107,0.4)';
                 setTimeout(() => {
@@ -1927,10 +1924,15 @@ function validateStep6(silent = false) {
                     checkboxCard.style.boxShadow = '';
                 }, 3000);
             }
+            // إعادة الزرار لحالته الطبيعية
+            const submitBtn = document.getElementById('btnSubmit');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>';
+                submitBtn.disabled = false;
+            }
         }
         return false;
     }
-    
     return true;
 }
 
