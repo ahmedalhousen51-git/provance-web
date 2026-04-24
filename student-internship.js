@@ -1473,3 +1473,144 @@ window.InternshipManager = {
     getStudentApplicationStatus,
     isEligibleToApply
 };
+// ============================================
+// ✅ Supabase - تحميل التدريبات الحقيقية
+// ============================================
+const _SB_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+
+function _getSB() {
+    if (!window._intSB) {
+        if (typeof supabase === 'undefined') return null;
+        window._intSB = supabase.createClient(_SB_URL, _SB_KEY);
+    }
+    return window._intSB;
+}
+
+async function loadRealInternships() {
+    const sb = _getSB();
+    if (!sb) return;
+
+    try {
+        // تحقق من تسجيل الدخول
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+            window.location.href = 'student-login.html';
+            return;
+        }
+
+        // جيب بيانات الطالب الحقيقية
+        const { data: st } = await sb
+            .from('student')
+            .select('full_name, level')
+            .eq('user_id', session.user.id)
+            .single();
+
+        if (st) {
+            studentData.name  = st.full_name || session.user.email.split('@')[0];
+            studentData.level = st.level || 'beginner';
+            // تحديث الاسم في الـ UI
+            document.querySelectorAll('.student-name, .user-name, #studentName').forEach(el => {
+                el.textContent = studentData.name;
+            });
+        }
+
+        // جيب التدريبات المعتمدة من قاعدة البيانات
+        const { data: rows, error } = await sb
+            .from('internships')
+            .select('*')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false });
+
+        if (error || !rows || rows.length === 0) return;
+
+        // تحويل البيانات لنفس الشكل المستخدم في الكود
+        const mapped = rows.map((r, i) => ({
+            id:            r.id || (i + 100),
+            title:         r.title || `تدريب في ${r.field}`,
+            company:       r.company_name || '',
+            logo:          r.company_logo || '🏢',
+            level:         r.trainee_type === 'first-time'    ? 'beginner'     :
+                           r.trainee_type === 'once-trained'  ? 'intermediate' : 'advanced',
+            price:         (r.salary_min && r.salary_max)
+                           ? `${r.salary_min} - ${r.salary_max}`
+                           : 'مجاني',
+            location:      r.company_location || '',
+            fields:        [r.field || ''],
+            duration:      r.duration || '3 أشهر',
+            applicants:    0,
+            maxApplicants: parseInt(r.max_applicants) || 10,
+            description:   r.description || '',
+            requirements:  r.requirements || '',
+            createdAt:     new Date(r.created_at).getTime(),
+            branches: [{
+                id: 1,
+                name: 'الفرع الرئيسي',
+                location: r.company_location || ''
+            }],
+            fieldsStats: [{
+                name:    r.field || '',
+                current: 0,
+                max:     parseInt(r.max_applicants) || 10
+            }],
+            knowledgeBenefits: r.requirements
+                ? [{ title: 'المتطلبات', description: r.requirements }]
+                : [],
+            financialBenefits: (r.salary_min && r.salary_max)
+                ? [{ title: 'المكافأة الشهرية', description: `${r.salary_min} - ${r.salary_max}` }]
+                : []
+        }));
+
+        // استبدال البيانات الوهمية بالحقيقية
+        internshipsData.length = 0;
+        mapped.forEach(item => internshipsData.push(item));
+
+        // إعادة رسم الكروت
+        if (typeof renderInternshipCards === 'function') renderInternshipCards();
+
+        // جيب الطلبات السابقة للطالب من Supabase
+        const { data: apps } = await sb
+            .from('applications')
+            .select('*')
+            .eq('student_user_id', session.user.id);
+
+        if (apps && apps.length > 0) {
+            studentData.appliedInternships = apps.map(a => ({
+                internshipId: a.internship_id,
+                status: a.status,
+                appliedAt: a.created_at
+            }));
+            studentData.pendingApplicationsCount = apps.filter(a => a.status === 'pending').length;
+            if (typeof updatePendingApplicationsCount === 'function') {
+                updatePendingApplicationsCount();
+            }
+        }
+
+    } catch (err) {
+        console.error('loadRealInternships error:', err);
+    }
+}
+
+// override saveApplicationToStorage عشان يحفظ في Supabase
+const _origSave = window.saveApplicationToStorage || (() => {});
+window.saveApplicationToStorage = async function(internship, branch, field) {
+    const sb = _getSB();
+    if (!sb) return _origSave(internship, branch, field);
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+
+    await sb.from('applications').insert({
+        student_user_id: session.user.id,
+        company_user_id: null,
+        internship_id:   String(internship.id),
+        status:          'pending',
+        field:           field || '',
+        branch:          branch?.name || '',
+    }).then(({ error }) => {
+        if (error) console.warn('Application insert error:', error.message);
+    });
+
+    // أيضاً الـ original save للـ UI
+    _origSave(internship, branch, field);
+};
