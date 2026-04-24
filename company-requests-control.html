@@ -4566,9 +4566,197 @@
 
         function logout() {
             if (confirm('هل تريد تسجيل الخروج؟')) {
+                if (window._reqSB) window._reqSB.auth.signOut();
+                localStorage.clear();
                 window.location.href = 'company-login.html';
             }
         }
+    </script>
+
+    <!-- ✅ Supabase Override -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    window._reqSB = supabase.createClient(
+        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
+    );
+
+    async function loadCompanyRealData() {
+        try {
+            const { data: { session } } = await window._reqSB.auth.getSession();
+            if (!session) { window.location.href = 'company-login.html'; return; }
+
+            const { data: co } = await window._reqSB
+                .from('companies').select('*').eq('user_id', session.user.id).single();
+
+            if (!co) { window.location.href = 'company-login.html'; return; }
+            if (co.status === 'pending')  { window.location.href = 'Company-pending.html'; return; }
+            if (co.status === 'rejected') { await window._reqSB.auth.signOut(); window.location.href = 'company-login.html'; return; }
+
+            // تحديث اسم الشركة في كل مكان
+            document.querySelectorAll('.company-name-display, .user-name-header, [data-company-name], .sidebar-company-name').forEach(el => {
+                el.textContent = co.company_name;
+            });
+            const nameHeader = document.querySelector('.user-name') || document.querySelector('.header-user-name');
+            if (nameHeader) nameHeader.textContent = co.company_name;
+
+            // جيب التدريبات الخاصة بالشركة
+            const { data: internships } = await window._reqSB
+                .from('internships').select('*').eq('company_user_id', session.user.id)
+                .order('created_at', { ascending: false });
+
+            // جيب الطلبات
+            const { data: applications } = await window._reqSB
+                .from('applications').select('*, student(full_name, email, phone, university)')
+                .eq('company_user_id', session.user.id);
+
+            // تحديث الإحصائيات
+            const stats = {
+                total:    (internships||[]).length,
+                active:   (internships||[]).filter(i => i.status === 'active').length,
+                pending:  (applications||[]).filter(a => a.status === 'pending').length,
+                accepted: (applications||[]).filter(a => a.status === 'accepted').length
+            };
+
+            // تحديث بطاقات الإحصاء
+            const statMap = {
+                'totalInternships': stats.total,
+                'activeInternships': stats.active,
+                'pendingApplications': stats.pending,
+                'acceptedApplications': stats.accepted
+            };
+            Object.entries(statMap).forEach(([id, val]) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val;
+            });
+
+            // عرض التدريبات في الجدول
+            renderInternshipsTable(internships || [], co);
+
+            // عرض الطلبات في الجدول
+            renderApplicationsTable(applications || []);
+
+        } catch(err) {
+            console.error('loadCompanyRealData:', err);
+        }
+    }
+
+    function renderInternshipsTable(internships, co) {
+        const tbody = document.querySelector('#internshipsTable tbody, .internships-table tbody, table tbody');
+        if (!tbody || internships.length === 0) return;
+
+        tbody.innerHTML = internships.map(i => `
+            <tr>
+                <td>${i.title || `تدريب في ${i.field}`}</td>
+                <td>${i.field || '—'}</td>
+                <td>${i.duration || '—'}</td>
+                <td>${i.max_applicants || '—'}</td>
+                <td>
+                    <span class="status-badge status-${i.status}">
+                        ${i.status === 'active' ? '✅ نشط' : i.status === 'pending' ? '⏳ قيد المراجعة' : '❌ غير نشط'}
+                    </span>
+                </td>
+                <td>
+                    <button onclick="toggleInternshipStatus('${i.id}', '${i.status}')"
+                        class="btn-small ${i.status === 'active' ? 'btn-warning' : 'btn-success'}">
+                        ${i.status === 'active' ? 'إيقاف' : 'تفعيل'}
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function renderApplicationsTable(applications) {
+        const tbody = document.querySelector('#applicationsTable tbody, .applications-table tbody');
+        if (!tbody) return;
+
+        if (applications.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#b8b5c9;padding:20px;">لا توجد طلبات بعد</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = applications.map(a => `
+            <tr>
+                <td>${a.student?.full_name || 'طالب'}</td>
+                <td>${a.student?.email || '—'}</td>
+                <td>${a.field || '—'}</td>
+                <td>${a.branch || '—'}</td>
+                <td>
+                    <span class="status-badge status-${a.status}">
+                        ${a.status === 'pending' ? '⏳ قيد المراجعة' :
+                          a.status === 'accepted' ? '✅ مقبول' : '❌ مرفوض'}
+                    </span>
+                </td>
+                <td style="display:flex;gap:8px;flex-wrap:wrap;">
+                    ${a.status === 'pending' ? `
+                    <button onclick="updateApplication('${a.id}','accepted')" class="btn-small btn-success">قبول</button>
+                    <button onclick="updateApplication('${a.id}','rejected')" class="btn-small btn-danger">رفض</button>
+                    ` : `<span style="color:#b8b5c9;font-size:0.85rem;">تم البت</span>`}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function toggleInternshipStatus(id, currentStatus) {
+        const newStatus = currentStatus === 'active' ? 'closed' : 'active';
+        const { error } = await window._reqSB.from('internships').update({ status: newStatus }).eq('id', id);
+        if (!error) {
+            showNotification(`تم ${newStatus === 'active' ? 'تفعيل' : 'إيقاف'} التدريب`, 'success');
+            loadCompanyRealData();
+        }
+    }
+
+    async function updateApplication(id, status) {
+        const { error } = await window._reqSB.from('applications').update({ status }).eq('id', id);
+        if (!error) {
+            showNotification(`تم ${status === 'accepted' ? 'قبول' : 'رفض'} الطلب ✅`, 'success');
+            loadCompanyRealData();
+        }
+    }
+
+    // إضافة CSS للـ status badges و mobile
+    const _css = document.createElement('style');
+    _css.textContent = `
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
+        .status-active   { background: rgba(81,207,102,0.15); color: #51cf66; }
+        .status-pending  { background: rgba(255,215,0,0.15);  color: #ffd700; }
+        .status-accepted { background: rgba(81,207,102,0.15); color: #51cf66; }
+        .status-rejected { background: rgba(255,107,107,0.15);color: #ff6b6b; }
+        .status-closed   { background: rgba(184,181,201,0.15);color: #b8b5c9; }
+        .btn-small { padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; }
+        .btn-success { background: rgba(81,207,102,0.2); color: #51cf66; }
+        .btn-warning { background: rgba(255,215,0,0.2);  color: #ffd700; }
+        .btn-danger  { background: rgba(255,107,107,0.2);color: #ff6b6b; }
+        .mobile-menu-btn { display: none; }
+        @media (max-width: 768px) {
+            .main-content { margin-right: 0 !important; }
+            .sidebar { transform: translateX(100%); transition: transform .3s; }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .mobile-menu-btn {
+                display: flex; align-items: center; justify-content: center;
+                width: 40px; height: 40px; background: rgba(255,255,255,0.08);
+                border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+                color: #fff; font-size: 18px; cursor: pointer; margin-left: 10px;
+            }
+        }
+    `;
+    document.head.appendChild(_css);
+
+    // hamburger button
+    document.addEventListener('DOMContentLoaded', function() {
+        const header = document.querySelector('.header-content, .header-right, .header-advanced .header-left');
+        if (header) {
+            const btn = document.createElement('button');
+            btn.className = 'mobile-menu-btn';
+            btn.innerHTML = '<i class="fas fa-bars"></i>';
+            btn.onclick = function() {
+                const sb = document.querySelector('.sidebar');
+                if (sb) sb.classList.toggle('mobile-open');
+            };
+            header.prepend(btn);
+        }
+        setTimeout(loadCompanyRealData, 400);
+    });
     </script>
 </body>
 </html>
