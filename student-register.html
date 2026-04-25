@@ -2,1097 +2,1551 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProVance - تسجيل الطلاب</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>تسجيل طالب - ProVance</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="student-register-style.css">
+
     <style>
-        /* ============================================
-           إصلاح شامل للنصوص على الموبايل
-        ============================================ */
-        .summary-section, .contract-section {
-            background: var(--bg-card, #1a1625);
+        :root {
+            --primary: #4facfe; --secondary: #00f2fe;
+            --gradient: linear-gradient(135deg, #4facfe, #00f2fe);
+            --bg: #0a0e27; --bg-2: #1a1535;
+            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+            --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
+            --error: #ef4444; --success: #10b981; --warning: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 20px 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .bg-anim {
+            position: fixed; inset: 0; z-index: -1;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(79,172,254,0.12), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0,242,254,0.10), transparent 50%),
+                var(--bg);
+        }
+        .bg-anim::before, .bg-anim::after {
+            content: ''; position: absolute;
+            border-radius: 50%; filter: blur(100px); opacity: 0.25;
+            animation: float 25s infinite ease-in-out;
+        }
+        .bg-anim::before { width: 400px; height: 400px; background: var(--primary); top: -100px; right: -100px; }
+        .bg-anim::after { width: 350px; height: 350px; background: var(--secondary); bottom: -100px; left: -100px; animation-delay: 12s; }
+        @keyframes float { 0%,100% { transform: translate(0,0); } 50% { transform: translate(40px, 30px); } }
+
+        .container { max-width: 880px; margin: 0 auto; }
+
+        .header-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 22px; gap: 14px;
+        }
+        .back-link {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 16px;
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--text-muted); text-decoration: none;
+            border-radius: 10px; font-size: 0.9rem; font-weight: 600;
+            transition: all .2s;
+        }
+        .back-link:hover { color: var(--text); background: var(--card-hover); }
+        .logo-link { display: inline-flex; align-items: center; text-decoration: none; }
+        .logo-link img { height: 38px; }
+
+        .card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 24px; padding: 36px 32px;
+            backdrop-filter: blur(24px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+
+        .progress-section { margin-bottom: 30px; }
+        .progress-text {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; font-size: 0.88rem;
+            color: var(--text-muted); font-weight: 600;
+        }
+        .progress-text strong { color: var(--text); }
+        .progress-text .step-name { color: var(--primary); }
+        .progress-bar-wrap {
+            height: 6px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px; overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--gradient);
+            border-radius: 3px;
+            transition: width .4s cubic-bezier(.4,0,.2,1);
+            box-shadow: 0 0 20px rgba(79,172,254,0.5);
+        }
+
+        .step-header {
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 28px; padding-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+        }
+        .step-icon-big {
+            width: 60px; height: 60px;
+            background: var(--gradient);
             border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(0, 217, 255, 0.1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; color: #fff; flex-shrink: 0;
+            box-shadow: 0 12px 30px rgba(79,172,254,0.35);
+        }
+        .step-info h2 { font-size: 1.35rem; font-weight: 800; margin-bottom: 4px; }
+        .step-info p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
+
+        .step-section { display: none; animation: stepIn .4s ease-out; }
+        .step-section.active { display: block; }
+        @keyframes stepIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .photo-upload-section {
+            text-align: center; margin-bottom: 22px; padding: 22px;
+            background: rgba(255,255,255,0.02);
+            border: 2px dashed var(--border-strong);
+            border-radius: 16px; transition: all .25s;
+        }
+        .photo-upload-section:hover { border-color: var(--primary); background: rgba(79,172,254,0.04); }
+        .photo-circle {
+            width: 110px; height: 110px;
+            border-radius: 50%; margin: 0 auto 14px;
+            background: var(--gradient);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 2.4rem;
+            position: relative; overflow: hidden; cursor: pointer;
+            box-shadow: 0 15px 40px rgba(79,172,254,0.4);
+            transition: all .25s;
+        }
+        .photo-circle:hover { transform: scale(1.05); }
+        .photo-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-circle-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity .25s;
+        }
+        .photo-circle:hover .photo-circle-overlay { opacity: 1; }
+        .photo-upload-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        .btn-small {
+            padding: 7px 14px; font-size: 0.82rem;
+            border-radius: 8px; border: 1px solid var(--border);
+            background: var(--card); color: var(--text);
+            cursor: pointer; transition: all .2s;
+            display: inline-flex; align-items: center; gap: 5px;
+            font-family: inherit;
+        }
+        .btn-small:hover { background: var(--card-hover); }
+        .btn-small.danger { color: var(--error); }
+        .photo-hint { color: var(--text-dim); font-size: 0.8rem; margin-top: 8px; }
+
+        .form-row {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 14px; margin-bottom: 16px;
+        }
+        .form-row.three { grid-template-columns: repeat(3, 1fr); }
+        .form-row.full { grid-template-columns: 1fr; }
+        @media (max-width: 700px) {
+            .form-row, .form-row.three { grid-template-columns: 1fr; }
         }
 
-        .summary-header, .contract-header {
+        .field { margin-bottom: 16px; }
+        .field-label {
+            display: flex; align-items: center; gap: 6px;
+            color: var(--text); font-size: 0.9rem; font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .field-label i { color: var(--primary); font-size: 0.85rem; }
+        .field-label .required { color: var(--error); margin-right: 2px; }
+        .field-label .optional {
+            color: var(--text-dim); font-size: 0.78rem;
+            font-weight: 500; margin-right: auto;
+        }
+
+        .field-input, .field-select, .field-textarea {
+            width: 100%; padding: 13px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 2px solid var(--border);
+            border-radius: 12px; color: var(--text);
+            font-size: 0.95rem; font-family: inherit;
+            transition: all .2s;
+        }
+        .field-textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+        .field-input:focus, .field-select:focus, .field-textarea:focus {
+            outline: none; border-color: var(--primary);
+            background: rgba(255,255,255,0.06);
+            box-shadow: 0 0 0 4px rgba(79,172,254,0.1);
+        }
+        .field-input::placeholder, .field-textarea::placeholder { color: var(--text-dim); }
+        .field-input[type="email"], .field-input[type="tel"],
+        .field-input[type="password"], .field-input[type="url"],
+        .field-input[type="date"] {
+            direction: ltr; text-align: right;
+        }
+        .field-select {
+            appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='%2394a3b8'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 14px center;
+            padding-left: 38px;
+        }
+        .field-error {
+            display: block; color: var(--error);
+            font-size: 0.8rem; margin-top: 6px; min-height: 16px;
+        }
+        .field-hint {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            margin-top: 5px;
+        }
+
+        .input-wrap { position: relative; }
+        .toggle-pass {
+            position: absolute; left: 12px; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            color: var(--text-muted); cursor: pointer;
+            padding: 6px; font-size: 0.95rem;
+        }
+        .toggle-pass:hover { color: var(--text); }
+
+        .password-match {
+            font-size: 0.82rem; margin-top: 6px;
+            font-weight: 600; display: flex; align-items: center; gap: 5px;
+        }
+        .password-match.match { color: var(--success); }
+        .password-match.nomatch { color: var(--error); }
+
+        .age-display {
+            background: rgba(79,172,254,0.08);
+            border: 1px solid rgba(79,172,254,0.25);
+            color: var(--primary);
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-top: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            display: none;
+        }
+        .age-display.show { display: block; }
+
+        .radio-cards {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        }
+        @media (max-width: 500px) { .radio-cards { grid-template-columns: 1fr; } }
+        .radio-cards input[type="radio"] {
+            position: absolute; opacity: 0; width: 0; height: 0;
+        }
+        .radio-card {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 2px solid var(--border);
+            border-radius: 12px; cursor: pointer; transition: all .2s;
+        }
+        .radio-card:hover {
+            border-color: var(--border-strong);
+            background: rgba(255,255,255,0.05);
+        }
+        .radio-cards input[type="radio"]:checked + .radio-card {
+            border-color: var(--primary);
+            background: rgba(79,172,254,0.08);
+        }
+        .radio-card-icon {
+            width: 36px; height: 36px;
+            border-radius: 9px; background: var(--card);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.95rem; color: var(--primary); flex-shrink: 0;
+        }
+        .radio-cards input[type="radio"]:checked + .radio-card .radio-card-icon {
+            background: var(--gradient); color: #fff;
+        }
+        .radio-card-content { flex: 1; }
+        .radio-card-title { font-weight: 700; font-size: 0.92rem; margin-bottom: 2px; }
+        .radio-card-desc { color: var(--text-muted); font-size: 0.8rem; }
+
+        .checkbox-card {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 2px solid var(--border);
+            border-radius: 12px; cursor: pointer; transition: all .2s;
+        }
+        .checkbox-card:has(input:checked) {
+            border-color: var(--primary);
+            background: rgba(79,172,254,0.08);
+        }
+        .checkbox-card input { margin-top: 2px; cursor: pointer; }
+        .checkbox-card-content { flex: 1; }
+        .checkbox-card-content strong { display: block; margin-bottom: 2px; }
+        .checkbox-card-content small { color: var(--text-muted); font-size: 0.82rem; }
+
+        .hidden { display: none !important; }
+
+        /* Tags Input */
+        .field-tags-input {
+            display: flex; gap: 8px; margin-bottom: 10px;
+        }
+        .field-tags-input input { flex: 1; }
+        .add-btn {
+            padding: 0 18px;
+            background: var(--gradient); color: #fff;
+            border: none; border-radius: 10px;
+            cursor: pointer; font-weight: 700; font-family: inherit;
+            display: flex; align-items: center; gap: 6px;
+            transition: all .2s;
+        }
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79,172,254,0.35);
+        }
+        .field-tags-list {
+            display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px;
+        }
+        .field-tag {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px;
+            background: rgba(79,172,254,0.12);
+            border: 1px solid rgba(79,172,254,0.3);
+            color: var(--primary);
+            border-radius: 16px;
+            font-size: 0.85rem; font-weight: 600;
+            animation: tagIn .3s;
+        }
+        @keyframes tagIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        .field-tag-remove {
+            background: rgba(255,255,255,0.1); border: none;
+            color: var(--primary);
+            width: 18px; height: 18px;
+            border-radius: 50%; cursor: pointer;
+            font-size: 0.7rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .field-tag-remove:hover { background: var(--error); color: #fff; }
+        .empty-tags {
+            color: var(--text-dim); font-size: 0.85rem; font-style: italic;
+        }
+
+        /* Languages with proficiency */
+        .language-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
             display: flex;
             align-items: center;
-            gap: 16px;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid var(--primary-light);
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .language-card .lang-name { flex: 1; font-weight: 700; }
+        .language-card .lang-level {
+            background: rgba(79,172,254,0.15);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 0.78rem;
+            font-weight: 700;
         }
 
-        .summary-icon, .contract-header .contract-icon {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
+        /* Experience Card */
+        .experience-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            position: relative;
         }
-
-        .summary-info h3, .contract-header h2 {
-            color: var(--text-primary);
-            margin: 0;
-            font-size: 1.5rem;
-        }
-
-        .summary-info p, .contract-header p {
-            color: var(--text-secondary);
-            margin: 8px 0 0;
-            font-size: 0.9rem;
-        }
-
-        .summary-content {
-            background: rgba(0, 217, 255, 0.03);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid rgba(0, 217, 255, 0.1);
-        }
-
-        .summary-item {
+        .experience-card-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 10px 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            gap: 8px;
-        }
-        .summary-item:last-child { border-bottom: none; }
-        .summary-item .label {
-            color: var(--text-secondary, #b8b5c9);
-            font-weight: 600;
-            min-width: 130px;
-            flex-shrink: 0;
-            font-size: 0.9rem;
-        }
-        .summary-item .value {
-            color: var(--text-primary, #fff);
-            font-weight: 500;
-            flex: 1;
-            text-align: right;
-            word-break: break-word;
-            overflow-wrap: break-word;
-        }
-        @media (max-width: 500px) {
-            .summary-item { flex-direction: column; align-items: flex-start; gap: 3px; }
-            .summary-item .label { min-width: unset; color: var(--primary, #00D9FF); font-size: 0.82rem; }
-            .summary-item .value { width: 100%; }
-        }
-
-        .summary-item .value img {
-            width: 60px;
-            height: 60px;
-            border-radius: 8px;
-            object-fit: cover;
-            border: 2px solid var(--primary-light);
-        }
-
-        .summary-loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            color: var(--text-secondary);
-        }
-
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(0, 217, 255, 0.1);
-            border-radius: 50%;
-            border-top-color: var(--primary);
-            animation: spin 1s linear infinite;
-            margin-bottom: 16px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* أنماط العقد */
-        .contract-obligation {
-            background: var(--bg-secondary, #15111f);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            border: 1px solid rgba(255,255,255,0.08);
-            width: 100%;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-
-        .obligation-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .obligation-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        .obligation-title {
-            color: var(--text-primary);
-            margin: 0;
-            font-size: 1.1rem;
-        }
-
-        .obligation-content {
-            color: var(--text-secondary);
-            line-height: 1.8;
-            word-break: break-word;
-            overflow-wrap: break-word;
-            white-space: normal;
-            width: 100%;
-        }
-
-        .obligation-list {
-            list-style: none;
-            padding: 0;
-            margin: 12px 0;
-        }
-
-        .obligation-list li {
-            padding: 6px 28px 6px 0;
-            position: relative;
-            display: block;
-            width: 100%;
-            word-break: break-word;
-            overflow-wrap: break-word;
-            white-space: normal;
-            line-height: 1.8;
-        }
-
-        .obligation-list li:before {
-            content: "•";
-            color: var(--primary);
-            font-size: 1.2rem;
-            position: absolute;
-            right: 0;
-        }
-
-        .obligation-content h4 {
-            color: var(--text-primary);
-            margin: 16px 0 8px;
-            font-size: 1rem;
-        }
-
-        .obligation-note {
-            background: rgba(0, 217, 255, 0.05);
-            border-right: 3px solid var(--primary);
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 16px;
-        }
-
-        .contract-agreement {
-            background: var(--bg-card, #1a1625);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
-            border: 1px solid rgba(0, 217, 255, 0.2);
-        }
-
-        .agreement-checkbox {
-            margin-bottom: 16px;
-        }
-
-        .final-note {
-            display: flex;
             align-items: flex-start;
-            gap: 12px;
-            background: rgba(0, 217, 255, 0.05);
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 16px;
-            border-right: 3px solid var(--primary);
+            margin-bottom: 6px;
         }
-
-        .final-note i {
-            color: var(--primary);
-            font-size: 1.2rem;
-            margin-top: 2px;
+        .experience-card-title { font-weight: 800; font-size: 0.95rem; color: var(--primary); }
+        .experience-card-meta {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            margin-bottom: 6px;
         }
-
-        .final-note p {
-            margin: 0;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
+        .experience-card-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
             line-height: 1.5;
         }
 
-        .section-divider {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 16px 24px;
-            border-radius: 12px;
-            margin: 32px 0 24px;
+        /* CV Upload */
+        .cv-upload-area {
+            border: 2px dashed var(--border-strong);
+            border-radius: 14px;
+            padding: 22px;
             text-align: center;
-            font-weight: 600;
-            font-size: 1.2rem;
+            background: rgba(255,255,255,0.02);
+            transition: all .25s;
+            cursor: pointer;
+        }
+        .cv-upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(79,172,254,0.04);
+        }
+        .cv-upload-area.has-file {
+            border-style: solid;
+            border-color: var(--success);
+            background: rgba(16,185,129,0.05);
+        }
+        .cv-icon {
+            font-size: 2.2rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .cv-text {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .cv-hint {
+            color: var(--text-dim);
+            font-size: 0.82rem;
         }
 
-        .sub-section {
-            margin-right: 20px;
-            margin-bottom: 20px;
+        /* Summary */
+        .summary-section { padding: 16px 0; }
+        .summary-block {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 14px; padding: 18px; margin-bottom: 14px;
+        }
+        .summary-block-title {
+            display: flex; align-items: center; gap: 8px;
+            font-weight: 800; margin-bottom: 12px; font-size: 1rem;
+            padding-bottom: 8px; border-bottom: 1px solid var(--border);
+        }
+        .summary-block-title i { color: var(--primary); }
+        .summary-row {
+            display: flex; justify-content: space-between;
+            padding: 6px 0; font-size: 0.88rem; gap: 14px;
+        }
+        .summary-row .label { color: var(--text-muted); }
+        .summary-row .value {
+            color: var(--text); font-weight: 600;
+            text-align: left; word-break: break-word;
         }
 
-        /* ✅ إصلاح شامل النص في العقود */
-        .contract-section, .contract-content, .contract-obligation,
-        .obligation-content, .obligation-list, .obligation-list li,
-        .obligation-note p, .obligation-note ul li {
-            max-width: 100% !important;
-            box-sizing: border-box !important;
-            word-break: break-word !important;
-            overflow-wrap: break-word !important;
-            white-space: normal !important;
+        /* Contract */
+        .contract-section {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 14px; padding: 22px;
+            max-height: 380px; overflow-y: auto;
+            margin-bottom: 16px;
+            line-height: 1.8; font-size: 0.9rem;
         }
-        .contract-content { width: 100%; overflow: hidden; }
+        .contract-section::-webkit-scrollbar { width: 6px; }
+        .contract-section::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 3px; }
+        .contract-section::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+        .contract-section h3 {
+            color: var(--primary); font-size: 1.05rem;
+            margin: 14px 0 8px; padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        .contract-section h3:first-child { margin-top: 0; }
+        .contract-section p { color: var(--text-muted); margin-bottom: 8px; }
+        .contract-section ul { padding-right: 22px; margin-bottom: 8px; }
+        .contract-section ul li { color: var(--text-muted); margin-bottom: 4px; }
+        .contract-section strong { color: var(--text); }
+
+        .navigation {
+            display: flex; gap: 12px;
+            margin-top: 24px; padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        .btn-nav {
+            flex: 1; padding: 14px 22px;
+            border: none; border-radius: 12px;
+            font-weight: 800; font-size: 1rem; font-family: inherit;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all .25s;
+        }
+        .btn-prev {
+            background: var(--card); color: var(--text);
+            border: 1px solid var(--border);
+            flex: 0 0 auto; padding: 14px 24px;
+        }
+        .btn-prev:hover { background: var(--card-hover); }
+        .btn-next, .btn-submit { background: var(--gradient); color: #fff; }
+        .btn-next:hover:not(:disabled),
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 35px rgba(79,172,254,0.4);
+        }
+        .btn-nav:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-nav .spinner { display: none; }
+        .btn-nav.loading .spinner { display: inline-block; }
+        .btn-nav.loading .txt, .btn-nav.loading .arrow { display: none; }
+
+        .login-link {
+            text-align: center; margin-top: 20px;
+            color: var(--text-muted); font-size: 0.92rem;
+        }
+        .login-link a { color: var(--primary); text-decoration: none; font-weight: 700; }
+        .login-link a:hover { text-decoration: underline; }
+
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .shake { animation: shake .35s; }
+
+        /* Mini modal for adding language/experience */
+        .mini-modal {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            z-index: 200;
+            display: none;
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .mini-modal.active { display: flex; }
+        .mini-modal-content {
+            background: var(--bg-2); border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 100%; max-width: 480px;
+            padding: 24px;
+        }
+        .mini-modal-title {
+            font-size: 1.1rem; font-weight: 800;
+            margin-bottom: 18px; padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .mini-modal-title i { color: var(--primary); }
+        .mini-modal-actions {
+            display: flex; gap: 10px; margin-top: 14px;
+        }
+        .mini-modal-actions .btn-nav { padding: 12px 20px; flex: 1; }
+
         @media (max-width: 600px) {
-            .contract-section { padding: 12px !important; }
-            .contract-obligation { padding: 12px !important; }
-            .obligation-title { font-size: 0.95rem !important; line-height: 1.5; }
+            .card { padding: 26px 20px; }
+            .step-info h2 { font-size: 1.15rem; }
+            .step-icon-big { width: 50px; height: 50px; font-size: 1.3rem; }
+            .navigation { flex-direction: column-reverse; }
+            .btn-prev { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <!-- Animated Background -->
-    <div class="bg-animation">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-        <div class="shape shape-4"></div>
-    </div>
+    <div class="bg-anim"></div>
 
-    <!-- Floating Particles -->
-    <div class="particles" id="particles"></div>
-
-    <!-- Navigation Header -->
-    <header class="nav-header">
-        <div class="nav-content">
-            <div class="nav-logo">
-                <i class="fas fa-rocket"></i>
-                <span>ProVance</span>
-            </div>
-            <a href="student-login.html" class="back-to-login">
-                <i class="fas fa-arrow-right"></i>
-                <span>العودة لتسجيل الدخول</span>
+    <div class="container">
+        <div class="header-bar">
+            <a href="index.html" class="back-link">
+                <i class="fas fa-arrow-right"></i><span>الرئيسية</span>
+            </a>
+            <a href="index.html" class="logo-link">
+                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
             </a>
         </div>
-    </header>
 
-    <!-- Main Container -->
-    <main class="register-container">
-        <!-- Header Section -->
-        <header class="register-header">
-            <div class="logo-badge">
-                <div class="logo-inner">
-                    <i class="fas fa-user-graduate"></i>
-                </div>
-                <div class="logo-rings">
-                    <div class="ring ring-1"></div>
-                    <div class="ring ring-2"></div>
-                    <div class="ring ring-3"></div>
-                </div>
-            </div>
-            <h1 class="main-title">
-                <span class="title-gradient">تسجيل الطلاب</span>
-                <span class="title-brand">في منصة ProVance</span>
-            </h1>
-            <p class="subtitle">انضم إلى منصة التدريب المتطورة وابحث عن أفضل فرص التدريب المناسبة لمهاراتك وتخصصك</p>
-
-            <!-- Stats Cards -->
-            <div class="stats-cards">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-user-graduate"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">+5,000</div>
-                        <div class="stat-label">طالب مسجل</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-building"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">+500</div>
-                        <div class="stat-label">شركة متعاونة</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-handshake"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">+2,000</div>
-                        <div class="stat-label">تدريب مكتمل</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">4.7/5</div>
-                        <div class="stat-label">تقييم الطلاب</div>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Progress Section -->
-        <section class="progress-container">
-            <div class="progress-header">
-                <h3>تقدم التسجيل</h3>
+        <div class="card">
+            <div class="progress-section">
                 <div class="progress-text">
-                    الخطوة <span id="currentStep">1</span> من <span id="totalSteps">4</span>
+                    <span>الخطوة <strong id="currentStep">1</strong> من <strong>5</strong></span>
+                    <span class="step-name" id="currentStepName">المعلومات الشخصية</span>
+                </div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill" id="progressFill" style="width: 20%;"></div>
                 </div>
             </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="progress-dots">
-                <div class="progress-dot active" data-step="1">
-                    <i class="fas fa-user"></i>
-                    <span>المعلومات الشخصية</span>
-                </div>
-                <div class="progress-dot" data-step="2">
-                    <i class="fas fa-graduation-cap"></i>
-                    <span>المعلومات الأكاديمية</span>
-                </div>
-                <div class="progress-dot" data-step="3">
-                    <i class="fas fa-file-alt"></i>
-                    <span>ملخص التسجيل</span>
-                </div>
-                <div class="progress-dot" data-step="4">
-                    <i class="fas fa-file-contract"></i>
-                    <span>العقود والموافقة</span>
-                </div>
-            </div>
-        </section>
 
-        <!-- Form Container -->
-        <div class="form-container">
-            <form id="studentRegisterForm">
-                <!-- Step 1: Personal Information -->
-                <div class="form-step active" data-step="1">
+            <form id="studentRegisterForm" novalidate>
+
+                <!-- ========== STEP 1: المعلومات الشخصية ========== -->
+                <div class="step-section active" data-step="1">
                     <div class="step-header">
-                        <div class="step-icon">
-                            <i class="fas fa-user"></i>
-                        </div>
+                        <div class="step-icon-big"><i class="fas fa-user"></i></div>
                         <div class="step-info">
-                            <h2 class="step-title">المعلومات الشخصية</h2>
-                            <p class="step-description">أدخل معلوماتك الشخصية الأساسية للبدء في عملية التسجيل</p>
+                            <h2>المعلومات الشخصية</h2>
+                            <p>أدخل بياناتك الشخصية الأساسية</p>
                         </div>
                     </div>
 
-                    <!-- Photo Upload Section -->
-                    <section class="upload-section">
-                        <div class="upload-header">
-                            <h3><i class="fas fa-camera"></i> الصورة الشخصية</h3>
-                            <p>قم برفع صورتك الشخصية لتعزيز ملفك الشخصي</p>
+                    <div class="photo-upload-section">
+                        <div class="photo-circle" id="photoCircle" onclick="document.getElementById('studentPhoto').click()">
+                            <i class="fas fa-camera" id="photoIcon"></i>
+                            <div class="photo-circle-overlay"><i class="fas fa-cloud-upload-alt"></i></div>
                         </div>
-                        <div class="logo-upload-container">
-                            <div class="logo-upload-area" onclick="document.getElementById('studentPhoto').click()">
-                                <div class="logo-preview-wrapper">
-                                    <img id="photoPreview" class="logo-preview" alt="Student Photo Preview">
-                                    <div class="logo-placeholder">
-                                        <div class="upload-icon">
-                                            <i class="fas fa-user-plus"></i>
+                        <input type="file" id="studentPhoto" accept="image/*" class="hidden">
+                        <div class="photo-upload-actions">
+                            <button type="button" class="btn-small" onclick="document.getElementById('studentPhoto').click()">
+                                <i class="fas fa-upload"></i> رفع صورة
+                            </button>
+                            <button type="button" class="btn-small danger hidden" id="photoRemoveBtn" onclick="removePhoto()">
+                                <i class="fas fa-trash"></i> حذف
+                            </button>
+                        </div>
+                        <div class="photo-hint">PNG / JPG (حد أقصى 2 ميجا)</div>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="fullName">
+                            <i class="fas fa-user-circle"></i> الاسم بالكامل <span class="required">*</span>
+                        </label>
+                        <input type="text" id="fullName" class="field-input" placeholder="الاسم الثلاثي على الأقل" required>
+                        <span class="field-error" id="fullNameErr"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label class="field-label" for="email">
+                                <i class="fas fa-envelope"></i> البريد الإلكتروني <span class="required">*</span>
+                            </label>
+                            <input type="email" id="email" class="field-input" placeholder="student@example.com" required>
+                            <span class="field-error" id="emailErr"></span>
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="phone">
+                                <i class="fas fa-mobile-alt"></i> رقم الهاتف <span class="required">*</span>
+                            </label>
+                            <input type="tel" id="phone" class="field-input" placeholder="01012345678" required>
+                            <span class="field-error" id="phoneErr"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label class="field-label" for="birthDate">
+                                <i class="fas fa-birthday-cake"></i> تاريخ الميلاد <span class="required">*</span>
+                            </label>
+                            <input type="date" id="birthDate" class="field-input" required>
+                            <div class="age-display" id="ageDisplay"></div>
+                            <span class="field-error" id="birthDateErr"></span>
+                        </div>
+                        <div class="field">
+                            <label class="field-label">
+                                <i class="fas fa-venus-mars"></i> النوع <span class="required">*</span>
+                            </label>
+                            <div class="radio-cards">
+                                <label>
+                                    <input type="radio" name="gender" value="male" id="genderMale" checked>
+                                    <div class="radio-card">
+                                        <div class="radio-card-icon"><i class="fas fa-mars"></i></div>
+                                        <div class="radio-card-content">
+                                            <div class="radio-card-title">ذكر</div>
                                         </div>
-                                        <h4>رفع الصورة الشخصية</h4>
-                                        <p>PNG, JPG - الحد الأقصى 2MB</p>
                                     </div>
-                                    <div class="upload-overlay">
-                                        <i class="fas fa-camera"></i>
-                                        <span>تغيير الصورة</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="gender" value="female" id="genderFemale">
+                                    <div class="radio-card">
+                                        <div class="radio-card-icon"><i class="fas fa-venus"></i></div>
+                                        <div class="radio-card-content">
+                                            <div class="radio-card-title">أنثى</div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <input type="file" id="studentPhoto" accept="image/*" class="hidden">
-                            <div class="upload-actions">
-                                <button type="button" class="btn-upload" onclick="document.getElementById('studentPhoto').click()">
-                                    <i class="fas fa-upload"></i>
-                                    <span>اختر صورة</span>
-                                </button>
-                                <button type="button" class="btn-remove hidden" id="photoRemoveBtn" onclick="removePhoto(event)">
-                                    <i class="fas fa-trash"></i>
-                                    <span>إزالة</span>
-                                </button>
+                                </label>
                             </div>
                         </div>
-                    </section>
+                    </div>
 
-                    <!-- Personal Information Form -->
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="fullName" class="form-label required">
-                                <i class="fas fa-user"></i>
-                                الاسم الثلاثي
+                    <div class="field">
+                        <label class="field-label" for="nationalId">
+                            <i class="fas fa-id-card"></i> الرقم القومي <span class="optional">اختياري</span>
+                        </label>
+                        <input type="text" id="nationalId" class="field-input" placeholder="14 رقم" maxlength="14" pattern="[0-9]{14}">
+                        <div class="field-hint">الرقم القومي مفيد لإصدار شهادات التدريب الرسمية</div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label class="field-label" for="country">
+                                <i class="fas fa-globe-africa"></i> الدولة
                             </label>
-                            <div class="input-wrapper">
-                                <input type="text" id="fullName" class="form-input" placeholder="أدخل الاسم الثلاثي" required>
-                                <div class="input-border"></div>
-                            </div>
+                            <input type="text" id="country" class="field-input" placeholder="مصر" value="مصر">
                         </div>
-
-                        <div class="form-group">
-                            <label for="email" class="form-label required">
-                                <i class="fas fa-envelope"></i>
-                                البريد الإلكتروني
+                        <div class="field">
+                            <label class="field-label" for="city">
+                                <i class="fas fa-city"></i> المدينة <span class="required">*</span>
                             </label>
-                            <div class="input-wrapper">
-                                <input type="email" id="email" class="form-input" placeholder="student@example.com" required>
-                                <div class="input-border"></div>
-                            </div>
+                            <input type="text" id="city" class="field-input" placeholder="مثال: القاهرة" required>
+                            <span class="field-error" id="cityErr"></span>
                         </div>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="birthDate" class="form-label required">
-                                <i class="fas fa-calendar-alt"></i>
-                                تاريخ الميلاد
-                            </label>
-                            <div class="input-wrapper">
-                                <input type="date" id="birthDate" class="form-input" required onchange="calculateAge()">
-                                <div class="input-border"></div>
-                            </div>
-                            <div id="ageDisplay" class="age-display">
-                                العمر: -- سنة
-                            </div>
-                            <div class="form-note">يجب أن يكون عمرك بين 18 و 30 سنة للتسجيل</div>
-                        </div>
+                    <div class="field">
+                        <label class="field-label" for="address">
+                            <i class="fas fa-map-marker-alt"></i> العنوان التفصيلي <span class="optional">اختياري</span>
+                        </label>
+                        <input type="text" id="address" class="field-input" placeholder="الحي / الشارع / رقم العقار">
+                    </div>
 
-                        <div class="form-group">
-                            <label for="phone" class="form-label required">
-                                <i class="fas fa-phone"></i>
-                                رقم الهاتف
+                    <div class="form-row">
+                        <div class="field">
+                            <label class="field-label" for="password">
+                                <i class="fas fa-lock"></i> كلمة المرور <span class="required">*</span>
                             </label>
-                            <div class="input-wrapper">
-                                <input type="tel" id="phone" class="form-input" placeholder="مثال: 0551234567" required>
-                                <div class="input-border"></div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="address" class="form-label required">
-                                <i class="fas fa-map-marker-alt"></i>
-                                مكان الإقامة
-                            </label>
-                            <div class="input-wrapper">
-                                <input type="text" id="address" class="form-input" placeholder="المدينة والمنطقة" required>
-                                <div class="input-border"></div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="password" class="form-label required">
-                                <i class="fas fa-lock"></i>
-                                كلمة المرور
-                            </label>
-                            <div class="password-wrapper">
-                                <input type="password" id="password" class="form-input" placeholder="كلمة المرور (8 أحرف على الأقل)" minlength="8" required>
-                                <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                            <div class="input-wrap">
+                                <input type="password" id="password" class="field-input" placeholder="8 أحرف على الأقل" minlength="8" required>
+                                <button type="button" class="toggle-pass" data-target="password">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <div class="input-border"></div>
                             </div>
-                            <div class="password-strength">
-                                <div class="strength-bar"></div>
-                                <div class="strength-text">قوة كلمة المرور: ضعيفة</div>
-                            </div>
+                            <span class="field-error" id="passwordErr"></span>
                         </div>
-
-                        <div class="form-group">
-                            <label for="confirmPassword" class="form-label required">
-                                <i class="fas fa-lock"></i>
-                                تأكيد كلمة المرور
+                        <div class="field">
+                            <label class="field-label" for="confirmPassword">
+                                <i class="fas fa-lock"></i> تأكيد كلمة المرور <span class="required">*</span>
                             </label>
-                            <div class="password-wrapper">
-                                <input type="password" id="confirmPassword" class="form-input" placeholder="أعد كتابة كلمة المرور" required>
-                                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                            <div class="input-wrap">
+                                <input type="password" id="confirmPassword" class="field-input" placeholder="نفس كلمة المرور" required>
+                                <button type="button" class="toggle-pass" data-target="confirmPassword">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <div class="input-border"></div>
                             </div>
-                            <div id="passwordMatch" class="password-match"></div>
+                            <div class="password-match" id="passwordMatch"></div>
+                            <span class="field-error" id="confirmPasswordErr"></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 2: Academic Information -->
-                <div class="form-step" data-step="2">
+                <!-- ========== STEP 2: المعلومات الأكاديمية ========== -->
+                <div class="step-section" data-step="2">
                     <div class="step-header">
-                        <div class="step-icon">
-                            <i class="fas fa-graduation-cap"></i>
-                        </div>
+                        <div class="step-icon-big"><i class="fas fa-graduation-cap"></i></div>
                         <div class="step-info">
-                            <h2 class="step-title">المعلومات الأكاديمية</h2>
-                            <p class="step-description">أدخل معلوماتك الأكاديمية لتحديد فرص التدريب المناسبة لك</p>
+                            <h2>المعلومات الأكاديمية</h2>
+                            <p>أدخل بياناتك الدراسية والتعليمية</p>
                         </div>
                     </div>
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="university" class="form-label required">
-                                <i class="fas fa-university"></i>
-                                الجامعة
-                            </label>
-                            <div class="input-wrapper">
-                                <input type="text" id="university" class="form-input" placeholder="أدخل اسم الجامعة" required>
-                                <div class="input-border"></div>
-                            </div>
-                        </div>
+                    <div class="field">
+                        <label class="field-label" for="educationLevel">
+                            <i class="fas fa-layer-group"></i> المرحلة الدراسية <span class="required">*</span>
+                        </label>
+                        <select id="educationLevel" class="field-select" required>
+                            <option value="">اختر المرحلة</option>
+                            <option value="high_school">طالب ثانوية</option>
+                            <option value="diploma">دبلوم</option>
+                            <option value="university">طالب جامعي</option>
+                            <option value="graduate">خريج</option>
+                            <option value="postgraduate">دراسات عليا</option>
+                        </select>
+                        <span class="field-error" id="educationLevelErr"></span>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="college" class="form-label required">
-                                <i class="fas fa-graduation-cap"></i>
-                                الكلية
+                    <div class="form-row">
+                        <div class="field">
+                            <label class="field-label" for="university">
+                                <i class="fas fa-university"></i> الجامعة / المعهد <span class="required">*</span>
                             </label>
-                            <div class="input-wrapper">
-                                <input type="text" id="college" class="form-input" placeholder="أدخل اسم الكلية" required>
-                                <div class="input-border"></div>
-                            </div>
+                            <input type="text" id="university" class="field-input" placeholder="مثال: جامعة المنصورة" required>
+                            <span class="field-error" id="universityErr"></span>
                         </div>
-
-                        <div class="form-group">
-                            <label for="major" class="form-label">
-                                <i class="fas fa-book"></i>
-                                التخصص (اختياري)
+                        <div class="field">
+                            <label class="field-label" for="faculty">
+                                <i class="fas fa-school"></i> الكلية <span class="required">*</span>
                             </label>
-                            <div class="input-wrapper">
-                                <input type="text" id="major" class="form-input" placeholder="أدخل التخصص">
-                                <div class="input-border"></div>
-                            </div>
+                            <input type="text" id="faculty" class="field-input" placeholder="مثال: كلية الهندسة" required>
+                            <span class="field-error" id="facultyErr"></span>
                         </div>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="level" class="form-label required">
-                                <i class="fas fa-layer-group"></i>
-                                المستوى / السنة الدراسية
+                    <div class="form-row">
+                        <div class="field">
+                            <label class="field-label" for="major">
+                                <i class="fas fa-bookmark"></i> التخصص <span class="optional">اختياري</span>
                             </label>
-                            <div class="select-wrapper">
-                                <select id="level" class="form-select" required>
-                                    <option value="">اختر المستوى</option>
-                                    <option value="1">السنة الأولى</option>
-                                    <option value="2">السنة الثانية</option>
-                                    <option value="3">السنة الثالثة</option>
-                                    <option value="4">السنة الرابعة</option>
-                                    <option value="5">السنة الخامسة</option>
-                                    <option value="graduate">خريج</option>
-                                </select>
-                                <div class="select-arrow">
-                                    <i class="fas fa-chevron-down"></i>
-                                </div>
-                            </div>
+                            <input type="text" id="major" class="field-input" placeholder="مثال: علوم الحاسب">
                         </div>
-
-                        <div class="form-group full-width">
-                            <label for="skills" class="form-label">
-                                <i class="fas fa-tools"></i>
-                                المهارات (اختياري)
+                        <div class="field">
+                            <label class="field-label" for="studyYear">
+                                <i class="fas fa-layer-group"></i> سنة الدراسة <span class="required">*</span>
                             </label>
-                            <div class="textarea-wrapper">
-                                <textarea id="skills" class="form-textarea" placeholder="اذكر المهارات التي تمتلكها (مثال: HTML, CSS, JavaScript, تصميم جرافيك...)"></textarea>
-                                <div class="textarea-border"></div>
-                            </div>
+                            <select id="studyYear" class="field-select" required>
+                                <option value="">اختر السنة</option>
+                                <option value="1">السنة الأولى</option>
+                                <option value="2">السنة الثانية</option>
+                                <option value="3">السنة الثالثة</option>
+                                <option value="4">السنة الرابعة</option>
+                                <option value="5">السنة الخامسة</option>
+                                <option value="6">السنة السادسة</option>
+                                <option value="graduated">متخرج</option>
+                            </select>
+                            <span class="field-error" id="studyYearErr"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label class="field-label" for="graduationYear">
+                                <i class="fas fa-calendar-alt"></i> سنة التخرج المتوقعة <span class="optional">اختياري</span>
+                            </label>
+                            <input type="number" id="graduationYear" class="field-input" placeholder="مثال: 2026" min="2020" max="2035">
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="gpa">
+                                <i class="fas fa-star"></i> المعدل التراكمي (GPA) <span class="optional">اختياري</span>
+                            </label>
+                            <input type="text" id="gpa" class="field-input" placeholder="مثال: 3.5 من 4 أو جيد جداً">
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 3: Summary -->
-                <div class="form-step" data-step="3">
+                <!-- ========== STEP 3: المهارات والاهتمامات ========== -->
+                <div class="step-section" data-step="3">
                     <div class="step-header">
-                        <div class="step-icon">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
+                        <div class="step-icon-big"><i class="fas fa-tools"></i></div>
                         <div class="step-info">
-                            <h2 class="step-title">ملخص التسجيل</h2>
-                            <p class="step-description">راجع معلوماتك قبل إتمام التسجيل</p>
+                            <h2>المهارات والاهتمامات</h2>
+                            <p>أضف مهاراتك واللغات التي تعرفها والمجالات التي تهمك</p>
                         </div>
                     </div>
 
-                    <!-- Summary Section -->
-                    <section class="summary-section">
-                        <div class="summary-header">
-                            <div class="summary-icon">
-                                <i class="fas fa-file-alt"></i>
-                            </div>
-                            <div class="summary-info">
-                                <h3>ملخص التسجيل</h3>
-                                <p>راجع معلوماتك قبل إتمام التسجيل</p>
-                            </div>
+                    <div class="field">
+                        <label class="field-label">
+                            <i class="fas fa-cogs"></i> المهارات التقنية والشخصية <span class="required">*</span>
+                        </label>
+                        <div class="field-tags-input">
+                            <input type="text" id="newSkill" class="field-input" placeholder="مثال: HTML, تصميم جرافيك, Excel...">
+                            <button type="button" class="add-btn" onclick="addSkill()">
+                                <i class="fas fa-plus"></i> إضافة
+                            </button>
                         </div>
-                        <div id="summaryContent" class="summary-content">
-                            <div class="summary-loading">
-                                <div class="loading-spinner"></div>
-                                <p>جاري تجهيز الملخص...</p>
-                            </div>
+                        <div class="field-tags-list" id="skillsList">
+                            <p class="empty-tags">لم تتم إضافة مهارات بعد</p>
                         </div>
-                        <div class="final-note">
-                            <i class="fas fa-info-circle"></i>
-                            <p>بعد إتمام التسجيل، ستحصل على إشعار بالبريد الإلكتروني لتأكيد الحساب وتفعيله</p>
+                        <div class="field-hint">اضغط Enter بعد كل مهارة</div>
+                        <span class="field-error" id="skillsErr"></span>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">
+                            <i class="fas fa-language"></i> اللغات
+                        </label>
+                        <button type="button" class="btn-small" style="width:100%; padding:12px; justify-content:center; margin-bottom:10px;" onclick="openLangModal()">
+                            <i class="fas fa-plus"></i> إضافة لغة
+                        </button>
+                        <div id="languagesList">
+                            <p class="empty-tags">لم تتم إضافة لغات بعد</p>
                         </div>
-                    </section>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">
+                            <i class="fas fa-heart"></i> المجالات التي تهمك <span class="required">*</span>
+                        </label>
+                        <div class="field-tags-input">
+                            <input type="text" id="newInterest" class="field-input" placeholder="مثال: تطوير الويب, التسويق الرقمي, التصميم...">
+                            <button type="button" class="add-btn" onclick="addInterest()">
+                                <i class="fas fa-plus"></i> إضافة
+                            </button>
+                        </div>
+                        <div class="field-tags-list" id="interestsList">
+                            <p class="empty-tags">لم تتم إضافة مجالات بعد</p>
+                        </div>
+                        <span class="field-error" id="interestsErr"></span>
+                    </div>
                 </div>
 
-                <!-- Step 4: Contracts -->
-                <div class="form-step" data-step="4">
+                <!-- ========== STEP 4: الخبرات والروابط ========== -->
+                <div class="step-section" data-step="4">
                     <div class="step-header">
-                        <div class="step-icon">
-                            <i class="fas fa-file-contract"></i>
-                        </div>
+                        <div class="step-icon-big"><i class="fas fa-briefcase"></i></div>
                         <div class="step-info">
-                            <h2 class="step-title">الشروط والأحكام</h2>
-                            <p class="step-description">يرجى قراءة والموافقة على شروط وأحكام استخدام منصة Provance</p>
+                            <h2>الخبرات والروابط</h2>
+                            <p>أضف خبراتك السابقة وروابط حساباتك المهنية (اختياري لكن يزيد فرصك)</p>
                         </div>
                     </div>
 
-                    <!-- Contract Terms Section -->
-                    <section class="contract-section">
-                        <div class="contract-header">
-                            <h2>الشروط والأحكام لاستخدام Provance</h2>
-                            <p>باستخدام منصة Provance، تُقر بأنك قد قرأت وفهمت هذه الشروط والأحكام وتوافق على الالتزام بها بشكل كامل وملزم قانونيًا</p>
+                    <div class="field">
+                        <label class="field-label">
+                            <i class="fas fa-suitcase"></i> الخبرات السابقة (تدريبات / أعمال)
+                        </label>
+                        <button type="button" class="btn-small" style="width:100%; padding:12px; justify-content:center; margin-bottom:10px;" onclick="openExpModal()">
+                            <i class="fas fa-plus"></i> إضافة خبرة
+                        </button>
+                        <div id="experiencesList">
+                            <p class="empty-tags">لم تتم إضافة خبرات بعد</p>
                         </div>
+                    </div>
 
-                        <div class="contract-content">
-                            <!-- الشرط الأول -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-check-circle"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط الأول: القبول والالتزام بالشروط</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>باستخدام منصة Provance، يُقر كل من المتدرب والشركة بأنه قد قرأ هذه الشروط والأحكام وفهمها بالكامل، ويوافق على الالتزام بها التزامًا قانونيًا كاملًا دون أي استثناء.</li>
-                                        <li>تحتفظ Provance بالحق في تعديل أو تحديث هذه الشروط في أي وقت، على أن يتم إشعار المستخدمين مسبقًا عبر البريد الإلكتروني أو إشعار داخل المنصة قبل سريان أي تعديل.</li>
-                                        <li>ويُعد استمرار استخدام المنصة بعد التعديل موافقة صريحة وملزمة على الشروط المعدلة.</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- الشرط الثاني -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-user-check"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط الثاني: متطلبات التسجيل واستخدام المنصة</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>يجب على المتدرب والشركة تقديم بيانات صحيحة ودقيقة وكاملة عند التسجيل، مع الالتزام بتحديثها عند أي تغيير.</li>
-                                        <li>يُمنع إنشاء حسابات وهمية أو تقديم معلومات مضللة أو انتحال أي صفة.</li>
-                                        <li>يحق لـ Provance التحقق من صحة البيانات، ورفض أو تعليق أو إنهاء أي حساب مخالف، مع فرض تعويض مالي مباشر للطرف المتضرر ولـ Provance عند ثبوت المخالفة.</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- قسم شروط المتدربين -->
-                            <div class="section-divider">
-                                <i class="fas fa-user-graduate"></i>
-                                أولًا: الشروط والأحكام الخاصة بالمتدربين
-                            </div>
-
-                            <!-- الشرط الثالث -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-user-graduate"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط الثالث: الالتزام بالتدريب</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>يلتزم المتدرب بتنفيذ جميع المهام والمتطلبات التدريبية المحددة له وفقًا للمجال الذي تم قبوله فيه.</li>
-                                        <li>يُحظر أي سلوك غير مهني أو مخالف لأهداف التدريب داخل المنصة.</li>
-                                        <li>أي مخالفة تؤدي إلى الحظر الفوري للمتدرب، مع فرض تعويض مالي مباشر للطرف المتضرر وProvance.</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- الشرط الرابع -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-money-bill-wave"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط الرابع: الرسوم والدفع</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>يدفع المتدرب أي رسوم أو مستحقات مالية من خلال نظام الدفع الداخلي لمنصة Provance فقط.</li>
-                                        <li>يُمنع دفع أي مبالغ مالية مباشرة لأي شركة خارج المنصة.</li>
-                                        <li>أي محاولة للدفع خارج النظام المعتمد تُعد مخالفة جسيمة تؤدي إلى الحظر وفرض تعويض مالي كامل.</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- الشرط الخامس -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-user-slash"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط الخامس: إنهاء حساب المتدرب</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>يحق لـ Provance تعليق أو إنهاء حساب المتدرب في حال مخالفة الشروط.</li>
-                                        <li>لا يحق للمتدرب المطالبة باسترجاع أي بيانات أو محتوى بعد الحظر.</li>
-                                        <li>وفي حال كانت المخالفة جسيمة أو متكررة، يتم فرض تعويض مالي مضاعف.</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- قسم شروط الشركات -->
-                            <div class="section-divider">
-                                <i class="fas fa-building"></i>
-                                ثانيًا: الشروط والأحكام الخاصة بالشركات
-                            </div>
-
-                            <!-- الشرط السادس -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-clipboard-check"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط السادس: معايير التدريب والتقييم</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>تلتزم الشركات بتقديم تدريب مهني حقيقي يتوافق مع تخصص المتدرب وأهداف المنصة.</li>
-                                        <li>يُحظر استغلال المتدربين في مهام خارج نطاق التدريب أو تحقيق أي مكاسب مالية مباشرة منهم.</li>
-                                        <li>يجب تقديم تقييمات عادلة وموضوعية تعكس الأداء الحقيقي للمتدرب.</li>
-                                    </ul>
-                                    <div class="obligation-note">
-                                        <p><strong>أي مخالفة تؤدي إلى:</strong></p>
-                                        <ul class="obligation-list">
-                                            <li>حظر الشركة وإدراجها ضمن الشركات المخالفة</li>
-                                            <li>فرض تعويض مالي للمتدرب وProvance</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- الشرط السابع -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-hand-holding-usd"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط السابع: الرسوم والدفع</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>يُمنع على الشركات تحصيل أي مبالغ مالية من المتدربين بشكل مباشر.</li>
-                                        <li>تتم جميع المدفوعات حصريًا من خلال نظام الدفع الداخلي للمنصة.</li>
-                                        <li>أي مخالفة لهذا الشرط تؤدي إلى الحظر الفوري وفرض تعويض مالي كامل.</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- الشرط الثامن -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-building-slash"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط الثامن: إنهاء حساب الشركة</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>يحق لـ Provance تعليق أو إنهاء حساب أي شركة تخالف هذه الشروط دون إشعار مسبق.</li>
-                                        <li>لا يحق للشركة المطالبة باسترجاع أي بيانات أو تعويضات بعد الحظر.</li>
-                                        <li>في حال المخالفات الجسيمة أو المتكررة، يتم فرض تعويض مالي مضاعف.</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- قسم البنود العامة -->
-                            <div class="section-divider">
-                                <i class="fas fa-balance-scale"></i>
-                                البنود العامة (المحايدة)
-                            </div>
-
-                            <!-- الشرط التاسع -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-shield-alt"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط التاسع: سرية البيانات وحماية الخصوصية</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>تلتزم Provance بحماية بيانات المتدربين والشركات وفقًا لسياسات الخصوصية المعتمدة.</li>
-                                        <li>يُحظر على أي طرف استخدام أو مشاركة البيانات خارج نطاق المنصة دون موافقة خطية مسبقة.</li>
-                                        <li>بعد انتهاء التدريب، تصبح Provance الجهة الوحيدة المخوّلة بمشاركة تقييمات المتدربين بما يضمن فرصًا عادلة.</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- الشرط العاشر -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-credit-card"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط العاشر: الرسوم والخدمات الإضافية</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>قد تتضمن بعض الخدمات داخل المنصة رسومًا إضافية.</li>
-                                        <li>يتم توضيح أي رسوم قبل تنفيذ الخدمة.</li>
-                                        <li>أي محاولة للتحايل على النظام المالي تؤدي إلى الحظر وفرض تعويض مالي مباشر.</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- الشرط الحادي عشر -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-gavel"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط الحادي عشر: حقوق Provance وإخلاء المسؤولية</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>تهدف Provance إلى تسهيل التدريب وربط المتدربين بالشركات.</li>
-                                        <li>لا تتحمل المنصة مسؤولية النتائج النهائية للتدريب أو التوظيف.</li>
-                                        <li>تحتفظ Provance بحق تطوير أو تعديل خدماتها في أي وقت.</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- الشرط الثاني عشر -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-globe"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط الثاني عشر: القانون والاختصاص القضائي الدولي</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <ul class="obligation-list">
-                                        <li>تخضع هذه الشروط والأحكام لقوانين الدولة التي يقيم فيها الطرف المستخدم.</li>
-                                        <li>يتم الفصل في أي نزاع أمام الجهة القضائية المختصة في تلك الدولة.</li>
-                                        <li>يُعد هذا العقد ملزمًا وقابلًا للتنفيذ في جميع الدول التي تُستخدم فيها المنصة.</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- الشرط الثالث عشر -->
-                            <div class="contract-obligation">
-                                <div class="obligation-header">
-                                    <div class="obligation-icon">
-                                        <i class="fas fa-file-signature"></i>
-                                    </div>
-                                    <h3 class="obligation-title">الشرط الثالث عشر: الموافقة النهائية</h3>
-                                </div>
-                                <div class="obligation-content">
-                                    <p>باستخدام منصة Provance، يقر كل من المتدرب والشركة بالموافقة الكاملة والنهائية على جميع الشروط والأحكام المذكورة أعلاه والالتزام بها التزامًا قانونيًا كاملًا.</p>
-                                    <div class="obligation-note">
-                                        <p><strong>ملاحظة هامة:</strong> هذه الشروط والأحكام تمثل اتفاقية قانونية ملزمة. يرجى قراءتها بعناية قبل الموافقة.</p>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="form-row">
+                        <div class="field">
+                            <label class="field-label" for="linkedinUrl">
+                                <i class="fab fa-linkedin" style="color:#0077b5"></i> LinkedIn
+                            </label>
+                            <input type="url" id="linkedinUrl" class="field-input" placeholder="https://linkedin.com/in/...">
                         </div>
-
-                        <!-- Agreement Section -->
-                        <div class="contract-agreement">
-                            <div class="agreement-checkbox">
-                                <div class="checkbox-card">
-                                    <div class="checkbox-wrapper">
-                                        <input type="checkbox" id="contractAgreement" required>
-                                        <label for="contractAgreement" class="checkbox-content">
-                                            <div class="checkbox-icon">
-                                                <i class="fas fa-file-contract"></i>
-                                            </div>
-                                            <div class="checkbox-info">
-                                                <h4>أوافق على شروط وأحكام منصة Provance</h4>
-                                                <p>أقر بأنني قد قرأت وفهمت جميع الشروط والأحكام المذكورة أعلاه وأوافق على الالتزام بها بشكل كامل</p>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="final-note">
-                                <i class="fas fa-info-circle"></i>
-                                <p>بعد الموافقة على الشروط والأحكام، سيتم إتمام عملية التسجيل وإنشاء حسابك في منصة Provance</p>
-                            </div>
+                        <div class="field">
+                            <label class="field-label" for="githubUrl">
+                                <i class="fab fa-github"></i> GitHub
+                            </label>
+                            <input type="url" id="githubUrl" class="field-input" placeholder="https://github.com/...">
                         </div>
-                    </section>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="portfolioUrl">
+                            <i class="fas fa-globe"></i> رابط الـ Portfolio أو موقعك الشخصي
+                        </label>
+                        <input type="url" id="portfolioUrl" class="field-input" placeholder="https://your-portfolio.com">
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">
+                            <i class="fas fa-file-pdf"></i> رفع السيرة الذاتية (CV)
+                        </label>
+                        <div class="cv-upload-area" id="cvUploadArea" onclick="document.getElementById('cvFile').click()">
+                            <div class="cv-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                            <div class="cv-text" id="cvText">اضغط لرفع السيرة الذاتية</div>
+                            <div class="cv-hint">PDF / DOC / DOCX (حد أقصى 5 ميجا)</div>
+                        </div>
+                        <input type="file" id="cvFile" accept=".pdf,.doc,.docx" class="hidden">
+                    </div>
                 </div>
 
-                <!-- Form Navigation -->
-                <div class="form-navigation">
-                    <button type="button" id="btnPrev" class="btn-nav btn-prev" onclick="previousStep()">
-                        <i class="fas fa-arrow-right"></i>
-                        <span>السابق</span>
+                <!-- ========== STEP 5: الشروط والأحكام ========== -->
+                <div class="step-section" data-step="5">
+                    <div class="step-header">
+                        <div class="step-icon-big"><i class="fas fa-file-contract"></i></div>
+                        <div class="step-info">
+                            <h2>الشروط والأحكام</h2>
+                            <p>راجع البيانات ووافق على الشروط لإتمام التسجيل</p>
+                        </div>
+                    </div>
+
+                    <div class="summary-section" id="summaryContent" style="margin-bottom:14px;"></div>
+
+                    <div class="contract-section">
+                        <h3>المادة الأولى: التسجيل والاستخدام</h3>
+                        <ul>
+                            <li>التسجيل في منصة <strong>ProVance</strong> مجاني للطلاب</li>
+                            <li>يجب أن تكون البيانات المُدخلة صحيحة وحقيقية</li>
+                            <li>التسجيل ببيانات مزورة يؤدي إلى إيقاف الحساب فوراً</li>
+                            <li>المنصة وسيط بين الطالب والشركة فقط</li>
+                        </ul>
+
+                        <h3>المادة الثانية: التزامات الطالب</h3>
+                        <ul>
+                            <li>الالتزام بمواعيد المقابلات والتدريب</li>
+                            <li>الالتزام بسياسات وقواعد الشركة المُتدرَّب فيها</li>
+                            <li>عدم تسريب أي معلومات سرية للشركة</li>
+                            <li>إعلام الشركة فور الانسحاب أو الغياب لأي ظرف</li>
+                        </ul>
+
+                        <h3>المادة الثالثة: حقوق الطالب</h3>
+                        <ul>
+                            <li>الحصول على فرصة تدريب فعلية</li>
+                            <li>الحصول على شهادة تدريب رسمية</li>
+                            <li>تقديم شكوى للإدارة في حال أي تجاوزات</li>
+                            <li>حماية البيانات الشخصية وخصوصيتها</li>
+                        </ul>
+
+                        <h3>المادة الرابعة: المسؤولية</h3>
+                        <p>منصة <strong>ProVance</strong> غير مسؤولة عن أي خلافات تحدث بين الطالب والشركة، لكنها تتدخل لحل الخلافات وفقاً للشروط المتفق عليها.</p>
+
+                        <h3>المادة الخامسة: الخصوصية</h3>
+                        <p>جميع بياناتك محمية ولا يتم مشاركتها مع أي طرف ثالث. الشركات ترى بياناتك فقط عند تقديمك لطلب تدريب لديها.</p>
+
+                        <h3>المادة السادسة: الإيقاف</h3>
+                        <p>يحق للإدارة إيقاف أي حساب يُخالف الشروط أو يُسجَّل ضده شكاوى متعددة من الشركات.</p>
+                    </div>
+
+                    <div class="field">
+                        <label class="checkbox-card">
+                            <input type="checkbox" id="contractAgreement" required>
+                            <div class="checkbox-card-content">
+                                <strong>أوافق على الشروط والأحكام</strong>
+                                <small>أقر بأنني قرأت جميع البنود ووافقت عليها وأن جميع البيانات المُدخلة صحيحة</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="navigation">
+                    <button type="button" class="btn-nav btn-prev hidden" id="btnPrev" onclick="previousStep()">
+                        <i class="fas fa-arrow-right"></i><span>السابق</span>
                     </button>
-                    <button type="button" id="btnNext" class="btn-nav btn-next" onclick="nextStep()">
-                        <span>التالي</span>
-                        <i class="fas fa-arrow-left"></i>
+                    <button type="button" class="btn-nav btn-next" id="btnNext" onclick="nextStep()">
+                        <span class="txt">التالي</span>
+                        <i class="fas fa-arrow-left arrow"></i>
                     </button>
-                    <button type="submit" id="btnSubmit" class="btn-nav btn-submit hidden">
-                        <i class="fas fa-check"></i>
-                        <span>إتمام التسجيل</span>
+                    <button type="submit" class="btn-nav btn-submit hidden" id="btnSubmit">
+                        <span class="txt">تأكيد التسجيل</span>
+                        <i class="fas fa-check arrow"></i>
+                        <i class="fas fa-spinner fa-spin spinner"></i>
                     </button>
                 </div>
             </form>
-        </div>
-    </main>
 
-    <!-- Footer -->
-    <footer class="page-footer">
-        <div class="footer-content">
-            <p>© 2023 ProVance. جميع الحقوق محفوظة</p>
-            <div class="footer-links">
-                <a href="#">الشروط والأحكام</a>
-                <a href="#">سياسة الخصوصية</a>
-                <a href="#">الدعم والمساعدة</a>
+            <p class="login-link">
+                لديك حساب بالفعل؟ <a href="student-login.html">تسجيل الدخول</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Language Modal -->
+    <div class="mini-modal" id="langModal">
+        <div class="mini-modal-content">
+            <h3 class="mini-modal-title"><i class="fas fa-language"></i> إضافة لغة</h3>
+            <div class="field">
+                <label class="field-label">اسم اللغة</label>
+                <input type="text" id="langName" class="field-input" placeholder="مثال: الإنجليزية">
+            </div>
+            <div class="field">
+                <label class="field-label">المستوى</label>
+                <select id="langLevel" class="field-select">
+                    <option value="beginner">مبتدئ</option>
+                    <option value="intermediate" selected>متوسط</option>
+                    <option value="advanced">متقدم</option>
+                    <option value="native">لغة أم</option>
+                </select>
+            </div>
+            <div class="mini-modal-actions">
+                <button type="button" class="btn-nav btn-prev" onclick="closeLangModal()">إلغاء</button>
+                <button type="button" class="btn-nav btn-next" onclick="saveLang()">إضافة</button>
             </div>
         </div>
-    </footer>
+    </div>
+
+    <!-- Experience Modal -->
+    <div class="mini-modal" id="expModal">
+        <div class="mini-modal-content">
+            <h3 class="mini-modal-title"><i class="fas fa-briefcase"></i> إضافة خبرة</h3>
+            <div class="field">
+                <label class="field-label">المسمى الوظيفي / الدور</label>
+                <input type="text" id="expTitle" class="field-input" placeholder="مثال: مطور ويب متدرب">
+            </div>
+            <div class="field">
+                <label class="field-label">الجهة (شركة / مؤسسة)</label>
+                <input type="text" id="expCompany" class="field-input" placeholder="اسم الشركة">
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label class="field-label">من (شهر/سنة)</label>
+                    <input type="text" id="expStart" class="field-input" placeholder="6/2024">
+                </div>
+                <div class="field">
+                    <label class="field-label">إلى</label>
+                    <input type="text" id="expEnd" class="field-input" placeholder="9/2024 أو حتى الآن">
+                </div>
+            </div>
+            <div class="field">
+                <label class="field-label">الوصف (مهامك وإنجازاتك)</label>
+                <textarea id="expDesc" class="field-textarea" rows="3" placeholder="اكتب باختصار..."></textarea>
+            </div>
+            <div class="mini-modal-actions">
+                <button type="button" class="btn-nav btn-prev" onclick="closeExpModal()">إلغاء</button>
+                <button type="button" class="btn-nav btn-next" onclick="saveExp()">إضافة</button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="student-register-script.js"></script>
+    <script src="supabase-config.js"></script>
     <script>
-        // دالة لعرض ملخص التسجيل
-        function generateSummary() {
-            const summaryContent = document.getElementById('summaryContent');
-            
-            // جمع البيانات من النموذج
-            const photoPreview = document.getElementById('photoPreview').src;
-            const fullName = document.getElementById('fullName').value || 'لم يتم الإدخال';
-            const email = document.getElementById('email').value || 'لم يتم الإدخال';
-            const birthDate = document.getElementById('birthDate').value || 'لم يتم الإدخال';
-            const phone = document.getElementById('phone').value || 'لم يتم الإدخال';
-            const address = document.getElementById('address').value || 'لم يتم الإدخال';
-            const university = document.getElementById('university').value || 'لم يتم الإدخال';
-            const college = document.getElementById('college').value || 'لم يتم الإدخال';
-            const major = document.getElementById('major').value || 'لم يتم الإدخال';
-            const level = document.getElementById('level').value || 'لم يتم الإدخال';
-            const skills = document.getElementById('skills').value || 'لم يتم الإدخال';
+    (function() {
+        'use strict';
+        const TOTAL_STEPS = 5;
+        const STEP_NAMES = ['', 'المعلومات الشخصية', 'المعلومات الأكاديمية', 'المهارات والاهتمامات', 'الخبرات والروابط', 'الشروط والأحكام'];
+        let currentStep = 1;
+        let photoBase64 = null;
+        let cvFile = null;
+        let skills = [];
+        let interests = [];
+        let languages = [];
+        let experiences = [];
 
-            // تحويل مستوى الدراسة
-            let levelText = '';
-            switch(level) {
-                case '1': levelText = 'السنة الأولى'; break;
-                case '2': levelText = 'السنة الثانية'; break;
-                case '3': levelText = 'السنة الثالثة'; break;
-                case '4': levelText = 'السنة الرابعة'; break;
-                case '5': levelText = 'السنة الخامسة'; break;
-                case 'graduate': levelText = 'خريج'; break;
-                default: levelText = 'لم يتم التحديد';
+        function escapeHtml(s) {
+            return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function showErr(id, msg) {
+            const errEl = document.getElementById(id + 'Err');
+            const inp = document.getElementById(id);
+            if (errEl) errEl.textContent = msg;
+            if (inp) {
+                inp.style.borderColor = 'var(--error)';
+                inp.classList.add('shake');
+                setTimeout(() => inp.classList.remove('shake'), 400);
             }
-
-            // إنشاء HTML للملخص
-            const summaryHTML = `
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <div class="label">الصورة الشخصية:</div>
-                        <div class="value">
-                            ${photoPreview && photoPreview !== '' ? 
-                                `<img src="${photoPreview}" alt="صورة الطالب">` : 
-                                'لم يتم رفع صورة'}
-                        </div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="label">الاسم الثلاثي:</div>
-                        <div class="value">${fullName}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="label">البريد الإلكتروني:</div>
-                        <div class="value">${email}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="label">تاريخ الميلاد:</div>
-                        <div class="value">${birthDate}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="label">رقم الهاتف:</div>
-                        <div class="value">${phone}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="label">مكان الإقامة:</div>
-                        <div class="value">${address}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="label">الجامعة:</div>
-                        <div class="value">${university}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="label">الكلية:</div>
-                        <div class="value">${college}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="label">التخصص:</div>
-                        <div class="value">${major}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="label">المستوى الدراسي:</div>
-                        <div class="value">${levelText}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="label">المهارات:</div>
-                        <div class="value">${skills.split('\n').map(skill => `<div>• ${skill}</div>`).join('')}</div>
-                    </div>
-                </div>
-            `;
-
-            summaryContent.innerHTML = summaryHTML;
+        }
+        function clearErr(id) {
+            const errEl = document.getElementById(id + 'Err');
+            const inp = document.getElementById(id);
+            if (errEl) errEl.textContent = '';
+            if (inp) inp.style.borderColor = '';
         }
 
-        // استدعاء دالة توليد الملخص عند الوصول للخطوة الثالثة
-        document.addEventListener('DOMContentLoaded', function() {
-            // إضافة مستمع حدث للانتقال بين الخطوات
-            const nextButton = document.getElementById('btnNext');
-            const prevButton = document.getElementById('btnPrev');
-            
-            // عند النقر على التالي
-            nextButton.addEventListener('click', function() {
-                const currentStep = parseInt(document.getElementById('currentStep').textContent);
-                if (currentStep === 2) { // إذا كنا في الخطوة الثانية وننتقل للثالثة (الملخص)
-                    setTimeout(generateSummary, 300);
+        function updateProgress() {
+            const pct = (currentStep / TOTAL_STEPS) * 100;
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('currentStep').textContent = currentStep;
+            document.getElementById('currentStepName').textContent = STEP_NAMES[currentStep] || '';
+            document.getElementById('btnPrev').classList.toggle('hidden', currentStep === 1);
+            document.getElementById('btnNext').classList.toggle('hidden', currentStep === TOTAL_STEPS);
+            document.getElementById('btnSubmit').classList.toggle('hidden', currentStep !== TOTAL_STEPS);
+        }
+        function showStep(n) {
+            document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
+            document.querySelector(`[data-step="${n}"]`).classList.add('active');
+            currentStep = n;
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (n === 5) generateSummary();
+        }
+
+        function validateStep(n) {
+            let ok = true;
+            if (n === 1) {
+                ['fullName','email','phone','birthDate','city','password','confirmPassword'].forEach(clearErr);
+                const name = document.getElementById('fullName').value.trim();
+                const email = document.getElementById('email').value.trim().toLowerCase();
+                const phone = document.getElementById('phone').value.trim();
+                const birth = document.getElementById('birthDate').value;
+                const city = document.getElementById('city').value.trim();
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+
+                if (!name || name.split(' ').filter(Boolean).length < 2) { showErr('fullName', 'الاسم الثلاثي على الأقل'); ok = false; }
+                if (!window.ProVance.isValidEmail(email)) { showErr('email', 'البريد غير صحيح'); ok = false; }
+                if (!window.ProVance.isValidEgyptianPhone(phone)) { showErr('phone', 'رقم هاتف مصري صحيح (01xxxxxxxxx)'); ok = false; }
+                if (!birth) { showErr('birthDate', 'تاريخ الميلاد مطلوب'); ok = false; }
+                else {
+                    const age = calcAge(birth);
+                    if (age < 14) { showErr('birthDate', 'يجب أن يكون عمرك 14 سنة على الأقل'); ok = false; }
+                    if (age > 80) { showErr('birthDate', 'تاريخ غير صحيح'); ok = false; }
                 }
-            });
-            
-            // عند النقر على السابق
-            prevButton.addEventListener('click', function() {
-                const currentStep = parseInt(document.getElementById('currentStep').textContent);
-                if (currentStep === 4) { // إذا كنا في الخطوة الرابعة (العقود) ونعود للثالثة (الملخص)
-                    setTimeout(generateSummary, 300);
+                if (!city) { showErr('city', 'المدينة مطلوبة'); ok = false; }
+                if (password.length < 8) { showErr('password', 'كلمة المرور 8 أحرف على الأقل'); ok = false; }
+                if (password !== confirmPassword) { showErr('confirmPassword', 'كلمتا المرور غير متطابقتين'); ok = false; }
+            }
+            else if (n === 2) {
+                ['educationLevel','university','faculty','studyYear'].forEach(clearErr);
+                if (!document.getElementById('educationLevel').value) { showErr('educationLevel', 'المرحلة الدراسية مطلوبة'); ok = false; }
+                if (!document.getElementById('university').value.trim()) { showErr('university', 'الجامعة مطلوبة'); ok = false; }
+                if (!document.getElementById('faculty').value.trim()) { showErr('faculty', 'الكلية مطلوبة'); ok = false; }
+                if (!document.getElementById('studyYear').value) { showErr('studyYear', 'سنة الدراسة مطلوبة'); ok = false; }
+            }
+            else if (n === 3) {
+                clearErr('skills'); clearErr('interests');
+                if (skills.length === 0) { showErr('skills', 'أضف مهارة واحدة على الأقل'); ok = false; }
+                if (interests.length === 0) { showErr('interests', 'أضف مجال اهتمام واحد على الأقل'); ok = false; }
+            }
+            else if (n === 5) {
+                if (!document.getElementById('contractAgreement').checked) {
+                    window.ProVance.showToast('يجب الموافقة على الشروط والأحكام', 'warning');
+                    ok = false;
                 }
+            }
+            return ok;
+        }
+
+        window.nextStep = () => {
+            if (!validateStep(currentStep)) return;
+            if (currentStep < TOTAL_STEPS) showStep(currentStep + 1);
+        };
+        window.previousStep = () => {
+            if (currentStep > 1) showStep(currentStep - 1);
+        };
+
+        // Photo upload
+        document.getElementById('studentPhoto').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                window.ProVance.showToast('الحجم أكبر من 2 ميجا', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                photoBase64 = ev.target.result;
+                document.getElementById('photoCircle').innerHTML = `
+                    <img src="${photoBase64}" alt="Photo">
+                    <div class="photo-circle-overlay"><i class="fas fa-cloud-upload-alt"></i></div>
+                `;
+                document.getElementById('photoCircle').onclick = () => document.getElementById('studentPhoto').click();
+                document.getElementById('photoRemoveBtn').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+        window.removePhoto = () => {
+            photoBase64 = null;
+            document.getElementById('studentPhoto').value = '';
+            document.getElementById('photoCircle').innerHTML = `
+                <i class="fas fa-camera"></i>
+                <div class="photo-circle-overlay"><i class="fas fa-cloud-upload-alt"></i></div>
+            `;
+            document.getElementById('photoCircle').onclick = () => document.getElementById('studentPhoto').click();
+            document.getElementById('photoRemoveBtn').classList.add('hidden');
+        };
+
+        // Age calculation
+        function calcAge(birthDate) {
+            const b = new Date(birthDate);
+            const t = new Date();
+            let age = t.getFullYear() - b.getFullYear();
+            const m = t.getMonth() - b.getMonth();
+            if (m < 0 || (m === 0 && t.getDate() < b.getDate())) age--;
+            return age;
+        }
+        document.getElementById('birthDate').addEventListener('change', (e) => {
+            const display = document.getElementById('ageDisplay');
+            if (e.target.value) {
+                const age = calcAge(e.target.value);
+                display.innerHTML = `<i class="fas fa-info-circle"></i> العمر: <strong>${age} سنة</strong>`;
+                display.classList.add('show');
+            } else display.classList.remove('show');
+        });
+
+        // National ID - Numbers only
+        document.getElementById('nationalId').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+
+        // Toggle password
+        document.querySelectorAll('.toggle-pass').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = document.getElementById(btn.dataset.target);
+                const isPass = target.type === 'password';
+                target.type = isPass ? 'text' : 'password';
+                btn.innerHTML = `<i class="fas fa-${isPass ? 'eye-slash' : 'eye'}"></i>`;
             });
         });
+
+        function checkPasswordMatch() {
+            const p = document.getElementById('password').value;
+            const c = document.getElementById('confirmPassword').value;
+            const m = document.getElementById('passwordMatch');
+            if (!c) { m.innerHTML = ''; m.className = 'password-match'; return; }
+            if (p === c) {
+                m.innerHTML = '<i class="fas fa-check"></i> كلمتا المرور متطابقتان';
+                m.className = 'password-match match';
+            } else {
+                m.innerHTML = '<i class="fas fa-times"></i> كلمتا المرور غير متطابقتين';
+                m.className = 'password-match nomatch';
+            }
+        }
+        document.getElementById('password').addEventListener('input', checkPasswordMatch);
+        document.getElementById('confirmPassword').addEventListener('input', checkPasswordMatch);
+
+        // Skills
+        window.addSkill = () => {
+            const inp = document.getElementById('newSkill');
+            const val = inp.value.trim();
+            if (!val) return;
+            if (skills.includes(val)) { window.ProVance.showToast('موجودة بالفعل', 'warning'); return; }
+            skills.push(val);
+            inp.value = '';
+            renderSkills();
+        };
+        function renderSkills() {
+            const list = document.getElementById('skillsList');
+            if (skills.length === 0) {
+                list.innerHTML = '<p class="empty-tags">لم تتم إضافة مهارات بعد</p>';
+                return;
+            }
+            list.innerHTML = skills.map((s, i) => `
+                <span class="field-tag">
+                    ${escapeHtml(s)}
+                    <button type="button" class="field-tag-remove" onclick="removeSkill(${i})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </span>
+            `).join('');
+        }
+        window.removeSkill = (i) => { skills.splice(i, 1); renderSkills(); };
+        document.getElementById('newSkill').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); addSkill(); }
+        });
+
+        // Interests
+        window.addInterest = () => {
+            const inp = document.getElementById('newInterest');
+            const val = inp.value.trim();
+            if (!val) return;
+            if (interests.includes(val)) { window.ProVance.showToast('موجود بالفعل', 'warning'); return; }
+            interests.push(val);
+            inp.value = '';
+            renderInterests();
+        };
+        function renderInterests() {
+            const list = document.getElementById('interestsList');
+            if (interests.length === 0) {
+                list.innerHTML = '<p class="empty-tags">لم تتم إضافة مجالات بعد</p>';
+                return;
+            }
+            list.innerHTML = interests.map((s, i) => `
+                <span class="field-tag">
+                    ${escapeHtml(s)}
+                    <button type="button" class="field-tag-remove" onclick="removeInterest(${i})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </span>
+            `).join('');
+        }
+        window.removeInterest = (i) => { interests.splice(i, 1); renderInterests(); };
+        document.getElementById('newInterest').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); addInterest(); }
+        });
+
+        // Languages
+        const LANG_LEVEL_LABELS = {
+            'beginner': 'مبتدئ',
+            'intermediate': 'متوسط',
+            'advanced': 'متقدم',
+            'native': 'لغة أم'
+        };
+        window.openLangModal = () => {
+            document.getElementById('langName').value = '';
+            document.getElementById('langLevel').value = 'intermediate';
+            document.getElementById('langModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+        window.closeLangModal = () => {
+            document.getElementById('langModal').classList.remove('active');
+            document.body.style.overflow = '';
+        };
+        window.saveLang = () => {
+            const name = document.getElementById('langName').value.trim();
+            const level = document.getElementById('langLevel').value;
+            if (!name) { window.ProVance.showToast('اكتب اسم اللغة', 'warning'); return; }
+            languages.push({ name, level });
+            renderLanguages();
+            closeLangModal();
+        };
+        function renderLanguages() {
+            const list = document.getElementById('languagesList');
+            if (languages.length === 0) {
+                list.innerHTML = '<p class="empty-tags">لم تتم إضافة لغات بعد</p>';
+                return;
+            }
+            list.innerHTML = languages.map((l, i) => `
+                <div class="language-card">
+                    <i class="fas fa-globe" style="color:var(--primary)"></i>
+                    <span class="lang-name">${escapeHtml(l.name)}</span>
+                    <span class="lang-level">${LANG_LEVEL_LABELS[l.level] || l.level}</span>
+                    <button type="button" class="btn-small danger" onclick="removeLanguage(${i})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+        window.removeLanguage = (i) => { languages.splice(i, 1); renderLanguages(); };
+
+        // Experiences
+        window.openExpModal = () => {
+            ['expTitle','expCompany','expStart','expEnd','expDesc'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('expModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+        window.closeExpModal = () => {
+            document.getElementById('expModal').classList.remove('active');
+            document.body.style.overflow = '';
+        };
+        window.saveExp = () => {
+            const title = document.getElementById('expTitle').value.trim();
+            const company = document.getElementById('expCompany').value.trim();
+            const start = document.getElementById('expStart').value.trim();
+            const end = document.getElementById('expEnd').value.trim();
+            const desc = document.getElementById('expDesc').value.trim();
+            if (!title || !company) { window.ProVance.showToast('املأ المسمى والجهة على الأقل', 'warning'); return; }
+            experiences.push({ title, company, start, end, description: desc });
+            renderExperiences();
+            closeExpModal();
+        };
+        function renderExperiences() {
+            const list = document.getElementById('experiencesList');
+            if (experiences.length === 0) {
+                list.innerHTML = '<p class="empty-tags">لم تتم إضافة خبرات بعد</p>';
+                return;
+            }
+            list.innerHTML = experiences.map((e, i) => `
+                <div class="experience-card">
+                    <div class="experience-card-header">
+                        <span class="experience-card-title">${escapeHtml(e.title)}</span>
+                        <button type="button" class="btn-small danger" onclick="removeExp(${i})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="experience-card-meta">
+                        <i class="fas fa-building"></i> ${escapeHtml(e.company)}
+                        ${e.start || e.end ? `&nbsp;|&nbsp;<i class="fas fa-calendar"></i> ${escapeHtml(e.start || '')} - ${escapeHtml(e.end || 'الآن')}` : ''}
+                    </div>
+                    ${e.description ? `<div class="experience-card-desc">${escapeHtml(e.description)}</div>` : ''}
+                </div>
+            `).join('');
+        }
+        window.removeExp = (i) => { experiences.splice(i, 1); renderExperiences(); };
+
+        // CV Upload
+        document.getElementById('cvFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) {
+                window.ProVance.showToast('الحجم أكبر من 5 ميجا', 'error');
+                return;
+            }
+            cvFile = file;
+            const area = document.getElementById('cvUploadArea');
+            const text = document.getElementById('cvText');
+            area.classList.add('has-file');
+            text.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success)"></i> ${escapeHtml(file.name)}`;
+        });
+
+        // Summary
+        function generateSummary() {
+            const v = (id) => document.getElementById(id)?.value || '-';
+            const sumContent = document.getElementById('summaryContent');
+            const gender = document.querySelector('input[name="gender"]:checked')?.value;
+            const age = v('birthDate') !== '-' ? calcAge(v('birthDate')) : '-';
+            const eduLevel = {
+                'high_school': 'طالب ثانوية', 'diploma': 'دبلوم',
+                'university': 'طالب جامعي', 'graduate': 'خريج', 'postgraduate': 'دراسات عليا'
+            }[v('educationLevel')] || v('educationLevel');
+
+            sumContent.innerHTML = `
+                <div class="summary-block">
+                    <div class="summary-block-title"><i class="fas fa-user"></i> المعلومات الشخصية</div>
+                    ${photoBase64 ? `<div style="text-align:center;margin-bottom:12px"><img src="${photoBase64}" style="width:80px;height:80px;border-radius:50%;object-fit:cover"></div>` : ''}
+                    <div class="summary-row"><span class="label">الاسم</span><span class="value">${escapeHtml(v('fullName'))}</span></div>
+                    <div class="summary-row"><span class="label">البريد</span><span class="value" style="direction:ltr">${escapeHtml(v('email'))}</span></div>
+                    <div class="summary-row"><span class="label">الهاتف</span><span class="value" style="direction:ltr">${escapeHtml(v('phone'))}</span></div>
+                    <div class="summary-row"><span class="label">العمر</span><span class="value">${age} سنة</span></div>
+                    <div class="summary-row"><span class="label">النوع</span><span class="value">${gender === 'female' ? 'أنثى' : 'ذكر'}</span></div>
+                    <div class="summary-row"><span class="label">المدينة</span><span class="value">${escapeHtml(v('city'))}</span></div>
+                </div>
+                <div class="summary-block">
+                    <div class="summary-block-title"><i class="fas fa-graduation-cap"></i> المعلومات الأكاديمية</div>
+                    <div class="summary-row"><span class="label">المرحلة</span><span class="value">${eduLevel}</span></div>
+                    <div class="summary-row"><span class="label">الجامعة</span><span class="value">${escapeHtml(v('university'))}</span></div>
+                    <div class="summary-row"><span class="label">الكلية</span><span class="value">${escapeHtml(v('faculty'))}</span></div>
+                    ${v('major')!=='-' && v('major') ? `<div class="summary-row"><span class="label">التخصص</span><span class="value">${escapeHtml(v('major'))}</span></div>` : ''}
+                    <div class="summary-row"><span class="label">سنة الدراسة</span><span class="value">${v('studyYear')==='graduated' ? 'متخرج' : 'السنة ' + v('studyYear')}</span></div>
+                </div>
+                <div class="summary-block">
+                    <div class="summary-block-title"><i class="fas fa-tools"></i> المهارات والاهتمامات</div>
+                    <div class="summary-row"><span class="label">المهارات</span><span class="value">${skills.map(escapeHtml).join('، ')}</span></div>
+                    ${languages.length > 0 ? `<div class="summary-row"><span class="label">اللغات</span><span class="value">${languages.map(l => escapeHtml(l.name) + ' (' + LANG_LEVEL_LABELS[l.level] + ')').join('، ')}</span></div>` : ''}
+                    <div class="summary-row"><span class="label">المجالات المهتم بها</span><span class="value">${interests.map(escapeHtml).join('، ')}</span></div>
+                </div>
+                ${experiences.length > 0 || v('linkedinUrl')!=='-' || cvFile ? `
+                <div class="summary-block">
+                    <div class="summary-block-title"><i class="fas fa-briefcase"></i> الخبرات والروابط</div>
+                    ${experiences.length > 0 ? `<div class="summary-row"><span class="label">الخبرات</span><span class="value">${experiences.length} خبرة</span></div>` : ''}
+                    ${v('linkedinUrl') && v('linkedinUrl')!=='-' ? `<div class="summary-row"><span class="label">LinkedIn</span><span class="value">✓</span></div>` : ''}
+                    ${v('githubUrl') && v('githubUrl')!=='-' ? `<div class="summary-row"><span class="label">GitHub</span><span class="value">✓</span></div>` : ''}
+                    ${cvFile ? `<div class="summary-row"><span class="label">السيرة الذاتية</span><span class="value">✓ ${escapeHtml(cvFile.name)}</span></div>` : ''}
+                </div>
+                ` : ''}
+            `;
+        }
+
+        document.getElementById('studentRegisterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!validateStep(5)) return;
+            const btn = document.getElementById('btnSubmit');
+            btn.classList.add('loading');
+            btn.disabled = true;
+            const v = (id) => document.getElementById(id)?.value?.trim() || null;
+            const gender = document.querySelector('input[name="gender"]:checked')?.value;
+
+            const data = {
+                full_name: v('fullName'),
+                email: v('email')?.toLowerCase(),
+                phone: v('phone'),
+                birth_date: v('birthDate'),
+                gender,
+                national_id: v('nationalId'),
+                photo: photoBase64,
+                country: v('country'),
+                city: v('city'),
+                address: v('address'),
+                education_level: v('educationLevel'),
+                university: v('university'),
+                faculty: v('faculty'),
+                major: v('major'),
+                study_year: v('studyYear'),
+                graduation_year: v('graduationYear') ? parseInt(v('graduationYear')) : null,
+                gpa: v('gpa'),
+                skills: skills,
+                languages: languages,
+                experience: experiences,
+                interested_fields: interests,
+                linkedin: v('linkedinUrl'),
+                github: v('githubUrl'),
+                portfolio: v('portfolioUrl'),
+                status: 'active',
+                training_status: 'looking'
+            };
+            const password = document.getElementById('password').value;
+
+            try {
+                const sb = window.ProVance.sb;
+                const { data: authData, error: authErr } = await sb.auth.signUp({
+                    email: data.email,
+                    password: password
+                });
+                if (authErr) {
+                    let msg = 'حدث خطأ، حاول مرة أخرى';
+                    if (authErr.message.includes('already registered')) msg = 'هذا البريد مسجل بالفعل';
+                    window.ProVance.showToast(msg, 'error');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Upload CV if exists
+                if (cvFile && authData.user) {
+                    try {
+                        const fileName = `cv-${authData.user.id}-${Date.now()}.${cvFile.name.split('.').pop()}`;
+                        const { data: uploadData, error: uploadErr } = await sb.storage
+                            .from('student-files')
+                            .upload(fileName, cvFile);
+                        if (!uploadErr && uploadData) {
+                            const { data: urlData } = sb.storage.from('student-files').getPublicUrl(fileName);
+                            data.cv_url = urlData.publicUrl;
+                        }
+                    } catch (cvErr) {
+                        console.warn('CV upload failed:', cvErr);
+                    }
+                }
+
+                const { error: profileErr } = await sb.from('student').insert({
+                    user_id: authData.user.id,
+                    ...data
+                });
+
+                if (profileErr) {
+                    console.error(profileErr);
+                    window.ProVance.showToast('خطأ في حفظ البيانات: ' + profileErr.message, 'error');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    return;
+                }
+
+                localStorage.setItem('studentName', data.full_name);
+                localStorage.setItem('userEmail', data.email);
+                localStorage.setItem('userType', 'student');
+                window.ProVance.showToast('تم إنشاء حسابك بنجاح! 🎉', 'success');
+                setTimeout(() => window.location.href = 'student-internship.html', 1800);
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('خطأ في الاتصال', 'error');
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        });
+
+        updateProgress();
+    })();
     </script>
 </body>
 </html>
