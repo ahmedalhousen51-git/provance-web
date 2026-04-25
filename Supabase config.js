@@ -413,6 +413,48 @@
         }
     }
 
+    /** إرسال إشعار لكل الأدمن النشطين */
+    async function notifyAdmins({ title, message, type = 'info', relatedType, relatedId, actionUrl }) {
+        const sb = getSupabase();
+        if (!sb) return false;
+
+        try {
+            // جلب كل الأدمن النشطين
+            const { data: admins, error: adminsErr } = await sb.from('admins')
+                .select('user_id')
+                .eq('is_active', true);
+
+            if (adminsErr) {
+                console.error('فشل جلب الأدمن:', adminsErr);
+                return false;
+            }
+
+            if (!admins || admins.length === 0) {
+                console.warn('لا يوجد أدمن نشط');
+                return false;
+            }
+
+            // إنشاء إشعار لكل أدمن
+            const notifications = admins.map(admin => ({
+                user_id: admin.user_id,
+                user_type: 'admin',
+                title,
+                message,
+                type,
+                related_type: relatedType || null,
+                related_id: relatedId || null,
+                action_url: actionUrl || null
+            }));
+
+            const { error } = await sb.from('notifications').insert(notifications);
+            if (error) console.warn('فشل إرسال الإشعارات للأدمن:', error);
+            return !error;
+        } catch (err) {
+            console.error('notifyAdmins error:', err);
+            return false;
+        }
+    }
+
     /** عدد الإشعارات غير المقروءة */
     async function getUnreadNotificationsCount(userId) {
         const sb = getSupabase();
@@ -562,6 +604,7 @@
 
         // Notifications
         sendNotification,
+        notifyAdmins,
         getUnreadNotificationsCount
     };
 
