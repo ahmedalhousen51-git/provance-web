@@ -1,573 +1,686 @@
-/* ============================================================
- * ProVance - Supabase Configuration (Professional)
- * ============================================================
- * ملف مشترك بين كل صفحات المشروع
- * استخدمه في أي HTML كده:
- *
- *   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
- *   <script src="supabase-config.js"></script>
- *
- * بيوفرلك:
- *   - Supabase client جاهز (sb)
- *   - دوال Auth (requireCompanyAuth, requireStudentAuth, requireAdminAuth)
- *   - دوال Toast للإشعارات (showToast)
- *   - دالة logout موحدة
- *   - دوال Helper متنوعة
- * ============================================================ */
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>دخول الإدارة - ProVance</title>
+    <meta name="description" content="بوابة دخول الإدارة في منصة ProVance">
 
-(function () {
-    'use strict';
+    <!-- Preconnects -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
 
-    // ============================================================
-    // Configuration
-    // ============================================================
-    const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
-    // ============================================================
-    // Supabase Client (Singleton)
-    // ============================================================
-    let _sbInstance = null;
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    function getSupabase() {
-        if (_sbInstance) return _sbInstance;
-
-        if (typeof supabase === 'undefined' || !supabase.createClient) {
-            console.error('❌ مكتبة Supabase مش محمّلة. ضيف ده قبل supabase-config.js:');
-            console.error('   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>');
-            return null;
+    <style>
+        :root {
+            --primary: #1e293b;
+            --primary-dark: #0f172a;
+            --accent: #ef4444;
+            --accent-light: #fee2e2;
+            --gold: #fbbf24;
+            --bg: #020617;
+            --card: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.1);
+            --text: #ffffff;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --error: #ef4444;
         }
 
-        _sbInstance = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true,
-                storage: window.localStorage
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body { min-height: 100vh; }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        .bg-anim {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(239,68,68,0.15), transparent 45%),
+                radial-gradient(circle at 80% 80%, rgba(251,191,36,0.12), transparent 45%),
+                var(--bg);
+        }
+
+        .bg-anim::before,
+        .bg-anim::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.3;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .bg-anim::before {
+            width: 450px; height: 450px;
+            background: var(--accent);
+            top: -120px; right: -120px;
+        }
+
+        .bg-anim::after {
+            width: 400px; height: 400px;
+            background: var(--gold);
+            bottom: -120px; left: -120px;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0,0); }
+            33% { transform: translate(60px, 40px); }
+            66% { transform: translate(-40px, 80px); }
+        }
+
+        /* Card */
+        .admin-card {
+            width: 100%;
+            max-width: 460px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px 36px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            animation: cardIn 0.6s ease-out;
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Back Link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--text); }
+
+        /* Logo */
+        .logo-box {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .logo-icon {
+            width: 80px; height: 80px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, var(--accent), #dc2626);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.2rem;
+            color: #fff;
+            box-shadow: 0 15px 40px rgba(239,68,68,0.35);
+            animation: pulse 2.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            background: rgba(239,68,68,0.15);
+            color: var(--accent);
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 1.7rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Form */
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .field label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .input-wrap { position: relative; }
+
+        .field input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.04);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+            direction: ltr;
+            text-align: right;
+        }
+
+        .field input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .field input::placeholder {
+            color: rgba(148,163,184,0.5);
+            text-align: right;
+        }
+
+        .toggle-pass {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 6px;
+            font-size: 1rem;
+        }
+
+        .err-msg {
+            display: block;
+            color: var(--error);
+            font-size: 0.82rem;
+            margin-top: 6px;
+            min-height: 18px;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--accent), #dc2626);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.05rem;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(239,68,68,0.35);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .submit-btn .spinner { display: none; }
+        .submit-btn.loading .txt,
+        .submit-btn.loading .arrow { display: none; }
+        .submit-btn.loading .spinner { display: inline-block; }
+
+        /* Security Notice */
+        .security-notice {
+            margin-top: 22px;
+            padding: 14px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 12px;
+            display: flex;
+            gap: 10px;
+            font-size: 0.83rem;
+            line-height: 1.5;
+            color: var(--text-muted);
+        }
+
+        .security-notice i {
+            color: var(--accent);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Locked Out */
+        .locked-box {
+            display: none;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .locked-box.show { display: block; }
+
+        .locked-box .lock-icon {
+            width: 70px; height: 70px;
+            margin: 0 auto 16px;
+            background: rgba(239,68,68,0.15);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            color: var(--accent);
+        }
+
+        .locked-box h3 {
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+
+        .locked-box .countdown {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin: 14px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .admin-card { padding: 30px 20px; }
+            h1 { font-size: 1.4rem; }
+            .logo-icon { width: 70px; height: 70px; font-size: 1.9rem; }
+        }
+
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.35s; }
+    </style>
+</head>
+<body>
+    <div class="bg-anim"></div>
+
+    <div class="admin-card" id="loginCard">
+        <a href="index.html" class="back-link">
+            <i class="fas fa-arrow-right"></i>
+            <span>الرئيسية</span>
+        </a>
+
+        <div class="logo-box">
+            <div class="logo-icon">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            <span class="brand-badge">
+                <i class="fas fa-lock"></i>
+                منطقة محمية
+            </span>
+            <h1>دخول الإدارة</h1>
+            <p class="subtitle">
+                سجّل الدخول ببيانات حساب الإدارة المعتمد
+            </p>
+        </div>
+
+        <form id="loginForm" novalidate>
+            <div class="field">
+                <label for="email">
+                    <i class="fas fa-envelope"></i>
+                    البريد الإلكتروني
+                </label>
+                <div class="input-wrap">
+                    <input type="email" id="email" placeholder="admin@provance.com" autocomplete="username" required>
+                </div>
+                <span class="err-msg" id="emailErr"></span>
+            </div>
+
+            <div class="field">
+                <label for="password">
+                    <i class="fas fa-key"></i>
+                    كلمة المرور
+                </label>
+                <div class="input-wrap">
+                    <input type="password" id="password" placeholder="أدخل كلمة المرور" autocomplete="current-password" required>
+                    <button type="button" class="toggle-pass" id="togglePass" aria-label="إظهار/إخفاء كلمة المرور">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <span class="err-msg" id="passwordErr"></span>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span class="txt">دخول</span>
+                <i class="fas fa-arrow-left arrow"></i>
+                <i class="fas fa-spinner fa-spin spinner"></i>
+            </button>
+        </form>
+
+        <div class="security-notice">
+            <i class="fas fa-shield-alt"></i>
+            <div>
+                <strong>ملاحظة أمنية:</strong> هذه منطقة محمية للإدارة فقط. تتم مراقبة جميع محاولات الدخول. بعد 5 محاولات خاطئة، سيتم قفل الحساب مؤقتاً.
+            </div>
+        </div>
+    </div>
+
+    <!-- Locked Out Card -->
+    <div class="admin-card locked-box" id="lockedBox">
+        <div class="lock-icon">
+            <i class="fas fa-lock"></i>
+        </div>
+        <h3>تم قفل الدخول مؤقتاً</h3>
+        <p class="subtitle">
+            تم تجاوز عدد المحاولات المسموح بها.<br>
+            يرجى الانتظار قبل المحاولة مرة أخرى.
+        </p>
+        <div class="countdown" id="lockCountdown">10:00</div>
+        <a href="index.html" class="back-link" style="margin-top:10px;">
+            <i class="fas fa-arrow-right"></i>
+            العودة للرئيسية
+        </a>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const form      = document.getElementById('loginForm');
+        const loginCard = document.getElementById('loginCard');
+        const lockedBox = document.getElementById('lockedBox');
+        const emailInp  = document.getElementById('email');
+        const passInp   = document.getElementById('password');
+        const togglePass = document.getElementById('togglePass');
+        const submitBtn = document.getElementById('submitBtn');
+
+        const MAX_ATTEMPTS   = 5;
+        const LOCKOUT_MS     = 10 * 60 * 1000;  // 10 دقائق
+        const LS_ATTEMPTS    = 'admin_attempts';
+        const LS_LOCK_UNTIL  = 'admin_lock_until';
+
+        // ============================================================
+        // Lockout Management
+        // ============================================================
+        function getLockUntil() {
+            const v = parseInt(localStorage.getItem(LS_LOCK_UNTIL) || '0');
+            return isNaN(v) ? 0 : v;
+        }
+
+        function isLocked() {
+            return getLockUntil() > Date.now();
+        }
+
+        function getAttempts() {
+            const v = parseInt(localStorage.getItem(LS_ATTEMPTS) || '0');
+            return isNaN(v) ? 0 : v;
+        }
+
+        function incrementAttempts() {
+            const n = getAttempts() + 1;
+            localStorage.setItem(LS_ATTEMPTS, String(n));
+            if (n >= MAX_ATTEMPTS) {
+                localStorage.setItem(LS_LOCK_UNTIL, String(Date.now() + LOCKOUT_MS));
+                showLocked();
+            }
+            return n;
+        }
+
+        function resetAttempts() {
+            localStorage.removeItem(LS_ATTEMPTS);
+            localStorage.removeItem(LS_LOCK_UNTIL);
+        }
+
+        function showLocked() {
+            loginCard.style.display = 'none';
+            lockedBox.classList.add('show');
+            updateCountdown();
+        }
+
+        function updateCountdown() {
+            const until = getLockUntil();
+            const ms = until - Date.now();
+            const el = document.getElementById('lockCountdown');
+            if (!el) return;
+            if (ms <= 0) {
+                resetAttempts();
+                lockedBox.classList.remove('show');
+                loginCard.style.display = 'block';
+                return;
+            }
+            const mm = Math.floor(ms / 60000);
+            const ss = Math.floor((ms % 60000) / 1000);
+            el.textContent = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+            setTimeout(updateCountdown, 1000);
+        }
+
+        // ============================================================
+        // Validation Helpers
+        // ============================================================
+        function showErr(inputId, msg) {
+            document.getElementById(inputId + 'Err').textContent = msg;
+            const inp = document.getElementById(inputId);
+            inp.style.borderColor = 'var(--error)';
+            inp.classList.add('shake');
+            setTimeout(() => inp.classList.remove('shake'), 400);
+        }
+
+        function clearErr(inputId) {
+            document.getElementById(inputId + 'Err').textContent = '';
+            document.getElementById(inputId).style.borderColor = '';
+        }
+
+        // ============================================================
+        // Toggle Password
+        // ============================================================
+        togglePass.addEventListener('click', () => {
+            const isPass = passInp.type === 'password';
+            passInp.type = isPass ? 'text' : 'password';
+            togglePass.innerHTML = `<i class="fas fa-${isPass ? 'eye-slash' : 'eye'}"></i>`;
+        });
+
+        // ============================================================
+        // On Load: Check if already logged in
+        // ============================================================
+        async function checkSession() {
+            if (!window.ProVance) return;
+            const session = await window.ProVance.getSession();
+            if (!session) return;
+
+            // عنده جلسة - نتأكد إنه أدمن فعلاً
+            const sb = window.ProVance.sb;
+            const { data: admin } = await sb.from('admins')
+                .select('user_id, is_active')
+                .eq('user_id', session.user.id)
+                .eq('is_active', true)
+                .maybeSingle();
+
+            if (admin) {
+                // بالفعل أدمن مسجل - خش على الـ dashboard
+                window.location.href = 'admin-dashboard.html';
+            } else {
+                // مسجل دخول لكن مش أدمن - اعمل signOut
+                await sb.auth.signOut();
+            }
+        }
+
+        // ============================================================
+        // Submit Handler
+        // ============================================================
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (isLocked()) {
+                showLocked();
+                return;
+            }
+
+            const email = emailInp.value.trim().toLowerCase();
+            const password = passInp.value;
+
+            clearErr('email');
+            clearErr('password');
+
+            let ok = true;
+            if (!email) {
+                showErr('email', 'البريد الإلكتروني مطلوب');
+                ok = false;
+            } else if (!window.ProVance.isValidEmail(email)) {
+                showErr('email', 'صيغة البريد غير صحيحة');
+                ok = false;
+            }
+            if (!password) {
+                showErr('password', 'كلمة المرور مطلوبة');
+                ok = false;
+            } else if (password.length < 6) {
+                showErr('password', 'كلمة المرور 6 أحرف على الأقل');
+                ok = false;
+            }
+            if (!ok) return;
+
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+
+            try {
+                const sb = window.ProVance.sb;
+                if (!sb) throw new Error('مكتبة Supabase غير محمّلة');
+
+                // 1. تسجيل دخول Supabase Auth
+                const { data: authData, error: authErr } = await sb.auth.signInWithPassword({
+                    email, password
+                });
+
+                if (authErr) {
+                    incrementAttempts();
+                    const attemptsLeft = MAX_ATTEMPTS - getAttempts();
+
+                    let msg = 'البريد أو كلمة المرور غير صحيحة';
+                    if (authErr.message.includes('Email not confirmed')) {
+                        msg = 'يرجى تأكيد البريد الإلكتروني أولاً';
+                    } else if (authErr.message.includes('Too many')) {
+                        msg = 'محاولات كثيرة جداً، انتظر قليلاً';
+                    }
+
+                    if (attemptsLeft > 0 && attemptsLeft < 3) {
+                        msg += ` (${attemptsLeft} محاولات متبقية)`;
+                    }
+
+                    window.ProVance.showToast(msg, 'error');
+                    showErr('email', ' ');
+                    showErr('password', ' ');
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                // 2. التحقق إن المستخدم فعلاً أدمن
+                const { data: admin, error: adminErr } = await sb
+                    .from('admins')
+                    .select('user_id, full_name, role, permissions, is_active')
+                    .eq('user_id', authData.user.id)
+                    .maybeSingle();
+
+                if (adminErr || !admin) {
+                    // ليس أدمن - اعمل signOut
+                    await sb.auth.signOut();
+                    incrementAttempts();
+                    window.ProVance.showToast('هذا الحساب ليس له صلاحية إدارية', 'error');
+                    showErr('email', 'غير مصرح لك بالدخول هنا');
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                if (!admin.is_active) {
+                    await sb.auth.signOut();
+                    window.ProVance.showToast('حساب الإدارة موقوف حالياً', 'error');
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                // 3. تحديث آخر دخول
+                await sb.from('admins')
+                    .update({ last_login: new Date().toISOString() })
+                    .eq('user_id', admin.user_id);
+
+                // 4. حفظ بيانات للصفحات الأخرى
+                localStorage.setItem('userType', 'admin');
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userName', admin.full_name || 'مسؤول');
+                localStorage.setItem('userRole', admin.role || 'admin');
+                localStorage.setItem('userId', admin.user_id);
+
+                resetAttempts();
+
+                window.ProVance.showToast(`مرحباً ${admin.full_name}! جاري الدخول...`, 'success');
+
+                setTimeout(() => {
+                    window.location.href = 'admin-dashboard.html';
+                }, 1200);
+
+            } catch (err) {
+                console.error('Admin login error:', err);
+                window.ProVance.showToast('خطأ في الاتصال، تحقق من الإنترنت', 'error');
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
             }
         });
 
-        return _sbInstance;
-    }
+        // Real-time validation
+        emailInp.addEventListener('input', () => clearErr('email'));
+        passInp.addEventListener('input',  () => clearErr('password'));
 
-
-    // ============================================================
-    // Auth Helpers
-    // ============================================================
-
-    /** ياخد الجلسة الحالية */
-    async function getSession() {
-        const sb = getSupabase();
-        if (!sb) return null;
-        try {
-            const { data: { session } } = await sb.auth.getSession();
-            return session;
-        } catch (err) {
-            console.error('getSession error:', err);
-            return null;
-        }
-    }
-
-    /** ياخد اليوزر الحالي */
-    async function getUser() {
-        const session = await getSession();
-        return session?.user || null;
-    }
-
-    /** يتأكد إن اليوزر شركة معتمدة — غير كده يحوّله للـ login */
-    async function requireCompanyAuth() {
-        const sb = getSupabase();
-        if (!sb) {
-            redirectTo('company-login.html');
-            return null;
-        }
-
-        const session = await getSession();
-        if (!session) {
-            redirectTo('company-login.html');
-            return null;
-        }
-
-        const { data: company, error } = await sb
-            .from('companies')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-
-        if (error || !company) {
-            console.warn('Company profile not found');
-            await sb.auth.signOut();
-            redirectTo('company-login.html');
-            return null;
-        }
-
-        if (company.status === 'pending') {
-            redirectTo('Company-pending.html');
-            return null;
-        }
-
-        if (company.status === 'rejected' || company.status === 'suspended') {
-            await sb.auth.signOut();
-            localStorage.setItem('rejectReason', company.rejection_reason || '');
-            redirectTo('company-login.html');
-            return null;
-        }
-
-        return { session, company };
-    }
-
-    /** يتأكد إن اليوزر طالب */
-    async function requireStudentAuth() {
-        const sb = getSupabase();
-        if (!sb) {
-            redirectTo('student-login.html');
-            return null;
-        }
-
-        const session = await getSession();
-        if (!session) {
-            redirectTo('student-login.html');
-            return null;
-        }
-
-        const { data: student, error } = await sb
-            .from('student')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-
-        if (error || !student) {
-            console.warn('Student profile not found');
-            await sb.auth.signOut();
-            redirectTo('student-login.html');
-            return null;
-        }
-
-        return { session, student };
-    }
-
-    /** يتأكد إن اليوزر أدمن */
-    async function requireAdminAuth() {
-        const sb = getSupabase();
-        if (!sb) {
-            redirectTo('admin-login.html');
-            return null;
-        }
-
-        const session = await getSession();
-        if (!session) {
-            redirectTo('admin-login.html');
-            return null;
-        }
-
-        const { data: admin, error } = await sb
-            .from('admins')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .eq('is_active', true)
-            .maybeSingle();
-
-        if (error || !admin) {
-            await sb.auth.signOut();
-            redirectTo('admin-login.html');
-            return null;
-        }
-
-        return { session, admin };
-    }
-
-    /** تسجيل خروج موحد من أي صفحة */
-    async function logout(redirectUrl = 'index.html') {
-        const sb = getSupabase();
-        if (sb) {
-            try { await sb.auth.signOut(); } catch (e) {}
-        }
-        // نمسح المفاتيح المحلية بس (مش كل حاجة عشان ميحصلش مشاكل)
-        ['isLoggedIn', 'userType', 'userEmail', 'userName', 'userId',
-         'companyName', 'rememberMe', 'pendingCompanyName', 'pendingCompanyEmail'
-        ].forEach(k => localStorage.removeItem(k));
-
-        redirectTo(redirectUrl);
-    }
-
-
-    // ============================================================
-    // Navigation Helpers
-    // ============================================================
-    function redirectTo(url) {
-        // نستنى شوية علشان الصفحة تبقى جاهزة
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                window.location.href = url;
-            });
+        // ============================================================
+        // Init
+        // ============================================================
+        if (isLocked()) {
+            showLocked();
         } else {
-            window.location.href = url;
+            // لو مسجل دخول كأدمن من قبل، خشه على الdashboard
+            if (typeof supabase !== 'undefined') {
+                setTimeout(checkSession, 200);
+            }
         }
-    }
-
-
-    // ============================================================
-    // Toast / Notification System
-    // ============================================================
-    const TOAST_COLORS = {
-        success: 'linear-gradient(135deg,#10b981,#059669)',
-        error:   'linear-gradient(135deg,#ef4444,#dc2626)',
-        warning: 'linear-gradient(135deg,#f59e0b,#d97706)',
-        info:    'linear-gradient(135deg,#3b82f6,#2563eb)'
-    };
-
-    const TOAST_ICONS = {
-        success: 'check-circle',
-        error:   'exclamation-triangle',
-        warning: 'exclamation-circle',
-        info:    'info-circle'
-    };
-
-    function _ensureToastStyles() {
-        if (document.getElementById('_pv_toast_styles')) return;
-        const s = document.createElement('style');
-        s.id = '_pv_toast_styles';
-        s.textContent = `
-            #_pv_toast_container {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 999999;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                max-width: 380px;
-                pointer-events: none;
-            }
-            .pv-toast {
-                pointer-events: auto;
-                color: #fff;
-                padding: 14px 18px;
-                border-radius: 12px;
-                box-shadow: 0 10px 40px rgba(0,0,0,.25);
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                font-weight: 600;
-                font-size: 14px;
-                line-height: 1.5;
-                font-family: 'Cairo','Tajawal','Segoe UI',sans-serif;
-                animation: _pv_slideIn .35s cubic-bezier(.2,.9,.3,1);
-                word-break: break-word;
-                direction: rtl;
-            }
-            .pv-toast i { flex-shrink: 0; font-size: 20px; }
-            .pv-toast.leaving { animation: _pv_slideOut .3s ease forwards; }
-            @keyframes _pv_slideIn {
-                from { transform: translateX(420px); opacity: 0; }
-                to   { transform: translateX(0);     opacity: 1; }
-            }
-            @keyframes _pv_slideOut {
-                from { transform: translateX(0);     opacity: 1; }
-                to   { transform: translateX(420px); opacity: 0; }
-            }
-            @media (max-width: 480px) {
-                #_pv_toast_container {
-                    top: 10px;
-                    right: 10px;
-                    left: 10px;
-                    max-width: none;
-                }
-            }
-        `;
-        document.head.appendChild(s);
-    }
-
-    function _ensureToastContainer() {
-        let c = document.getElementById('_pv_toast_container');
-        if (!c) {
-            c = document.createElement('div');
-            c.id = '_pv_toast_container';
-            document.body.appendChild(c);
-        }
-        return c;
-    }
-
-    function showToast(message, type = 'success', duration = 4000) {
-        _ensureToastStyles();
-        const container = _ensureToastContainer();
-
-        const toast = document.createElement('div');
-        toast.className = 'pv-toast';
-        toast.style.background = TOAST_COLORS[type] || TOAST_COLORS.info;
-        toast.innerHTML = `
-            <i class="fas fa-${TOAST_ICONS[type] || TOAST_ICONS.info}"></i>
-            <span>${escapeHtml(message)}</span>
-        `;
-
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add('leaving');
-            setTimeout(() => toast.remove(), 300);
-        }, duration);
-    }
-
-
-    // ============================================================
-    // Utility Helpers
-    // ============================================================
-
-    /** هروب HTML لمنع XSS */
-    function escapeHtml(text) {
-        if (text == null) return '';
-        const div = document.createElement('div');
-        div.textContent = String(text);
-        return div.innerHTML;
-    }
-
-    /** تنسيق تاريخ عربي */
-    function formatDate(dateStr, options = {}) {
-        if (!dateStr) return 'غير محدد';
-        try {
-            const d = new Date(dateStr);
-            if (isNaN(d)) return 'تاريخ غير صالح';
-            return d.toLocaleDateString('ar-EG', {
-                year: 'numeric', month: 'long', day: 'numeric',
-                ...options
-            });
-        } catch (e) {
-            return 'تاريخ غير صالح';
-        }
-    }
-
-    /** تنسيق تاريخ ووقت عربي */
-    function formatDateTime(dateStr) {
-        if (!dateStr) return 'غير محدد';
-        try {
-            const d = new Date(dateStr);
-            if (isNaN(d)) return 'تاريخ غير صالح';
-            return d.toLocaleString('ar-EG', {
-                year: 'numeric', month: 'long', day: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            });
-        } catch (e) {
-            return 'تاريخ غير صالح';
-        }
-    }
-
-    /** منذ متى (مثلاً: منذ 3 دقائق) */
-    function timeAgo(dateStr) {
-        if (!dateStr) return '';
-        const d = new Date(dateStr);
-        if (isNaN(d)) return '';
-        const diff = Math.floor((Date.now() - d.getTime()) / 1000);
-
-        if (diff < 60)       return 'الآن';
-        if (diff < 3600)     return `منذ ${Math.floor(diff / 60)} دقيقة`;
-        if (diff < 86400)    return `منذ ${Math.floor(diff / 3600)} ساعة`;
-        if (diff < 604800)   return `منذ ${Math.floor(diff / 86400)} يوم`;
-        if (diff < 2592000)  return `منذ ${Math.floor(diff / 604800)} أسبوع`;
-        if (diff < 31536000) return `منذ ${Math.floor(diff / 2592000)} شهر`;
-        return `منذ ${Math.floor(diff / 31536000)} سنة`;
-    }
-
-    /** التحقق من صحة الإيميل */
-    function isValidEmail(email) {
-        if (!email) return false;
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-    }
-
-    /** التحقق من رقم تليفون مصري */
-    function isValidEgyptianPhone(phone) {
-        if (!phone) return false;
-        const clean = phone.replace(/[\s\-+]/g, '');
-        return /^(2?01[0125]\d{8})$/.test(clean);
-    }
-
-    /** debounce للأداء */
-    function debounce(fn, wait = 300) {
-        let t;
-        return function (...args) {
-            clearTimeout(t);
-            t = setTimeout(() => fn.apply(this, args), wait);
-        };
-    }
-
-    /** إرسال إشعار لمستخدم معين */
-    async function sendNotification({ userId, userType, title, message, type = 'info', relatedType, relatedId, actionUrl }) {
-        const sb = getSupabase();
-        if (!sb) return false;
-
-        try {
-            const { error } = await sb.from('notifications').insert({
-                user_id: userId,
-                user_type: userType,
-                title,
-                message,
-                type,
-                related_type: relatedType || null,
-                related_id: relatedId || null,
-                action_url: actionUrl || null
-            });
-            if (error) console.warn('Notification error:', error);
-            return !error;
-        } catch (err) {
-            console.error('sendNotification error:', err);
-            return false;
-        }
-    }
-
-    /** عدد الإشعارات غير المقروءة */
-    async function getUnreadNotificationsCount(userId) {
-        const sb = getSupabase();
-        if (!sb || !userId) return 0;
-        try {
-            const { count } = await sb
-                .from('notifications')
-                .select('id', { count: 'exact', head: true })
-                .eq('user_id', userId)
-                .eq('is_read', false);
-            return count || 0;
-        } catch (err) {
-            return 0;
-        }
-    }
-
-
-    // ============================================================
-    // Modal Helpers (بديل أنظف من alert/confirm)
-    // ============================================================
-    function _ensureModalStyles() {
-        if (document.getElementById('_pv_modal_styles')) return;
-        const s = document.createElement('style');
-        s.id = '_pv_modal_styles';
-        s.textContent = `
-            .pv-modal-overlay {
-                position: fixed; inset: 0;
-                background: rgba(0,0,0,.65);
-                backdrop-filter: blur(6px);
-                display: flex; align-items: center; justify-content: center;
-                z-index: 999998;
-                padding: 20px;
-                animation: _pv_fade .2s ease;
-                font-family: 'Cairo','Tajawal',sans-serif;
-            }
-            @keyframes _pv_fade { from { opacity: 0 } to { opacity: 1 } }
-            .pv-modal-box {
-                background: #fff;
-                border-radius: 16px;
-                padding: 28px;
-                max-width: 440px;
-                width: 100%;
-                box-shadow: 0 25px 60px rgba(0,0,0,.3);
-                text-align: center;
-                direction: rtl;
-            }
-            .pv-modal-icon {
-                width: 70px; height: 70px;
-                border-radius: 50%;
-                display: flex; align-items: center; justify-content: center;
-                margin: 0 auto 16px;
-                font-size: 32px;
-                color: #fff;
-            }
-            .pv-modal-title {
-                font-size: 1.3rem; font-weight: 800;
-                margin-bottom: 10px; color: #1f2937;
-            }
-            .pv-modal-msg {
-                color: #4b5563; line-height: 1.6; margin-bottom: 22px;
-            }
-            .pv-modal-btns { display: flex; gap: 10px; justify-content: center; }
-            .pv-modal-btn {
-                padding: 12px 22px;
-                border: none; border-radius: 10px;
-                font-weight: 700; cursor: pointer;
-                font-size: 15px; min-width: 100px;
-                font-family: inherit;
-                transition: transform .15s;
-            }
-            .pv-modal-btn:hover { transform: translateY(-2px); }
-            .pv-btn-confirm { background: #3b82f6; color: #fff; }
-            .pv-btn-cancel  { background: #e5e7eb; color: #374151; }
-            .pv-btn-danger  { background: #ef4444; color: #fff; }
-        `;
-        document.head.appendChild(s);
-    }
-
-    /** بديل confirm */
-    function confirmModal({ title = 'تأكيد', message = '', confirmText = 'تأكيد', cancelText = 'إلغاء', type = 'info' } = {}) {
-        _ensureModalStyles();
-        return new Promise((resolve) => {
-            const colors = {
-                info:    ['#3b82f6', 'question-circle'],
-                warning: ['#f59e0b', 'exclamation-triangle'],
-                danger:  ['#ef4444', 'times-circle'],
-                success: ['#10b981', 'check-circle']
-            };
-            const [color, icon] = colors[type] || colors.info;
-
-            const overlay = document.createElement('div');
-            overlay.className = 'pv-modal-overlay';
-            overlay.innerHTML = `
-                <div class="pv-modal-box">
-                    <div class="pv-modal-icon" style="background:${color}">
-                        <i class="fas fa-${icon}"></i>
-                    </div>
-                    <div class="pv-modal-title">${escapeHtml(title)}</div>
-                    <div class="pv-modal-msg">${escapeHtml(message)}</div>
-                    <div class="pv-modal-btns">
-                        <button class="pv-modal-btn ${type === 'danger' ? 'pv-btn-danger' : 'pv-btn-confirm'}" data-act="ok">${escapeHtml(confirmText)}</button>
-                        <button class="pv-modal-btn pv-btn-cancel" data-act="cancel">${escapeHtml(cancelText)}</button>
-                    </div>
-                </div>`;
-
-            overlay.addEventListener('click', (e) => {
-                const act = e.target.dataset.act;
-                if (act) {
-                    overlay.remove();
-                    resolve(act === 'ok');
-                }
-            });
-
-            document.body.appendChild(overlay);
-        });
-    }
-
-
-    // ============================================================
-    // Export to Global Scope
-    // ============================================================
-    window.ProVance = {
-        // Client
-        getSupabase,
-        get sb()   { return getSupabase(); },
-
-        // Auth
-        getSession,
-        getUser,
-        requireCompanyAuth,
-        requireStudentAuth,
-        requireAdminAuth,
-        logout,
-
-        // UI
-        showToast,
-        confirmModal,
-
-        // Helpers
-        escapeHtml,
-        formatDate,
-        formatDateTime,
-        timeAgo,
-        isValidEmail,
-        isValidEgyptianPhone,
-        debounce,
-
-        // Notifications
-        sendNotification,
-        getUnreadNotificationsCount
-    };
-
-    // Backward compatibility (للكود القديم)
-    window.showToast = showToast;
-    window.logout    = logout;
-    window.getSB     = getSupabase;
-
-})();
+    })();
+    </script>
+</body>
+</html>
