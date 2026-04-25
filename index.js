@@ -1,142 +1,142 @@
-// ===== دالة الـ scroll لأعلى - متوافقة مع كل الموبايلات =====
-function scrollToTop() {
-    try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch(e) {}
-    try { window.scrollTo(0, 0); } catch(e) {}
-    try { document.documentElement.scrollTop = 0; } catch(e) {}
-    try { document.body.scrollTop = 0; } catch(e) {}
-}
+/* ============================================
+ * ProVance - Optimized Index Script
+ * بدون parallax أو particles اللي بيسببوا لاج
+ * ============================================ */
 
-// ===== عرض شاشة الاختيار =====
-function showSelectionScreen() {
-    var welcomePage = document.getElementById('welcomePage');
-    var selectionScreen = document.getElementById('selectionScreen');
-    if (!welcomePage || !selectionScreen) return;
+(function () {
+    'use strict';
 
-    welcomePage.classList.remove('active');
-    welcomePage.style.display = 'none';
+    // ============================================
+    // Helpers
+    // ============================================
+    function $(id) { return document.getElementById(id); }
 
-    selectionScreen.classList.add('active');
-    selectionScreen.style.display = 'block';
-
-    // نرجع لأعلى - بنجربها تلات مرات عشان iOS و Samsung
-    scrollToTop();
-    setTimeout(scrollToTop, 50);
-    setTimeout(scrollToTop, 200);
-}
-
-// ===== إخفاء شاشة الاختيار =====
-function hideSelectionScreen() {
-    var welcomePage = document.getElementById('welcomePage');
-    var selectionScreen = document.getElementById('selectionScreen');
-    if (!welcomePage || !selectionScreen) return;
-
-    selectionScreen.classList.remove('active');
-    selectionScreen.style.display = 'none';
-
-    welcomePage.classList.add('active');
-    welcomePage.style.display = 'block';
-
-    scrollToTop();
-}
-
-// ===== التمرير لقسم اكتشف المزيد =====
-function scrollToAbout() {
-    var aboutSection = document.getElementById('aboutSection');
-    if (aboutSection) {
-        aboutSection.scrollIntoView({ behavior: 'smooth' });
-    }
-}
-
-// ===== عند تحميل الصفحة =====
-document.addEventListener('DOMContentLoaded', function () {
-
-    // ---- زر "ابدأ الآن مجاناً" ----
-    var mainStartBtn = document.getElementById('mainStartBtn');
-    if (mainStartBtn) {
-        mainStartBtn.addEventListener('click', showSelectionScreen);
+    function scrollToTop() {
+        // طريقة موحدة تشتغل على كل المتصفحات
+        try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch (e) {
+            window.scrollTo(0, 0);
+        }
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
     }
 
-    // ---- زر "اكتشف المزيد" ----
-    var scrollBtn = document.querySelector('.scroll-btn');
-    if (scrollBtn) {
-        scrollBtn.addEventListener('click', scrollToAbout);
+    // ============================================
+    // Page Switching
+    // ============================================
+    function showPage(hideId, showId) {
+        const hide = $(hideId);
+        const show = $(showId);
+        if (!hide || !show) return;
+
+        hide.classList.remove('active');
+        hide.style.display = 'none';
+
+        show.classList.add('active');
+        show.style.display = 'block';
+
+        scrollToTop();
+        // استدعاء scrollToTop مرة تانية بعد render
+        requestAnimationFrame(scrollToTop);
     }
 
-    // ---- زر "رجوع" ----
-    var backBtn = document.getElementById('backBtn');
-    if (backBtn) {
-        backBtn.addEventListener('click', hideSelectionScreen);
+    function showSelection() {
+        showPage('welcomePage', 'selectionScreen');
     }
 
-    // ---- بطاقات الاختيار ----
-    var userCards = document.querySelectorAll('.user-card');
-    for (var i = 0; i < userCards.length; i++) {
-        (function(card) {
+    function showWelcome() {
+        showPage('selectionScreen', 'welcomePage');
+    }
 
-            // *** المشكلة الأساسية: الـ button جوا البطاقة بيعمل أحداث تانية
-            // نوقفه تماماً ونخلي البطاقة كلها هي اللي تتحكم
-            var btn = card.querySelector('.select-btn');
-            if (btn) {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation(); // منع الحدث من الانتشار
-                    e.preventDefault();
-                });
+    function scrollToAbout() {
+        const el = $('aboutSection');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ============================================
+    // Counter Animation (محسّنة جداً)
+    // ============================================
+    function animateCounters() {
+        const counters = document.querySelectorAll('.stat-number');
+        if (!counters.length) return;
+
+        counters.forEach(el => {
+            const target = parseInt(el.dataset.target || '0', 10);
+            if (!target) return;
+
+            const duration = 1500;
+            const startTime = performance.now();
+
+            function step(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // easing function
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const value = Math.floor(target * eased);
+                el.textContent = value.toLocaleString('ar-EG');
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                }
             }
 
-            // الضغط على البطاقة كلها هو اللي ينقل
-            card.addEventListener('click', function(e) {
-                // لو الضغطة جت من الـ button، نتجاهلها هنا
-                // واحنا بالفعل وقفناها فوق بالـ stopPropagation
-                var url = card.getAttribute('data-url');
-                if (url) {
-                    // أنيميشن بسيط
-                    card.style.opacity = '0.7';
-                    setTimeout(function() {
-                        window.location.href = url;
-                    }, 150);
-                }
-            });
-
-            // Hover effects للكمبيوتر بس
-            card.addEventListener('mouseenter', function() {
-                card.style.transform = 'translateY(-10px) scale(1.03)';
-            });
-            card.addEventListener('mouseleave', function() {
-                card.style.transform = 'translateY(0) scale(1)';
-            });
-
-        })(userCards[i]);
+            requestAnimationFrame(step);
+        });
     }
 
-    // ---- أنيميشن الأرقام ----
-    var statNumbers = document.querySelectorAll('.stat-number');
-    for (var j = 0; j < statNumbers.length; j++) {
-        (function(el) {
-            var target = parseInt(el.getAttribute('data-target'));
-            if (!target) return;
-            var current = 0;
-            var increment = Math.ceil(target / 60);
-            var timer = setInterval(function() {
-                current += increment;
-                if (current >= target) {
-                    current = target;
-                    clearInterval(timer);
-                }
-                el.textContent = current.toLocaleString('ar-EG');
-            }, 30);
-        })(statNumbers[j]);
+    // ============================================
+    // Card Click Handler
+    // ============================================
+    function setupCards() {
+        const cards = document.querySelectorAll('.user-card');
+
+        cards.forEach(card => {
+            const url = card.dataset.url;
+            if (!url) return;
+
+            card.addEventListener('click', function (e) {
+                // منع الضغط المتكرر
+                if (card.dataset.clicked === 'true') return;
+                card.dataset.clicked = 'true';
+
+                // تأثير بصري بسيط
+                card.style.transform = 'scale(0.97)';
+                card.style.opacity = '0.85';
+
+                // التحويل بعد فترة قصيرة جداً
+                setTimeout(() => {
+                    window.location.href = url;
+                }, 150);
+            });
+        });
     }
 
-    document.body.classList.add('loaded');
-});
+    // ============================================
+    // Init
+    // ============================================
+    function init() {
+        // Buttons
+        const startBtn = $('mainStartBtn');
+        if (startBtn) startBtn.addEventListener('click', showSelection);
 
-// ===== تأثير الشعار =====
-var logo = document.querySelector('.logo');
-if (logo) {
-    setInterval(function() {
-        logo.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.7), 0 0 20px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.3)';
-        setTimeout(function() {
-            logo.style.textShadow = '0 0 10px rgba(255, 215, 0, 0.5)';
-        }, 1000);
-    }, 3000);
-}
+        const discoverBtn = $('discoverBtn');
+        if (discoverBtn) discoverBtn.addEventListener('click', scrollToAbout);
+
+        const backBtn = $('backBtn');
+        if (backBtn) backBtn.addEventListener('click', showWelcome);
+
+        // Cards
+        setupCards();
+
+        // Counters - استنى شوية بعد التحميل عشان أداء أحسن
+        setTimeout(animateCounters, 300);
+    }
+
+    // ============================================
+    // Start
+    // ============================================
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
