@@ -661,7 +661,7 @@
                         <label class="field-label" for="nationalId">
                             <i class="fas fa-id-card"></i> الرقم القومي <span class="optional">اختياري</span>
                         </label>
-                        <input type="text" id="nationalId" class="field-input" placeholder="14 رقم" maxlength="14" pattern="[0-9]{14}">
+                        <input type="text" id="nationalId" class="field-input" placeholder="14 رقم">
                         <div class="field-hint">الرقم القومي مفيد لإصدار شهادات التدريب الرسمية</div>
                     </div>
 
@@ -694,7 +694,7 @@
                                 <i class="fas fa-lock"></i> كلمة المرور <span class="required">*</span>
                             </label>
                             <div class="input-wrap">
-                                <input type="password" id="password" class="field-input" placeholder="8 أحرف على الأقل" minlength="8">
+                                <input type="password" id="password" class="field-input" placeholder="8 أحرف على الأقل">
                                 <button type="button" class="toggle-pass" data-target="password">
                                     <i class="fas fa-eye"></i>
                                 </button>
@@ -1055,6 +1055,52 @@
     <script>
     (function() {
         'use strict';
+
+        // ============================================================
+        // 🛡️ SAFETY FALLBACKS - في حالة supabase-config.js مش متحمل
+        // ============================================================
+        if (!window.ProVance) {
+            console.error('⚠️ window.ProVance غير معرّف! supabase-config.js مش متحمل صح');
+            window.ProVance = {};
+        }
+        if (typeof window.ProVance.isValidEmail !== 'function') {
+            window.ProVance.isValidEmail = function(email) {
+                if (!email) return false;
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+            };
+        }
+        if (typeof window.ProVance.isValidEgyptianPhone !== 'function') {
+            window.ProVance.isValidEgyptianPhone = function(phone) {
+                if (!phone) return false;
+                const clean = phone.replace(/[\s\-+]/g, '');
+                return /^(2?01[0125]\d{8})$/.test(clean);
+            };
+        }
+        if (typeof window.ProVance.escapeHtml !== 'function') {
+            window.ProVance.escapeHtml = function(s) {
+                return String(s || '').replace(/[&<>"']/g, function(c) {
+                    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+                });
+            };
+        }
+        if (typeof window.ProVance.showToast !== 'function') {
+            window.ProVance.showToast = function(msg, type) {
+                console.log('[Toast ' + (type||'info') + ']', msg);
+                var toast = document.createElement('div');
+                var colors = { error: '#ef4444', success: '#10b981', warning: '#f59e0b', info: '#4facfe' };
+                toast.style.cssText =
+                    'position:fixed;top:20px;left:50%;transform:translateX(-50%);' +
+                    'background:' + (colors[type] || '#4facfe') + ';color:#fff;' +
+                    'padding:14px 24px;border-radius:12px;' +
+                    'font-family:Cairo,sans-serif;font-weight:700;' +
+                    'box-shadow:0 10px 30px rgba(0,0,0,0.3);z-index:9999;';
+                toast.textContent = msg;
+                document.body.appendChild(toast);
+                setTimeout(function(){ toast.remove(); }, 4000);
+            };
+        }
+
+        console.log('✅ Form initialized successfully');
         const TOTAL_STEPS = 5;
         const STEP_NAMES = ['', 'المعلومات الشخصية', 'المعلومات الأكاديمية', 'المهارات والاهتمامات', 'الخبرات والروابط', 'الشروط والأحكام'];
         let currentStep = 1;
@@ -1068,7 +1114,10 @@
         function escapeHtml(s) {
             return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         }
+        let stepErrors = [];
+
         function showErr(id, msg) {
+            stepErrors.push({ id, msg });
             const errEl = document.getElementById(id + 'Err');
             const inp = document.getElementById(id);
             if (errEl) errEl.textContent = msg;
@@ -1085,6 +1134,97 @@
             if (inp) inp.style.borderColor = '';
         }
 
+        function showErrorBanner() {
+            let banner = document.getElementById('errorBanner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'errorBanner';
+                banner.style.cssText = `
+                    background: rgba(239,68,68,0.1);
+                    border: 1.5px solid rgba(239,68,68,0.4);
+                    border-radius: 12px;
+                    padding: 14px 18px;
+                    margin-bottom: 18px;
+                    color: #fca5a5;
+                    font-size: 0.92rem;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 10px;
+                    animation: stepIn .3s ease-out;
+                `;
+                const card = document.querySelector('.card');
+                const progressSec = card.querySelector('.progress-section');
+                progressSec.after(banner);
+            }
+
+            const errCount = stepErrors.length;
+            const firstErr = stepErrors[0];
+            banner.innerHTML = `
+                <i class="fas fa-exclamation-triangle" style="font-size:1.2rem; color:var(--error); flex-shrink:0; margin-top:2px;"></i>
+                <div style="flex:1">
+                    <strong style="color:var(--error); display:block; margin-bottom:4px;">
+                        ${errCount === 1 ? 'فيه حقل محتاج تظبطه' : `فيه ${errCount} حقول محتاجين تظبطهم`}
+                    </strong>
+                    <div style="font-size:0.88rem;">
+                        ${firstErr ? '👈 ' + firstErr.msg : ''}
+                        ${errCount > 1 ? `<br><small style="color:var(--text-muted)">و ${errCount - 1} مشاكل تانية في الخانات اللي بالأحمر</small>` : ''}
+                    </div>
+                </div>
+                <button onclick="document.getElementById('errorBanner').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;padding:0;flex-shrink:0;">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            try { if (banner && banner.scrollIntoView) banner.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) { console.warn('scroll failed', e); }
+        }
+        function clearErrorBanner() {
+            const banner = document.getElementById('errorBanner');
+            if (banner) banner.remove();
+        }
+        function showServerErrorBanner(message) {
+            let banner = document.getElementById('errorBanner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'errorBanner';
+                banner.style.cssText = `
+                    background: rgba(239,68,68,0.1);
+                    border: 1.5px solid rgba(239,68,68,0.4);
+                    border-radius: 12px;
+                    padding: 14px 18px;
+                    margin-bottom: 18px;
+                    color: #fca5a5;
+                    font-size: 0.92rem;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 10px;
+                `;
+                const card = document.querySelector('.card');
+                const progressSec = card.querySelector('.progress-section');
+                progressSec.after(banner);
+            }
+            banner.innerHTML = `
+                <i class="fas fa-times-circle" style="font-size:1.3rem; color:var(--error); flex-shrink:0; margin-top:2px;"></i>
+                <div style="flex:1">
+                    <strong style="color:var(--error); display:block; margin-bottom:4px;">حصل خطأ في التسجيل</strong>
+                    <div style="font-size:0.9rem; line-height:1.5;">${message}</div>
+                </div>
+                <button onclick="document.getElementById('errorBanner').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;padding:0;flex-shrink:0;">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            try { if (banner && banner.scrollIntoView) banner.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) { console.warn('scroll failed', e); }
+        }
+        function focusFirstError() {
+            if (stepErrors.length === 0) return;
+            const firstId = stepErrors[0].id;
+            const inp = document.getElementById(firstId);
+            if (inp) {
+                setTimeout(() => {
+                    try { if (inp && inp.scrollIntoView) inp.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e){}
+                    try { inp.focus({ preventScroll: true }); } catch(e) {}
+                }, 350);
+            }
+        }
+
         function updateProgress() {
             const pct = (currentStep / TOTAL_STEPS) * 100;
             document.getElementById('progressFill').style.width = pct + '%';
@@ -1099,11 +1239,13 @@
             document.querySelector(`[data-step="${n}"]`).classList.add('active');
             currentStep = n;
             updateProgress();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) { try { window.scrollTo(0, 0); } catch(e2){} }
             if (n === 5) generateSummary();
         }
 
         function validateStep(n) {
+            stepErrors = [];
+            clearErrorBanner();
             let ok = true;
             if (n === 1) {
                 ['fullName','email','phone','birthDate','city','password','confirmPassword'].forEach(clearErr);
@@ -1115,46 +1257,87 @@
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
 
-                if (!name || name.split(' ').filter(Boolean).length < 2) { showErr('fullName', 'الاسم الثلاثي على الأقل'); ok = false; }
-                if (!window.ProVance.isValidEmail(email)) { showErr('email', 'البريد غير صحيح'); ok = false; }
-                if (!window.ProVance.isValidEgyptianPhone(phone)) { showErr('phone', 'رقم هاتف مصري صحيح (01xxxxxxxxx)'); ok = false; }
+                if (!name) { showErr('fullName', 'الاسم مطلوب'); ok = false; }
+                else if (name.split(' ').filter(Boolean).length < 2) { showErr('fullName', 'اكتب اسمك الثلاثي على الأقل (مثلاً: أحمد محمد علي)'); ok = false; }
+
+                if (!email) { showErr('email', 'البريد الإلكتروني مطلوب'); ok = false; }
+                else if (!window.ProVance.isValidEmail(email)) { showErr('email', 'صيغة البريد غير صحيحة (مثال: name@gmail.com)'); ok = false; }
+
+                if (!phone) { showErr('phone', 'رقم الهاتف مطلوب'); ok = false; }
+                else if (!window.ProVance.isValidEgyptianPhone(phone)) { showErr('phone', 'رقم هاتف مصري صحيح (يبدأ بـ 010 / 011 / 012 / 015)'); ok = false; }
+
                 if (!birth) { showErr('birthDate', 'تاريخ الميلاد مطلوب'); ok = false; }
                 else {
                     const age = calcAge(birth);
-                    if (age < 14) { showErr('birthDate', 'يجب أن يكون عمرك 14 سنة على الأقل'); ok = false; }
-                    if (age > 80) { showErr('birthDate', 'تاريخ غير صحيح'); ok = false; }
+                    if (age < 14) { showErr('birthDate', `لازم يكون عمرك 14 سنة على الأقل (دلوقتي ${age} سنة)`); ok = false; }
+                    else if (age > 80) { showErr('birthDate', 'تاريخ غير صحيح، تأكد من السنة'); ok = false; }
                 }
+
                 if (!city) { showErr('city', 'المدينة مطلوبة'); ok = false; }
-                if (password.length < 8) { showErr('password', 'كلمة المرور 8 أحرف على الأقل'); ok = false; }
-                if (password !== confirmPassword) { showErr('confirmPassword', 'كلمتا المرور غير متطابقتين'); ok = false; }
+
+                if (!password) { showErr('password', 'كلمة المرور مطلوبة'); ok = false; }
+                else if (password.length < 8) { showErr('password', 'كلمة المرور لازم 8 أحرف على الأقل'); ok = false; }
+
+                if (!confirmPassword) { showErr('confirmPassword', 'تأكيد كلمة المرور مطلوب'); ok = false; }
+                else if (password !== confirmPassword) { showErr('confirmPassword', 'كلمتا المرور غير متطابقتين'); ok = false; }
             }
             else if (n === 2) {
                 ['educationLevel','university','faculty','studyYear'].forEach(clearErr);
-                if (!document.getElementById('educationLevel').value) { showErr('educationLevel', 'المرحلة الدراسية مطلوبة'); ok = false; }
+                if (!document.getElementById('educationLevel').value) { showErr('educationLevel', 'اختر المرحلة الدراسية'); ok = false; }
                 if (!document.getElementById('university').value.trim()) { showErr('university', 'الجامعة مطلوبة'); ok = false; }
                 if (!document.getElementById('faculty').value.trim()) { showErr('faculty', 'الكلية مطلوبة'); ok = false; }
-                if (!document.getElementById('studyYear').value) { showErr('studyYear', 'سنة الدراسة مطلوبة'); ok = false; }
+                if (!document.getElementById('studyYear').value) { showErr('studyYear', 'اختر سنة الدراسة'); ok = false; }
             }
             else if (n === 3) {
                 clearErr('skills'); clearErr('interests');
-                if (skills.length === 0) { showErr('skills', 'أضف مهارة واحدة على الأقل'); ok = false; }
-                if (interests.length === 0) { showErr('interests', 'أضف مجال اهتمام واحد على الأقل'); ok = false; }
+                if (skills.length === 0) { showErr('skills', 'لازم تضيف مهارة واحدة على الأقل (اكتبها واضغط إضافة)'); ok = false; }
+                if (interests.length === 0) { showErr('interests', 'لازم تضيف مجال اهتمام واحد على الأقل'); ok = false; }
             }
             else if (n === 5) {
                 if (!document.getElementById('contractAgreement').checked) {
-                    window.ProVance.showToast('يجب الموافقة على الشروط والأحكام', 'warning');
+                    window.ProVance.showToast('⚠️ لازم توافق على الشروط والأحكام أولاً', 'warning');
+                    const cb = document.getElementById('contractAgreement');
+                    if (cb) {
+                        const card = cb.closest('.checkbox-card');
+                        if (card) {
+                            card.style.borderColor = 'var(--error)';
+                            card.classList.add('shake');
+                            try { if (card && card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e){}
+                            setTimeout(() => card.classList.remove('shake'), 400);
+                        }
+                    }
                     ok = false;
                 }
             }
+
+            if (!ok && stepErrors.length > 0) {
+                showErrorBanner();
+                window.ProVance.showToast(`❌ ${stepErrors[0].msg}`, 'error');
+                focusFirstError();
+            }
+
             return ok;
         }
 
-        window.nextStep = () => {
-            if (!validateStep(currentStep)) return;
-            if (currentStep < TOTAL_STEPS) showStep(currentStep + 1);
+        window.nextStep = function() {
+            try {
+                if (!validateStep(currentStep)) return;
+                clearErrorBanner();
+                if (currentStep < TOTAL_STEPS) showStep(currentStep + 1);
+            } catch (err) {
+                console.error('nextStep error:', err);
+                if (window.ProVance && window.ProVance.showToast) {
+                    window.ProVance.showToast('حدث خطأ، حاول تاني', 'error');
+                } else {
+                    alert('حدث خطأ، حاول تاني');
+                }
+            }
         };
-        window.previousStep = () => {
-            if (currentStep > 1) showStep(currentStep - 1);
+        window.previousStep = function() {
+            try {
+                clearErrorBanner();
+                if (currentStep > 1) showStep(currentStep - 1);
+            } catch (err) { console.error('previousStep error:', err); }
         };
 
         // Photo upload
@@ -1495,9 +1678,24 @@
                     password: password
                 });
                 if (authErr) {
-                    let msg = 'حدث خطأ، حاول مرة أخرى';
-                    if (authErr.message.includes('already registered')) msg = 'هذا البريد مسجل بالفعل';
+                    console.error('Auth error:', authErr);
+                    let msg = 'حدث خطأ في إنشاء الحساب، حاول تاني';
+                    const errMsg = (authErr.message || '').toLowerCase();
+                    if (errMsg.includes('already registered') || errMsg.includes('already been registered')) {
+                        msg = '⚠️ البريد ده مسجل قبل كده. لو دا حسابك جرب تسجيل الدخول، أو استخدم بريد تاني';
+                    } else if (errMsg.includes('invalid email')) {
+                        msg = '⚠️ البريد الإلكتروني غير صحيح';
+                    } else if (errMsg.includes('password') && errMsg.includes('weak')) {
+                        msg = '⚠️ كلمة المرور ضعيفة، استخدم 8 أحرف على الأقل مع أرقام';
+                    } else if (errMsg.includes('rate limit') || errMsg.includes('too many')) {
+                        msg = '⚠️ محاولات كتيرة، استنى دقيقتين وحاول تاني';
+                    } else if (errMsg.includes('network') || errMsg.includes('fetch')) {
+                        msg = '⚠️ مشكلة في الاتصال بالنت، تأكد من الاتصال';
+                    } else if (authErr.message) {
+                        msg = '⚠️ خطأ: ' + authErr.message;
+                    }
                     window.ProVance.showToast(msg, 'error');
+                    showServerErrorBanner(msg);
                     btn.classList.remove('loading');
                     btn.disabled = false;
                     return;
@@ -1525,8 +1723,18 @@
                 });
 
                 if (profileErr) {
-                    console.error(profileErr);
-                    window.ProVance.showToast('خطأ في حفظ البيانات: ' + profileErr.message, 'error');
+                    console.error('Profile error:', profileErr);
+                    let msg = 'حدث خطأ في حفظ البيانات';
+                    const pErr = (profileErr.message || '').toLowerCase();
+                    if (pErr.includes('duplicate') || pErr.includes('unique')) {
+                        msg = '⚠️ البيانات دي مسجلة قبل كده';
+                    } else if (pErr.includes('violates row-level security') || pErr.includes('rls')) {
+                        msg = '⚠️ مش مصرح لك بإتمام التسجيل، تواصل مع الإدارة';
+                    } else if (profileErr.message) {
+                        msg = '⚠️ خطأ في الحفظ: ' + profileErr.message;
+                    }
+                    window.ProVance.showToast(msg, 'error');
+                    showServerErrorBanner(msg);
                     btn.classList.remove('loading');
                     btn.disabled = false;
                     return;
@@ -1550,11 +1758,13 @@
                     console.warn('فشل إرسال الإشعار للأدمن:', notifErr);
                 }
 
-                window.ProVance.showToast('تم إنشاء حسابك بنجاح! 🎉', 'success');
+                window.ProVance.showToast('🎉 تم إنشاء حسابك بنجاح!', 'success');
                 setTimeout(() => window.location.href = 'student-internship.html', 1800);
             } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('خطأ في الاتصال', 'error');
+                console.error('Network/general error:', err);
+                const msg = '⚠️ مشكلة في الاتصال بالخادم، تأكد من الإنترنت وحاول تاني';
+                window.ProVance.showToast(msg, 'error');
+                showServerErrorBanner(msg);
                 btn.classList.remove('loading');
                 btn.disabled = false;
             }
