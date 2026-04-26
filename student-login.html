@@ -2,538 +2,576 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>تسجيل دخول الطالب - ProVance</title>
-    <link rel="stylesheet" href="student-login-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .social-btn {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
+        :root {
+            --primary: #4facfe; --secondary: #00f2fe;
+            --gradient: linear-gradient(135deg, #4facfe, #00f2fe);
+            --bg: #0a0e27; --bg-2: #1a1535;
+            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.08);
+            --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
+            --error: #ef4444; --success: #10b981; --warning: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        .bg-anim {
+            position: fixed; inset: 0; z-index: -1;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(79,172,254,0.12), transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(0,242,254,0.1), transparent 45%),
+                var(--bg);
+        }
+        .bg-anim::before, .bg-anim::after {
+            content: ''; position: absolute;
+            border-radius: 50%; filter: blur(120px); opacity: 0.3;
+            animation: float 20s infinite ease-in-out;
+        }
+        .bg-anim::before { width: 500px; height: 500px; background: var(--primary); top: -200px; right: -200px; }
+        .bg-anim::after { width: 400px; height: 400px; background: var(--secondary); bottom: -150px; left: -150px; animation-delay: 10s; }
+        @keyframes float {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(50px, 40px) scale(1.1); }
+            66% { transform: translate(-30px, 60px) scale(0.95); }
+        }
+        .container { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+        @media (max-width: 968px) {
+            .container { grid-template-columns: 1fr; }
+            .container .left-panel { display: none; }
+        }
+        .left-panel {
+            display: flex; flex-direction: column;
+            padding: 40px 50px; position: relative; overflow: hidden;
+        }
+        .left-panel::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(79,172,254,0.08), rgba(0,242,254,0.04));
+            backdrop-filter: blur(10px); z-index: -1;
+        }
+        .brand {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: auto;
+        }
+        .brand img { height: 42px; }
+        .brand-text {
+            font-size: 1.4rem; font-weight: 900;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-content { margin: auto 0; }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 7px 16px;
+            background: rgba(79,172,254,0.12);
+            border: 1px solid rgba(79,172,254,0.3);
+            border-radius: 20px;
+            color: var(--primary);
+            font-size: 0.85rem; font-weight: 700;
+            margin-bottom: 22px;
+        }
+        .hero-title {
+            font-size: 2.4rem; font-weight: 900;
+            line-height: 1.25; margin-bottom: 16px;
+        }
+        .hero-title .highlight {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-desc {
+            color: var(--text-muted); font-size: 1rem;
+            line-height: 1.8; margin-bottom: 32px; max-width: 460px;
+        }
+        .features {
+            display: flex; flex-direction: column; gap: 14px; max-width: 460px;
+        }
+        .feature-row { display: flex; align-items: flex-start; gap: 12px; }
+        .feature-icon {
+            width: 38px; height: 38px;
+            background: rgba(79,172,254,0.12);
+            border: 1px solid rgba(79,172,254,0.3);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--primary); font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+        .feature-text { display: flex; flex-direction: column; gap: 3px; }
+        .feature-text strong { font-size: 0.94rem; font-weight: 700; }
+        .feature-text small { color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; }
+        .stats-row {
+            display: flex; gap: 22px;
+            margin-top: auto; padding-top: 28px;
+            border-top: 1px solid var(--border);
+        }
+        .stat-item .num {
+            font-size: 1.6rem; font-weight: 900;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-item .label { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+        .right-panel {
+            display: flex; align-items: center; justify-content: center;
+            padding: 40px 30px; position: relative;
+        }
+        .form-wrap { width: 100%; max-width: 440px; }
+        .form-header { text-align: center; margin-bottom: 32px; }
+        .form-icon {
+            width: 64px; height: 64px;
+            margin: 0 auto 16px;
+            background: var(--gradient);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.7rem; color: #fff;
+            box-shadow: 0 16px 40px rgba(79,172,254,0.4);
+        }
+        .form-title { font-size: 1.7rem; font-weight: 800; margin-bottom: 6px; }
+        .form-subtitle { color: var(--text-muted); font-size: 0.92rem; }
+        .mobile-brand { display: none; text-align: center; margin-bottom: 24px; }
+        .mobile-brand img { height: 38px; }
+        @media (max-width: 968px) { .mobile-brand { display: block; } }
+        .field { margin-bottom: 16px; }
+        .field-label {
+            display: flex; align-items: center; justify-content: space-between;
+            color: var(--text); font-size: 0.9rem; font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .field-label-text { display: flex; align-items: center; gap: 6px; }
+        .field-label i { color: var(--primary); font-size: 0.85rem; }
+        .field-label a {
+            color: var(--primary); text-decoration: none;
+            font-size: 0.82rem; font-weight: 600;
+        }
+        .field-label a:hover { text-decoration: underline; }
+        .input-wrap { position: relative; }
+        .field-input {
+            width: 100%; padding: 14px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 2px solid var(--border);
+            border-radius: 12px; color: var(--text);
+            font-size: 0.95rem; font-family: inherit;
+            transition: all .2s;
+        }
+        .field-input:focus {
+            outline: none; border-color: var(--primary);
+            background: rgba(255,255,255,0.06);
+            box-shadow: 0 0 0 4px rgba(79,172,254,0.1);
+        }
+        .field-input::placeholder { color: var(--text-dim); }
+        .field-input[type="email"], .field-input[type="password"] {
+            direction: ltr; text-align: right; padding-left: 44px;
+        }
+        .toggle-pass {
+            position: absolute; left: 14px; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            color: var(--text-muted); cursor: pointer;
+            padding: 6px; font-size: 0.95rem;
+        }
+        .toggle-pass:hover { color: var(--text); }
+        .field-error {
+            display: block; color: var(--error);
+            font-size: 0.8rem; margin-top: 6px; min-height: 16px;
+        }
+        .remember-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 22px; font-size: 0.88rem;
+        }
+        .remember-checkbox {
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+        }
+        .remember-checkbox input {
+            width: 16px; height: 16px;
+            accent-color: var(--primary); cursor: pointer;
+        }
+        .remember-checkbox label {
+            color: var(--text-muted); cursor: pointer;
+        }
+        .btn-submit {
+            width: 100%; padding: 14px;
+            background: var(--gradient); color: #fff;
+            border: none; border-radius: 12px;
+            font-weight: 800; font-size: 1rem; font-family: inherit;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            width: 100%;
-            margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all .25s; margin-bottom: 16px;
         }
-        
-        .social-btn.google {
-            background: white;
-            color: #757575;
-            border: 2px solid #dadce0;
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 35px rgba(79,172,254,0.45);
         }
-        
-        .social-btn.google:hover {
-            background: #f8f9fa;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-submit .spinner { display: none; }
+        .btn-submit.loading .spinner { display: inline-block; }
+        .btn-submit.loading .text, .btn-submit.loading .arrow { display: none; }
+        .divider {
+            display: flex; align-items: center; gap: 14px;
+            margin: 22px 0; color: var(--text-dim); font-size: 0.82rem;
         }
-
-        /* ستايل نافذة اختيار الحسابات */
-        .account-selection-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+        .divider::before, .divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
         }
-
-        .account-modal-content {
-            background: white;
+        .switch-types {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; margin-bottom: 22px;
+        }
+        .switch-btn {
+            padding: 11px;
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 10px;
+            font-size: 0.85rem; font-weight: 700; font-family: inherit;
+            cursor: pointer; text-decoration: none;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: all .2s;
+        }
+        .switch-btn:hover {
+            background: var(--card-hover); color: var(--text);
+        }
+        .register-link {
+            text-align: center; color: var(--text-muted); font-size: 0.92rem;
+        }
+        .register-link a {
+            color: var(--primary); text-decoration: none; font-weight: 700;
+        }
+        .register-link a:hover { text-decoration: underline; }
+        .error-banner {
+            background: rgba(239,68,68,0.1);
+            border: 1.5px solid rgba(239,68,68,0.4);
             border-radius: 12px;
-            width: 400px;
-            max-width: 90vw;
-            max-height: 80vh;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            animation: modalSlideIn 0.3s ease-out;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            color: #fca5a5;
+            font-size: 0.92rem;
+            display: flex; align-items: flex-start; gap: 10px;
+            animation: slideIn .3s ease-out;
         }
-
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9) translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .modal-header {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid #e8eaed;
+        .back-home {
+            position: absolute; top: 24px; right: 24px;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 9px 14px;
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--text-muted); text-decoration: none;
+            border-radius: 10px; font-size: 0.85rem; font-weight: 600;
+            transition: all .2s;
+            z-index: 10;
         }
-
-        .modal-header h3 {
-            margin: 0;
-            color: #202124;
-            font-size: 18px;
-            font-weight: 500;
+        .back-home:hover { color: var(--text); background: var(--card-hover); }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
-
-        .modal-header p {
-            margin: 4px 0 0 0;
-            color: #5f6368;
-            font-size: 14px;
-        }
-
-        .accounts-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .account-item {
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background 0.2s ease;
-        }
-
-        .account-item:hover {
-            background: #f8f9fa;
-        }
-
-        .account-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .account-info {
-            flex: 1;
-            text-align: right;
-        }
-
-        .account-name {
-            font-weight: 500;
-            color: #202124;
-            margin-bottom: 2px;
-        }
-
-        .account-email {
-            color: #5f6368;
-            font-size: 13px;
-        }
-
-        .modal-footer {
-            padding: 16px;
-            border-top: 1px solid #e8eaed;
-        }
-
-        .add-account-btn {
-            width: 100%;
-            padding: 10px;
-            background: transparent;
-            border: 1px solid #dadce0;
-            border-radius: 4px;
-            color: #1a73e8;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .add-account-btn:hover {
-            background: #f8f9fa;
-        }
-
-        .error-notification {
-            position: fixed;
-            top: 30px;
-            right: 30px;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            box-shadow: 0 15px 50px rgba(255, 107, 107, 0.5);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-weight: 600;
-            animation: slideInRight 0.5s ease-out;
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideOutRight {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(400px);
-                opacity: 0;
-            }
+        .shake { animation: shake .35s; }
+        @media (max-width: 968px) {
+            .right-panel { padding: 70px 20px 30px; }
+            .form-title { font-size: 1.5rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Background Animation -->
-    <div class="bg-animation">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-    </div>
+    <div class="bg-anim"></div>
 
-    <!-- Login Container -->
-    <div class="login-container">
-        <!-- Left Side - Branding -->
-        <div class="login-left">
-            <div class="branding-content">
-                <div class="logo-circle">
+    <a href="index.html" class="back-home">
+        <i class="fas fa-arrow-right"></i>
+        <span>الرئيسية</span>
+    </a>
+
+    <div class="container">
+        <div class="left-panel">
+            <div class="brand">
+                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                <span class="brand-text" style="display:none">ProVance</span>
+            </div>
+
+            <div class="hero-content">
+                <span class="hero-badge">
                     <i class="fas fa-graduation-cap"></i>
-                </div>
-                <h1 class="brand-name">مرحباً بك في ProVance</h1>
-                <p class="brand-tagline">ابدأ رحلتك المهنية الآن</p>
-                
-                <div class="benefits-list">
-                    <div class="benefit-item">
-                        <div class="benefit-icon">
-                            <i class="fas fa-briefcase"></i>
-                        </div>
-                        <div class="benefit-text">
-                            <h4>فرص تدريب حقيقية</h4>
-                            <p>آلاف الفرص التدريبية في شركات معتمدة</p>
-                        </div>
-                    </div>
-                    
-                    <div class="benefit-item">
-                        <div class="benefit-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="benefit-text">
-                            <h4>تقييم احترافي</h4>
-                            <p>نظام تقييم شامل يوثق تطورك المهني</p>
-                        </div>
-                    </div>
-                    
-                    <div class="benefit-item">
-                        <div class="benefit-icon">
-                            <i class="fas fa-certificate"></i>
-                        </div>
-                        <div class="benefit-text">
-                            <h4>شهادات معتمدة</h4>
-                            <p>احصل على شهادات خبرة موثقة</p>
-                        </div>
-                    </div>
-                    
-                    <div class="benefit-item">
-                        <div class="benefit-icon">
-                            <i class="fas fa-rocket"></i>
-                        </div>
-                        <div class="benefit-text">
-                            <h4>ترشيح للوظائف</h4>
-                            <p>نظام ذكي يرشحك لأفضل الوظائف</p>
-                        </div>
-                    </div>
-                </div>
+                    منصة الطلاب
+                </span>
+                <h1 class="hero-title">
+                    أبدأ رحلتك في <span class="highlight">عالم التدريب المهني</span>
+                </h1>
+                <p class="hero-desc">
+                    اكتشف فرص تدريب حقيقية مع شركات معتمدة، طوّر مهاراتك واحصل على شهادات معتمدة تفتح لك أبواب المستقبل المهني.
+                </p>
 
-                <div class="stats-bar">
-                    <div class="stat">
-                        <span class="stat-number">10K+</span>
-                        <span class="stat-label">طالب نشط</span>
+                <div class="features">
+                    <div class="feature-row">
+                        <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                        <div class="feature-text">
+                            <strong>فرص تدريب متنوعة</strong>
+                            <small>مئات الفرص في مختلف المجالات والتخصصات</small>
+                        </div>
                     </div>
-                    <div class="stat">
-                        <span class="stat-number">500+</span>
-                        <span class="stat-label">شركة</span>
+                    <div class="feature-row">
+                        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="feature-text">
+                            <strong>شركات موثوقة</strong>
+                            <small>كل الشركات معتمدة من إدارة المنصة</small>
+                        </div>
                     </div>
-                    <div class="stat">
-                        <span class="stat-number">2.5K+</span>
-                        <span class="stat-label">فرصة تدريب</span>
+                    <div class="feature-row">
+                        <div class="feature-icon"><i class="fas fa-certificate"></i></div>
+                        <div class="feature-text">
+                            <strong>شهادات معتمدة</strong>
+                            <small>احصل على شهادة موثقة بعد إكمال التدريب</small>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="num">+500</div>
+                    <div class="label">فرصة تدريب</div>
+                </div>
+                <div class="stat-item">
+                    <div class="num">+200</div>
+                    <div class="label">شركة معتمدة</div>
+                </div>
+                <div class="stat-item">
+                    <div class="num">+1500</div>
+                    <div class="label">طالب نشط</div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Side - Login Form -->
-        <div class="login-right">
-            <div class="form-container">
-                <!-- Back Button -->
-                <a href="index.html" class="back-btn">
-                    <i class="fas fa-arrow-right"></i>
-                </a>
-
-                <!-- User Type Badge -->
-                <div class="user-type-badge">
-                    <i class="fas fa-user-graduate"></i>
-                    <span>حساب الطالب</span>
+        <div class="right-panel">
+            <div class="form-wrap">
+                <div class="mobile-brand">
+                    <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
                 </div>
 
-                <!-- Form Header -->
                 <div class="form-header">
-                    <h2>تسجيل الدخول</h2>
-                    <p>أدخل بياناتك للوصول إلى حسابك</p>
+                    <div class="form-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <h2 class="form-title">مرحباً بعودتك! 👋</h2>
+                    <p class="form-subtitle">سجل دخولك للوصول لحسابك كطالب</p>
                 </div>
 
-                <!-- Login Form -->
-                <form class="login-form" id="studentLoginForm">
-                    <!-- Email Input -->
-                    <div class="input-group">
-                        <label for="email">
-                            <i class="fas fa-envelope"></i>
-                            البريد الإلكتروني
+                <div id="errorBanner" style="display:none"></div>
+
+                <form id="loginForm" novalidate>
+                    <div class="field">
+                        <label class="field-label" for="email">
+                            <span class="field-label-text">
+                                <i class="fas fa-envelope"></i> البريد الإلكتروني
+                            </span>
                         </label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            placeholder="example@student.com"
-                            required
-                        >
-                        <span class="error-message" id="emailError"></span>
+                        <input type="email" id="email" class="field-input" placeholder="student@example.com" autocomplete="email">
+                        <span class="field-error" id="emailErr"></span>
                     </div>
 
-                    <!-- Password Input -->
-                    <div class="input-group">
-                        <label for="password">
-                            <i class="fas fa-lock"></i>
-                            كلمة المرور
+                    <div class="field">
+                        <label class="field-label" for="password">
+                            <span class="field-label-text">
+                                <i class="fas fa-lock"></i> كلمة المرور
+                            </span>
+                            <a href="student-forgot.html">نسيتها؟</a>
                         </label>
-                        <div class="password-wrapper">
-                            <input 
-                                type="password" 
-                                id="password" 
-                                name="password" 
-                                placeholder="أدخل كلمة المرور"
-                                required
-                            >
-                            <button type="button" class="toggle-password" id="togglePassword">
-                                <i class="fas fa-eye"></i>
+                        <div class="input-wrap">
+                            <input type="password" id="password" class="field-input" placeholder="كلمة المرور" autocomplete="current-password">
+                            <button type="button" class="toggle-pass" onclick="togglePass()">
+                                <i class="fas fa-eye" id="passIcon"></i>
                             </button>
                         </div>
-                        <span class="error-message" id="passwordError"></span>
+                        <span class="field-error" id="passwordErr"></span>
                     </div>
 
-                    <!-- Remember & Forgot -->
-                    <div class="form-options">
-                        <label class="remember-me">
-                            <input type="checkbox" id="rememberMe">
-                            <span class="checkmark"></span>
-                            <span>تذكرني</span>
-                        </label>
-                        <a href="student-forgot.html" class="forgot-link">
-                            نسيت كلمة المرور؟
-                        </a>
+                    <div class="remember-row">
+                        <div class="remember-checkbox">
+                            <input type="checkbox" id="rememberMe" checked>
+                            <label for="rememberMe">تذكرني</label>
+                        </div>
                     </div>
 
-                    <!-- Submit Button -->
-                    <button type="submit" class="submit-btn">
-                        <span class="btn-text">تسجيل الدخول</span>
-                        <span class="btn-icon"><i class="fas fa-arrow-left"></i></span>
-                        <span class="btn-loader">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </span>
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        <span class="text">تسجيل الدخول</span>
+                        <i class="fas fa-arrow-left arrow"></i>
+                        <i class="fas fa-spinner fa-spin spinner"></i>
                     </button>
-
-                    <!-- Divider -->
-                    <div class="divider">
-                        <span>أو سجل الدخول بواسطة</span>
-                    </div>
-
-                    <!-- Social Login -->
-                    <div class="social-login">
-                        <button type="button" class="social-btn google" id="googleBtn">
-                            <i class="fab fa-google"></i>
-                            <span>Google</span>
-                        </button>
-                    </div>
-
-                    <!-- Register Link -->
-                    <div class="register-link">
-                        <p>ليس لديك حساب؟ <a href="student-register.html">سجل الآن مجاناً</a></p>
-                    </div>
-
-                    <!-- Company Login Link -->
-                    <div class="switch-user">
-                        <p>هل أنت شركة؟ <a href="company-login.html">تسجيل دخول الشركات</a></p>
-                    </div>
                 </form>
+
+                <div class="divider">أو سجل دخول كـ</div>
+
+                <div class="switch-types">
+                    <a href="company-login.html" class="switch-btn">
+                        <i class="fas fa-building"></i> شركة
+                    </a>
+                    <a href="admin-login.html" class="switch-btn">
+                        <i class="fas fa-shield-alt"></i> أدمن
+                    </a>
+                </div>
+
+                <p class="register-link">
+                    لسه ماعندكش حساب؟ <a href="student-register.html">سجل دلوقتي</a>
+                </p>
             </div>
         </div>
     </div>
 
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <script>
-        const _sb = supabase.createClient(
-            'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
-        );
+    (function() {
+        'use strict';
 
-        // ============================================
-        // Animations
-        // ============================================
-        const _style = document.createElement('style');
-        _style.textContent = `
-            @keyframes slideInRight { from{transform:translateX(400px);opacity:0} to{transform:translateX(0);opacity:1} }
-            @keyframes slideOutRight { from{transform:translateX(0);opacity:1} to{transform:translateX(400px);opacity:0} }
-            @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
-        `;
-        document.head.appendChild(_style);
+        if (!window.ProVance) { console.error('⚠️ supabase-config.js مش متحمل'); window.ProVance = {}; }
+        if (typeof window.ProVance.isValidEmail !== 'function') {
+            window.ProVance.isValidEmail = function(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((e||'').trim()); };
+        }
+        if (typeof window.ProVance.showToast !== 'function') {
+            window.ProVance.showToast = function(msg, type) {
+                var t = document.createElement('div');
+                var c = { error: '#ef4444', success: '#10b981', warning: '#f59e0b', info: '#4facfe' };
+                t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:'+(c[type]||'#4facfe')+';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
+                t.textContent = msg; document.body.appendChild(t);
+                setTimeout(function(){ t.remove(); }, 4000);
+            };
+        }
 
-        // ============================================
-        // Helpers
-        // ============================================
-        function validateEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+        console.log('✅ Login form initialized');
+
+        window.togglePass = function() {
+            const inp = document.getElementById('password');
+            const icon = document.getElementById('passIcon');
+            if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+            else { inp.type = 'password'; icon.className = 'fas fa-eye'; }
+        };
 
         function showError(id, msg) {
-            const el = document.getElementById(id + 'Error');
+            const err = document.getElementById(id + 'Err');
             const inp = document.getElementById(id);
-            if (el) { el.textContent = msg; el.classList.add('show'); }
-            if (inp) { inp.style.borderColor = 'var(--error-color)'; inp.style.animation = 'shake 0.4s'; setTimeout(()=>inp.style.animation='',400); }
+            if (err) err.textContent = msg;
+            if (inp) {
+                inp.style.borderColor = 'var(--error)';
+                inp.classList.add('shake');
+                setTimeout(() => inp.classList.remove('shake'), 400);
+            }
         }
-        function hideError(id) {
-            const el = document.getElementById(id + 'Error');
+        function clearError(id) {
+            const err = document.getElementById(id + 'Err');
             const inp = document.getElementById(id);
-            if (el) el.classList.remove('show');
+            if (err) err.textContent = '';
             if (inp) inp.style.borderColor = '';
         }
-        function showToast(msg, ok=true) {
-            const n = document.createElement('div');
-            n.style.cssText = `position:fixed;top:24px;right:24px;background:${ok?'linear-gradient(135deg,#51cf66,#37b24d)':'linear-gradient(135deg,#ff6b6b,#ee5a52)'};color:#fff;padding:14px 22px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:99999;display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;animation:slideInRight .4s ease`;
-            n.innerHTML = `<i class="fas fa-${ok?'check-circle':'exclamation-triangle'}"></i><span>${msg}</span>`;
-            document.body.appendChild(n);
-            setTimeout(()=>{ n.style.animation='slideOutRight .4s ease'; setTimeout(()=>n.remove(),400); }, 3500);
+        function showBanner(msg) {
+            const banner = document.getElementById('errorBanner');
+            banner.style.display = 'flex';
+            banner.className = 'error-banner';
+            banner.innerHTML = '<i class="fas fa-exclamation-circle" style="font-size:1.2rem;color:var(--error);flex-shrink:0;margin-top:2px;"></i><div style="flex:1"><strong style="color:var(--error);display:block;margin-bottom:4px;">حصل خطأ في تسجيل الدخول</strong><div>'+msg+'</div></div><button onclick="document.getElementById(\'errorBanner\').style.display=\'none\'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;"><i class="fas fa-times"></i></button>';
         }
+        function hideBanner() { document.getElementById('errorBanner').style.display = 'none'; }
 
-        // ============================================
-        // Toggle Password
-        // ============================================
-        document.getElementById('togglePassword').addEventListener('click', function() {
-            const inp = document.getElementById('password');
-            const isPass = inp.type === 'password';
-            inp.type = isPass ? 'text' : 'password';
-            this.innerHTML = `<i class="fas fa-eye${isPass?'-slash':''}"></i>`;
-        });
+        const savedEmail = localStorage.getItem('rememberStudentEmail');
+        if (savedEmail) document.getElementById('email').value = savedEmail;
 
-        // ============================================
-        // Login Form - Supabase
-        // ============================================
-        document.getElementById('studentLoginForm').addEventListener('submit', async function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value.trim();
+            hideBanner();
+            clearError('email'); clearError('password');
+
+            const email = document.getElementById('email').value.trim().toLowerCase();
             const password = document.getElementById('password').value;
-            const rememberMe = document.getElementById('rememberMe').checked;
+            const remember = document.getElementById('rememberMe').checked;
 
-            hideError('email'); hideError('password');
-            let valid = true;
-            if (!email) { showError('email','البريد الإلكتروني مطلوب'); valid=false; }
-            else if (!validateEmail(email)) { showError('email','البريد الإلكتروني غير صحيح'); valid=false; }
-            if (!password) { showError('password','كلمة المرور مطلوبة'); valid=false; }
-            else if (password.length < 6) { showError('password','كلمة المرور 6 أحرف على الأقل'); valid=false; }
-            if (!valid) return;
+            let ok = true;
+            if (!email) { showError('email', 'البريد مطلوب'); ok = false; }
+            else if (!window.ProVance.isValidEmail(email)) { showError('email', 'صيغة البريد غير صحيحة'); ok = false; }
+            if (!password) { showError('password', 'كلمة المرور مطلوبة'); ok = false; }
 
-            const btn = document.querySelector('.submit-btn');
-            btn.classList.add('loading'); btn.disabled = true;
-
-            const { data, error } = await _sb.auth.signInWithPassword({ email, password });
-
-            if (error) {
-                let msg = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
-                if (error.message.includes('Email not confirmed')) msg = 'يرجى تأكيد بريدك الإلكتروني أولاً';
-                if (error.message.includes('Too many')) msg = 'محاولات كثيرة، انتظر قليلاً';
-                showError('email', msg); showError('password', msg);
-                btn.classList.remove('loading'); btn.disabled = false;
+            if (!ok) {
+                window.ProVance.showToast('املأ البيانات بشكل صحيح', 'error');
                 return;
             }
 
-            const { data: st } = await _sb.from('students').select('full_name').eq('user_id', data.user.id).single();
-            const name = st?.full_name || email.split('@')[0];
+            const btn = document.getElementById('submitBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
 
-            localStorage.setItem('isLoggedIn','true');
-            localStorage.setItem('userEmail', email);
-            localStorage.setItem('userName', name);
-            localStorage.setItem('userId', data.user.id);
-            if (rememberMe) localStorage.setItem('rememberMe','true');
-            else localStorage.removeItem('rememberMe');
+            try {
+                const sb = window.ProVance.sb;
+                if (!sb) {
+                    showBanner('مشكلة في الاتصال بالخادم. تأكد إن supabase-config.js متحمل');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    return;
+                }
 
-            showToast(`أهلاً ${name}! جاري الدخول...`);
-            setTimeout(()=>{ window.location.href='student-internship.html'; }, 1500);
-        });
+                const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
-        // ============================================
-        // Google Login - Supabase OAuth
-        // ============================================
-        document.getElementById('googleBtn').addEventListener('click', async function() {
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>جاري الاتصال...</span>';
-            const { error } = await _sb.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: 'https://ahmedalhousen51-git.github.io/provance-web/student-internship.html' }
-            });
-            if (error) {
-                showToast('حدث خطأ، حاول مرة أخرى', false);
-                this.disabled = false;
-                this.innerHTML = '<i class="fab fa-google"></i><span>Google</span>';
+                if (error) {
+                    let msg = 'حدث خطأ، حاول تاني';
+                    const errMsg = (error.message || '').toLowerCase();
+                    if (errMsg.includes('invalid') || errMsg.includes('credentials')) msg = '⚠️ البريد أو كلمة المرور غير صحيحة';
+                    else if (errMsg.includes('email not confirmed')) msg = '⚠️ لازم تأكد البريد الإلكتروني أولاً';
+                    else if (errMsg.includes('rate limit')) msg = '⚠️ محاولات كتيرة، استنى دقيقتين';
+                    else if (errMsg.includes('network')) msg = '⚠️ مشكلة في الاتصال بالنت';
+                    else msg = error.message;
+                    showBanner(msg);
+                    window.ProVance.showToast(msg, 'error');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    return;
+                }
+
+                const { data: studentData, error: studentErr } = await sb.from('student')
+                    .select('user_id, full_name, status')
+                    .eq('user_id', data.user.id)
+                    .maybeSingle();
+
+                if (studentErr || !studentData) {
+                    await sb.auth.signOut();
+                    showBanner('الحساب ده مش مسجل كطالب. لو إنت شركة استخدم تسجيل دخول الشركات، أو سجل حساب طالب جديد');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    return;
+                }
+
+                if (studentData.status === 'suspended') {
+                    await sb.auth.signOut();
+                    showBanner('حسابك متوقف. تواصل مع الإدارة على support@provance.com');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    return;
+                }
+
+                if (remember) localStorage.setItem('rememberStudentEmail', email);
+                else localStorage.removeItem('rememberStudentEmail');
+
+                localStorage.setItem('userType', 'student');
+                localStorage.setItem('studentName', studentData.full_name);
+                localStorage.setItem('userEmail', email);
+
+                window.ProVance.showToast('🎉 أهلاً بعودتك ' + (studentData.full_name?.split(' ')[0] || ''), 'success');
+                setTimeout(() => window.location.href = 'student-internship.html', 800);
+
+            } catch (err) {
+                console.error('Login error:', err);
+                showBanner('مشكلة في الاتصال بالخادم. تأكد من الإنترنت');
+                btn.classList.remove('loading');
+                btn.disabled = false;
             }
         });
-
-        // ============================================
-        // Page Load
-        // ============================================
-        window.addEventListener('load', async () => {
-            document.body.style.opacity='0';
-            setTimeout(()=>{ document.body.style.transition='opacity .5s'; document.body.style.opacity='1'; },80);
-
-            // لو مسجل دخول خليه يدخل مباشرة
-            const { data: { session } } = await _sb.auth.getSession();
-            if (session) { window.location.href='student-internship.html'; return; }
-
-            // تحميل الإيميل المحفوظ
-            if (localStorage.getItem('rememberMe')==='true' && localStorage.getItem('userEmail')) {
-                document.getElementById('email').value = localStorage.getItem('userEmail');
-                document.getElementById('rememberMe').checked = true;
-            }
-        });
-
-        // Real-time validation
-        document.getElementById('email').addEventListener('input', function() {
-            if (this.value && !validateEmail(this.value)) showError('email','البريد الإلكتروني غير صحيح');
-            else hideError('email');
-        });
-        document.getElementById('password').addEventListener('input', function() {
-            if (this.value && this.value.length < 6) showError('password','كلمة المرور 6 أحرف على الأقل');
-            else hideError('password');
-        });
-
-        // Focus effects
-        document.querySelectorAll('.input-group input').forEach(inp => {
-            inp.addEventListener('focus', ()=>inp.parentElement.style.transform='translateY(-2px)');
-            inp.addEventListener('blur',  ()=>inp.parentElement.style.transform='translateY(0)');
-        });
+    })();
     </script>
 </body>
 </html>
