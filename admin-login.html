@@ -3,683 +3,574 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>دخول الإدارة - ProVance</title>
-    <meta name="description" content="بوابة دخول الإدارة في منصة ProVance">
-
-    <!-- Preconnects -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-
-    <!-- Icons -->
+    <title>تسجيل دخول الأدمن - ProVance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         :root {
-            --primary: #1e293b;
-            --primary-dark: #0f172a;
-            --accent: #ef4444;
-            --accent-light: #fee2e2;
-            --gold: #fbbf24;
-            --bg: #020617;
-            --card: rgba(255,255,255,0.04);
-            --border: rgba(255,255,255,0.1);
-            --text: #ffffff;
-            --text-muted: #94a3b8;
-            --success: #10b981;
-            --error: #ef4444;
+            --primary: #ef4444; --secondary: #dc2626;
+            --gradient: linear-gradient(135deg, #ef4444, #dc2626);
+            --bg: #0a0e27; --bg-2: #1a1535;
+            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.08);
+            --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
+            --error: #ef4444; --success: #10b981; --warning: #f59e0b;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        html, body { min-height: 100vh; }
-
         body {
             font-family: 'Cairo', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
-            position: relative;
         }
-
-        /* Animated Background */
         .bg-anim {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            overflow: hidden;
+            position: fixed; inset: 0; z-index: -1;
             background:
-                radial-gradient(circle at 20% 20%, rgba(239,68,68,0.15), transparent 45%),
-                radial-gradient(circle at 80% 80%, rgba(251,191,36,0.12), transparent 45%),
+                radial-gradient(circle at 15% 20%, rgba(239,68,68,0.12), transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(220,38,38,0.1), transparent 45%),
                 var(--bg);
         }
-
-        .bg-anim::before,
-        .bg-anim::after {
-            content: '';
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(90px);
-            opacity: 0.3;
+        .bg-anim::before, .bg-anim::after {
+            content: ''; position: absolute;
+            border-radius: 50%; filter: blur(120px); opacity: 0.3;
             animation: float 20s infinite ease-in-out;
         }
-
-        .bg-anim::before {
-            width: 450px; height: 450px;
-            background: var(--accent);
-            top: -120px; right: -120px;
-        }
-
-        .bg-anim::after {
-            width: 400px; height: 400px;
-            background: var(--gold);
-            bottom: -120px; left: -120px;
-            animation-delay: 10s;
-        }
-
+        .bg-anim::before { width: 500px; height: 500px; background: var(--primary); top: -200px; right: -200px; }
+        .bg-anim::after { width: 400px; height: 400px; background: var(--secondary); bottom: -150px; left: -150px; animation-delay: 10s; }
         @keyframes float {
-            0%, 100% { transform: translate(0,0); }
-            33% { transform: translate(60px, 40px); }
-            66% { transform: translate(-40px, 80px); }
+            0%,100% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(50px, 40px) scale(1.1); }
+            66% { transform: translate(-30px, 60px) scale(0.95); }
         }
-
-        /* Card */
-        .admin-card {
-            width: 100%;
-            max-width: 460px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 40px 36px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-            animation: cardIn 0.6s ease-out;
+        .container { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+        @media (max-width: 968px) {
+            .container { grid-template-columns: 1fr; }
+            .container .left-panel { display: none; }
         }
-
-        @keyframes cardIn {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        .left-panel {
+            display: flex; flex-direction: column;
+            padding: 40px 50px; position: relative; overflow: hidden;
         }
-
-        /* Back Link */
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-            transition: color 0.2s;
+        .left-panel::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(220,38,38,0.04));
+            backdrop-filter: blur(10px); z-index: -1;
         }
-        .back-link:hover { color: var(--text); }
-
-        /* Logo */
-        .logo-box {
-            text-align: center;
-            margin-bottom: 28px;
+        .brand {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: auto;
         }
-
-        .logo-icon {
-            width: 80px; height: 80px;
-            margin: 0 auto 16px;
-            background: linear-gradient(135deg, var(--accent), #dc2626);
+        .brand img { height: 42px; }
+        .brand-text {
+            font-size: 1.4rem; font-weight: 900;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-content { margin: auto 0; }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 7px 16px;
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.3);
             border-radius: 20px;
+            color: var(--primary);
+            font-size: 0.85rem; font-weight: 700;
+            margin-bottom: 22px;
+        }
+        .hero-title {
+            font-size: 2.4rem; font-weight: 900;
+            line-height: 1.25; margin-bottom: 16px;
+        }
+        .hero-title .highlight {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-desc {
+            color: var(--text-muted); font-size: 1rem;
+            line-height: 1.8; margin-bottom: 32px; max-width: 460px;
+        }
+        .features {
+            display: flex; flex-direction: column; gap: 14px; max-width: 460px;
+        }
+        .feature-row { display: flex; align-items: flex-start; gap: 12px; }
+        .feature-icon {
+            width: 38px; height: 38px;
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 2.2rem;
-            color: #fff;
-            box-shadow: 0 15px 40px rgba(239,68,68,0.35);
-            animation: pulse 2.5s infinite;
+            color: var(--primary); font-size: 0.95rem;
+            flex-shrink: 0;
         }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.04); }
+        .feature-text { display: flex; flex-direction: column; gap: 3px; }
+        .feature-text strong { font-size: 0.94rem; font-weight: 700; }
+        .feature-text small { color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; }
+        .stats-row {
+            display: flex; gap: 22px;
+            margin-top: auto; padding-top: 28px;
+            border-top: 1px solid var(--border);
         }
-
-        .brand-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 14px;
-            background: rgba(239,68,68,0.15);
-            color: var(--accent);
-            border-radius: 20px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            margin-bottom: 12px;
+        .stat-item .num {
+            font-size: 1.6rem; font-weight: 900;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-
-        h1 {
-            font-size: 1.7rem;
-            font-weight: 800;
-            margin-bottom: 6px;
+        .stat-item .label { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+        .right-panel {
+            display: flex; align-items: center; justify-content: center;
+            padding: 40px 30px; position: relative;
         }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            line-height: 1.5;
+        .form-wrap { width: 100%; max-width: 440px; }
+        .form-header { text-align: center; margin-bottom: 32px; }
+        .form-icon {
+            width: 64px; height: 64px;
+            margin: 0 auto 16px;
+            background: var(--gradient);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.7rem; color: #fff;
+            box-shadow: 0 16px 40px rgba(239,68,68,0.4);
         }
-
-        /* Form */
-        .field {
-            margin-bottom: 18px;
-        }
-
-        .field label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            font-weight: 600;
+        .form-title { font-size: 1.7rem; font-weight: 800; margin-bottom: 6px; }
+        .form-subtitle { color: var(--text-muted); font-size: 0.92rem; }
+        .mobile-brand { display: none; text-align: center; margin-bottom: 24px; }
+        .mobile-brand img { height: 38px; }
+        @media (max-width: 968px) { .mobile-brand { display: block; } }
+        .field { margin-bottom: 16px; }
+        .field-label {
+            display: flex; align-items: center; justify-content: space-between;
+            color: var(--text); font-size: 0.9rem; font-weight: 600;
             margin-bottom: 8px;
         }
-
+        .field-label-text { display: flex; align-items: center; gap: 6px; }
+        .field-label i { color: var(--primary); font-size: 0.85rem; }
+        .field-label a {
+            color: var(--primary); text-decoration: none;
+            font-size: 0.82rem; font-weight: 600;
+        }
+        .field-label a:hover { text-decoration: underline; }
         .input-wrap { position: relative; }
-
-        .field input {
-            width: 100%;
-            padding: 14px 16px;
-            background: rgba(255,255,255,0.04);
+        .field-input {
+            width: 100%; padding: 14px 16px;
+            background: rgba(255,255,255,0.03);
             border: 2px solid var(--border);
-            border-radius: 12px;
-            color: var(--text);
-            font-size: 1rem;
-            font-family: inherit;
-            transition: all 0.2s;
-            direction: ltr;
-            text-align: right;
+            border-radius: 12px; color: var(--text);
+            font-size: 0.95rem; font-family: inherit;
+            transition: all .2s;
         }
-
-        .field input:focus {
-            outline: none;
-            border-color: var(--accent);
-            background: rgba(255,255,255,0.08);
+        .field-input:focus {
+            outline: none; border-color: var(--primary);
+            background: rgba(255,255,255,0.06);
+            box-shadow: 0 0 0 4px rgba(239,68,68,0.1);
         }
-
-        .field input::placeholder {
-            color: rgba(148,163,184,0.5);
-            text-align: right;
+        .field-input::placeholder { color: var(--text-dim); }
+        .field-input[type="email"], .field-input[type="password"] {
+            direction: ltr; text-align: right; padding-left: 44px;
         }
-
         .toggle-pass {
-            position: absolute;
-            left: 12px;
-            top: 50%;
+            position: absolute; left: 14px; top: 50%;
             transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--text-muted);
+            background: none; border: none;
+            color: var(--text-muted); cursor: pointer;
+            padding: 6px; font-size: 0.95rem;
+        }
+        .toggle-pass:hover { color: var(--text); }
+        .field-error {
+            display: block; color: var(--error);
+            font-size: 0.8rem; margin-top: 6px; min-height: 16px;
+        }
+        .remember-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 22px; font-size: 0.88rem;
+        }
+        .remember-checkbox {
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+        }
+        .remember-checkbox input {
+            width: 16px; height: 16px;
+            accent-color: var(--primary); cursor: pointer;
+        }
+        .remember-checkbox label {
+            color: var(--text-muted); cursor: pointer;
+        }
+        .btn-submit {
+            width: 100%; padding: 14px;
+            background: var(--gradient); color: #fff;
+            border: none; border-radius: 12px;
+            font-weight: 800; font-size: 1rem; font-family: inherit;
             cursor: pointer;
-            padding: 6px;
-            font-size: 1rem;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all .25s; margin-bottom: 16px;
         }
-
-        .err-msg {
-            display: block;
-            color: var(--error);
-            font-size: 0.82rem;
-            margin-top: 6px;
-            min-height: 18px;
-        }
-
-        /* Submit Button */
-        .submit-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, var(--accent), #dc2626);
-            border: none;
-            border-radius: 12px;
-            color: #fff;
-            font-weight: 700;
-            font-size: 1.05rem;
-            font-family: inherit;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.2s;
-            margin-top: 10px;
-        }
-
-        .submit-btn:hover:not(:disabled) {
+        .btn-submit:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(239,68,68,0.35);
+            box-shadow: 0 14px 35px rgba(239,68,68,0.45);
         }
-
-        .submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-submit .spinner { display: none; }
+        .btn-submit.loading .spinner { display: inline-block; }
+        .btn-submit.loading .text, .btn-submit.loading .arrow { display: none; }
+        .divider {
+            display: flex; align-items: center; gap: 14px;
+            margin: 22px 0; color: var(--text-dim); font-size: 0.82rem;
         }
-
-        .submit-btn .spinner { display: none; }
-        .submit-btn.loading .txt,
-        .submit-btn.loading .arrow { display: none; }
-        .submit-btn.loading .spinner { display: inline-block; }
-
-        /* Security Notice */
-        .security-notice {
-            margin-top: 22px;
-            padding: 14px;
-            background: rgba(239,68,68,0.08);
-            border: 1px solid rgba(239,68,68,0.2);
-            border-radius: 12px;
-            display: flex;
-            gap: 10px;
-            font-size: 0.83rem;
-            line-height: 1.5;
+        .divider::before, .divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
+        }
+        .switch-types {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; margin-bottom: 22px;
+        }
+        .switch-btn {
+            padding: 11px;
+            background: var(--card); border: 1px solid var(--border);
             color: var(--text-muted);
+            border-radius: 10px;
+            font-size: 0.85rem; font-weight: 700; font-family: inherit;
+            cursor: pointer; text-decoration: none;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: all .2s;
         }
-
-        .security-notice i {
-            color: var(--accent);
-            flex-shrink: 0;
-            margin-top: 2px;
+        .switch-btn:hover {
+            background: var(--card-hover); color: var(--text);
         }
-
-        /* Locked Out */
-        .locked-box {
-            display: none;
-            text-align: center;
-            padding: 30px 20px;
+        .register-link {
+            text-align: center; color: var(--text-muted); font-size: 0.92rem;
         }
-
-        .locked-box.show { display: block; }
-
-        .locked-box .lock-icon {
-            width: 70px; height: 70px;
-            margin: 0 auto 16px;
-            background: rgba(239,68,68,0.15);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2rem;
-            color: var(--accent);
+        .register-link a {
+            color: var(--primary); text-decoration: none; font-weight: 700;
         }
-
-        .locked-box h3 {
-            margin-bottom: 10px;
-            color: var(--accent);
+        .register-link a:hover { text-decoration: underline; }
+        .error-banner {
+            background: rgba(239,68,68,0.1);
+            border: 1.5px solid rgba(239,68,68,0.4);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            color: #fca5a5;
+            font-size: 0.92rem;
+            display: flex; align-items: flex-start; gap: 10px;
+            animation: slideIn .3s ease-out;
         }
-
-        .locked-box .countdown {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--accent);
-            margin: 14px 0;
-            font-variant-numeric: tabular-nums;
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        /* Responsive */
-        @media (max-width: 480px) {
-            .admin-card { padding: 30px 20px; }
-            h1 { font-size: 1.4rem; }
-            .logo-icon { width: 70px; height: 70px; font-size: 1.9rem; }
+        .back-home {
+            position: absolute; top: 24px; right: 24px;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 9px 14px;
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--text-muted); text-decoration: none;
+            border-radius: 10px; font-size: 0.85rem; font-weight: 600;
+            transition: all .2s;
+            z-index: 10;
         }
-
+        .back-home:hover { color: var(--text); background: var(--card-hover); }
         @keyframes shake {
             0%,100% { transform: translateX(0); }
-            25% { transform: translateX(-6px); }
-            75% { transform: translateX(6px); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
-        .shake { animation: shake 0.35s; }
+        .shake { animation: shake .35s; }
+        @media (max-width: 968px) {
+            .right-panel { padding: 70px 20px 30px; }
+            .form-title { font-size: 1.5rem; }
+        }
     </style>
 </head>
 <body>
     <div class="bg-anim"></div>
 
-    <div class="admin-card" id="loginCard">
-        <a href="index.html" class="back-link">
-            <i class="fas fa-arrow-right"></i>
-            <span>الرئيسية</span>
-        </a>
+    <a href="index.html" class="back-home">
+        <i class="fas fa-arrow-right"></i>
+        <span>الرئيسية</span>
+    </a>
 
-        <div class="logo-box">
-            <div class="logo-icon">
-                <i class="fas fa-shield-halved"></i>
+    <div class="container">
+        <div class="left-panel">
+            <div class="brand">
+                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                <span class="brand-text" style="display:none">ProVance</span>
             </div>
-            <span class="brand-badge">
-                <i class="fas fa-lock"></i>
-                منطقة محمية
-            </span>
-            <h1>دخول الإدارة</h1>
-            <p class="subtitle">
-                سجّل الدخول ببيانات حساب الإدارة المعتمد
-            </p>
+
+            <div class="hero-content">
+                <span class="hero-badge">
+                    <i class="fas fa-graduation-cap"></i>
+                    لوحة الإدارة
+                </span>
+                <h1 class="hero-title">
+                    تحكم كامل في <span class="highlight">منصة ProVance</span>
+                </h1>
+                <p class="hero-desc">
+                    إدارة الشركات والطلاب، مراجعة الطلبات، إرسال الإشعارات، ومتابعة كل النشاطات على المنصة.
+                </p>
+
+                <div class="features">
+                    <div class="feature-row">
+                        <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                        <div class="feature-text">
+                            <strong>إدارة الشركات</strong>
+                            <small>قبول/رفض/إيقاف الشركات بضغطة</small>
+                        </div>
+                    </div>
+                    <div class="feature-row">
+                        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="feature-text">
+                            <strong>إدارة الطلاب</strong>
+                            <small>متابعة كل الحسابات والنشاطات</small>
+                        </div>
+                    </div>
+                    <div class="feature-row">
+                        <div class="feature-icon"><i class="fas fa-certificate"></i></div>
+                        <div class="feature-text">
+                            <strong>إشعارات ذكية</strong>
+                            <small>إرسال إشعارات لكل المستخدمين</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="num">+200</div>
+                    <div class="label">شركة</div>
+                </div>
+                <div class="stat-item">
+                    <div class="num">+1500</div>
+                    <div class="label">طالب</div>
+                </div>
+                <div class="stat-item">
+                    <div class="num">+500</div>
+                    <div class="label">فرصة</div>
+                </div>
+            </div>
         </div>
 
-        <form id="loginForm" novalidate>
-            <div class="field">
-                <label for="email">
-                    <i class="fas fa-envelope"></i>
-                    البريد الإلكتروني
-                </label>
-                <div class="input-wrap">
-                    <input type="email" id="email" placeholder="admin@provance.com" autocomplete="username" required>
+        <div class="right-panel">
+            <div class="form-wrap">
+                <div class="mobile-brand">
+                    <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
                 </div>
-                <span class="err-msg" id="emailErr"></span>
-            </div>
 
-            <div class="field">
-                <label for="password">
-                    <i class="fas fa-key"></i>
-                    كلمة المرور
-                </label>
-                <div class="input-wrap">
-                    <input type="password" id="password" placeholder="أدخل كلمة المرور" autocomplete="current-password" required>
-                    <button type="button" class="toggle-pass" id="togglePass" aria-label="إظهار/إخفاء كلمة المرور">
-                        <i class="fas fa-eye"></i>
+                <div class="form-header">
+                    <div class="form-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h2 class="form-title">لوحة تحكم الأدمن 🛡️</h2>
+                    <p class="form-subtitle">سجل دخولك للوصول لحسابك كطالب</p>
+                </div>
+
+                <div id="errorBanner" style="display:none"></div>
+
+                <form id="loginForm" novalidate>
+                    <div class="field">
+                        <label class="field-label" for="email">
+                            <span class="field-label-text">
+                                <i class="fas fa-envelope"></i> البريد الإلكتروني
+                            </span>
+                        </label>
+                        <input type="email" id="email" class="field-input" placeholder="admin@example.com" autocomplete="email">
+                        <span class="field-error" id="emailErr"></span>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="password">
+                            <span class="field-label-text">
+                                <i class="fas fa-lock"></i> كلمة المرور
+                            </span>
+                            <a href="student-forgot.html">نسيتها؟</a>
+                        </label>
+                        <div class="input-wrap">
+                            <input type="password" id="password" class="field-input" placeholder="كلمة المرور" autocomplete="current-password">
+                            <button type="button" class="toggle-pass" onclick="togglePass()">
+                                <i class="fas fa-eye" id="passIcon"></i>
+                            </button>
+                        </div>
+                        <span class="field-error" id="passwordErr"></span>
+                    </div>
+
+                    <div class="remember-row">
+                        <div class="remember-checkbox">
+                            <input type="checkbox" id="rememberMe" checked>
+                            <label for="rememberMe">تذكرني</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        <span class="text">تسجيل الدخول</span>
+                        <i class="fas fa-arrow-left arrow"></i>
+                        <i class="fas fa-spinner fa-spin spinner"></i>
                     </button>
+                </form>
+
+                <div class="divider">أو سجل دخول كـ</div>
+
+                <div class="switch-types">
+                    <a href="student-login.html" class="switch-btn">
+                        <i class="fas fa-user-graduate"></i> طالب
+                    </a>
+                    <a href="company-login.html" class="switch-btn">
+                        <i class="fas fa-building"></i> شركة
+                    </a>
                 </div>
-                <span class="err-msg" id="passwordErr"></span>
-            </div>
 
-            <button type="submit" class="submit-btn" id="submitBtn">
-                <span class="txt">دخول</span>
-                <i class="fas fa-arrow-left arrow"></i>
-                <i class="fas fa-spinner fa-spin spinner"></i>
-            </button>
-        </form>
-
-        <div class="security-notice">
-            <i class="fas fa-shield-alt"></i>
-            <div>
-                <strong>ملاحظة أمنية:</strong> هذه منطقة محمية للإدارة فقط. تتم مراقبة جميع محاولات الدخول. بعد 5 محاولات خاطئة، سيتم قفل الحساب مؤقتاً.
+                <p class="register-link" style="font-size:0.82rem">
+                    🛡️ منطقة محمية - الوصول للأدمن المعتمد فقط
+                </p>
             </div>
         </div>
     </div>
 
-    <!-- Locked Out Card -->
-    <div class="admin-card locked-box" id="lockedBox">
-        <div class="lock-icon">
-            <i class="fas fa-lock"></i>
-        </div>
-        <h3>تم قفل الدخول مؤقتاً</h3>
-        <p class="subtitle">
-            تم تجاوز عدد المحاولات المسموح بها.<br>
-            يرجى الانتظار قبل المحاولة مرة أخرى.
-        </p>
-        <div class="countdown" id="lockCountdown">10:00</div>
-        <a href="index.html" class="back-link" style="margin-top:10px;">
-            <i class="fas fa-arrow-right"></i>
-            العودة للرئيسية
-        </a>
-    </div>
-
-    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-
     <script>
-    (function () {
+    (function() {
         'use strict';
 
-        const form      = document.getElementById('loginForm');
-        const loginCard = document.getElementById('loginCard');
-        const lockedBox = document.getElementById('lockedBox');
-        const emailInp  = document.getElementById('email');
-        const passInp   = document.getElementById('password');
-        const togglePass = document.getElementById('togglePass');
-        const submitBtn = document.getElementById('submitBtn');
-
-        const MAX_ATTEMPTS   = 5;
-        const LOCKOUT_MS     = 10 * 60 * 1000;  // 10 دقائق
-        const LS_ATTEMPTS    = 'admin_attempts';
-        const LS_LOCK_UNTIL  = 'admin_lock_until';
-
-        // ============================================================
-        // Lockout Management
-        // ============================================================
-        function getLockUntil() {
-            const v = parseInt(localStorage.getItem(LS_LOCK_UNTIL) || '0');
-            return isNaN(v) ? 0 : v;
+        if (!window.ProVance) { console.error('⚠️ supabase-config.js مش متحمل'); window.ProVance = {}; }
+        if (typeof window.ProVance.isValidEmail !== 'function') {
+            window.ProVance.isValidEmail = function(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((e||'').trim()); };
+        }
+        if (typeof window.ProVance.showToast !== 'function') {
+            window.ProVance.showToast = function(msg, type) {
+                var t = document.createElement('div');
+                var c = { error: '#ef4444', success: '#10b981', warning: '#f59e0b', info: '#4facfe' };
+                t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:'+(c[type]||'#4facfe')+';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
+                t.textContent = msg; document.body.appendChild(t);
+                setTimeout(function(){ t.remove(); }, 4000);
+            };
         }
 
-        function isLocked() {
-            return getLockUntil() > Date.now();
-        }
+        console.log('✅ Login form initialized');
 
-        function getAttempts() {
-            const v = parseInt(localStorage.getItem(LS_ATTEMPTS) || '0');
-            return isNaN(v) ? 0 : v;
-        }
+        window.togglePass = function() {
+            const inp = document.getElementById('password');
+            const icon = document.getElementById('passIcon');
+            if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+            else { inp.type = 'password'; icon.className = 'fas fa-eye'; }
+        };
 
-        function incrementAttempts() {
-            const n = getAttempts() + 1;
-            localStorage.setItem(LS_ATTEMPTS, String(n));
-            if (n >= MAX_ATTEMPTS) {
-                localStorage.setItem(LS_LOCK_UNTIL, String(Date.now() + LOCKOUT_MS));
-                showLocked();
-            }
-            return n;
-        }
-
-        function resetAttempts() {
-            localStorage.removeItem(LS_ATTEMPTS);
-            localStorage.removeItem(LS_LOCK_UNTIL);
-        }
-
-        function showLocked() {
-            loginCard.style.display = 'none';
-            lockedBox.classList.add('show');
-            updateCountdown();
-        }
-
-        function updateCountdown() {
-            const until = getLockUntil();
-            const ms = until - Date.now();
-            const el = document.getElementById('lockCountdown');
-            if (!el) return;
-            if (ms <= 0) {
-                resetAttempts();
-                lockedBox.classList.remove('show');
-                loginCard.style.display = 'block';
-                return;
-            }
-            const mm = Math.floor(ms / 60000);
-            const ss = Math.floor((ms % 60000) / 1000);
-            el.textContent = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-            setTimeout(updateCountdown, 1000);
-        }
-
-        // ============================================================
-        // Validation Helpers
-        // ============================================================
-        function showErr(inputId, msg) {
-            document.getElementById(inputId + 'Err').textContent = msg;
-            const inp = document.getElementById(inputId);
-            inp.style.borderColor = 'var(--error)';
-            inp.classList.add('shake');
-            setTimeout(() => inp.classList.remove('shake'), 400);
-        }
-
-        function clearErr(inputId) {
-            document.getElementById(inputId + 'Err').textContent = '';
-            document.getElementById(inputId).style.borderColor = '';
-        }
-
-        // ============================================================
-        // Toggle Password
-        // ============================================================
-        togglePass.addEventListener('click', () => {
-            const isPass = passInp.type === 'password';
-            passInp.type = isPass ? 'text' : 'password';
-            togglePass.innerHTML = `<i class="fas fa-${isPass ? 'eye-slash' : 'eye'}"></i>`;
-        });
-
-        // ============================================================
-        // On Load: Check if already logged in
-        // ============================================================
-        async function checkSession() {
-            if (!window.ProVance) return;
-            const session = await window.ProVance.getSession();
-            if (!session) return;
-
-            // عنده جلسة - نتأكد إنه أدمن فعلاً
-            const sb = window.ProVance.sb;
-            const { data: admin } = await sb.from('admins')
-                .select('user_id, is_active')
-                .eq('user_id', session.user.id)
-                .eq('is_active', true)
-                .maybeSingle();
-
-            if (admin) {
-                // بالفعل أدمن مسجل - خش على الـ dashboard
-                window.location.href = 'admin-dashboard.html';
-            } else {
-                // مسجل دخول لكن مش أدمن - اعمل signOut
-                await sb.auth.signOut();
+        function showError(id, msg) {
+            const err = document.getElementById(id + 'Err');
+            const inp = document.getElementById(id);
+            if (err) err.textContent = msg;
+            if (inp) {
+                inp.style.borderColor = 'var(--error)';
+                inp.classList.add('shake');
+                setTimeout(() => inp.classList.remove('shake'), 400);
             }
         }
+        function clearError(id) {
+            const err = document.getElementById(id + 'Err');
+            const inp = document.getElementById(id);
+            if (err) err.textContent = '';
+            if (inp) inp.style.borderColor = '';
+        }
+        function showBanner(msg) {
+            const banner = document.getElementById('errorBanner');
+            banner.style.display = 'flex';
+            banner.className = 'error-banner';
+            banner.innerHTML = '<i class="fas fa-exclamation-circle" style="font-size:1.2rem;color:var(--error);flex-shrink:0;margin-top:2px;"></i><div style="flex:1"><strong style="color:var(--error);display:block;margin-bottom:4px;">حصل خطأ في تسجيل الدخول</strong><div>'+msg+'</div></div><button onclick="document.getElementById(\'errorBanner\').style.display=\'none\'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;"><i class="fas fa-times"></i></button>';
+        }
+        function hideBanner() { document.getElementById('errorBanner').style.display = 'none'; }
 
-        // ============================================================
-        // Submit Handler
-        // ============================================================
-        form.addEventListener('submit', async (e) => {
+        const savedEmail = localStorage.getItem('rememberAdminEmail');
+        if (savedEmail) document.getElementById('email').value = savedEmail;
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            hideBanner();
+            clearError('email'); clearError('password');
 
-            if (isLocked()) {
-                showLocked();
-                return;
-            }
-
-            const email = emailInp.value.trim().toLowerCase();
-            const password = passInp.value;
-
-            clearErr('email');
-            clearErr('password');
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('rememberMe').checked;
 
             let ok = true;
-            if (!email) {
-                showErr('email', 'البريد الإلكتروني مطلوب');
-                ok = false;
-            } else if (!window.ProVance.isValidEmail(email)) {
-                showErr('email', 'صيغة البريد غير صحيحة');
-                ok = false;
-            }
-            if (!password) {
-                showErr('password', 'كلمة المرور مطلوبة');
-                ok = false;
-            } else if (password.length < 6) {
-                showErr('password', 'كلمة المرور 6 أحرف على الأقل');
-                ok = false;
-            }
-            if (!ok) return;
+            if (!email) { showError('email', 'البريد مطلوب'); ok = false; }
+            else if (!window.ProVance.isValidEmail(email)) { showError('email', 'صيغة البريد غير صحيحة'); ok = false; }
+            if (!password) { showError('password', 'كلمة المرور مطلوبة'); ok = false; }
 
-            submitBtn.classList.add('loading');
-            submitBtn.disabled = true;
+            if (!ok) {
+                window.ProVance.showToast('املأ البيانات بشكل صحيح', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
 
             try {
                 const sb = window.ProVance.sb;
-                if (!sb) throw new Error('مكتبة Supabase غير محمّلة');
-
-                // 1. تسجيل دخول Supabase Auth
-                const { data: authData, error: authErr } = await sb.auth.signInWithPassword({
-                    email, password
-                });
-
-                if (authErr) {
-                    incrementAttempts();
-                    const attemptsLeft = MAX_ATTEMPTS - getAttempts();
-
-                    let msg = 'البريد أو كلمة المرور غير صحيحة';
-                    if (authErr.message.includes('Email not confirmed')) {
-                        msg = 'يرجى تأكيد البريد الإلكتروني أولاً';
-                    } else if (authErr.message.includes('Too many')) {
-                        msg = 'محاولات كثيرة جداً، انتظر قليلاً';
-                    }
-
-                    if (attemptsLeft > 0 && attemptsLeft < 3) {
-                        msg += ` (${attemptsLeft} محاولات متبقية)`;
-                    }
-
-                    window.ProVance.showToast(msg, 'error');
-                    showErr('email', ' ');
-                    showErr('password', ' ');
-                    submitBtn.classList.remove('loading');
-                    submitBtn.disabled = false;
+                if (!sb) {
+                    showBanner('مشكلة في الاتصال بالخادم. تأكد إن supabase-config.js متحمل');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
                     return;
                 }
 
-                // 2. التحقق إن المستخدم فعلاً أدمن
-                const { data: admin, error: adminErr } = await sb
-                    .from('admins')
-                    .select('user_id, full_name, role, permissions, is_active')
-                    .eq('user_id', authData.user.id)
+                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+                if (error) {
+                    let msg = 'حدث خطأ، حاول تاني';
+                    const errMsg = (error.message || '').toLowerCase();
+                    if (errMsg.includes('invalid') || errMsg.includes('credentials')) msg = '⚠️ البريد أو كلمة المرور غير صحيحة';
+                    else if (errMsg.includes('email not confirmed')) msg = '⚠️ لازم تأكد البريد الإلكتروني أولاً';
+                    else if (errMsg.includes('rate limit')) msg = '⚠️ محاولات كتيرة، استنى دقيقتين';
+                    else if (errMsg.includes('network')) msg = '⚠️ مشكلة في الاتصال بالنت';
+                    else msg = error.message;
+                    showBanner(msg);
+                    window.ProVance.showToast(msg, 'error');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    return;
+                }
+
+                const { data: studentData, error: studentErr } = await sb.from('admins')
+                    .select('user_id, full_name, is_active')
+                    .eq('user_id', data.user.id)
                     .maybeSingle();
 
-                if (adminErr || !admin) {
-                    // ليس أدمن - اعمل signOut
+                if (studentErr || !studentData) {
                     await sb.auth.signOut();
-                    incrementAttempts();
-                    window.ProVance.showToast('هذا الحساب ليس له صلاحية إدارية', 'error');
-                    showErr('email', 'غير مصرح لك بالدخول هنا');
-                    submitBtn.classList.remove('loading');
-                    submitBtn.disabled = false;
+                    showBanner('الحساب ده مش له صلاحية أدمن');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
                     return;
                 }
 
-                if (!admin.is_active) {
+                if (!studentData.is_active) {
                     await sb.auth.signOut();
-                    window.ProVance.showToast('حساب الإدارة موقوف حالياً', 'error');
-                    submitBtn.classList.remove('loading');
-                    submitBtn.disabled = false;
+                    showBanner('حساب الأدمن غير نشط. تواصل مع المسؤول الرئيسي');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
                     return;
                 }
 
-                // 3. تحديث آخر دخول
-                await sb.from('admins')
-                    .update({ last_login: new Date().toISOString() })
-                    .eq('user_id', admin.user_id);
+                if (remember) localStorage.setItem('rememberAdminEmail', email);
+                else localStorage.removeItem('rememberAdminEmail');
 
-                // 4. حفظ بيانات للصفحات الأخرى
                 localStorage.setItem('userType', 'admin');
+                localStorage.setItem('adminName', studentData.full_name);
                 localStorage.setItem('userEmail', email);
-                localStorage.setItem('userName', admin.full_name || 'مسؤول');
-                localStorage.setItem('userRole', admin.role || 'admin');
-                localStorage.setItem('userId', admin.user_id);
 
-                resetAttempts();
-
-                window.ProVance.showToast(`مرحباً ${admin.full_name}! جاري الدخول...`, 'success');
-
-                setTimeout(() => {
-                    window.location.href = 'admin-dashboard.html';
-                }, 1200);
+                window.ProVance.showToast('🎉 أهلاً بعودتك ' + (studentData.full_name?.split(' ')[0] || 'أدمن'), 'success');
+                setTimeout(() => window.location.href = 'admin-dashboard.html', 800);
 
             } catch (err) {
-                console.error('Admin login error:', err);
-                window.ProVance.showToast('خطأ في الاتصال، تحقق من الإنترنت', 'error');
-                submitBtn.classList.remove('loading');
-                submitBtn.disabled = false;
+                console.error('Login error:', err);
+                showBanner('مشكلة في الاتصال بالخادم. تأكد من الإنترنت');
+                btn.classList.remove('loading');
+                btn.disabled = false;
             }
         });
-
-        // Real-time validation
-        emailInp.addEventListener('input', () => clearErr('email'));
-        passInp.addEventListener('input',  () => clearErr('password'));
-
-        // ============================================================
-        // Init
-        // ============================================================
-        if (isLocked()) {
-            showLocked();
-        } else {
-            // لو مسجل دخول كأدمن من قبل، خشه على الdashboard
-            if (typeof supabase !== 'undefined') {
-                setTimeout(checkSession, 200);
-            }
-        }
     })();
     </script>
 </body>
