@@ -2,1606 +2,1329 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Provance Control - QR Code System</title>
-    
-    <!-- تحسينات التحميل -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>QR الحضور اليومي - ProVance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         :root {
-            --color-primary: #667eea;
-            --color-primary-dark: #5568d3;
-            --color-success: #11998e;
-            --color-warning: #f5576c;
-            --bg-ultra-dark: #0a0e27;
-            --bg-dark: #0f1419;
-            --bg-darker: #1a1f2e;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-primary: #ffffff;
-            --text-secondary: #a0aec0;
-            --sidebar-width: 280px;
-            --header-height: 80px;
-            --border-radius: 16px;
-            --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+            --primary: #f093fb; --secondary: #f5576c;
+            --gradient: linear-gradient(135deg, #f093fb, #f5576c);
+            --bg: #0a0e27; --bg-2: #1a1535;
+            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+            --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
+            --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+        .bg-anim {
+            position: fixed; inset: 0; z-index: -1;
+            background: radial-gradient(circle at 20% 20%, rgba(240,147,251,0.08), transparent 45%),
+                        radial-gradient(circle at 80% 80%, rgba(245,87,108,0.06), transparent 45%),
+                        var(--bg);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background: var(--bg-ultra-dark);
-            color: var(--text-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
-            font-size: 16px;
-        }
-
-        /* Loading Indicator */
-        #loading {
-            position: fixed;
-            top: 0;
-            right: 0;
-            left: 0;
-            bottom: 0;
-            background: var(--bg-ultra-dark);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
-        }
-
-        #loading.hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        .loading-content {
-            text-align: center;
-        }
-
-        .loading-logo {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 20px;
-            background: var(--color-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .loading-progress {
-            width: 200px;
-            height: 4px;
-            background: var(--glass-border);
-            border-radius: 2px;
-            overflow: hidden;
-            margin: 20px auto;
-        }
-
-        .loading-progress-bar {
-            width: 0%;
-            height: 100%;
-            background: var(--color-primary);
-            transition: width 0.3s ease;
-        }
-
-        /* Sidebar */
+        .layout { display: flex; min-height: 100vh; }
         .sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: var(--sidebar-width);
-            height: 100vh;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border-left: 1px solid var(--glass-border);
-            z-index: 1000;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.4s var(--transition-smooth);
+            width: 260px; background: rgba(20,18,40,0.7);
+            backdrop-filter: blur(20px); border-left: 1px solid var(--border);
+            padding: 24px 16px; position: fixed; inset: 0 0 0 auto;
+            z-index: 100; transition: transform .3s;
+            display: flex; flex-direction: column;
         }
+        .sidebar-logo {
+            display: flex; align-items: center; justify-content: center;
+            padding: 0 8px 20px; margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-logo img { height: 32px; max-width: 100%; }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 14px; color: var(--text-muted);
+            text-decoration: none; border-radius: 10px;
+            font-size: 0.92rem; font-weight: 600; margin-bottom: 4px;
+            transition: all .2s;
+        }
+        .nav-item:hover { background: var(--card); color: var(--text); }
+        .nav-item.active { background: var(--gradient); color: #fff; }
+        .nav-item i { width: 18px; }
 
-        .sidebar.collapsed {
-            width: 70px;
+        .main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 22px; gap: 14px; flex-wrap: wrap;
         }
+        .menu-toggle {
+            display: none; background: var(--card); border: 1px solid var(--border);
+            color: var(--text); width: 42px; height: 42px;
+            border-radius: 10px; cursor: pointer;
+        }
+        .topbar-title { font-size: 1.5rem; font-weight: 800; }
 
-        .sidebar-header {
-            padding: 25px 20px;
-            text-align: center;
-            border-bottom: 1px solid var(--glass-border);
+        /* Tabs */
+        .tabs-container {
+            display: flex; gap: 8px; margin-bottom: 22px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 6px;
+            overflow-x: auto;
         }
+        .tab-btn {
+            padding: 11px 18px; background: none; border: none;
+            color: var(--text-muted); font-family: inherit;
+            font-size: 0.92rem; font-weight: 700;
+            border-radius: 10px; cursor: pointer;
+            white-space: nowrap;
+            display: flex; align-items: center; gap: 7px;
+            transition: all .2s;
+        }
+        .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+        .tab-btn.active {
+            background: var(--gradient); color: #fff;
+            box-shadow: 0 6px 16px rgba(240,147,251,0.3);
+        }
+        .tab-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 1px 8px; border-radius: 10px;
+            font-size: 0.72rem;
+        }
+        .tab-content { display: none; animation: fadeIn .3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        .logo-container {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 15px;
-            background: var(--color-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        .sidebar-brand-text h2 {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--color-primary);
-            margin-bottom: 5px;
-        }
-
-        .sidebar-brand-text p {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        /* Navigation */
-        .nav-menu {
-            padding: 20px 0;
-            flex-grow: 1;
-        }
-
-        .nav-section-title {
-            padding: 12px 20px 8px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
-
-        .nav-link-advanced {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 20px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.3s var(--transition-smooth);
-            margin: 4px 10px;
-            border-radius: 10px;
-        }
-
-        .nav-link-advanced:hover {
-            background: var(--glass-bg-hover);
-            color: var(--text-primary);
-        }
-
-        .nav-link-advanced.active {
-            background: rgba(102, 126, 234, 0.15);
-            color: var(--color-primary);
-        }
-
-        .nav-icon {
-            width: 20px;
-            font-size: 1.1rem;
-            text-align: center;
-        }
-
-        .nav-text {
-            flex: 1;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        
-        .collapsed .nav-text {
-            display: none;
-        }
-
-        .nav-badge {
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
-
-        .badge-success {
-            background: var(--color-success);
-            color: white;
-        }
-
-        .badge-warning {
-            background: var(--color-warning);
-            color: white;
-        }
-
-        .badge-info {
-            background: var(--color-primary);
-            color: white;
-        }
-
-        .sidebar-footer {
-            padding: 15px;
-            border-top: 1px solid var(--glass-border);
-            margin-top: auto;
-        }
-
-        .logout-btn-advanced {
-            width: 100%;
-            padding: 12px;
-            background: transparent;
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s var(--transition-smooth);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .logout-btn-advanced:hover {
-            background: var(--color-warning);
-            border-color: transparent;
-        }
-
-        /* Main Content */
-        .main-content {
-            margin-right: var(--sidebar-width);
-            min-height: 100vh;
-            position: relative;
-            z-index: 1;
-            transition: all 0.4s var(--transition-smooth);
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-        
-        .main-content.loaded {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        .sidebar.collapsed + .main-content {
-            margin-right: 70px;
-        }
-
-        /* Header */
-        .header-advanced {
-            height: var(--header-height);
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--glass-border);
-            padding: 0 25px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .sidebar-toggle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-toggle:hover {
-            background: var(--color-primary);
-            transform: rotate(90deg);
-        }
-
-        .page-title-advanced {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--color-primary);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .page-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: var(--color-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: white;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-profile-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 12px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .user-profile-header:hover {
-            background: var(--glass-bg-hover);
-        }
-
-        .user-avatar-small {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: var(--color-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            color: white;
-        }
-
-        .user-info-header {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .user-name-header {
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
-
-        .user-role-header {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-        }
-
-        /* Page Container */
-        .page-container {
-            padding: 25px;
-        }
-
-        .content-section {
-            display: none;
-        }
-
-        .content-section.active {
-            display: block;
-        }
-
-        /* Cards */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius);
-            padding: 25px;
-            transition: all 0.3s ease;
-            margin-bottom: 25px;
-        }
-
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: var(--color-primary);
-        }
-
-        .card-title i {
-            width: 40px;
-            height: 40px;
-            background: var(--color-primary);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-
-        /* Navigation Buttons */
-        .nav-buttons-container {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .nav-button {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 25px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius);
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.4s var(--transition-smooth);
-            width: 200px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .nav-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(17, 153, 142, 0.1));
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .nav-button:hover::before {
-            opacity: 1;
-        }
-
-        .nav-button:hover {
-            transform: translateY(-5px);
-            border-color: var(--color-primary);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .nav-button.active {
-            background: rgba(102, 126, 234, 0.15);
-            border-color: var(--color-primary);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
-        }
-
-        .nav-button.active::before {
-            opacity: 1;
-        }
-
-        .nav-button-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 1;
-        }
-
-        .nav-button.create .nav-button-icon {
-            background: var(--color-primary);
-            color: white;
-        }
-
-        .nav-button.records .nav-button-icon {
-            background: var(--color-success);
-            color: white;
-        }
-
-        .nav-button-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .nav-button-desc {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            position: relative;
-            z-index: 1;
-        }
-
-        .nav-button-badge {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: var(--color-success);
-            color: white;
-            border-radius: 10px;
-            padding: 3px 8px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            z-index: 2;
-        }
-
-        /* Form Elements */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 1rem;
-        }
-
-        .form-input, .form-textarea, .form-select {
-            width: 100%;
-            padding: 12px 15px;
-            background: var(--bg-darker);
-            border: 1px solid var(--glass-border);
-            border-radius: 10px;
-            color: var(--text-primary);
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus, .form-textarea:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
-        }
-
-        .form-textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-
-        .form-row {
+        /* Stats Row */
+        .stats-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px; margin-bottom: 18px;
+        }
+        .stat-mini {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px;
+            display: flex; align-items: center; gap: 11px;
+            transition: all .2s;
+        }
+        .stat-mini:hover { border-color: var(--primary); }
+        .stat-mini-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; color: #fff; flex-shrink: 0;
+        }
+        .stat-mini-icon.purple { background: var(--gradient); }
+        .stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+        .stat-mini-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .stat-mini-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+        .stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+
+        /* QR Generator Card */
+        .qr-generator-card {
+            background: linear-gradient(135deg, rgba(240,147,251,0.08), rgba(245,87,108,0.04));
+            border: 1px solid rgba(240,147,251,0.2);
+            border-radius: 18px;
+            padding: 28px;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        .qr-generator-card h2 {
+            font-size: 1.2rem; font-weight: 800; margin-bottom: 6px;
+        }
+        .qr-generator-card p {
+            color: var(--text-muted); font-size: 0.9rem; margin-bottom: 18px;
+        }
+        .qr-canvas-wrap {
+            background: #fff;
+            padding: 18px;
+            border-radius: 16px;
+            display: inline-block;
+            margin: 14px 0;
+            position: relative;
+        }
+        .qr-canvas-wrap img {
+            display: block;
+            max-width: 280px;
+            width: 100%;
+            height: auto;
+        }
+        .qr-canvas-wrap.expired::after {
+            content: 'انتهت';
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; font-weight: 800;
+            border-radius: 16px;
+        }
+
+        .qr-validity-info {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 16px;
+            text-align: right;
+        }
+        .qr-validity-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        .qr-validity-row:last-child { border-bottom: none; }
+        .qr-validity-row .label { color: var(--text-muted); font-size: 0.86rem; }
+        .qr-validity-row .value { font-weight: 700; }
+
+        .countdown-big {
+            font-size: 2rem; font-weight: 900;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 14px 0;
+        }
+        .countdown-big.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .countdown-big.expired {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .qr-actions {
+            display: flex; gap: 10px; justify-content: center;
+            flex-wrap: wrap; margin-top: 16px;
         }
 
         /* Buttons */
         .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-
-        .btn-primary {
-            background: var(--color-primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--color-primary-dark);
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: var(--color-success);
-            color: white;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-        }
-
-        .btn-outline:hover {
-            background: var(--glass-bg-hover);
-            border-color: var(--color-primary);
-        }
-
-        /* QR Preview */
-        .qr-preview-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 25px;
-            padding: 30px;
-            background: var(--bg-darker);
-            border-radius: var(--border-radius);
-            margin: 25px 0;
-            border: 1px solid var(--glass-border);
-        }
-
-        #qrcode {
-            padding: 15px;
-            background: white;
-            border-radius: 10px;
-        }
-
-        .download-buttons {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        /* Table */
-        .table-container {
-            overflow-x: auto;
-            margin-top: 20px;
-            border-radius: 10px;
-            border: 1px solid var(--glass-border);
-        }
-
-        .qr-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .qr-table thead {
-            background: var(--bg-darker);
-        }
-
-        .qr-table th {
-            padding: 15px;
-            text-align: right;
-            font-weight: 700;
-            border-bottom: 2px solid var(--glass-border);
-            color: var(--color-primary);
-        }
-
-        .qr-table td {
-            padding: 15px;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .qr-table tbody tr {
-            transition: all 0.3s ease;
-        }
-
-        .qr-table tbody tr:hover {
-            background: var(--glass-bg-hover);
-        }
-
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .status-active {
-            background: rgba(17, 153, 142, 0.2);
-            color: var(--color-success);
-        }
-
-        .status-expired {
-            background: rgba(245, 87, 108, 0.2);
-            color: var(--color-warning);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        /* New Button Styles for Records Page */
-        .btn-small {
-            padding: 8px 15px;
-            font-size: 0.85rem;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 10px 16px; border: none; border-radius: 10px;
+            font-weight: 700; font-family: inherit; font-size: 0.88rem;
+            cursor: pointer; transition: all .2s; text-decoration: none;
             white-space: nowrap;
         }
+        .btn-primary { background: var(--gradient); color: #fff; }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(240,147,251,0.4);
+        }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+        .btn-secondary:hover { background: var(--card-hover); }
+        .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+        .btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+        .btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+        .btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
+        .btn-sm { padding: 7px 12px; font-size: 0.8rem; }
 
-        .btn-icon-only {
-            width: 35px;
-            height: 35px;
-            padding: 0;
-            justify-content: center;
-            border-radius: 8px;
+        /* Filters */
+        .filters-bar {
+            display: flex; gap: 10px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 12px;
+            margin-bottom: 18px; flex-wrap: wrap;
+        }
+        .filters-bar input, .filters-bar select {
+            padding: 9px 14px; background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text); font-family: inherit; font-size: 0.9rem;
+        }
+        .filters-bar input { flex: 1; min-width: 200px; }
+        .filters-bar input:focus, .filters-bar select:focus {
+            outline: none; border-color: var(--primary);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(100%);
-            }
-            
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .sidebar.collapsed + .main-content {
-                margin-right: 0;
-            }
-            
-            .main-content {
-                margin-right: 0;
-            }
-            
-            .header-advanced {
-                padding: 0 15px;
-            }
-            
-            .page-container {
-                padding: 15px;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .nav-buttons-container {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .nav-button {
-                width: 100%;
-                max-width: 300px;
-            }
+        /* Attendance Cards Grid */
+        .attendance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 14px;
+        }
+        .attendance-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 16px;
+            display: flex; align-items: center; gap: 12px;
+            transition: all .25s;
+        }
+        .attendance-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .attendance-avatar {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: var(--gradient);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: 1.1rem;
+            flex-shrink: 0; overflow: hidden;
+        }
+        .attendance-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .attendance-body { flex: 1; min-width: 0; }
+        .attendance-name { font-weight: 800; font-size: 0.95rem; }
+        .attendance-pos { color: var(--text-muted); font-size: 0.82rem; margin-top: 2px; }
+        .attendance-meta {
+            display: flex; gap: 10px; margin-top: 6px;
+            font-size: 0.78rem; color: var(--text-muted);
+            flex-wrap: wrap;
+        }
 
-            .action-buttons {
-                flex-direction: column;
-                gap: 5px;
-            }
-            
-            .btn-small {
-                padding: 6px 10px;
-                font-size: 0.75rem;
-            }
+        /* Status Badges */
+        .badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 14px;
+            font-size: 0.74rem; font-weight: 700;
+            white-space: nowrap;
+        }
+        .badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
+        .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .badge-error { background: rgba(239,68,68,0.15); color: var(--error); }
+        .badge-info { background: rgba(79,172,254,0.15); color: var(--info); }
+
+        /* Empty State */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-muted);
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            color: rgba(148,163,184,0.3);
+            margin-bottom: 16px;
+            display: block;
+        }
+        .empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
+
+        /* Modals */
+        .modal {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            z-index: 200; display: none;
+            align-items: center; justify-content: center;
+            padding: 20px;
+            animation: fadeIn .25s;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--bg-2); border: 1px solid var(--border);
+            border-radius: 22px;
+            width: 100%; max-width: 600px;
+            max-height: 92vh; overflow-y: auto;
+            padding: 28px; position: relative;
+            animation: slideUp .3s ease-out;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-content::-webkit-scrollbar { width: 6px; }
+        .modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 22px; padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-title {
+            font-size: 1.2rem; font-weight: 800;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .modal-title i { color: var(--primary); }
+        .modal-close {
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--text); width: 36px; height: 36px;
+            border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all .2s;
+        }
+        .modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
+
+        /* Form Fields */
+        .field { margin-bottom: 16px; }
+        .field label {
+            display: block; color: var(--text);
+            font-size: 0.9rem; font-weight: 600; margin-bottom: 8px;
+        }
+        .field label i { color: var(--primary); margin-left: 4px; }
+        .field input, .field select, .field textarea {
+            width: 100%; padding: 12px 14px;
+            background: rgba(255,255,255,0.03);
+            border: 2px solid var(--border);
+            border-radius: 10px; color: var(--text);
+            font-size: 0.95rem; font-family: inherit;
+            transition: all .2s;
+        }
+        .field input:focus, .field select:focus, .field textarea:focus {
+            outline: none; border-color: var(--primary);
+            background: rgba(255,255,255,0.06);
+        }
+
+        /* Holidays Days Grid */
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+        .day-checkbox {
+            padding: 10px 6px;
+            background: rgba(255,255,255,0.03);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.86rem;
+            font-weight: 700;
+            transition: all .2s;
+        }
+        .day-checkbox:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--primary);
+        }
+        .day-checkbox.checked {
+            background: rgba(240,147,251,0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .day-checkbox input { display: none; }
+
+        /* Section */
+        .section {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 18px;
+            margin-bottom: 16px;
+        }
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 14px;
+        }
+        .section-title {
+            font-size: 1rem; font-weight: 800;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title i { color: var(--primary); }
+
+        /* Live indicator */
+        .live-indicator {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 12px;
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 14px;
+            color: var(--success);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .live-dot {
+            width: 8px; height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px; background: rgba(255,255,255,0.06);
+            border-radius: 4px; overflow: hidden;
+            margin-top: 6px;
+        }
+        .progress-fill {
+            height: 100%; background: var(--gradient);
+            transition: width .4s;
+        }
+        .progress-fill.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .progress-fill.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+        .progress-fill.danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(100%); width: 280px; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-right: 0; }
+            .menu-toggle { display: flex; align-items: center; justify-content: center; }
+        }
+        @media (max-width: 600px) {
+            .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
+            .topbar-title { font-size: 1.2rem; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+            .countdown-big { font-size: 1.5rem; }
+            .qr-canvas-wrap img { max-width: 220px; }
         }
     </style>
 </head>
 <body>
-    <!-- Loading Indicator -->
-    <div id="loading">
-        <div class="loading-content">
-            <div class="loading-logo">
-                <i class="fas fa-qrcode"></i>
+    <div class="bg-anim"></div>
+
+    <div class="layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
             </div>
-            <h3 style="color: var(--color-primary); margin-bottom: 10px;">جاري تحميل نظام QR</h3>
-            <div class="loading-progress">
-                <div class="loading-progress-bar" id="loadingBar"></div>
+            <a href="company-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
+            <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
+            <a href="company-requests-control.html" class="nav-item"><i class="fas fa-envelope-open-text"></i> الطلبات</a>
+            <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
+            <a href="company-QR_Code.html" class="nav-item active"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
+            <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
+            <a href="company-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+            <a href="#" onclick="logoutCompany(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
+                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+            </a>
+        </aside>
+
+        <main class="main">
+            <div class="topbar">
+                <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="topbar-title">
+                    <i class="fas fa-qrcode" style="color:var(--primary)"></i> الحضور اليومي (QR)
+                </h1>
+                <button class="btn btn-secondary" onclick="openHolidaysSettings()">
+                    <i class="fas fa-calendar-times"></i> إعدادات الإجازات
+                </button>
             </div>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">الرجاء الانتظار...</p>
-        </div>
+
+            <!-- Tabs -->
+            <div class="tabs-container">
+                <button class="tab-btn active" data-tab="generate" onclick="switchTab(event, 'generate')">
+                    <i class="fas fa-qrcode"></i> توليد QR
+                </button>
+                <button class="tab-btn" data-tab="today-attendance" onclick="switchTab(event, 'today-attendance')">
+                    <i class="fas fa-calendar-day"></i> حضور اليوم
+                    <span class="tab-badge" id="todayCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="history" onclick="switchTab(event, 'history')">
+                    <i class="fas fa-history"></i> السجل
+                </button>
+                <button class="tab-btn" data-tab="stats" onclick="switchTab(event, 'stats')">
+                    <i class="fas fa-chart-bar"></i> إحصائيات
+                </button>
+            </div>
+
+            <!-- Tab: Generate QR -->
+            <div id="tab-generate" class="tab-content active">
+                <div class="qr-generator-card">
+                    <h2>QR Code للحضور اليومي</h2>
+                    <p id="qrGenSubtitle">اضغط الزرار لتوليد QR جديد للمتدربين</p>
+
+                    <div id="qrDisplay" style="display:none">
+                        <div class="qr-canvas-wrap" id="qrCanvasWrap">
+                            <img id="qrImage" src="" alt="QR Code">
+                        </div>
+
+                        <div class="countdown-big" id="qrCountdown">--:--</div>
+
+                        <div class="live-indicator">
+                            <div class="live-dot"></div>
+                            <span>الـ QR نشط</span>
+                        </div>
+
+                        <div class="qr-validity-info">
+                            <div class="qr-validity-row">
+                                <span class="label">📅 التاريخ:</span>
+                                <span class="value" id="qrDateInfo">-</span>
+                            </div>
+                            <div class="qr-validity-row">
+                                <span class="label">⏰ بدأ في:</span>
+                                <span class="value" id="qrStartInfo">-</span>
+                            </div>
+                            <div class="qr-validity-row">
+                                <span class="label">⏰ ينتهي في:</span>
+                                <span class="value" id="qrEndInfo">-</span>
+                            </div>
+                            <div class="qr-validity-row">
+                                <span class="label">🎯 عدد المسحات:</span>
+                                <span class="value" id="qrScansInfo">0</span>
+                            </div>
+                            <div class="qr-validity-row">
+                                <span class="label">🔑 الكود:</span>
+                                <span class="value" id="qrCodeInfo" style="font-family:'Courier New',monospace;font-size:0.85rem">-</span>
+                            </div>
+                        </div>
+
+                        <div class="qr-actions">
+                            <button class="btn btn-primary" onclick="generateNewQR()">
+                                <i class="fas fa-sync"></i> QR جديد
+                            </button>
+                            <button class="btn btn-secondary" onclick="printQR()">
+                                <i class="fas fa-print"></i> طباعة
+                            </button>
+                            <button class="btn btn-info" onclick="copyQRCode()">
+                                <i class="fas fa-copy"></i> نسخ الكود
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="qrPlaceholder">
+                        <div style="padding:40px 20px;color:var(--text-muted);text-align:center">
+                            <i class="fas fa-qrcode" style="font-size:5rem;opacity:0.3;display:block;margin-bottom:14px"></i>
+                            <p style="margin-bottom:18px">مفيش QR Code نشط حالياً</p>
+                            <button class="btn btn-primary" onclick="generateNewQR()">
+                                <i class="fas fa-plus"></i> ولّد QR جديد
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Card -->
+                <div class="section">
+                    <div class="section-header">
+                        <h3 class="section-title"><i class="fas fa-info-circle"></i> كيف يعمل النظام؟</h3>
+                    </div>
+                    <ul style="list-style:none;color:var(--text-muted);font-size:0.9rem;line-height:2">
+                        <li><i class="fas fa-check-circle" style="color:var(--success);margin-left:8px"></i> ولّد QR Code لكل يوم تدريب</li>
+                        <li><i class="fas fa-check-circle" style="color:var(--success);margin-left:8px"></i> الـ QR صالح لساعة من وقت التوليد</li>
+                        <li><i class="fas fa-check-circle" style="color:var(--success);margin-left:8px"></i> اعرض الـ QR على شاشة كبيرة عشان المتدربين يمسحوه</li>
+                        <li><i class="fas fa-check-circle" style="color:var(--success);margin-left:8px"></i> اتأكد من قائمة الحضور في تاب "حضور اليوم"</li>
+                        <li><i class="fas fa-exclamation-triangle" style="color:var(--warning);margin-left:8px"></i> لما متدرب يحضر 3 أيام، حسابه يقفل تلقائياً للدفع</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tab: Today's Attendance -->
+            <div id="tab-today-attendance" class="tab-content">
+                <div class="stats-row">
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon purple"><i class="fas fa-users"></i></div>
+                        <div>
+                            <div class="stat-mini-num" id="statExpected">0</div>
+                            <div class="stat-mini-label">المتوقع</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon success"><i class="fas fa-check"></i></div>
+                        <div>
+                            <div class="stat-mini-num" id="statAttended">0</div>
+                            <div class="stat-mini-label">حضروا</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon warning"><i class="fas fa-clock"></i></div>
+                        <div>
+                            <div class="stat-mini-num" id="statLate">0</div>
+                            <div class="stat-mini-label">متأخرين</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon error"><i class="fas fa-times"></i></div>
+                        <div>
+                            <div class="stat-mini-num" id="statAbsent">0</div>
+                            <div class="stat-mini-label">غايبين</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filters-bar">
+                    <input type="text" id="searchAttendance" placeholder="🔍 ابحث باسم المتدرب...">
+                    <select id="filterStatus">
+                        <option value="">كل الحالات</option>
+                        <option value="on_time">في الوقت</option>
+                        <option value="late">متأخر</option>
+                        <option value="absent">غائب</option>
+                    </select>
+                </div>
+
+                <div class="attendance-grid" id="todayAttendanceGrid">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
+                </div>
+            </div>
+
+            <!-- Tab: History -->
+            <div id="tab-history" class="tab-content">
+                <div class="filters-bar">
+                    <input type="text" id="searchHistory" placeholder="🔍 ابحث باسم المتدرب...">
+                    <input type="date" id="filterHistoryDate">
+                </div>
+
+                <div class="attendance-grid" id="historyGrid">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i></div>
+                </div>
+            </div>
+
+            <!-- Tab: Stats -->
+            <div id="tab-stats" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <h3 class="section-title"><i class="fas fa-chart-line"></i> إحصائيات الشهر الحالي</h3>
+                    </div>
+                    <div id="monthStatsContent">
+                        <div class="empty-state"><i class="fas fa-spinner fa-spin"></i></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h3 class="section-title"><i class="fas fa-trophy"></i> أعلى نسبة حضور</h3>
+                    </div>
+                    <div id="topAttendees">
+                        <div class="empty-state"><i class="fas fa-spinner fa-spin"></i></div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!-- Sidebar -->
-    <aside class="sidebar" id="mainSidebar">
-        <!-- Sidebar Header -->
-        <div class="sidebar-header">
-            <div class="logo-container">
-                <i class="fas fa-rocket"></i>
-            </div>
-            
-            <div class="sidebar-brand-text">
-                <h2>PROVANCE</h2>
-                <p>نظام إدارة التدريب</p>
-            </div>
-        </div>
+    <div id="modalsContainer"></div>
 
-        <!-- Navigation Menu -->
-        <nav class="nav-menu">
-            <div class="nav-section-title">القائمة الرئيسية</div>
-            
-            <a class="nav-link-advanced" href="company-requests-control.html">
-                <div class="nav-icon"><i class="fas fa-cogs"></i></div>
-                <span class="nav-text">طلبات الأقسام</span>
-            </a>
-            
-            <a class="nav-link-advanced" href="company-dashboard.html">
-                <div class="nav-icon"><i class="fas fa-home"></i></div>
-                <span class="nav-text">لوحة التحكم</span>
-            </a>
-
-            <a class="nav-link-advanced active" href="company-qr-system.html">
-                <div class="nav-icon"><i class="fas fa-qrcode"></i></div>
-                <span class="nav-text">نظام QR</span>
-            </a>
-
-            <a class="nav-link-advanced" href="company-trainers.html">
-                <div class="nav-icon"><i class="fas fa-users"></i></div>
-                <span class="nav-text">المتدربين</span>
-            </a>
-
-            <a class="nav-link-advanced" href="company-interviews.html">
-                <div class="nav-icon"><i class="fas fa-handshake"></i></div>
-                <span class="nav-text">المقابلات</span>
-            </a>
-
-            <a class="nav-link-advanced" href="company-profile.html">
-                <div class="nav-icon"><i class="fas fa-building"></i></div>
-                <span class="nav-text">الملف الشخصي</span>
-            </a>
-
-            <a class="nav-link-advanced" href="company-batches.html">
-                <div class="nav-icon"><i class="fas fa-layer-group"></i></div>
-                <span class="nav-text">إدارة الدفعات</span>
-            </a>
-
-            <div class="nav-section-title">التقارير والتحليلات</div>
-
-            <a class="nav-link-advanced" href="company-departments.html">
-                <div class="nav-icon"><i class="fas fa-sitemap"></i></div>
-                <span class="nav-text">تحليل الأقسام</span>
-            </a>
-
-           <a class="nav-link-advanced" href="company-notifications.html">
-               <div class="nav-icon"><i class="fas fa-bell"></i></div>
-                <span class="nav-text">الإشعارات</span>
-            </a>
-        </nav>
-
-        <!-- Sidebar Footer -->
-        <div class="sidebar-footer">
-            <button class="logout-btn-advanced" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>تسجيل الخروج</span>
-            </button>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Header -->
-        <header class="header-advanced">
-            <div class="header-left">
-                <div class="sidebar-toggle" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </div>
-                
-                <div>
-                    <div class="page-title-advanced">
-                        <div class="page-icon">
-                            <i class="fas fa-qrcode"></i>
-                        </div>
-                        <span>نظام QR</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="header-right">
-                <div class="user-profile-header" onclick="toggleUserMenu()">
-                    <div class="user-avatar-small">
-                        <i class="fas fa-user-tie"></i>
-                    </div>
-                    <div class="user-info-header">
-                        <div class="user-name-header">شركة التقنية</div>
-                        <div class="user-role-header">مدير الموارد البشرية</div>
-                    </div>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-            </div>
-        </header>
-
-        <!-- Page Container -->
-        <div class="page-container">
-            <!-- Navigation Buttons -->
-            <div class="nav-buttons-container">
-                <div class="nav-button create active" onclick="showQRSection('create')">
-                    <div class="nav-button-icon">
-                        <i class="fas fa-plus-circle"></i>
-                    </div>
-                    <div class="nav-button-title">إنشاء QR جديد</div>
-                    <div class="nav-button-desc">إنشاء كود QR جديد بخصائص متقدمة</div>
-                </div>
-                
-                <div class="nav-button records" onclick="showQRSection('records')">
-                    <div class="nav-button-badge" id="recordsBadge">0</div>
-                    <div class="nav-button-icon">
-                        <i class="fas fa-database"></i>
-                    </div>
-                    <div class="nav-button-title">سجل QR</div>
-                    <div class="nav-button-desc">عرض وإدارة جميع أكواد QR المحفوظة</div>
-                </div>
-            </div>
-
-            <!-- Create QR Section -->
-            <div id="create-section" class="content-section active">
-                <div class="glass-card">
-                    <h3 class="card-title">
-                        <i class="fas fa-qrcode"></i>
-                        منشئ أكواد QR
-                    </h3>
-
-                    <form id="qrForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">نوع الـ QR</label>
-                                <select id="qrType" class="form-select" required>
-                                    <option value="">اختر نوع الكود...</option>
-                                    <option value="attendance">حضور وانصراف</option>
-                                    <option value="interview">مقابلة توظيف</option>
-                                    <option value="training">يوم تدريبي</option>
-                                    <option value="task">مهمة</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">اسم الكود</label>
-                                <input type="text" id="eventTitle" class="form-input" 
-                                       placeholder="اسم الحدث" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">وصف مختصر</label>
-                            <textarea id="description" class="form-textarea" 
-                                      placeholder="وصف الكود (اختياري)"></textarea>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">مدة الصلاحية</label>
-                                <select id="expiration" class="form-select" required>
-                                    <option value="30min">30 دقيقة</option>
-                                    <option value="1hour">ساعة واحدة</option>
-                                    <option value="1day">يوم واحد</option>
-                                    <option value="1week">أسبوع</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">قواعد المسح</label>
-                                <select id="scanRules" class="form-select" required>
-                                    <option value="single">مسح واحد فقط</option>
-                                    <option value="limited-5">5 مرات مسح</option>
-                                    <option value="limited-10">10 مرات مسح</option>
-                                    <option value="unlimited">مسح غير محدود</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
-                            <!-- تم تغيير نوع الزر من submit إلى button وإضافة onclick -->
-                            <button type="button" class="btn btn-primary" onclick="generateQRCode()">
-                                <i class="fas fa-qrcode"></i>
-                                إنشاء الكود
-                            </button>
-                            <button type="reset" class="btn btn-outline">
-                                <i class="fas fa-redo"></i>
-                                إعادة تعيين
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- QR Preview Card -->
-                <div class="glass-card" id="qrPreview" style="display: none;">
-                    <h3 class="card-title">
-                        <i class="fas fa-eye"></i>
-                        معاينة الكود
-                    </h3>
-
-                    <div class="qr-preview-container">
-                        <div id="qrcode"></div>
-
-                        <div class="download-buttons">
-                            <button class="btn btn-success" onclick="downloadQR('png')">
-                                <i class="fas fa-download"></i>
-                                تحميل PNG
-                            </button>
-                            <button class="btn btn-outline" onclick="printQR()">
-                                <i class="fas fa-print"></i>
-                                طباعة
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Records Section -->
-            <div id="records-section" class="content-section" style="display: none;">
-                <div class="glass-card">
-                    <h3 class="card-title">
-                        <i class="fas fa-database"></i>
-                        سجل QR
-                    </h3>
-
-                    <div class="table-container">
-                        <table class="qr-table">
-                            <thead>
-                                <tr>
-                                    <th>الحدث</th>
-                                    <th>النوع</th>
-                                    <th>تاريخ الإنشاء</th>
-                                    <th>الصلاحية</th>
-                                    <th>عمليات المسح</th>
-                                    <th>الحالة</th>
-                                    <th>الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody id="qrTableBody">
-                                <!-- سيتم ملؤها ديناميكيًا -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Load QR Code library dynamically with fallback -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <script>
-        // ===== GLOBAL STATE =====
-        let qrCodes = [];
-        let currentQRCode = null;
-        let qrLibraryLoaded = false;
+// ============================================================
+// ProVance: Daily QR Code & Attendance
+// ============================================================
+(function() {
+    'use strict';
 
-        // ===== LOADING INDICATOR FUNCTIONS =====
-        function updateLoadingProgress(percent) {
-            const loadingBar = document.getElementById('loadingBar');
-            if (loadingBar) {
-                loadingBar.style.width = percent + '%';
-            }
+    // Safety
+    if (!window.ProVance) {
+        console.error('⚠️ supabase-config.js مش متحمل');
+        window.ProVance = {};
+    }
+    if (typeof window.ProVance.escapeHtml !== 'function') {
+        window.ProVance.escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    if (typeof window.ProVance.showToast !== 'function') {
+        window.ProVance.showToast = (msg, type) => {
+            const t = document.createElement('div');
+            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+            t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (c[type]||'#4facfe') + ';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
+        };
+    }
+    if (typeof window.ProVance.confirmModal !== 'function') {
+        window.ProVance.confirmModal = async ({title, message}) => confirm((title||'') + '\n' + (message||''));
+    }
+
+    console.log('✅ QR Code app initialized');
+
+    const esc = window.ProVance.escapeHtml;
+
+    // STATE
+    let companyUserId = null;
+    let companyName = null;
+    let activeTrainees = [];      // المتدربين النشطين
+    let activeQrCode = null;       // QR الحالي
+    let allAttendanceLogs = [];    // كل سجلات الحضور
+    let weeklyHolidays = null;     // الإجازات
+    let countdownInterval = null;
+    let autoRefreshInterval = null;
+
+    function getInitial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function renderModal(html) {
+        document.getElementById('modalsContainer').innerHTML = html;
+        document.body.style.overflow = 'hidden';
+    }
+    window.closeModal = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+        if (document.querySelectorAll('.modal').length === 0) {
+            document.body.style.overflow = '';
+        }
+    };
+
+    window.logoutCompany = async (e) => {
+        e.preventDefault();
+        const ok = await window.ProVance.confirmModal({title: 'تسجيل الخروج', message: 'هل تريد تسجيل الخروج؟'});
+        if (ok) {
+            if (window.ProVance.logout) await window.ProVance.logout('company-login.html');
+            else window.location.href = 'company-login.html';
+        }
+    };
+
+    function formatDate(d) {
+        if (!d) return '-';
+        return new Date(d).toLocaleDateString('ar-EG');
+    }
+    function formatDateTime(d) {
+        if (!d) return '-';
+        return new Date(d).toLocaleString('ar-EG');
+    }
+    function formatTime(d) {
+        if (!d) return '-';
+        return new Date(d).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // TABS
+    window.switchTab = (e, tabName) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.add('active');
+
+        if (tabName === 'stats') {
+            renderMonthStats();
+        }
+    };
+
+    // GENERATE QR
+    window.generateNewQR = async () => {
+        if (activeTrainees.length === 0) {
+            window.ProVance.showToast('⚠️ مفيش متدربين نشطين عشان تولّد لهم QR', 'warning');
+            return;
         }
 
-        function hideLoadingIndicator() {
-            const loadingIndicator = document.getElementById('loading');
-            const mainContent = document.querySelector('.main-content');
-            
-            if (loadingIndicator) {
-                loadingIndicator.classList.add('hidden');
+        try {
+            const sb = window.ProVance.sb;
+
+            // إلغاء الـ QR القديم لو موجود
+            if (activeQrCode && activeQrCode.status === 'active') {
+                await sb.from('qr_codes').update({ status: 'cancelled' }).eq('id', activeQrCode.id);
             }
-            
-            if (mainContent) {
-                mainContent.classList.add('loaded');
-            }
-            
-            // إزالة المؤشر من DOM بعد الانتهاء من التحريك
-            setTimeout(() => {
-                if (loadingIndicator && loadingIndicator.parentNode) {
-                    loadingIndicator.style.display = 'none';
-                }
-            }, 500);
+
+            // توليد كود جديد
+            const qrCodeStr = 'DAY-' + Math.random().toString(36).substring(2, 14).toUpperCase();
+            const now = new Date();
+            const validUntil = new Date(now.getTime() + 60 * 60 * 1000); // ساعة
+
+            const { data: newQr, error } = await sb.from('qr_codes').insert({
+                code: qrCodeStr,
+                qr_type: 'daily_attendance',
+                company_user_id: companyUserId,
+                company_name: companyName,
+                application_id: null,    // QR عام للكل
+                student_user_id: null,
+                metadata: {
+                    training_day: now.toISOString().slice(0, 10),
+                    expected_attendees: activeTrainees.length
+                },
+                valid_from: now.toISOString(),
+                valid_until: validUntil.toISOString(),
+                status: 'active'
+            }).select().single();
+
+            if (error) throw error;
+
+            activeQrCode = newQr;
+            window.ProVance.showToast('🎉 تم توليد QR جديد!', 'success');
+            renderQR();
+            startCountdown();
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+        }
+    };
+
+    function renderQR() {
+        const placeholder = document.getElementById('qrPlaceholder');
+        const display = document.getElementById('qrDisplay');
+
+        if (!activeQrCode || activeQrCode.status !== 'active' || new Date(activeQrCode.valid_until) < new Date()) {
+            placeholder.style.display = 'block';
+            display.style.display = 'none';
+            return;
         }
 
-        // تحميل مكتبة QR Code بشكل ديناميكي بعد تحميل الصفحة
-        function loadQRCodeLibrary() {
-            return new Promise((resolve, reject) => {
-                // تحقق مما إذا كانت المكتبة محملة بالفعل
-                if (typeof QRCode !== 'undefined') {
-                    resolve();
-                    return;
-                }
-                
-                // محاولة تحميل المكتبة من CDN موثوق (qrcode-generator)
-                const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
-                script.async = true;
-                script.defer = true;
-                
-                script.onload = () => {
-                    console.log('QRCode library loaded successfully from cdnjs');
-                    qrLibraryLoaded = true;
-                    resolve();
-                };
-                
-                script.onerror = () => {
-                    console.error('Failed to load QRCode library from cdnjs, trying fallback...');
-                    // محاولة تحميل المكتبة من مصدر بديل
-                    const fallbackScript = document.createElement('script');
-                    fallbackScript.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js';
-                    fallbackScript.async = true;
-                    fallbackScript.defer = true;
-                    
-                    fallbackScript.onload = () => {
-                        console.log('QRCode library loaded successfully from fallback');
-                        qrLibraryLoaded = true;
-                        resolve();
-                    };
-                    
-                    fallbackScript.onerror = () => {
-                        console.error('All attempts to load QR library failed');
-                        reject(new Error('Failed to load QRCode library from all sources'));
-                    };
-                    
-                    document.body.appendChild(fallbackScript);
-                };
-                
-                document.body.appendChild(script);
-            });
-        }
+        placeholder.style.display = 'none';
+        display.style.display = 'block';
 
-        // ===== INITIALIZATION =====
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('QR System - Initializing with optimized loading...');
-            
-            // تحديث شريط التحميل
-            updateLoadingProgress(30);
-            
-            // تحميل المكتبة بشكل غير متزامن
-            loadQRCodeLibrary().then(() => {
-                console.log('QR Library is ready');
-                updateLoadingProgress(70);
-                
-                // تحميل البيانات بعد تحميل المكتبة
-                setTimeout(() => {
-                    loadQRCodes();
-                    renderQRTable();
-                    updateRecordsBadge();
-                    
-                    updateLoadingProgress(100);
-                    
-                    // إخفاء مؤشر التحميل بعد 500 مللي ثانية
-                    setTimeout(() => {
-                        hideLoadingIndicator();
-                    }, 500);
-                    
-                }, 300);
-                
-            }).catch(error => {
-                console.error('Failed to load QR library:', error);
-                updateLoadingProgress(100);
-                setTimeout(hideLoadingIndicator, 500);
-                
-                // عرض رسالة خطأ للمستخدم
-                showNotification('فشل تحميل مكتبة QR. يرجى تحديث الصفحة أو المحاولة لاحقًا.', 'error');
-            });
+        // QR Image
+        const qrData = JSON.stringify({
+            type: 'daily_attendance',
+            code: activeQrCode.code,
+            company: activeQrCode.company_name,
+            valid_until: activeQrCode.valid_until
+        });
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}&color=000000&bgcolor=FFFFFF`;
+        document.getElementById('qrImage').src = qrUrl;
+
+        // Info
+        const validFrom = new Date(activeQrCode.valid_from);
+        const validUntil = new Date(activeQrCode.valid_until);
+        document.getElementById('qrDateInfo').textContent = formatDate(validFrom);
+        document.getElementById('qrStartInfo').textContent = formatTime(validFrom);
+        document.getElementById('qrEndInfo').textContent = formatTime(validUntil);
+        document.getElementById('qrScansInfo').textContent = activeQrCode.scans_count || 0;
+        document.getElementById('qrCodeInfo').textContent = activeQrCode.code;
+
+        document.getElementById('qrGenSubtitle').textContent =
+            `الـ QR صالح لساعة كاملة • ${activeTrainees.length} متدرب نشط`;
+    }
+
+    function startCountdown() {
+        if (countdownInterval) clearInterval(countdownInterval);
+
+        const updateCountdown = () => {
+            if (!activeQrCode) return;
+            const validUntil = new Date(activeQrCode.valid_until);
+            const diff = validUntil.getTime() - Date.now();
+
+            const cdEl = document.getElementById('qrCountdown');
+            const wrap = document.getElementById('qrCanvasWrap');
+            if (!cdEl || !wrap) return;
+
+            if (diff <= 0) {
+                cdEl.textContent = '00:00';
+                cdEl.classList.remove('danger');
+                cdEl.classList.add('expired');
+                wrap.classList.add('expired');
+                clearInterval(countdownInterval);
+                // Auto refresh الصفحة
+                setTimeout(() => loadAll(), 2000);
+                return;
+            }
+
+            const mins = Math.floor(diff / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            cdEl.textContent = `${pad(mins)}:${pad(secs)}`;
+
+            if (diff < 5 * 60 * 1000) {  // أقل من 5 دقايق
+                cdEl.classList.add('danger');
+            } else {
+                cdEl.classList.remove('danger');
+            }
+            wrap.classList.remove('expired');
+            cdEl.classList.remove('expired');
+        };
+
+        updateCountdown();
+        countdownInterval = setInterval(updateCountdown, 1000);
+    }
+
+    window.copyQRCode = () => {
+        if (!activeQrCode) return;
+        navigator.clipboard.writeText(activeQrCode.code).then(() => {
+            window.ProVance.showToast('تم نسخ الكود ✓', 'success');
+        }).catch(() => {
+            window.ProVance.showToast('تعذر النسخ', 'error');
+        });
+    };
+
+    window.printQR = () => {
+        if (!activeQrCode) return;
+        const img = document.getElementById('qrImage');
+        const printWin = window.open('', '_blank', 'width=600,height=700');
+        printWin.document.write(`
+            <!DOCTYPE html>
+            <html dir="rtl"><head><title>ProVance - QR Code</title>
+            <style>
+                body { font-family: Arial; text-align: center; padding: 40px; }
+                img { max-width: 400px; margin: 20px 0; }
+                h1 { color: #333; }
+                .info { background: #f5f5f5; padding: 20px; border-radius: 12px; margin: 20px 0; }
+                .code { font-family: monospace; font-size: 1.4rem; font-weight: bold; color: #f093fb; }
+            </style>
+            </head><body>
+            <h1>🎫 ProVance - QR Code للحضور</h1>
+            <h2>${esc(companyName)}</h2>
+            <img src="${img.src}">
+            <div class="info">
+                <p>📅 ${formatDate(activeQrCode.valid_from)}</p>
+                <p>⏰ صالح من ${formatTime(activeQrCode.valid_from)} إلى ${formatTime(activeQrCode.valid_until)}</p>
+                <p class="code">${activeQrCode.code}</p>
+            </div>
+            <p style="color:#666">امسح الـ QR Code من تطبيق ProVance لتسجيل حضورك اليومي</p>
+            </body></html>
+        `);
+        printWin.document.close();
+        setTimeout(() => printWin.print(), 500);
+    };
+
+    // RENDER ATTENDANCE
+    function getTodayAttendance() {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+        return allAttendanceLogs.filter(a => {
+            if (a.attendance_type !== 'daily_attendance') return false;
+            const d = new Date(a.scanned_at);
+            return d >= today && d < tomorrow;
+        });
+    }
+
+    function renderTodayAttendance() {
+        const search = document.getElementById('searchAttendance').value.toLowerCase().trim();
+        const statusFilter = document.getElementById('filterStatus').value;
+
+        const todayAtt = getTodayAttendance();
+        const attendedIds = new Set(todayAtt.map(a => a.student_user_id));
+
+        // اعمل قائمة بكل المتدربين + حالتهم اليوم
+        let combined = activeTrainees.map(t => {
+            const att = todayAtt.find(a => a.student_user_id === t.student_user_id);
+            return {
+                ...t,
+                attendance: att,
+                status: att ? att.status : 'absent',
+                delay_minutes: att ? att.delay_minutes : 0,
+                scanned_at: att ? att.scanned_at : null
+            };
         });
 
-        // ===== STORAGE =====
-        function loadQRCodes() {
-            try {
-                const saved = localStorage.getItem('provance_qr_codes');
-                if (saved) {
-                    qrCodes = JSON.parse(saved);
-                    console.log(`Loaded ${qrCodes.length} QR codes from storage`);
-                } else {
-                    qrCodes = [];
-                    console.log('No QR codes found in storage');
-                }
-            } catch (error) {
-                console.error('Error loading QR codes:', error);
-                qrCodes = [];
-            }
+        // Filters
+        if (search) {
+            combined = combined.filter(c =>
+                (c.student_name || '').toLowerCase().includes(search)
+            );
+        }
+        if (statusFilter) {
+            combined = combined.filter(c => c.status === statusFilter);
         }
 
-        function saveQRCodes() {
-            try {
-                // حفظ فقط آخر 50 كود لتجنب استهلاك كبير للتخزين
-                const codesToSave = qrCodes.slice(0, 50);
-                localStorage.setItem('provance_qr_codes', JSON.stringify(codesToSave));
-                console.log(`Saved ${codesToSave.length} QR codes to storage`);
-            } catch (error) {
-                console.error('Error saving QR codes:', error);
-            }
+        // Update stats
+        const onTime = todayAtt.filter(a => a.status === 'on_time').length;
+        const late = todayAtt.filter(a => a.status === 'late').length;
+        const absent = activeTrainees.length - todayAtt.length;
+
+        document.getElementById('statExpected').textContent = activeTrainees.length;
+        document.getElementById('statAttended').textContent = onTime;
+        document.getElementById('statLate').textContent = late;
+        document.getElementById('statAbsent').textContent = absent;
+        document.getElementById('todayCount').textContent = todayAtt.length;
+
+        // Render grid
+        const grid = document.getElementById('todayAttendanceGrid');
+        if (combined.length === 0) {
+            grid.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><h3>مفيش متدربين</h3></div>';
+            return;
         }
 
-        // ===== QR GENERATION =====
-        function generateQRCode() {
-            // تحقق من تحميل المكتبة
-            if (!qrLibraryLoaded || typeof qrcode === 'undefined') {
-                showNotification('مكتبة QR Code لم تحمل بعد. الرجاء الانتظار...', 'error');
-                return;
-            }
-            
-            const type = document.getElementById('qrType').value;
-            const title = document.getElementById('eventTitle').value;
-            const description = document.getElementById('description').value;
-            const expiration = document.getElementById('expiration').value;
-            const scanRules = document.getElementById('scanRules').value;
-            
-            // التحقق من الحقول المطلوبة
-            if (!type || !title) {
-                showNotification('الرجاء ملء جميع الحقول المطلوبة', 'error');
-                return;
-            }
-            
-            const id = 'QR-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-            
-            // تحديد الرابط المناسب بناءً على نوع العملية
-            let qrContent = '';
-            const baseUrl = 'https://provance-control.com'; // يمكن تغييره لاحقاً
-            
-            if (type === 'interview') {
-                // مقابلة شخصية: رابط لتأكيد الحضور
-                qrContent = `${baseUrl}/confirm-interview?code=${id}`;
-            } else if (type === 'attendance' || type === 'training') {
-                // حضور تدريب: رابط لتسجيل الحضور اليومي
-                qrContent = `${baseUrl}/attendance?code=${id}`;
-            } else {
-                // أنواع أخرى (مثل مهمة) نضع بيانات JSON كاحتياطي
-                qrContent = JSON.stringify({
-                    id: id,
-                    type: type,
-                    title: title,
-                    description: description,
-                    expiration: expiration,
-                    scanRules: scanRules
-                });
-            }
-            
-            const formData = {
-                id: id,
-                type: type,
-                title: title,
-                description: description,
-                expiration: expiration,
-                scanRules: scanRules,
-                createdAt: new Date().toISOString(),
-                scans: 0,
-                status: 'active',
-                qrContent: qrContent // نحتفظ بالمحتوى للعرض لاحقاً
-            };
+        grid.innerHTML = combined.map(c => {
+            const photo = c.student_photo
+                ? `<img src="${c.student_photo}" alt="${esc(c.student_name)}">`
+                : `<span>${getInitial(c.student_name)}</span>`;
 
-            // Clear previous QR code
-            document.getElementById('qrcode').innerHTML = '';
-            
-            try {
-                // استخدام مكتبة qrcode-generator (اسم الكائن qrcode وليس QRCode)
-                const qr = qrcode(0, 'M'); // نوع تصحيح الخطأ M
-                qr.addData(qrContent);
-                qr.make();
-                
-                // إنشاء عنصر canvas
-                const canvas = document.createElement('canvas');
-                const size = qr.getModuleCount();
-                const cellSize = 5; // حجم الخلية بالبكسل
-                canvas.width = size * cellSize;
-                canvas.height = size * cellSize;
-                
-                const ctx = canvas.getContext('2d');
-                
-                // رسم الخلفية
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // رسم وحدات QR
-                ctx.fillStyle = '#667eea';
-                for (let row = 0; row < size; row++) {
-                    for (let col = 0; col < size; col++) {
-                        if (qr.isDark(row, col)) {
-                            ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
-                        }
-                    }
-                }
-                
-                // إضافة canvas إلى عنصر #qrcode
-                document.getElementById('qrcode').appendChild(canvas);
+            const statusBadge = {
+                'on_time': '<span class="badge badge-success">✓ في الوقت</span>',
+                'late': `<span class="badge badge-warning">⚠ متأخر ${c.delay_minutes}د</span>`,
+                'early': '<span class="badge badge-info">⚡ مبكراً</span>',
+                'absent': '<span class="badge badge-error">✕ غائب</span>'
+            }[c.status] || '';
 
-                // Show preview
-                document.getElementById('qrPreview').style.display = 'block';
-
-                // Save to storage
-                qrCodes.unshift(formData);
-                saveQRCodes();
-                currentQRCode = formData;
-
-                // Update UI
-                renderQRTable();
-                updateRecordsBadge();
-
-                // إظهار إشعار ناجح مع توضيح نوع الرابط
-                const message = (type === 'interview') ? 'تم إنشاء رابط تأكيد المقابلة بنجاح' :
-                                ((type === 'attendance' || type === 'training') ? 'تم إنشاء رابط تسجيل الحضور بنجاح' : 'تم إنشاء الكود بنجاح');
-                showNotification(message, 'success');
-                
-            } catch (error) {
-                console.error('Error generating QR code:', error);
-                showNotification('حدث خطأ أثناء إنشاء الكود. الرجاء المحاولة مرة أخرى.', 'error');
-            }
-        }
-
-        // ===== NOTIFICATION SYSTEM =====
-        function showNotification(message, type) {
-            // إزالة أي إشعارات سابقة
-            const existingNotification = document.querySelector('.notification-toast');
-            if (existingNotification) {
-                existingNotification.remove();
-            }
-            
-            // إنشاء الإشعار
-            const notification = document.createElement('div');
-            notification.className = `notification-toast ${type}`;
-            notification.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-                <span>${message}</span>
-            `;
-            
-            // إضافة الأنماط
-            notification.style.cssText = `
-                position: fixed;
-                top: 120px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: ${type === 'success' ? 'var(--color-success)' : 'var(--color-warning)'};
-                color: white;
-                padding: 15px 25px;
-                border-radius: 10px;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-                z-index: 10000;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                animation: slideIn 0.3s ease;
-                max-width: 90%;
-                text-align: center;
-            `;
-            
-            // إضافة الأنيميشن
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideIn {
-                    from { top: 80px; opacity: 0; }
-                    to { top: 120px; opacity: 1; }
-                }
-                @keyframes slideOut {
-                    from { top: 120px; opacity: 1; }
-                    to { top: 80px; opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-            
-            document.body.appendChild(notification);
-            
-            // إزالة الإشعار بعد 3 ثواني
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.remove();
-                    }
-                    if (style.parentNode) {
-                        style.remove();
-                    }
-                }, 300);
-            }, 3000);
-        }
-
-        // ===== DOWNLOAD & PRINT =====
-        function downloadQR(format) {
-            if (!currentQRCode) {
-                showNotification('يرجى إنشاء كود QR أولاً', 'error');
-                return;
-            }
-
-            const canvas = document.querySelector('#qrcode canvas');
-            if (!canvas) {
-                showNotification('لم يتم العثور على الكود للتحميل', 'error');
-                return;
-            }
-
-            if (format === 'png') {
-                try {
-                    const link = document.createElement('a');
-                    link.download = `${currentQRCode.title || currentQRCode.id}.png`;
-                    link.href = canvas.toDataURL('image/png', 1.0);
-                    link.click();
-                    showNotification('بدأ تحميل الكود', 'success');
-                } catch (error) {
-                    console.error('Error downloading QR:', error);
-                    showNotification('حدث خطأ أثناء التحميل', 'error');
-                }
-            }
-        }
-
-        function printQR() {
-            if (!currentQRCode) {
-                showNotification('يرجى إنشاء كود QR أولاً', 'error');
-                return;
-            }
-            
-            try {
-                window.print();
-            } catch (error) {
-                console.error('Error printing QR:', error);
-                showNotification('حدث خطأ أثناء الطباعة', 'error');
-            }
-        }
-
-        // ===== TABLE RENDERING =====
-        function renderQRTable() {
-            const tbody = document.getElementById('qrTableBody');
-            if (!tbody) return;
-
-            if (qrCodes.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 30px;">
-                            <i class="fas fa-inbox" style="font-size: 2rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
-                            لا توجد أكواد محفوظة بعد
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            tbody.innerHTML = qrCodes.map(qr => `
-                <tr>
-                    <td><strong>${qr.title}</strong></td>
-                    <td>${getTypeText(qr.type)}</td>
-                    <td>${formatDate(qr.createdAt)}</td>
-                    <td>${getExpirationText(qr.expiration)}</td>
-                    <td><strong>${qr.scans}</strong></td>
-                    <td>
-                        <span class="status-badge status-${qr.status}">
-                            ${getStatusText(qr.status)}
-                        </span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn btn-outline btn-small" onclick="viewQRDetails('${qr.id}')">
-                                <i class="fas fa-eye"></i>
-                                عرض
-                            </button>
-                            <button class="btn btn-outline btn-small" onclick="duplicateQR('${qr.id}')">
-                                <i class="fas fa-copy"></i>
-                                نسخ
-                            </button>
-                            <button class="btn btn-outline btn-small" onclick="deleteQR('${qr.id}')">
-                                <i class="fas fa-trash"></i>
-                                حذف
-                            </button>
+            return `
+                <div class="attendance-card">
+                    <div class="attendance-avatar">${photo}</div>
+                    <div class="attendance-body">
+                        <div class="attendance-name">${esc(c.student_name || '-')}</div>
+                        <div class="attendance-pos">${esc(c.internship_title || '')}</div>
+                        <div class="attendance-meta">
+                            ${statusBadge}
+                            ${c.scanned_at ? `<span><i class="fas fa-clock"></i> ${formatTime(c.scanned_at)}</span>` : ''}
                         </div>
-                    </td>
-                </tr>
-            `).join('');
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderHistory() {
+        const search = document.getElementById('searchHistory').value.toLowerCase().trim();
+        const dateFilter = document.getElementById('filterHistoryDate').value;
+
+        let logs = allAttendanceLogs.filter(a => a.attendance_type === 'daily_attendance');
+
+        if (search) {
+            logs = logs.filter(l => (l.student_name || '').toLowerCase().includes(search));
+        }
+        if (dateFilter) {
+            const filterDate = new Date(dateFilter); filterDate.setHours(0,0,0,0);
+            const nextDay = new Date(filterDate); nextDay.setDate(nextDay.getDate() + 1);
+            logs = logs.filter(l => {
+                const d = new Date(l.scanned_at);
+                return d >= filterDate && d < nextDay;
+            });
         }
 
-        // ===== ACTIONS =====
-        function viewQRDetails(id) {
-            const qr = qrCodes.find(q => q.id === id);
-            if (!qr) {
-                showNotification('لم يتم العثور على الكود', 'error');
-                return;
-            }
-
-            const details = `تفاصيل الكود:\n\nالاسم: ${qr.title}\nالنوع: ${getTypeText(qr.type)}\nالوصف: ${qr.description || 'لا يوجد'}\nتاريخ الإنشاء: ${formatDate(qr.createdAt)}\nعمليات المسح: ${qr.scans}\nالحالة: ${getStatusText(qr.status)}\nمحتوى QR: ${qr.qrContent}`;
-            alert(details);
+        const grid = document.getElementById('historyGrid');
+        if (logs.length === 0) {
+            grid.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><h3>لا يوجد سجل</h3></div>';
+            return;
         }
 
-        function duplicateQR(id) {
-            const qr = qrCodes.find(q => q.id === id);
-            if (!qr) {
-                showNotification('لم يتم العثور على الكود', 'error');
-                return;
-            }
+        grid.innerHTML = logs.slice(0, 100).map(l => {
+            const trainee = activeTrainees.find(t => t.student_user_id === l.student_user_id);
+            const photo = trainee?.student_photo
+                ? `<img src="${trainee.student_photo}" alt="">`
+                : `<span>${getInitial(l.student_name)}</span>`;
 
-            const duplicated = {
-                ...qr,
-                id: 'QR-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-                title: qr.title + ' (نسخة)',
-                createdAt: new Date().toISOString(),
-                scans: 0,
-                status: 'active'
+            const statusBadge = {
+                'on_time': '<span class="badge badge-success">✓ في الوقت</span>',
+                'late': `<span class="badge badge-warning">⚠ متأخر ${l.delay_minutes}د</span>`,
+                'early': '<span class="badge badge-info">⚡ مبكراً</span>',
+                'absent': '<span class="badge badge-error">✕ غائب</span>'
+            }[l.status] || '';
+
+            return `
+                <div class="attendance-card">
+                    <div class="attendance-avatar">${photo}</div>
+                    <div class="attendance-body">
+                        <div class="attendance-name">${esc(l.student_name || '-')}</div>
+                        <div class="attendance-pos">${formatDate(l.scanned_at)} • ${formatTime(l.scanned_at)}</div>
+                        <div class="attendance-meta">${statusBadge}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderMonthStats() {
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const monthLogs = allAttendanceLogs.filter(a => {
+            if (a.attendance_type !== 'daily_attendance') return false;
+            return new Date(a.scanned_at) >= monthStart;
+        });
+
+        const onTime = monthLogs.filter(l => l.status === 'on_time').length;
+        const late = monthLogs.filter(l => l.status === 'late').length;
+        const total = monthLogs.length;
+        const onTimePercent = total ? Math.round(onTime / total * 100) : 0;
+        const latePercent = total ? Math.round(late / total * 100) : 0;
+
+        document.getElementById('monthStatsContent').innerHTML = `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px">
+                <div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                        <span style="color:var(--text-muted);font-size:0.86rem">في الوقت</span>
+                        <strong>${onTime} (${onTimePercent}%)</strong>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill success" style="width:${onTimePercent}%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                        <span style="color:var(--text-muted);font-size:0.86rem">متأخرين</span>
+                        <strong>${late} (${latePercent}%)</strong>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill warning" style="width:${latePercent}%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                        <span style="color:var(--text-muted);font-size:0.86rem">إجمالي تسجيلات الشهر</span>
+                        <strong>${total}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Top attendees
+        const studentCounts = {};
+        monthLogs.forEach(l => {
+            if (!studentCounts[l.student_user_id]) {
+                studentCounts[l.student_user_id] = { name: l.student_name, count: 0, onTime: 0, late: 0 };
+            }
+            studentCounts[l.student_user_id].count++;
+            if (l.status === 'on_time') studentCounts[l.student_user_id].onTime++;
+            if (l.status === 'late') studentCounts[l.student_user_id].late++;
+        });
+
+        const top = Object.values(studentCounts).sort((a, b) => b.count - a.count).slice(0, 10);
+
+        const topEl = document.getElementById('topAttendees');
+        if (top.length === 0) {
+            topEl.innerHTML = '<div class="empty-state"><i class="fas fa-trophy"></i><p>لا يوجد بيانات بعد</p></div>';
+        } else {
+            topEl.innerHTML = top.map((t, i) => {
+                const medal = ['🥇', '🥈', '🥉'][i] || (i + 1);
+                return `
+                    <div class="attendance-card" style="cursor:default">
+                        <div style="font-size:1.5rem;width:48px;text-align:center;flex-shrink:0">${medal}</div>
+                        <div class="attendance-body">
+                            <div class="attendance-name">${esc(t.name)}</div>
+                            <div class="attendance-meta">
+                                <span><i class="fas fa-check"></i> ${t.count} يوم</span>
+                                <span class="badge badge-success">${t.onTime} في الوقت</span>
+                                ${t.late > 0 ? `<span class="badge badge-warning">${t.late} متأخر</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    // HOLIDAYS SETTINGS
+    window.openHolidaysSettings = () => {
+        const currentDays = weeklyHolidays?.holiday_days || [5, 6];
+        const workStart = weeklyHolidays?.work_start_time || '09:00:00';
+        const workEnd = weeklyHolidays?.work_end_time || '17:00:00';
+
+        const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+        const html = `
+            <div class="modal active" id="holidaysModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-calendar-times"></i><span>إعدادات الإجازات</span></div>
+                        <button class="modal-close" onclick="closeModal('holidaysModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-calendar-week"></i> أيام الإجازة الأسبوعية</label>
+                        <div class="days-grid" id="daysGrid">
+                            ${dayNames.map((name, idx) => `
+                                <label class="day-checkbox ${currentDays.includes(idx) ? 'checked' : ''}" data-day="${idx}">
+                                    <input type="checkbox" value="${idx}" ${currentDays.includes(idx) ? 'checked' : ''}>
+                                    ${name}
+                                </label>
+                            `).join('')}
+                        </div>
+                        <div style="color:var(--text-muted);font-size:0.78rem;margin-top:6px">
+                            <i class="fas fa-info-circle"></i> الأيام دي مش هتتحسب غياب
+                        </div>
+                    </div>
+
+                    <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div class="field">
+                            <label><i class="fas fa-sun"></i> بداية العمل</label>
+                            <input type="time" id="workStart" value="${workStart.slice(0,5)}">
+                        </div>
+                        <div class="field">
+                            <label><i class="fas fa-moon"></i> نهاية العمل</label>
+                            <input type="time" id="workEnd" value="${workEnd.slice(0,5)}">
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        <button class="btn btn-secondary" onclick="closeModal('holidaysModal')" style="flex:1;justify-content:center">إلغاء</button>
+                        <button class="btn btn-primary" onclick="saveHolidays()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+
+        // Day checkboxes
+        document.querySelectorAll('.day-checkbox').forEach(label => {
+            label.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'INPUT') {
+                    const cb = label.querySelector('input');
+                    cb.checked = !cb.checked;
+                }
+                label.classList.toggle('checked', label.querySelector('input').checked);
+            });
+        });
+    };
+
+    window.saveHolidays = async () => {
+        const checkedDays = Array.from(document.querySelectorAll('#daysGrid input:checked')).map(cb => parseInt(cb.value));
+        const workStart = document.getElementById('workStart').value + ':00';
+        const workEnd = document.getElementById('workEnd').value + ':00';
+
+        try {
+            const sb = window.ProVance.sb;
+            const data = {
+                company_user_id: companyUserId,
+                holiday_days: checkedDays,
+                work_start_time: workStart,
+                work_end_time: workEnd,
+                updated_at: new Date().toISOString()
             };
 
-            qrCodes.unshift(duplicated);
-            saveQRCodes();
-            renderQRTable();
-            updateRecordsBadge();
-            showNotification('تم نسخ الكود بنجاح!', 'success');
-        }
-
-        function deleteQR(id) {
-            if (confirm('هل أنت متأكد من حذف هذا الكود؟')) {
-                qrCodes = qrCodes.filter(qr => qr.id !== id);
-                saveQRCodes();
-                renderQRTable();
-                updateRecordsBadge();
-                showNotification('تم حذف الكود بنجاح', 'success');
-            }
-        }
-
-        function updateRecordsBadge() {
-            const badge = document.getElementById('recordsBadge');
-            if (badge) badge.textContent = qrCodes.length;
-        }
-
-        // ===== NAVIGATION =====
-        function showQRSection(section) {
-            // Hide all sections
-            document.querySelectorAll('.content-section').forEach(sec => sec.style.display = 'none');
-            
-            // Remove active class from all buttons
-            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
-            
-            // Show selected section
-            const sectionElement = document.getElementById(`${section}-section`);
-            if (sectionElement) {
-                sectionElement.style.display = 'block';
+            if (weeklyHolidays) {
+                await sb.from('company_weekly_holidays').update(data).eq('company_user_id', companyUserId);
+            } else {
+                await sb.from('company_weekly_holidays').insert(data);
             }
 
-            // Add active class to selected button
-            document.querySelector(`.nav-button.${section}`).classList.add('active');
+            window.ProVance.showToast('تم الحفظ ✓', 'success');
+            closeModal('holidaysModal');
+            await loadAll();
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+        }
+    };
+
+    // LOAD ALL
+    async function loadAll() {
+        const sb = window.ProVance.sb;
+        if (!sb) return;
+
+        try {
+            const [companyRes, traineesRes, qrRes, attRes, holRes] = await Promise.all([
+                sb.from('companies').select('company_name').eq('user_id', companyUserId).maybeSingle(),
+                sb.from('applications').select('*').eq('company_user_id', companyUserId).in('status', ['hired', 'in_training']),
+                sb.from('qr_codes').select('*').eq('company_user_id', companyUserId).eq('qr_type', 'daily_attendance').eq('status', 'active').gt('valid_until', new Date().toISOString()).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+                sb.from('attendance_logs').select('*').eq('company_user_id', companyUserId).order('scanned_at', { ascending: false }).limit(500),
+                sb.from('company_weekly_holidays').select('*').eq('company_user_id', companyUserId).maybeSingle()
+            ]);
+
+            companyName = companyRes.data?.company_name || 'الشركة';
+            activeTrainees = traineesRes.data || [];
+            activeQrCode = qrRes.data;
+            allAttendanceLogs = attRes.data || [];
+            weeklyHolidays = holRes.data;
+
+            renderQR();
+            if (activeQrCode) startCountdown();
+            renderTodayAttendance();
+            renderHistory();
+        } catch (err) {
+            console.error('Load error:', err);
+            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
+        }
+    }
+
+    // LISTENERS
+    document.getElementById('searchAttendance').addEventListener('input', renderTodayAttendance);
+    document.getElementById('filterStatus').addEventListener('change', renderTodayAttendance);
+    document.getElementById('searchHistory').addEventListener('input', renderHistory);
+    document.getElementById('filterHistoryDate').addEventListener('change', renderHistory);
+
+    // INIT
+    async function init() {
+        const ok = window.ProVance.requireCompanyAuth ? await window.ProVance.requireCompanyAuth() : true;
+        if (!ok) return;
+
+        const session = window.ProVance.getSession ? await window.ProVance.getSession() : null;
+        if (session && session.user) {
+            companyUserId = session.user.id;
+        } else if (window.ProVance.sb) {
+            const { data } = await window.ProVance.sb.auth.getSession();
+            if (data?.session?.user) companyUserId = data.session.user.id;
         }
 
-        function toggleSidebar() {
-            const sidebar = document.getElementById('mainSidebar');
-            sidebar.classList.toggle('collapsed');
+        if (!companyUserId) {
+            window.location.href = 'company-login.html';
+            return;
         }
 
-        function toggleUserMenu() {
-            showNotification('قائمة المستخدم - سيتم تطويرها لاحقًا', 'info');
+        await loadAll();
+
+        // Realtime
+        const sb = window.ProVance.sb;
+        if (sb) {
+            sb.channel('qr-' + companyUserId)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'qr_codes', filter: `company_user_id=eq.${companyUserId}` }, () => loadAll())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs', filter: `company_user_id=eq.${companyUserId}` }, () => loadAll())
+                .subscribe();
         }
 
-        function logout() {
-            if (confirm('هل تريد تسجيل الخروج؟')) {
-                showNotification('جارٍ تسجيل الخروج...', 'info');
-                setTimeout(() => {
-                    window.location.href = 'company-login.html';
-                }, 1500);
-            }
-        }
+        // Auto refresh every 30 seconds
+        autoRefreshInterval = setInterval(() => {
+            if (activeQrCode) {
+                // حدّث عدد المسحات بدون reload كامل
+                sb.from('qr_codes').select('scans_count, last_scanned_at, status').eq('id', activeQrCode.id).maybeSingle().then(({ data }) => {
+                    if (data) {
+                        activeQrCode.scans_count = data.scans_count;
+                        activeQrCode.last_scanned_at = data.last_scanned_at;
+                        const scansEl = document.getElementById('qrScansInfo');
+                        if (scansEl) scansEl.textContent = data.scans_count || 0;
 
-        // ===== HELPER FUNCTIONS =====
-        function getTypeText(type) {
-            const types = {
-                'attendance': 'حضور وانصراف', 
-                'interview': 'مقابلة توظيف', 
-                'training': 'يوم تدريبي', 
-                'task': 'مهمة'
-            };
-            return types[type] || type;
-        }
-
-        function getStatusText(status) {
-            const statuses = { 
-                'active': 'نشط', 
-                'expired': 'منتهي' 
-            };
-            return statuses[status] || status;
-        }
-
-        function getExpirationText(expiration) {
-            const expirations = {
-                '30min': '30 دقيقة', 
-                '1hour': 'ساعة واحدة', 
-                '1day': 'يوم واحد', 
-                '1week': 'أسبوع'
-            };
-            return expirations[expiration] || expiration;
-        }
-
-        function formatDate(dateString) {
-            try {
-                const date = new Date(dateString);
-                return date.toLocaleDateString('ar-EG', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+                        if (data.status !== 'active') loadAll();
+                    }
                 });
-            } catch (e) {
-                return 'تاريخ غير صالح';
             }
-        }
+        }, 30000);
+    }
+
+    init();
+})();
     </script>
 </body>
 </html>
