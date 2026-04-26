@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>ملفي الشخصي - ProVance</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         :root {
             --primary: #4facfe; --secondary: #00f2fe;
@@ -19,51 +19,61 @@
             --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
         .bg-anim {
             position: fixed; inset: 0; z-index: -1;
-            background:
-                radial-gradient(circle at 20% 20%, rgba(79,172,254,0.08), transparent 45%),
-                radial-gradient(circle at 80% 80%, rgba(0,242,254,0.06), transparent 45%),
-                var(--bg);
+            background: radial-gradient(circle at 20% 20%, rgba(79,172,254,0.08), transparent 45%),
+                        radial-gradient(circle at 80% 80%, rgba(0,242,254,0.06), transparent 45%),
+                        var(--bg);
         }
+
         .layout { display: flex; min-height: 100vh; }
         .sidebar {
             width: 260px; background: rgba(20,18,40,0.7);
             backdrop-filter: blur(20px); border-left: 1px solid var(--border);
             padding: 24px 16px; position: fixed; inset: 0 0 0 auto;
             z-index: 100; transition: transform .3s;
-            display: flex; flex-direction: column;
+            display: flex; flex-direction: column; overflow-y: auto;
         }
         .sidebar-logo {
-            display: flex; align-items: center; gap: 10px;
-            padding: 0 8px 20px; border-bottom: 1px solid var(--border);
-            margin-bottom: 16px; justify-content: center;
-        }
-        .sidebar-logo img { height: 32px; width: auto; max-width: 100%; }
-        .sidebar-logo-icon {
-            width: 40px; height: 40px;
-            background: var(--gradient); border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem;
+            padding: 0 8px 16px; margin-bottom: 14px;
+            border-bottom: 1px solid var(--border);
         }
-        .sidebar-logo-text {
-            font-size: 1.2rem; font-weight: 800;
+        .sidebar-logo img { height: 32px; max-width: 100%; }
+
+        .sidebar-profile {
+            text-align: center;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 14px;
+        }
+        .sidebar-avatar {
+            width: 80px; height: 80px;
+            border-radius: 50%;
             background: var(--gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            margin: 0 auto 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: 1.8rem;
+            overflow: hidden;
+            border: 3px solid rgba(79,172,254,0.3);
         }
+        .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .sidebar-name { font-weight: 800; font-size: 0.95rem; }
+        .sidebar-email { color: var(--text-muted); font-size: 0.78rem; margin-top: 3px; }
+
         .nav-item {
             display: flex; align-items: center; gap: 10px;
             padding: 12px 14px; color: var(--text-muted);
             text-decoration: none; border-radius: 10px;
-            font-size: 0.92rem; font-weight: 600;
-            margin-bottom: 4px; transition: all .2s;
+            font-size: 0.92rem; font-weight: 600; margin-bottom: 4px;
+            transition: all .2s;
         }
         .nav-item:hover { background: var(--card); color: var(--text); }
         .nav-item.active { background: var(--gradient); color: #fff; }
         .nav-item i { width: 18px; }
+
         .main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
         .topbar {
             display: flex; justify-content: space-between; align-items: center;
@@ -76,382 +86,383 @@
         }
         .topbar-title { font-size: 1.5rem; font-weight: 800; }
 
-        /* Profile Header */
-        .profile-hero {
-            background: linear-gradient(135deg, rgba(79,172,254,0.12), rgba(0,242,254,0.06));
+        /* Welcome Card */
+        .welcome-card {
+            background: linear-gradient(135deg, rgba(79,172,254,0.1), rgba(0,242,254,0.05));
             border: 1px solid rgba(79,172,254,0.2);
-            border-radius: 22px;
-            padding: 30px;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
-        }
-        .profile-hero::before {
-            content: '';
-            position: absolute;
-            top: -100px; right: -100px;
-            width: 250px; height: 250px;
-            background: radial-gradient(circle, rgba(79,172,254,0.1), transparent 70%);
-            border-radius: 50%;
-        }
-
-        .profile-avatar {
-            width: 130px; height: 130px;
-            border-radius: 50%;
-            background: var(--gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 3.4rem;
-            font-weight: 900;
-            flex-shrink: 0;
-            box-shadow: 0 20px 50px rgba(79,172,254,0.4);
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-avatar:hover .avatar-overlay { opacity: 1; }
-        .avatar-overlay {
-            position: absolute; inset: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem;
-            opacity: 0; transition: opacity .25s;
-        }
-        .profile-info { flex: 1; min-width: 0; position: relative; z-index: 1; }
-        .profile-name { font-size: 1.7rem; font-weight: 800; margin-bottom: 6px; }
-        .profile-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            color: var(--text-muted);
-            font-size: 0.92rem;
-            margin-bottom: 14px;
-        }
-        .profile-meta span { display: flex; align-items: center; gap: 5px; }
-        .profile-meta i { color: var(--primary); }
-        .profile-status-row {
-            display: flex; gap: 8px; flex-wrap: wrap;
-        }
-        .badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.78rem;
-            font-weight: 700;
-        }
-        .badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
-        .badge-info { background: rgba(79,172,254,0.15); color: var(--info); }
-        .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
-
-        /* Stats grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 14px;
-            margin-bottom: 22px;
-        }
-        .stat-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 18px;
-            text-align: center;
-            transition: all .25s;
-        }
-        .stat-box:hover {
-            border-color: var(--primary);
-            transform: translateY(-3px);
-        }
-        .stat-icon-wrap {
-            width: 50px; height: 50px;
-            background: var(--gradient);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 1.2rem;
-            margin: 0 auto 10px;
-        }
-        .stat-icon-wrap.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .stat-icon-wrap.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .stat-icon-wrap.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .stat-num {
-            font-size: 1.8rem;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 4px;
-        }
-        .stat-name { color: var(--text-muted); font-size: 0.88rem; }
-
-        /* Sections */
-        .section-card {
-            background: var(--card);
-            border: 1px solid var(--border);
             border-radius: 18px;
             padding: 24px;
             margin-bottom: 18px;
-            backdrop-filter: blur(10px);
-        }
-        .section-title {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            font-size: 1.1rem;
-            font-weight: 800;
-            margin-bottom: 18px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid var(--border);
-        }
-        .section-title-text {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .section-title-text i { color: var(--primary); }
-
-        /* Info Grid */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 12px;
-        }
-        .info-item {
-            padding: 12px 14px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-        }
-        .info-label {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .info-label i { color: var(--primary); font-size: 0.82rem; }
-        .info-value {
-            color: var(--text);
-            font-weight: 600;
-            word-break: break-word;
-            font-size: 0.92rem;
-        }
-        .info-value.empty { color: rgba(148,163,184,0.5); font-style: italic; }
-        .info-value a { color: var(--info); text-decoration: none; }
-        .info-value a:hover { text-decoration: underline; }
-
-        /* Tags */
-        .tags-row {
-            display: flex;
+            display: flex; align-items: center; gap: 18px;
             flex-wrap: wrap;
-            gap: 8px;
         }
-        .tag {
-            padding: 6px 14px;
-            background: rgba(79,172,254,0.1);
-            border: 1px solid rgba(79,172,254,0.3);
-            color: var(--primary);
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
+        .welcome-text { flex: 1; min-width: 200px; }
+        .welcome-greeting {
+            font-size: 1.4rem; font-weight: 800; margin-bottom: 4px;
         }
-        .tag.lang {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .tag-level {
-            background: rgba(255,255,255,0.1);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.72rem;
-        }
-
-        /* Experience cards */
-        .exp-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .exp-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            position: relative;
-            padding-right: 44px;
-        }
-        .exp-card::before {
-            content: '';
-            position: absolute;
-            top: 22px;
-            right: 18px;
-            width: 12px;
-            height: 12px;
+        .welcome-greeting .highlight {
             background: var(--gradient);
-            border-radius: 50%;
-            box-shadow: 0 0 15px rgba(79,172,254,0.5);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .exp-card-title {
-            font-weight: 800;
-            font-size: 0.98rem;
-            color: var(--primary);
-            margin-bottom: 4px;
+        .welcome-subtitle {
+            color: var(--text-muted); font-size: 0.95rem;
         }
-        .exp-card-meta {
-            color: var(--text-muted);
-            font-size: 0.84rem;
-            margin-bottom: 8px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        .exp-card-meta i { color: var(--primary); }
-        .exp-card-desc {
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            line-height: 1.6;
+        .welcome-actions {
+            display: flex; gap: 10px; flex-wrap: wrap;
         }
 
         /* Buttons */
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 18px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            font-family: inherit;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all .2s;
-            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 10px 16px; border: none; border-radius: 10px;
+            font-weight: 700; font-family: inherit; font-size: 0.88rem;
+            cursor: pointer; transition: all .2s; text-decoration: none;
+            white-space: nowrap;
         }
         .btn-primary { background: var(--gradient); color: #fff; }
         .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(79,172,254,0.4);
         }
-        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-secondary {
-            background: var(--card); border: 1px solid var(--border); color: var(--text);
-        }
+        .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
         .btn-secondary:hover { background: var(--card-hover); }
-        .btn-small {
-            padding: 7px 12px;
-            font-size: 0.82rem;
-        }
+        .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+        .btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+        .btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+        .btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
+        .btn-sm { padding: 7px 12px; font-size: 0.8rem; }
 
-        .empty-section {
-            text-align: center;
+        /* Payment Lock Alert */
+        .payment-alert {
+            background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(239,68,68,0.05));
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 18px;
+            display: flex; align-items: center; gap: 14px;
+            flex-wrap: wrap;
+        }
+        .payment-alert-icon {
+            width: 50px; height: 50px;
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: #fff;
+            flex-shrink: 0;
+        }
+        .payment-alert-body { flex: 1; min-width: 200px; }
+        .payment-alert-title { font-size: 1.05rem; font-weight: 800; color: var(--warning); }
+        .payment-alert-desc { color: var(--text-muted); font-size: 0.88rem; margin-top: 4px; }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px; margin-bottom: 18px;
+        }
+        .stat-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 16px;
+            display: flex; align-items: center; gap: 12px;
+            transition: all .2s;
+        }
+        .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .stat-icon {
+            width: 46px; height: 46px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: #fff; flex-shrink: 0;
+        }
+        .stat-icon.cyan { background: var(--gradient); }
+        .stat-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .stat-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+        .stat-icon.purple { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .stat-num { font-size: 1.5rem; font-weight: 800; line-height: 1; }
+        .stat-label { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
+
+        /* Sections */
+        .section {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px;
+            margin-bottom: 16px;
+        }
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
+        }
+        .section-title {
+            font-size: 1.1rem; font-weight: 800;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title i { color: var(--primary); }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .info-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+        }
+        .info-label {
             color: var(--text-muted);
-            padding: 30px 20px;
-            font-size: 0.92rem;
+            font-size: 0.78rem;
+            display: flex; align-items: center; gap: 5px;
+            margin-bottom: 4px;
         }
-        .empty-section i {
-            font-size: 2.5rem;
-            color: rgba(148,163,184,0.3);
-            margin-bottom: 10px;
-            display: block;
+        .info-label i { color: var(--primary); }
+        .info-value {
+            font-weight: 700; font-size: 0.95rem;
+            word-break: break-word;
+        }
+        .info-value.empty {
+            color: var(--text-dim);
+            font-weight: 500;
+            font-size: 0.86rem;
+            font-style: italic;
         }
 
-        /* Modal */
+        /* Skills */
+        .skills-list {
+            display: flex; flex-wrap: wrap; gap: 7px;
+        }
+        .skill-tag {
+            background: rgba(79,172,254,0.1);
+            border: 1px solid rgba(79,172,254,0.25);
+            color: var(--primary);
+            padding: 5px 12px;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Training History */
+        .training-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex; align-items: center; gap: 12px;
+            transition: all .2s;
+        }
+        .training-card:hover { border-color: var(--primary); }
+        .training-logo {
+            width: 50px; height: 50px;
+            border-radius: 12px;
+            background: var(--gradient);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: 1.2rem;
+            flex-shrink: 0; overflow: hidden;
+        }
+        .training-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .training-body { flex: 1; min-width: 0; }
+        .training-company { font-weight: 800; font-size: 1rem; }
+        .training-position { color: var(--text-muted); font-size: 0.86rem; margin-top: 2px; }
+        .training-meta {
+            display: flex; gap: 12px; margin-top: 6px;
+            font-size: 0.78rem; color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        /* Modals */
         .modal {
             position: fixed; inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(5px);
-            z-index: 200;
-            display: none;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            z-index: 200; display: none;
             align-items: center; justify-content: center;
             padding: 20px;
+            animation: fadeIn .25s;
         }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .modal.active { display: flex; }
         .modal-content {
-            background: var(--bg-2);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            width: 100%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-            padding: 28px;
+            background: var(--bg-2); border: 1px solid var(--border);
+            border-radius: 22px;
+            width: 100%; max-width: 600px;
+            max-height: 92vh; overflow-y: auto;
+            padding: 28px; position: relative;
+            animation: slideUp .3s ease-out;
         }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-content::-webkit-scrollbar { width: 6px; }
+        .modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
         .modal-header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; padding-bottom: 14px;
+            margin-bottom: 22px; padding-bottom: 14px;
             border-bottom: 1px solid var(--border);
         }
-        .modal-title { font-size: 1.2rem; font-weight: 800; }
+        .modal-title {
+            font-size: 1.2rem; font-weight: 800;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .modal-title i { color: var(--primary); }
         .modal-close {
             background: var(--card); border: 1px solid var(--border);
             color: var(--text); width: 36px; height: 36px;
             border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all .2s;
         }
-        .field { margin-bottom: 14px; }
+        .modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
+
+        /* Form Fields */
+        .field { margin-bottom: 16px; }
         .field label {
-            display: block; color: var(--text-muted);
-            font-size: 0.88rem; font-weight: 600; margin-bottom: 8px;
+            display: block; color: var(--text);
+            font-size: 0.9rem; font-weight: 600; margin-bottom: 8px;
         }
-        .field input,
-        .field select,
-        .field textarea {
+        .field label i { color: var(--primary); margin-left: 4px; }
+        .field label .req { color: var(--error); }
+        .field input, .field select, .field textarea {
             width: 100%; padding: 12px 14px;
-            background: rgba(255,255,255,0.04);
+            background: rgba(255,255,255,0.03);
             border: 2px solid var(--border);
             border-radius: 10px; color: var(--text);
             font-size: 0.95rem; font-family: inherit;
+            transition: all .2s;
         }
-        .field textarea { resize: vertical; min-height: 80px; }
+        .field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
         .field input:focus, .field select:focus, .field textarea:focus {
             outline: none; border-color: var(--primary);
+            background: rgba(255,255,255,0.06);
+            box-shadow: 0 0 0 4px rgba(79,172,254,0.1);
         }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
-        .modal-actions {
-            display: flex; gap: 10px; margin-top: 20px;
-        }
-        .modal-actions .btn { flex: 1; justify-content: center; padding: 12px; }
 
-        /* Activity Item */
-        .activity-list {
-            display: flex; flex-direction: column; gap: 10px;
+        /* QR Scanner */
+        .qr-scanner-wrap {
+            background: #000;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 1;
+            max-width: 360px;
+            margin: 0 auto 14px;
         }
-        .activity-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px 14px;
+        .qr-scanner-wrap video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+        .qr-scanner-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%; height: 70%;
+            border: 3px solid var(--primary);
+            border-radius: 16px;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+        }
+        .qr-scanner-overlay::before,
+        .qr-scanner-overlay::after {
+            content: '';
+            position: absolute;
+            width: 30px; height: 30px;
+            border: 4px solid var(--primary);
+        }
+        .qr-scanner-overlay::before {
+            top: -4px; right: -4px;
+            border-bottom: none; border-left: none;
+            border-radius: 0 16px 0 0;
+        }
+        .qr-scanner-overlay::after {
+            bottom: -4px; left: -4px;
+            border-top: none; border-right: none;
+            border-radius: 0 0 0 16px;
+        }
+        .qr-input-fallback {
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 14px;
+        }
+
+        /* Avatar Upload */
+        .avatar-upload {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        .avatar-upload-circle {
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            background: var(--gradient);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 3rem; font-weight: 800;
+            overflow: hidden;
+            border: 4px solid rgba(79,172,254,0.3);
+            position: relative;
+            cursor: pointer;
+        }
+        .avatar-upload-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-upload-circle::after {
+            content: '\f030';
+            font-family: 'Font Awesome 6 Free'; font-weight: 900;
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: #fff;
+            opacity: 0;
+            transition: opacity .2s;
+        }
+        .avatar-upload-circle:hover::after { opacity: 1; }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: rgba(148,163,184,0.3);
+            margin-bottom: 12px;
+            display: block;
+        }
+        .empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1rem; }
+
+        /* QR History */
+        .qr-history-card {
             background: rgba(255,255,255,0.02);
             border: 1px solid var(--border);
             border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 12px;
         }
-        .activity-icon {
-            width: 36px; height: 36px;
+        .qr-history-icon {
+            width: 38px; height: 38px;
             border-radius: 10px;
-            background: var(--card);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; flex-shrink: 0;
             font-size: 0.95rem;
-            color: var(--primary);
-            flex-shrink: 0;
         }
-        .activity-icon.success { background: rgba(16,185,129,0.12); color: var(--success); }
-        .activity-icon.warning { background: rgba(245,158,11,0.12); color: var(--warning); }
-        .activity-icon.error { background: rgba(239,68,68,0.12); color: var(--error); }
-        .activity-body { flex: 1; min-width: 0; }
-        .activity-title { font-weight: 700; font-size: 0.92rem; margin-bottom: 2px; }
-        .activity-time { color: var(--text-muted); font-size: 0.78rem; }
+        .qr-history-icon.interview { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .qr-history-icon.daily { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .qr-history-body { flex: 1; min-width: 0; }
+        .qr-history-title { font-weight: 700; font-size: 0.92rem; }
+        .qr-history-meta { color: var(--text-muted); font-size: 0.78rem; margin-top: 3px; }
+
+        /* Status Badges */
+        .badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 14px;
+            font-size: 0.74rem; font-weight: 700;
+        }
+        .badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
+        .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .badge-error { background: rgba(239,68,68,0.15); color: var(--error); }
+        .badge-info { background: rgba(79,172,254,0.15); color: var(--info); }
 
         @media (max-width: 1024px) {
             .sidebar { transform: translateX(100%); width: 280px; }
@@ -460,12 +471,9 @@
             .menu-toggle { display: flex; align-items: center; justify-content: center; }
         }
         @media (max-width: 600px) {
-            .profile-hero {
-                flex-direction: column;
-                text-align: center;
-            }
-            .profile-meta { justify-content: center; }
-            .info-grid { grid-template-columns: 1fr; }
+            .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
+            .topbar-title { font-size: 1.2rem; }
+            .welcome-greeting { font-size: 1.2rem; }
         }
     </style>
 </head>
@@ -475,17 +483,22 @@
     <div class="layout">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">
-                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div style="display:none; align-items: center; gap: 10px;">
-                    <div class="sidebar-logo-icon"><i class="fas fa-rocket"></i></div>
-                    <span class="sidebar-logo-text">ProVance</span>
-                </div>
+                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
             </div>
-            <a href="student-internship.html" class="nav-item"><i class="fas fa-bullhorn"></i> فرص التدريب</a>
+
+            <div class="sidebar-profile">
+                <div class="sidebar-avatar" id="sidebarAvatar">
+                    <span id="sidebarAvatarInitial">?</span>
+                </div>
+                <div class="sidebar-name" id="sidebarName">جاري التحميل...</div>
+                <div class="sidebar-email" id="sidebarEmail">-</div>
+            </div>
+
+            <a href="student-internship.html" class="nav-item"><i class="fas fa-search"></i> فرص التدريب</a>
             <a href="student-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلباتي</a>
-            <a href="student-profile.html" class="nav-item active"><i class="fas fa-user-graduate"></i> ملفي</a>
-            <a href="student-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+            <a href="student-profile.html" class="nav-item active"><i class="fas fa-user"></i> ملفي</a>
             <a href="Student_-payments.html" class="nav-item"><i class="fas fa-credit-card"></i> المدفوعات</a>
+            <a href="student-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
             <a href="#" onclick="logoutStudent(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
             </a>
@@ -496,855 +509,1049 @@
                 <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="topbar-title">ملفي الشخصي</h1>
-                <button class="btn btn-primary" onclick="openEditModal('basic')">
-                    <i class="fas fa-edit"></i>
-                    <span>تعديل البيانات</span>
-                </button>
+                <h1 class="topbar-title">
+                    <i class="fas fa-user" style="color:var(--primary)"></i> ملفي الشخصي
+                </h1>
             </div>
 
-            <!-- Profile Hero -->
-            <div class="profile-hero">
-                <div class="profile-avatar" onclick="document.getElementById('photoFileInput').click()">
-                    <span id="avatarInitial">؟</span>
-                    <div class="avatar-overlay"><i class="fas fa-camera"></i></div>
+            <!-- Welcome Card -->
+            <div class="welcome-card">
+                <div class="welcome-text">
+                    <div class="welcome-greeting">مرحباً، <span class="highlight" id="welcomeName">طالب</span>! 👋</div>
+                    <div class="welcome-subtitle">إدارة بياناتك الشخصية والتدريبية من هنا</div>
                 </div>
-                <input type="file" id="photoFileInput" accept="image/*" style="display:none">
-                <div class="profile-info">
-                    <h2 class="profile-name" id="studentName">جاري التحميل...</h2>
-                    <div class="profile-meta">
-                        <span><i class="fas fa-graduation-cap"></i> <span id="metaEducation">-</span></span>
-                        <span><i class="fas fa-map-marker-alt"></i> <span id="metaCity">-</span></span>
-                        <span><i class="fas fa-envelope"></i> <span id="metaEmail" style="direction:ltr">-</span></span>
-                    </div>
-                    <div class="profile-status-row">
-                        <span class="badge badge-success" id="statusBadge">
-                            <i class="fas fa-check-circle"></i> نشط
-                        </span>
-                        <span class="badge badge-info" id="trainingBadge">
-                            <i class="fas fa-search"></i> يبحث عن تدريب
-                        </span>
-                    </div>
+                <div class="welcome-actions">
+                    <button class="btn btn-primary" onclick="openQRScanner()">
+                        <i class="fas fa-qrcode"></i> مسح QR
+                    </button>
+                    <button class="btn btn-secondary" onclick="openEditAvatar()">
+                        <i class="fas fa-camera"></i> تغيير الصورة
+                    </button>
                 </div>
             </div>
+
+            <!-- Payment Lock Alert (visible only if locked) -->
+            <div id="paymentLockAlert" style="display:none"></div>
 
             <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div class="stat-icon-wrap"><i class="fas fa-paper-plane"></i></div>
-                    <div class="stat-num" id="statTotalApps">0</div>
-                    <div class="stat-name">إجمالي الطلبات</div>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon cyan"><i class="fas fa-graduation-cap"></i></div>
+                    <div>
+                        <div class="stat-num" id="statTrainings">0</div>
+                        <div class="stat-label">تدريبات أكملتها</div>
+                    </div>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-icon-wrap warning"><i class="fas fa-clock"></i></div>
-                    <div class="stat-num" id="statPending">0</div>
-                    <div class="stat-name">قيد المراجعة</div>
+                <div class="stat-card">
+                    <div class="stat-icon warning"><i class="fas fa-star"></i></div>
+                    <div>
+                        <div class="stat-num" id="statRating">0</div>
+                        <div class="stat-label">متوسط التقييم</div>
+                    </div>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-icon-wrap success"><i class="fas fa-check"></i></div>
-                    <div class="stat-num" id="statAccepted">0</div>
-                    <div class="stat-name">طلبات مقبولة</div>
+                <div class="stat-card">
+                    <div class="stat-icon success"><i class="fas fa-check-circle"></i></div>
+                    <div>
+                        <div class="stat-num" id="statAttendance">0</div>
+                        <div class="stat-label">أيام حضور</div>
+                    </div>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-icon-wrap"><i class="fas fa-calendar-check"></i></div>
-                    <div class="stat-num" id="statInterviews">0</div>
-                    <div class="stat-name">مقابلات</div>
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="fas fa-paper-plane"></i></div>
+                    <div>
+                        <div class="stat-num" id="statApplications">0</div>
+                        <div class="stat-label">طلبات تقديم</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 1. المعلومات الشخصية -->
-            <div class="section-card">
-                <div class="section-title">
-                    <div class="section-title-text">
-                        <i class="fas fa-user-circle"></i> المعلومات الشخصية
-                    </div>
-                    <button class="btn btn-secondary btn-small" onclick="openEditModal('basic')">
+            <!-- Personal Info -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-id-card"></i> البيانات الشخصية
+                    </h2>
+                    <button class="btn btn-primary btn-sm" onclick="openEditPersonal()">
                         <i class="fas fa-edit"></i> تعديل
                     </button>
                 </div>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-user"></i> الاسم بالكامل</div>
-                        <div class="info-value" id="infoName">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-envelope"></i> البريد الإلكتروني</div>
-                        <div class="info-value" id="infoEmail" style="direction:ltr;text-align:right">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-phone"></i> الهاتف</div>
-                        <div class="info-value" id="infoPhone" style="direction:ltr;text-align:right">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-birthday-cake"></i> العمر</div>
-                        <div class="info-value" id="infoAge">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-venus-mars"></i> النوع</div>
-                        <div class="info-value" id="infoGender">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-map-marker-alt"></i> المدينة</div>
-                        <div class="info-value" id="infoCity">-</div>
-                    </div>
+                <div class="info-grid" id="personalInfoGrid">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
                 </div>
-            </div>
+            </section>
 
-            <!-- 2. المعلومات الأكاديمية -->
-            <div class="section-card">
-                <div class="section-title">
-                    <div class="section-title-text">
-                        <i class="fas fa-graduation-cap"></i> المعلومات الأكاديمية
-                    </div>
-                    <button class="btn btn-secondary btn-small" onclick="openEditModal('education')">
+            <!-- Education -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-graduation-cap"></i> التعليم
+                    </h2>
+                    <button class="btn btn-primary btn-sm" onclick="openEditEducation()">
                         <i class="fas fa-edit"></i> تعديل
                     </button>
                 </div>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-layer-group"></i> المرحلة</div>
-                        <div class="info-value" id="infoLevel">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-university"></i> الجامعة</div>
-                        <div class="info-value" id="infoUniversity">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-school"></i> الكلية</div>
-                        <div class="info-value" id="infoFaculty">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-bookmark"></i> التخصص</div>
-                        <div class="info-value" id="infoMajor">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-calendar"></i> سنة الدراسة</div>
-                        <div class="info-value" id="infoYear">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-star"></i> المعدل (GPA)</div>
-                        <div class="info-value" id="infoGpa">-</div>
-                    </div>
-                </div>
-            </div>
+                <div class="info-grid" id="educationInfoGrid"></div>
+            </section>
 
-            <!-- 3. المهارات والاهتمامات -->
-            <div class="section-card">
-                <div class="section-title">
-                    <div class="section-title-text">
+            <!-- Skills -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
                         <i class="fas fa-tools"></i> المهارات والاهتمامات
-                    </div>
-                    <button class="btn btn-secondary btn-small" onclick="openEditModal('skills')">
+                    </h2>
+                    <button class="btn btn-primary btn-sm" onclick="openEditSkills()">
                         <i class="fas fa-edit"></i> تعديل
                     </button>
                 </div>
-
-                <div style="margin-bottom:16px;">
-                    <div class="info-label" style="margin-bottom:10px"><i class="fas fa-cogs"></i> المهارات</div>
-                    <div class="tags-row" id="skillsRow">
-                        <span class="info-value empty">لا توجد مهارات مضافة</span>
-                    </div>
+                <div id="skillsContainer">
+                    <h4 style="font-size:0.88rem;color:var(--text-muted);margin-bottom:8px">المهارات:</h4>
+                    <div class="skills-list" id="skillsList"></div>
+                    <h4 style="font-size:0.88rem;color:var(--text-muted);margin:14px 0 8px">المجالات المهتم بها:</h4>
+                    <div class="skills-list" id="interestsList"></div>
                 </div>
+            </section>
 
-                <div style="margin-bottom:16px;">
-                    <div class="info-label" style="margin-bottom:10px"><i class="fas fa-language"></i> اللغات</div>
-                    <div class="tags-row" id="languagesRow">
-                        <span class="info-value empty">لا توجد لغات مضافة</span>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="info-label" style="margin-bottom:10px"><i class="fas fa-heart"></i> المجالات المهتم بها</div>
-                    <div class="tags-row" id="interestsRow">
-                        <span class="info-value empty">لا توجد مجالات مضافة</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. الخبرات -->
-            <div class="section-card">
-                <div class="section-title">
-                    <div class="section-title-text">
-                        <i class="fas fa-briefcase"></i> الخبرات
-                    </div>
-                    <button class="btn btn-secondary btn-small" onclick="openEditModal('experience')">
+            <!-- Social Links -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-link"></i> الروابط والـ CV
+                    </h2>
+                    <button class="btn btn-primary btn-sm" onclick="openEditSocial()">
                         <i class="fas fa-edit"></i> تعديل
                     </button>
                 </div>
-                <div class="exp-list" id="experienceList">
-                    <div class="empty-section">
-                        <i class="fas fa-briefcase"></i>
-                        <p>لا توجد خبرات مضافة بعد</p>
-                    </div>
-                </div>
-            </div>
+                <div class="info-grid" id="socialInfoGrid"></div>
+            </section>
 
-            <!-- 5. الروابط والملفات -->
-            <div class="section-card">
-                <div class="section-title">
-                    <div class="section-title-text">
-                        <i class="fas fa-link"></i> الروابط والملفات
-                    </div>
-                    <button class="btn btn-secondary btn-small" onclick="openEditModal('links')">
-                        <i class="fas fa-edit"></i> تعديل
-                    </button>
+            <!-- Training History -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-history"></i> سجل التدريبات
+                    </h2>
                 </div>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-label"><i class="fab fa-linkedin"></i> LinkedIn</div>
-                        <div class="info-value" id="infoLinkedin">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fab fa-github"></i> GitHub</div>
-                        <div class="info-value" id="infoGithub">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-globe"></i> Portfolio</div>
-                        <div class="info-value" id="infoPortfolio">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label"><i class="fas fa-file-pdf"></i> السيرة الذاتية</div>
-                        <div class="info-value" id="infoCv">-</div>
-                    </div>
+                <div id="trainingHistory">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i></div>
                 </div>
-            </div>
+            </section>
 
-            <!-- 6. آخر النشاطات -->
-            <div class="section-card">
-                <div class="section-title">
-                    <div class="section-title-text">
-                        <i class="fas fa-history"></i> آخر النشاطات
+            <!-- QR History -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-qrcode"></i> سجل المسح (QR Scans)
+                    </h2>
+                </div>
+                <div id="qrHistory">
+                    <div class="empty-state">
+                        <i class="fas fa-qrcode"></i>
+                        <h3>لا يوجد سجل مسح بعد</h3>
                     </div>
                 </div>
-                <div class="activity-list" id="activityList">
-                    <div class="empty-section">
-                        <i class="fas fa-clock"></i>
-                        <p>لا يوجد نشاط بعد</p>
-                    </div>
-                </div>
-            </div>
+            </section>
         </main>
     </div>
 
-    <!-- Edit Modal -->
-    <div class="modal" id="editModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="modalTitle">تعديل البيانات</h3>
-                <button class="modal-close" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div id="modalContent"></div>
-        </div>
-    </div>
+    <div id="modalsContainer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script>
-    (function() {
-        'use strict';
-        let studentData = null;
-        let studentUserId = null;
-        let allApps = [];
+// ============================================================
+// ProVance: Student Profile
+// ============================================================
+(function() {
+    'use strict';
 
-        const EDU_LEVELS = {
-            'high_school': 'طالب ثانوية',
-            'diploma': 'دبلوم',
-            'university': 'طالب جامعي',
-            'graduate': 'خريج',
-            'postgraduate': 'دراسات عليا'
+    // Safety
+    if (!window.ProVance) {
+        console.error('⚠️ supabase-config.js مش متحمل');
+        window.ProVance = {};
+    }
+    if (typeof window.ProVance.escapeHtml !== 'function') {
+        window.ProVance.escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    if (typeof window.ProVance.showToast !== 'function') {
+        window.ProVance.showToast = (msg, type) => {
+            const t = document.createElement('div');
+            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+            t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (c[type]||'#4facfe') + ';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
         };
-        const LANG_LEVELS = {
-            'beginner': 'مبتدئ',
-            'intermediate': 'متوسط',
-            'advanced': 'متقدم',
-            'native': 'لغة أم'
+    }
+    if (typeof window.ProVance.confirmModal !== 'function') {
+        window.ProVance.confirmModal = async ({title, message}) => confirm((title||'') + '\n' + (message||''));
+    }
+
+    console.log('✅ Student profile initialized');
+
+    // STATE
+    let studentUserId = null;
+    let studentEmail = null;
+    let studentData = null;
+    let allApplications = [];
+    let allEvaluations = [];
+    let allAttendance = [];
+    let paymentLock = null;
+    let qrStream = null;
+
+    const esc = window.ProVance.escapeHtml;
+
+    function getInitial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
+
+    function renderModal(html) {
+        document.getElementById('modalsContainer').innerHTML = html;
+        document.body.style.overflow = 'hidden';
+    }
+    window.closeModal = (id) => {
+        // أوقف الكاميرا لو مفتوحة
+        if (id === 'qrScannerModal' && qrStream) {
+            qrStream.getTracks().forEach(t => t.stop());
+            qrStream = null;
+        }
+        const el = document.getElementById(id);
+        if (el) el.remove();
+        if (document.querySelectorAll('.modal').length === 0) {
+            document.body.style.overflow = '';
+        }
+    };
+
+    window.logoutStudent = async (e) => {
+        e.preventDefault();
+        const ok = await window.ProVance.confirmModal({title: 'تسجيل الخروج', message: 'هل تريد تسجيل الخروج؟'});
+        if (ok) {
+            if (window.ProVance.logout) await window.ProVance.logout('student-login.html');
+            else window.location.href = 'student-login.html';
+        }
+    };
+
+    function formatDate(d) {
+        if (!d) return '-';
+        return new Date(d).toLocaleDateString('ar-EG');
+    }
+    function formatDateTime(d) {
+        if (!d) return '-';
+        return new Date(d).toLocaleString('ar-EG');
+    }
+    function timeAgo(d) {
+        if (!d) return '';
+        const diff = Date.now() - new Date(d).getTime();
+        const mins = Math.floor(diff/60000);
+        if (mins < 1) return 'الآن';
+        if (mins < 60) return `${mins} دقيقة`;
+        const hrs = Math.floor(mins/60);
+        if (hrs < 24) return `${hrs} ساعة`;
+        return `${Math.floor(hrs/24)} يوم`;
+    }
+
+    // RENDER PROFILE
+    function renderProfile() {
+        if (!studentData) return;
+
+        // Sidebar
+        document.getElementById('sidebarName').textContent = studentData.full_name || '-';
+        document.getElementById('sidebarEmail').textContent = studentData.email || '-';
+
+        const sidebarAvatar = document.getElementById('sidebarAvatar');
+        if (studentData.photo) {
+            sidebarAvatar.innerHTML = `<img src="${studentData.photo}" alt="${esc(studentData.full_name)}">`;
+        } else {
+            sidebarAvatar.innerHTML = `<span>${getInitial(studentData.full_name)}</span>`;
+        }
+
+        // Welcome
+        const firstName = (studentData.full_name || 'طالب').split(' ')[0];
+        document.getElementById('welcomeName').textContent = firstName;
+
+        // Personal Info
+        const personalGrid = document.getElementById('personalInfoGrid');
+        const genderLabel = { male: 'ذكر', female: 'أنثى', other: 'غير محدد' }[studentData.gender] || '-';
+        personalGrid.innerHTML = `
+            ${infoItem('user', 'الاسم الكامل', studentData.full_name)}
+            ${infoItem('envelope', 'البريد الإلكتروني', studentData.email)}
+            ${infoItem('phone', 'رقم الهاتف', studentData.phone)}
+            ${infoItem('birthday-cake', 'تاريخ الميلاد', studentData.birth_date ? formatDate(studentData.birth_date) : null)}
+            ${infoItem('venus-mars', 'النوع', studentData.gender ? genderLabel : null)}
+            ${infoItem('map-marker-alt', 'العنوان', studentData.address)}
+        `;
+
+        // Education
+        const eduGrid = document.getElementById('educationInfoGrid');
+        const eduLevels = {
+            'high_school': 'ثانوي', 'diploma': 'دبلوم',
+            'bachelor': 'بكالوريوس', 'master': 'ماجستير', 'phd': 'دكتوراه'
         };
+        eduGrid.innerHTML = `
+            ${infoItem('graduation-cap', 'المستوى التعليمي', studentData.education_level ? eduLevels[studentData.education_level] || studentData.education_level : null)}
+            ${infoItem('university', 'الجامعة', studentData.university)}
+            ${infoItem('book', 'الكلية / التخصص', studentData.faculty)}
+            ${infoItem('calendar', 'سنة الدراسة', studentData.study_year)}
+            ${infoItem('star', 'المعدل التراكمي', studentData.gpa)}
+        `;
 
-        function calcAge(birth) {
-            if (!birth) return null;
-            const b = new Date(birth);
-            const t = new Date();
-            let age = t.getFullYear() - b.getFullYear();
-            const m = t.getMonth() - b.getMonth();
-            if (m < 0 || (m === 0 && t.getDate() < b.getDate())) age--;
-            return age;
+        // Skills
+        const skills = Array.isArray(studentData.skills) ? studentData.skills : [];
+        const interests = Array.isArray(studentData.interested_fields) ? studentData.interested_fields : [];
+        const skillsList = document.getElementById('skillsList');
+        const interestsList = document.getElementById('interestsList');
+
+        skillsList.innerHTML = skills.length === 0
+            ? '<span style="color:var(--text-dim);font-size:0.86rem">لا توجد مهارات مضافة</span>'
+            : skills.map(s => `<span class="skill-tag">${esc(typeof s === 'string' ? s : (s.name || s))}</span>`).join('');
+
+        interestsList.innerHTML = interests.length === 0
+            ? '<span style="color:var(--text-dim);font-size:0.86rem">لا توجد مجالات مضافة</span>'
+            : interests.map(i => `<span class="skill-tag">${esc(typeof i === 'string' ? i : (i.name || i))}</span>`).join('');
+
+        // Social
+        const socialGrid = document.getElementById('socialInfoGrid');
+        socialGrid.innerHTML = `
+            ${linkItem('linkedin', 'LinkedIn', studentData.linkedin)}
+            ${linkItem('github', 'GitHub', studentData.github)}
+            ${linkItem('globe', 'الموقع الشخصي', studentData.portfolio)}
+            ${linkItem('file-pdf', 'السيرة الذاتية (CV)', studentData.cv_url)}
+        `;
+
+        // Training History
+        renderTrainingHistory();
+        renderQRHistory();
+        updateStats();
+        renderPaymentLock();
+    }
+
+    function infoItem(icon, label, value) {
+        const isEmpty = !value || value === '-';
+        return `
+            <div class="info-item">
+                <div class="info-label"><i class="fas fa-${icon}"></i> ${label}</div>
+                <div class="info-value ${isEmpty ? 'empty' : ''}">${isEmpty ? 'لم يُحدد' : esc(value)}</div>
+            </div>
+        `;
+    }
+
+    function linkItem(icon, label, url) {
+        const isEmpty = !url;
+        return `
+            <div class="info-item">
+                <div class="info-label"><i class="fa${icon === 'linkedin' || icon === 'github' ? 'b' : 's'} fa-${icon}"></i> ${label}</div>
+                <div class="info-value ${isEmpty ? 'empty' : ''}">
+                    ${isEmpty ? 'لم يُحدد' : `<a href="${esc(url)}" target="_blank" style="color:var(--primary);text-decoration:none">${esc(url.length > 35 ? url.substring(0, 35) + '...' : url)} <i class="fas fa-external-link-alt" style="font-size:0.75rem"></i></a>`}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTrainingHistory() {
+        const list = document.getElementById('trainingHistory');
+        const trainings = allApplications.filter(a => ['hired', 'in_training', 'completed'].includes(a.status));
+
+        if (trainings.length === 0) {
+            list.innerHTML = '<div class="empty-state"><i class="fas fa-graduation-cap"></i><h3>لا يوجد سجل تدريبات</h3><p>تدريباتك المُكتملة هتظهر هنا</p></div>';
+            return;
         }
 
-        function setVal(id, val, link = false) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            if (val === null || val === undefined || val === '') {
-                el.innerHTML = '<span class="empty">غير محدد</span>';
-                return;
-            }
-            if (link) {
-                let url = String(val);
-                if (!url.startsWith('http')) url = 'https://' + url;
-                el.innerHTML = `<a href="${url}" target="_blank">${window.ProVance.escapeHtml(val)}</a>`;
-            } else {
-                el.textContent = val;
-            }
-        }
+        list.innerHTML = trainings.map(t => {
+            const eval_ = allEvaluations.find(e => e.application_id === t.id);
+            const logo = t.company_logo
+                ? `<img src="${t.company_logo}" alt="${esc(t.company_name)}">`
+                : `<span>${getInitial(t.company_name)}</span>`;
 
-        function loadStudentData(data) {
-            studentData = data;
+            const statusBadge = {
+                'hired': '<span class="badge badge-info">✓ تم التعيين</span>',
+                'in_training': '<span class="badge badge-success">🎓 قيد التدريب</span>',
+                'completed': '<span class="badge badge-info">✓ أكمل</span>'
+            }[t.status] || '';
 
-            // Avatar
-            const initial = (data.full_name || '?').trim().charAt(0).toUpperCase();
-            document.getElementById('avatarInitial').textContent = initial;
-            if (data.photo) {
-                const avatar = document.querySelector('.profile-avatar');
-                avatar.innerHTML = `
-                    <img src="${data.photo}" alt="${data.full_name}">
-                    <div class="avatar-overlay"><i class="fas fa-camera"></i></div>
-                `;
-                avatar.onclick = () => document.getElementById('photoFileInput').click();
-            }
-
-            // Name + meta
-            document.getElementById('studentName').textContent = data.full_name || '-';
-            const eduText = EDU_LEVELS[data.education_level] || data.education_level || '-';
-            const yearText = data.study_year === 'graduated' ? 'متخرج' : data.study_year ? `السنة ${data.study_year}` : '';
-            document.getElementById('metaEducation').textContent = `${eduText}${yearText ? ' • ' + yearText : ''}`;
-            document.getElementById('metaCity').textContent = data.city || '-';
-            document.getElementById('metaEmail').textContent = data.email || '-';
-
-            // Status badges
-            const statusBadge = document.getElementById('statusBadge');
-            if (data.status === 'suspended') {
-                statusBadge.className = 'badge badge-warning';
-                statusBadge.innerHTML = '<i class="fas fa-pause-circle"></i> موقوف';
-            }
-            const trainingBadge = document.getElementById('trainingBadge');
-            if (data.training_status === 'in_training') {
-                trainingBadge.className = 'badge badge-success';
-                trainingBadge.innerHTML = '<i class="fas fa-check"></i> في تدريب';
-            } else if (data.training_status === 'completed') {
-                trainingBadge.className = 'badge badge-info';
-                trainingBadge.innerHTML = '<i class="fas fa-trophy"></i> أكمل التدريب';
-            }
-
-            // Personal info
-            setVal('infoName', data.full_name);
-            setVal('infoEmail', data.email);
-            setVal('infoPhone', data.phone);
-            const age = calcAge(data.birth_date);
-            setVal('infoAge', age ? age + ' سنة' : null);
-            setVal('infoGender', data.gender === 'female' ? 'أنثى' : data.gender === 'male' ? 'ذكر' : null);
-            setVal('infoCity', data.city);
-
-            // Education
-            setVal('infoLevel', eduText !== '-' ? eduText : null);
-            setVal('infoUniversity', data.university);
-            setVal('infoFaculty', data.faculty);
-            setVal('infoMajor', data.major);
-            setVal('infoYear', yearText || null);
-            setVal('infoGpa', data.gpa);
-
-            // Skills
-            const skillsRow = document.getElementById('skillsRow');
-            const skills = Array.isArray(data.skills) ? data.skills : [];
-            if (skills.length > 0) {
-                skillsRow.innerHTML = skills.map(s => `<span class="tag">${window.ProVance.escapeHtml(s)}</span>`).join('');
-            } else {
-                skillsRow.innerHTML = '<span class="info-value empty">لا توجد مهارات مضافة</span>';
-            }
-
-            // Languages
-            const langRow = document.getElementById('languagesRow');
-            const langs = Array.isArray(data.languages) ? data.languages : [];
-            if (langs.length > 0) {
-                langRow.innerHTML = langs.map(l => `
-                    <span class="tag lang">
-                        <i class="fas fa-globe"></i> ${window.ProVance.escapeHtml(l.name || l)}
-                        ${l.level ? `<span class="tag-level">${LANG_LEVELS[l.level] || l.level}</span>` : ''}
-                    </span>
-                `).join('');
-            } else {
-                langRow.innerHTML = '<span class="info-value empty">لا توجد لغات مضافة</span>';
-            }
-
-            // Interests
-            const interestsRow = document.getElementById('interestsRow');
-            const interests = Array.isArray(data.interested_fields) ? data.interested_fields : [];
-            if (interests.length > 0) {
-                interestsRow.innerHTML = interests.map(s => `<span class="tag">${window.ProVance.escapeHtml(s)}</span>`).join('');
-            } else {
-                interestsRow.innerHTML = '<span class="info-value empty">لا توجد مجالات مضافة</span>';
-            }
-
-            // Experiences
-            const expList = document.getElementById('experienceList');
-            const exps = Array.isArray(data.experience) ? data.experience : [];
-            if (exps.length > 0) {
-                expList.innerHTML = exps.map(e => `
-                    <div class="exp-card">
-                        <div class="exp-card-title">${window.ProVance.escapeHtml(e.title || '-')}</div>
-                        <div class="exp-card-meta">
-                            ${e.company ? `<span><i class="fas fa-building"></i> ${window.ProVance.escapeHtml(e.company)}</span>` : ''}
-                            ${e.start || e.end ? `<span><i class="fas fa-calendar"></i> ${window.ProVance.escapeHtml(e.start || '')} - ${window.ProVance.escapeHtml(e.end || 'الآن')}</span>` : ''}
-                        </div>
-                        ${e.description ? `<div class="exp-card-desc">${window.ProVance.escapeHtml(e.description)}</div>` : ''}
-                    </div>
-                `).join('');
-            } else {
-                expList.innerHTML = `
-                    <div class="empty-section">
-                        <i class="fas fa-briefcase"></i>
-                        <p>لا توجد خبرات مضافة بعد</p>
-                    </div>
-                `;
-            }
-
-            // Links
-            setVal('infoLinkedin', data.linkedin, true);
-            setVal('infoGithub', data.github, true);
-            setVal('infoPortfolio', data.portfolio, true);
-            if (data.cv_url) {
-                document.getElementById('infoCv').innerHTML = `<a href="${data.cv_url}" target="_blank"><i class="fas fa-download"></i> تحميل السيرة الذاتية</a>`;
-            } else {
-                setVal('infoCv', null);
-            }
-        }
-
-        async function loadStats() {
-            const sb = window.ProVance.sb;
-            const { data } = await sb.from('applications')
-                .select('status, created_at, internship_title, company_name')
-                .eq('student_user_id', studentUserId)
-                .order('created_at', { ascending: false });
-
-            allApps = data || [];
-
-            const total = allApps.length;
-            const pending = allApps.filter(a => a.status === 'pending').length;
-            const accepted = allApps.filter(a => ['accepted', 'hired'].includes(a.status)).length;
-            const interviews = allApps.filter(a => ['interview_scheduled', 'interview_done'].includes(a.status)).length;
-
-            document.getElementById('statTotalApps').textContent = total;
-            document.getElementById('statPending').textContent = pending;
-            document.getElementById('statAccepted').textContent = accepted;
-            document.getElementById('statInterviews').textContent = interviews;
-
-            // Activity list
-            const activityList = document.getElementById('activityList');
-            if (allApps.length === 0) {
-                activityList.innerHTML = `
-                    <div class="empty-section">
-                        <i class="fas fa-clock"></i>
-                        <p>لا يوجد نشاط بعد</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const recent = allApps.slice(0, 6);
-            const STATUS_INFO = {
-                'pending': { icon: 'clock', cls: 'warning', text: 'قدمت طلب' },
-                'accepted': { icon: 'check', cls: 'success', text: 'تم قبول طلبك' },
-                'rejected': { icon: 'times', cls: 'error', text: 'تم رفض طلبك' },
-                'interview_scheduled': { icon: 'calendar-check', cls: '', text: 'تم جدولة مقابلة' },
-                'interview_done': { icon: 'check', cls: '', text: 'تمت المقابلة' },
-                'hired': { icon: 'trophy', cls: 'success', text: '🎉 تم تعيينك' }
-            };
-
-            activityList.innerHTML = recent.map(app => {
-                const info = STATUS_INFO[app.status] || { icon: 'info-circle', cls: '', text: app.status };
-                return `
-                    <div class="activity-item">
-                        <div class="activity-icon ${info.cls}"><i class="fas fa-${info.icon}"></i></div>
-                        <div class="activity-body">
-                            <div class="activity-title">${info.text} - ${window.ProVance.escapeHtml(app.internship_title || '')}</div>
-                            <div class="activity-time">
-                                <i class="fas fa-building"></i> ${window.ProVance.escapeHtml(app.company_name || '-')}
-                                • ${window.ProVance.timeAgo(app.created_at)}
-                            </div>
+            return `
+                <div class="training-card">
+                    <div class="training-logo">${logo}</div>
+                    <div class="training-body">
+                        <div class="training-company">${esc(t.company_name || '-')}</div>
+                        <div class="training-position">${esc(t.internship_title || '-')}</div>
+                        <div class="training-meta">
+                            ${statusBadge}
+                            ${eval_ ? `<span><i class="fas fa-star" style="color:var(--warning)"></i> ${Number(eval_.overall_score).toFixed(1)}/10</span>` : ''}
+                            <span><i class="fas fa-calendar"></i> ${formatDate(t.created_at)}</span>
                         </div>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderQRHistory() {
+        const list = document.getElementById('qrHistory');
+        if (allAttendance.length === 0) {
+            list.innerHTML = '<div class="empty-state"><i class="fas fa-qrcode"></i><h3>لا يوجد سجل مسح بعد</h3></div>';
+            return;
         }
 
-        // ==================== Edit Modals ====================
-        window.openEditModal = (section) => {
-            if (!studentData) return;
-            const titles = {
-                'basic': 'تعديل المعلومات الشخصية',
-                'education': 'تعديل المعلومات الأكاديمية',
-                'skills': 'تعديل المهارات والاهتمامات',
-                'experience': 'تعديل الخبرات',
-                'links': 'تعديل الروابط والملفات'
-            };
-            document.getElementById('modalTitle').textContent = titles[section] || 'تعديل';
+        const TYPE_INFO = {
+            'interview': { icon: 'calendar-check', cls: 'interview', label: 'مقابلة' },
+            'daily_attendance': { icon: 'check-circle', cls: 'daily', label: 'حضور يومي' },
+            'task_check': { icon: 'tasks', cls: 'daily', label: 'مهمة' }
+        };
 
-            const content = document.getElementById('modalContent');
-            if (section === 'basic') {
-                content.innerHTML = `
+        list.innerHTML = allAttendance.slice(0, 10).map(a => {
+            const info = TYPE_INFO[a.attendance_type] || TYPE_INFO['daily_attendance'];
+            const statusBadge = {
+                'on_time': '<span class="badge badge-success">✓ في الوقت</span>',
+                'late': '<span class="badge badge-warning">⚠ متأخر</span>',
+                'absent': '<span class="badge badge-error">✕ غياب</span>',
+                'early': '<span class="badge badge-info">⚡ مبكراً</span>'
+            }[a.status] || '';
+
+            return `
+                <div class="qr-history-card">
+                    <div class="qr-history-icon ${info.cls}"><i class="fas fa-${info.icon}"></i></div>
+                    <div class="qr-history-body">
+                        <div class="qr-history-title">${info.label} - ${esc(a.company_name || '-')}</div>
+                        <div class="qr-history-meta">
+                            <i class="fas fa-clock"></i> ${formatDateTime(a.scanned_at)}
+                            • ${statusBadge}
+                            ${a.delay_minutes > 0 ? `• تأخر ${a.delay_minutes} دقيقة` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateStats() {
+        const completed = allApplications.filter(a => a.status === 'completed').length;
+        const totalApplications = allApplications.length;
+        const attendanceCount = allAttendance.filter(a => a.attendance_type === 'daily_attendance' && a.status !== 'absent').length;
+        const evaluations = allEvaluations.filter(e => e.overall_score > 0);
+        const avgRating = evaluations.length
+            ? (evaluations.reduce((s, e) => s + Number(e.overall_score), 0) / evaluations.length).toFixed(1)
+            : '0';
+
+        document.getElementById('statTrainings').textContent = completed;
+        document.getElementById('statRating').textContent = avgRating;
+        document.getElementById('statAttendance').textContent = attendanceCount;
+        document.getElementById('statApplications').textContent = totalApplications;
+    }
+
+    function renderPaymentLock() {
+        const alert = document.getElementById('paymentLockAlert');
+        if (!paymentLock || paymentLock.lock_status === 'fully_paid' || paymentLock.lock_status === 'released') {
+            alert.style.display = 'none';
+            alert.innerHTML = '';
+            return;
+        }
+
+        alert.style.display = 'block';
+        alert.innerHTML = `
+            <div class="payment-alert">
+                <div class="payment-alert-icon"><i class="fas fa-lock"></i></div>
+                <div class="payment-alert-body">
+                    <div class="payment-alert-title">⚠️ مطلوب دفع رسوم التدريب</div>
+                    <div class="payment-alert-desc">
+                        لقد حضرت ${paymentLock.days_attended} أيام تدريب. لاستكمال التدريب، يجب دفع
+                        <strong style="color:var(--text)"> ${paymentLock.remaining_amount} ${paymentLock.currency}</strong>
+                        قبل ${formatDate(paymentLock.payment_deadline)}.
+                    </div>
+                </div>
+                <a href="Student_-payments.html" class="btn btn-warning">
+                    <i class="fas fa-credit-card"></i> ادفع الآن
+                </a>
+            </div>
+        `;
+    }
+
+    // EDIT PERSONAL INFO
+    window.openEditPersonal = () => {
+        const html = `
+            <div class="modal active" id="editPersonalModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-id-card"></i><span>تعديل البيانات الشخصية</span></div>
+                        <button class="modal-close" onclick="closeModal('editPersonalModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
                     <div class="field">
-                        <label>الاسم بالكامل *</label>
-                        <input type="text" id="editName" value="${window.ProVance.escapeHtml(studentData.full_name || '')}">
+                        <label><i class="fas fa-user"></i> الاسم الكامل <span class="req">*</span></label>
+                        <input type="text" id="ep_full_name" value="${esc(studentData.full_name || '')}">
                     </div>
+
                     <div class="grid-2">
                         <div class="field">
-                            <label>الهاتف</label>
-                            <input type="tel" id="editPhone" value="${studentData.phone || ''}" style="direction:ltr;text-align:right">
+                            <label><i class="fas fa-phone"></i> رقم الهاتف</label>
+                            <input type="tel" id="ep_phone" value="${esc(studentData.phone || '')}" style="direction:ltr;text-align:right">
                         </div>
                         <div class="field">
-                            <label>المدينة</label>
-                            <input type="text" id="editCity" value="${window.ProVance.escapeHtml(studentData.city || '')}">
+                            <label><i class="fas fa-birthday-cake"></i> تاريخ الميلاد</label>
+                            <input type="date" id="ep_birth_date" value="${studentData.birth_date || ''}">
                         </div>
                     </div>
+
                     <div class="field">
-                        <label>العنوان التفصيلي</label>
-                        <input type="text" id="editAddress" value="${window.ProVance.escapeHtml(studentData.address || '')}">
-                    </div>
-                    <div class="grid-2">
-                        <div class="field">
-                            <label>تاريخ الميلاد</label>
-                            <input type="date" id="editBirth" value="${studentData.birth_date || ''}" style="direction:ltr;text-align:right">
-                        </div>
-                        <div class="field">
-                            <label>النوع</label>
-                            <select id="editGender">
-                                <option value="male" ${studentData.gender === 'male' ? 'selected' : ''}>ذكر</option>
-                                <option value="female" ${studentData.gender === 'female' ? 'selected' : ''}>أنثى</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">إلغاء</button>
-                        <button type="button" class="btn btn-primary" onclick="saveBasic()">
-                            <i class="fas fa-save"></i> حفظ
-                        </button>
-                    </div>
-                `;
-            } else if (section === 'education') {
-                content.innerHTML = `
-                    <div class="field">
-                        <label>المرحلة</label>
-                        <select id="editLevel">
-                            ${Object.entries(EDU_LEVELS).map(([k, v]) =>
-                                `<option value="${k}" ${studentData.education_level === k ? 'selected' : ''}>${v}</option>`
-                            ).join('')}
+                        <label><i class="fas fa-venus-mars"></i> النوع</label>
+                        <select id="ep_gender">
+                            <option value="">-- اختر --</option>
+                            <option value="male" ${studentData.gender === 'male' ? 'selected' : ''}>ذكر</option>
+                            <option value="female" ${studentData.gender === 'female' ? 'selected' : ''}>أنثى</option>
+                            <option value="other" ${studentData.gender === 'other' ? 'selected' : ''}>غير محدد</option>
                         </select>
                     </div>
-                    <div class="grid-2">
-                        <div class="field">
-                            <label>الجامعة</label>
-                            <input type="text" id="editUniversity" value="${window.ProVance.escapeHtml(studentData.university || '')}">
-                        </div>
-                        <div class="field">
-                            <label>الكلية</label>
-                            <input type="text" id="editFaculty" value="${window.ProVance.escapeHtml(studentData.faculty || '')}">
-                        </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-map-marker-alt"></i> العنوان</label>
+                        <textarea id="ep_address" rows="2" placeholder="مثال: القاهرة، مدينة نصر">${esc(studentData.address || '')}</textarea>
                     </div>
+
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        <button class="btn btn-secondary" onclick="closeModal('editPersonalModal')" style="flex:1;justify-content:center">إلغاء</button>
+                        <button class="btn btn-primary" onclick="savePersonal()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    window.savePersonal = async () => {
+        const data = {
+            full_name: document.getElementById('ep_full_name').value.trim(),
+            phone: document.getElementById('ep_phone').value.trim() || null,
+            birth_date: document.getElementById('ep_birth_date').value || null,
+            gender: document.getElementById('ep_gender').value || null,
+            address: document.getElementById('ep_address').value.trim() || null
+        };
+
+        if (!data.full_name) {
+            window.ProVance.showToast('الاسم مطلوب', 'warning');
+            return;
+        }
+
+        try {
+            const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', studentUserId);
+            if (error) throw error;
+            window.ProVance.showToast('تم الحفظ ✓', 'success');
+            closeModal('editPersonalModal');
+            await loadAll();
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+        }
+    };
+
+    // EDIT EDUCATION
+    window.openEditEducation = () => {
+        const html = `
+            <div class="modal active" id="editEducationModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-graduation-cap"></i><span>تعديل التعليم</span></div>
+                        <button class="modal-close" onclick="closeModal('editEducationModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-graduation-cap"></i> المستوى التعليمي</label>
+                        <select id="ed_level">
+                            <option value="">-- اختر --</option>
+                            <option value="high_school" ${studentData.education_level === 'high_school' ? 'selected' : ''}>ثانوي</option>
+                            <option value="diploma" ${studentData.education_level === 'diploma' ? 'selected' : ''}>دبلوم</option>
+                            <option value="bachelor" ${studentData.education_level === 'bachelor' ? 'selected' : ''}>بكالوريوس</option>
+                            <option value="master" ${studentData.education_level === 'master' ? 'selected' : ''}>ماجستير</option>
+                            <option value="phd" ${studentData.education_level === 'phd' ? 'selected' : ''}>دكتوراه</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-university"></i> اسم الجامعة</label>
+                        <input type="text" id="ed_university" value="${esc(studentData.university || '')}" placeholder="مثال: جامعة القاهرة">
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-book"></i> الكلية / التخصص</label>
+                        <input type="text" id="ed_faculty" value="${esc(studentData.faculty || '')}" placeholder="مثال: علوم الحاسب">
+                    </div>
+
                     <div class="grid-2">
                         <div class="field">
-                            <label>التخصص</label>
-                            <input type="text" id="editMajor" value="${window.ProVance.escapeHtml(studentData.major || '')}">
-                        </div>
-                        <div class="field">
-                            <label>سنة الدراسة</label>
-                            <select id="editStudyYear">
-                                ${[1,2,3,4,5,6].map(n =>
-                                    `<option value="${n}" ${String(studentData.study_year) === String(n) ? 'selected' : ''}>السنة ${n}</option>`
-                                ).join('')}
+                            <label><i class="fas fa-calendar"></i> سنة الدراسة</label>
+                            <select id="ed_year">
+                                <option value="">--</option>
+                                ${[1,2,3,4,5,6].map(y => `<option value="${y}" ${studentData.study_year == y ? 'selected' : ''}>${y}</option>`).join('')}
                                 <option value="graduated" ${studentData.study_year === 'graduated' ? 'selected' : ''}>متخرج</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="grid-2">
                         <div class="field">
-                            <label>سنة التخرج المتوقعة</label>
-                            <input type="number" id="editGradYear" value="${studentData.graduation_year || ''}" min="2020" max="2035">
-                        </div>
-                        <div class="field">
-                            <label>المعدل (GPA)</label>
-                            <input type="text" id="editGpa" value="${window.ProVance.escapeHtml(studentData.gpa || '')}">
+                            <label><i class="fas fa-star"></i> المعدل التراكمي</label>
+                            <input type="text" id="ed_gpa" value="${esc(studentData.gpa || '')}" placeholder="مثال: 3.5">
                         </div>
                     </div>
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">إلغاء</button>
-                        <button type="button" class="btn btn-primary" onclick="saveEducation()">
-                            <i class="fas fa-save"></i> حفظ
-                        </button>
-                    </div>
-                `;
-            } else if (section === 'skills') {
-                const skillsArr = Array.isArray(studentData.skills) ? studentData.skills : [];
-                const interestsArr = Array.isArray(studentData.interested_fields) ? studentData.interested_fields : [];
-                const langsArr = Array.isArray(studentData.languages) ? studentData.languages : [];
-                content.innerHTML = `
-                    <div class="field">
-                        <label>المهارات (افصل بفاصلة)</label>
-                        <textarea id="editSkills" rows="3" placeholder="HTML, CSS, تصميم...">${skillsArr.join(', ')}</textarea>
-                    </div>
-                    <div class="field">
-                        <label>المجالات المهتم بها (افصل بفاصلة)</label>
-                        <textarea id="editInterests" rows="3" placeholder="تطوير الويب, التسويق...">${interestsArr.join(', ')}</textarea>
-                    </div>
-                    <div class="field">
-                        <label>اللغات (مثال: الإنجليزية:متقدم، العربية:لغة أم)</label>
-                        <textarea id="editLangs" rows="2" placeholder="">${langsArr.map(l => typeof l === 'object' ? `${l.name}:${l.level}` : l).join('، ')}</textarea>
-                        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:5px;">المستويات: مبتدئ / متوسط / متقدم / لغة أم</div>
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">إلغاء</button>
-                        <button type="button" class="btn btn-primary" onclick="saveSkills()">
-                            <i class="fas fa-save"></i> حفظ
-                        </button>
-                    </div>
-                `;
-            } else if (section === 'experience') {
-                const exps = Array.isArray(studentData.experience) ? studentData.experience : [];
-                content.innerHTML = `
-                    <div id="expEditList">
-                        ${exps.map((e, i) => `
-                            <div class="exp-card" style="margin-bottom: 12px; padding-right: 16px;" data-idx="${i}">
-                                <div style="display:flex; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
-                                    <strong style="color: var(--primary)">خبرة ${i+1}</strong>
-                                    <button type="button" class="btn btn-secondary btn-small" onclick="removeExpEdit(${i})" style="color:var(--error)">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                                <input type="text" placeholder="المسمى" value="${window.ProVance.escapeHtml(e.title || '')}" data-field="title" style="margin-bottom:8px; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); width: 100%;">
-                                <input type="text" placeholder="الشركة" value="${window.ProVance.escapeHtml(e.company || '')}" data-field="company" style="margin-bottom:8px; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); width: 100%;">
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
-                                    <input type="text" placeholder="من (مثال: 6/2024)" value="${window.ProVance.escapeHtml(e.start || '')}" data-field="start" style="padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text);">
-                                    <input type="text" placeholder="إلى" value="${window.ProVance.escapeHtml(e.end || '')}" data-field="end" style="padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text);">
-                                </div>
-                                <textarea placeholder="الوصف" data-field="description" rows="2" style="padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); width: 100%; font-family:inherit;">${window.ProVance.escapeHtml(e.description || '')}</textarea>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <button type="button" class="btn btn-secondary" onclick="addExpEdit()" style="width:100%; justify-content:center; margin-bottom:14px;">
-                        <i class="fas fa-plus"></i> إضافة خبرة جديدة
-                    </button>
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">إلغاء</button>
-                        <button type="button" class="btn btn-primary" onclick="saveExperience()">
-                            <i class="fas fa-save"></i> حفظ
-                        </button>
-                    </div>
-                `;
-            } else if (section === 'links') {
-                content.innerHTML = `
-                    <div class="field">
-                        <label>LinkedIn</label>
-                        <input type="url" id="editLinkedin" value="${studentData.linkedin || ''}" placeholder="https://linkedin.com/in/...">
-                    </div>
-                    <div class="field">
-                        <label>GitHub</label>
-                        <input type="url" id="editGithub" value="${studentData.github || ''}" placeholder="https://github.com/...">
-                    </div>
-                    <div class="field">
-                        <label>Portfolio</label>
-                        <input type="url" id="editPortfolio" value="${studentData.portfolio || ''}" placeholder="https://...">
-                    </div>
-                    <div class="field">
-                        <label>السيرة الذاتية (PDF)</label>
-                        <input type="file" id="editCv" accept=".pdf,.doc,.docx" style="padding:8px;">
-                        ${studentData.cv_url ? `<div style="margin-top:6px;font-size:0.85rem;"><a href="${studentData.cv_url}" target="_blank" style="color:var(--primary)"><i class="fas fa-download"></i> السيرة الحالية</a></div>` : ''}
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">إلغاء</button>
-                        <button type="button" class="btn btn-primary" onclick="saveLinks()">
-                            <i class="fas fa-save"></i> حفظ
-                        </button>
-                    </div>
-                `;
-            }
 
-            document.getElementById('editModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        <button class="btn btn-secondary" onclick="closeModal('editEducationModal')" style="flex:1;justify-content:center">إلغاء</button>
+                        <button class="btn btn-primary" onclick="saveEducation()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    window.saveEducation = async () => {
+        const data = {
+            education_level: document.getElementById('ed_level').value || null,
+            university: document.getElementById('ed_university').value.trim() || null,
+            faculty: document.getElementById('ed_faculty').value.trim() || null,
+            study_year: document.getElementById('ed_year').value || null,
+            gpa: document.getElementById('ed_gpa').value.trim() || null
         };
 
-        window.closeEditModal = () => {
-            document.getElementById('editModal').classList.remove('active');
-            document.body.style.overflow = '';
-        };
-
-        async function updateStudent(updates) {
-            const sb = window.ProVance.sb;
-            const { error } = await sb.from('student').update(updates).eq('user_id', studentUserId);
-            if (error) {
-                console.error(error);
-                window.ProVance.showToast('حدث خطأ في الحفظ', 'error');
-                return false;
-            }
-            Object.assign(studentData, updates);
-            loadStudentData(studentData);
+        try {
+            const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', studentUserId);
+            if (error) throw error;
             window.ProVance.showToast('تم الحفظ ✓', 'success');
-            closeEditModal();
-            return true;
+            closeModal('editEducationModal');
+            await loadAll();
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+        }
+    };
+
+    // EDIT SKILLS
+    window.openEditSkills = () => {
+        const skills = Array.isArray(studentData.skills) ? studentData.skills : [];
+        const interests = Array.isArray(studentData.interested_fields) ? studentData.interested_fields : [];
+
+        const skillsStr = skills.map(s => typeof s === 'string' ? s : (s.name || s)).join(', ');
+        const interestsStr = interests.map(i => typeof i === 'string' ? i : (i.name || i)).join(', ');
+
+        const html = `
+            <div class="modal active" id="editSkillsModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-tools"></i><span>تعديل المهارات</span></div>
+                        <button class="modal-close" onclick="closeModal('editSkillsModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-tools"></i> المهارات</label>
+                        <textarea id="sk_skills" rows="3" placeholder="اكتب المهارات مفصولة بفاصلة، مثال: HTML, CSS, JavaScript">${esc(skillsStr)}</textarea>
+                        <div style="color:var(--text-muted);font-size:0.78rem;margin-top:4px"><i class="fas fa-info-circle"></i> افصل بين المهارات بفاصلة (,)</div>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-bullseye"></i> المجالات المهتم بها</label>
+                        <textarea id="sk_interests" rows="3" placeholder="مثال: تطوير الويب, تطبيقات الموبايل, الذكاء الاصطناعي">${esc(interestsStr)}</textarea>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        <button class="btn btn-secondary" onclick="closeModal('editSkillsModal')" style="flex:1;justify-content:center">إلغاء</button>
+                        <button class="btn btn-primary" onclick="saveSkills()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    window.saveSkills = async () => {
+        const skillsStr = document.getElementById('sk_skills').value.trim();
+        const interestsStr = document.getElementById('sk_interests').value.trim();
+
+        const skills = skillsStr ? skillsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const interests = interestsStr ? interestsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        try {
+            const { error } = await window.ProVance.sb.from('student').update({
+                skills: skills,
+                interested_fields: interests
+            }).eq('user_id', studentUserId);
+            if (error) throw error;
+            window.ProVance.showToast('تم الحفظ ✓', 'success');
+            closeModal('editSkillsModal');
+            await loadAll();
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+        }
+    };
+
+    // EDIT SOCIAL
+    window.openEditSocial = () => {
+        const html = `
+            <div class="modal active" id="editSocialModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-link"></i><span>تعديل الروابط</span></div>
+                        <button class="modal-close" onclick="closeModal('editSocialModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fab fa-linkedin"></i> LinkedIn</label>
+                        <input type="url" id="so_linkedin" value="${esc(studentData.linkedin || '')}" placeholder="https://linkedin.com/in/..." style="direction:ltr;text-align:right">
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fab fa-github"></i> GitHub</label>
+                        <input type="url" id="so_github" value="${esc(studentData.github || '')}" placeholder="https://github.com/..." style="direction:ltr;text-align:right">
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-globe"></i> الموقع الشخصي</label>
+                        <input type="url" id="so_portfolio" value="${esc(studentData.portfolio || '')}" placeholder="https://..." style="direction:ltr;text-align:right">
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-file-pdf"></i> رابط السيرة الذاتية (CV)</label>
+                        <input type="url" id="so_cv" value="${esc(studentData.cv_url || '')}" placeholder="https://drive.google.com/..." style="direction:ltr;text-align:right">
+                        <div style="color:var(--text-muted);font-size:0.78rem;margin-top:4px"><i class="fas fa-info-circle"></i> ارفع الـ CV على Google Drive وضع الرابط هنا</div>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        <button class="btn btn-secondary" onclick="closeModal('editSocialModal')" style="flex:1;justify-content:center">إلغاء</button>
+                        <button class="btn btn-primary" onclick="saveSocial()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    window.saveSocial = async () => {
+        const data = {
+            linkedin: document.getElementById('so_linkedin').value.trim() || null,
+            github: document.getElementById('so_github').value.trim() || null,
+            portfolio: document.getElementById('so_portfolio').value.trim() || null,
+            cv_url: document.getElementById('so_cv').value.trim() || null
+        };
+
+        try {
+            const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', studentUserId);
+            if (error) throw error;
+            window.ProVance.showToast('تم الحفظ ✓', 'success');
+            closeModal('editSocialModal');
+            await loadAll();
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+        }
+    };
+
+    // EDIT AVATAR
+    window.openEditAvatar = () => {
+        const currentAvatar = studentData.photo
+            ? `<img src="${studentData.photo}" alt="">`
+            : `<span>${getInitial(studentData.full_name)}</span>`;
+
+        const html = `
+            <div class="modal active" id="editAvatarModal">
+                <div class="modal-content" style="max-width:480px">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-camera"></i><span>تغيير الصورة الشخصية</span></div>
+                        <button class="modal-close" onclick="closeModal('editAvatarModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div class="avatar-upload">
+                        <div class="avatar-upload-circle" id="avatarPreview" onclick="document.getElementById('avatarFile').click()">
+                            ${currentAvatar}
+                        </div>
+                        <input type="file" id="avatarFile" accept="image/*" style="display:none" onchange="previewAvatar(event)">
+                        <div style="color:var(--text-muted);font-size:0.84rem;margin-top:8px">اضغط على الصورة لاختيار صورة جديدة</div>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-link"></i> أو ضع رابط صورة مباشر</label>
+                        <input type="url" id="av_url" value="${esc(studentData.photo || '')}" placeholder="https://..." style="direction:ltr;text-align:right">
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        <button class="btn btn-secondary" onclick="closeModal('editAvatarModal')" style="flex:1;justify-content:center">إلغاء</button>
+                        <button class="btn btn-primary" onclick="saveAvatar()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    window.previewAvatar = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            window.ProVance.showToast('الصورة كبيرة - الحد الأقصى 2MB', 'warning');
+            return;
         }
 
-        window.saveBasic = async () => {
-            await updateStudent({
-                full_name: document.getElementById('editName').value.trim(),
-                phone: document.getElementById('editPhone').value.trim() || null,
-                city: document.getElementById('editCity').value.trim() || null,
-                address: document.getElementById('editAddress').value.trim() || null,
-                birth_date: document.getElementById('editBirth').value || null,
-                gender: document.getElementById('editGender').value
-            });
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            document.getElementById('avatarPreview').innerHTML = `<img src="${ev.target.result}" alt="">`;
+            document.getElementById('av_url').value = ev.target.result;
         };
+        reader.readAsDataURL(file);
+    };
 
-        window.saveEducation = async () => {
-            await updateStudent({
-                education_level: document.getElementById('editLevel').value,
-                university: document.getElementById('editUniversity').value.trim() || null,
-                faculty: document.getElementById('editFaculty').value.trim() || null,
-                major: document.getElementById('editMajor').value.trim() || null,
-                study_year: document.getElementById('editStudyYear').value,
-                graduation_year: document.getElementById('editGradYear').value ? parseInt(document.getElementById('editGradYear').value) : null,
-                gpa: document.getElementById('editGpa').value.trim() || null
-            });
-        };
+    window.saveAvatar = async () => {
+        const url = document.getElementById('av_url').value.trim();
 
-        window.saveSkills = async () => {
-            const skillsArr = document.getElementById('editSkills').value.split(/[,،\n]/).map(s => s.trim()).filter(Boolean);
-            const interestsArr = document.getElementById('editInterests').value.split(/[,،\n]/).map(s => s.trim()).filter(Boolean);
-            const langRaw = document.getElementById('editLangs').value;
-            const LANG_MAP = { 'مبتدئ':'beginner', 'متوسط':'intermediate', 'متقدم':'advanced', 'لغة أم':'native' };
-            const langsArr = langRaw.split(/[,،\n]/).map(s => {
-                s = s.trim();
-                if (!s) return null;
-                if (s.includes(':')) {
-                    const [name, level] = s.split(':').map(p => p.trim());
-                    return { name, level: LANG_MAP[level] || 'intermediate' };
-                }
-                return { name: s, level: 'intermediate' };
-            }).filter(Boolean);
+        try {
+            const { error } = await window.ProVance.sb.from('student').update({ photo: url || null }).eq('user_id', studentUserId);
+            if (error) throw error;
+            window.ProVance.showToast('تم تغيير الصورة ✓', 'success');
+            closeModal('editAvatarModal');
+            await loadAll();
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+        }
+    };
 
-            await updateStudent({
-                skills: skillsArr,
-                interested_fields: interestsArr,
-                languages: langsArr
-            });
-        };
+    // QR SCANNER
+    window.openQRScanner = () => {
+        const html = `
+            <div class="modal active" id="qrScannerModal">
+                <div class="modal-content" style="max-width:500px">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-qrcode"></i><span>مسح QR Code</span></div>
+                        <button class="modal-close" onclick="closeModal('qrScannerModal')"><i class="fas fa-times"></i></button>
+                    </div>
 
-        // Experience editing
-        let tempExps = [];
-        window.addExpEdit = () => {
-            const list = document.getElementById('expEditList');
-            const idx = list.children.length;
-            const el = document.createElement('div');
-            el.className = 'exp-card';
-            el.style.cssText = 'margin-bottom: 12px; padding-right: 16px;';
-            el.dataset.idx = idx;
-            el.innerHTML = `
-                <div style="display:flex; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
-                    <strong style="color: var(--primary)">خبرة ${idx+1}</strong>
-                    <button type="button" class="btn btn-secondary btn-small" onclick="this.closest('.exp-card').remove()" style="color:var(--error)">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="qr-scanner-wrap" id="scannerWrap">
+                        <video id="qrVideo" autoplay playsinline muted></video>
+                        <div class="qr-scanner-overlay"></div>
+                    </div>
+
+                    <p style="text-align:center;color:var(--text-muted);font-size:0.86rem;margin-bottom:14px">
+                        <i class="fas fa-info-circle"></i> وجّه الكاميرا نحو الـ QR Code
+                    </p>
+
+                    <div class="qr-input-fallback">
+                        <label style="display:block;margin-bottom:8px;font-weight:600;font-size:0.88rem">
+                            <i class="fas fa-keyboard"></i> أو أدخل الكود يدوياً
+                        </label>
+                        <div style="display:flex;gap:8px">
+                            <input type="text" id="manualQrCode" placeholder="مثال: INT-A1B2C3D4..." style="flex:1;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Courier New',monospace">
+                            <button class="btn btn-primary btn-sm" onclick="processManualCode()">
+                                <i class="fas fa-check"></i> تأكيد
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <input type="text" placeholder="المسمى" data-field="title" style="margin-bottom:8px; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); width: 100%;">
-                <input type="text" placeholder="الشركة" data-field="company" style="margin-bottom:8px; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); width: 100%;">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
-                    <input type="text" placeholder="من" data-field="start" style="padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text);">
-                    <input type="text" placeholder="إلى" data-field="end" style="padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text);">
-                </div>
-                <textarea placeholder="الوصف" data-field="description" rows="2" style="padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); width: 100%; font-family:inherit;"></textarea>
-            `;
-            list.appendChild(el);
-        };
-        window.removeExpEdit = (idx) => {
-            const item = document.querySelector(`#expEditList [data-idx="${idx}"]`);
-            if (item) item.remove();
-        };
+            </div>
+        `;
+        renderModal(html);
 
-        window.saveExperience = async () => {
-            const cards = document.querySelectorAll('#expEditList .exp-card');
-            const exps = [];
-            cards.forEach(card => {
-                const exp = {};
-                card.querySelectorAll('[data-field]').forEach(inp => {
-                    const v = inp.value.trim();
-                    if (v) exp[inp.dataset.field] = v;
-                });
-                if (exp.title || exp.company) exps.push(exp);
+        // Try to start camera
+        startQRCamera();
+    };
+
+    async function startQRCamera() {
+        try {
+            const video = document.getElementById('qrVideo');
+            qrStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
             });
-            await updateStudent({ experience: exps });
-        };
-
-        window.saveLinks = async () => {
-            const updates = {
-                linkedin: document.getElementById('editLinkedin').value.trim() || null,
-                github: document.getElementById('editGithub').value.trim() || null,
-                portfolio: document.getElementById('editPortfolio').value.trim() || null
-            };
-
-            // CV upload
-            const cvInput = document.getElementById('editCv');
-            if (cvInput && cvInput.files[0]) {
-                const file = cvInput.files[0];
-                if (file.size > 5 * 1024 * 1024) {
-                    window.ProVance.showToast('حجم الملف أكبر من 5 ميجا', 'error');
-                    return;
-                }
-                try {
-                    const sb = window.ProVance.sb;
-                    const fileName = `cv-${studentUserId}-${Date.now()}.${file.name.split('.').pop()}`;
-                    const { error: uploadErr } = await sb.storage.from('student-files').upload(fileName, file, { upsert: true });
-                    if (!uploadErr) {
-                        const { data } = sb.storage.from('student-files').getPublicUrl(fileName);
-                        updates.cv_url = data.publicUrl;
-                    }
-                } catch (e) { console.warn('CV upload skipped', e); }
+            video.srcObject = qrStream;
+            // Note: للـ scan الفعلي، نحتاج jsQR library
+            // دلوقتي بنعتمد على manual input
+        } catch (err) {
+            console.warn('Camera unavailable:', err);
+            const wrap = document.getElementById('scannerWrap');
+            if (wrap) {
+                wrap.innerHTML = `
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);gap:10px;padding:20px;text-align:center">
+                        <i class="fas fa-camera-slash" style="font-size:3rem"></i>
+                        <p>الكاميرا غير متاحة. استخدم الإدخال اليدوي أدناه</p>
+                    </div>
+                `;
             }
+        }
+    }
 
-            await updateStudent(updates);
-        };
+    window.processManualCode = async () => {
+        const code = document.getElementById('manualQrCode').value.trim().toUpperCase();
+        if (!code) {
+            window.ProVance.showToast('أدخل كود الـ QR', 'warning');
+            return;
+        }
 
-        // Photo upload
-        document.getElementById('photoFileInput').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (file.size > 2 * 1024 * 1024) {
-                window.ProVance.showToast('حجم الصورة أكبر من 2 ميجا', 'error');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = async (ev) => {
-                await updateStudent({ photo: ev.target.result });
-            };
-            reader.readAsDataURL(file);
-        });
+        await processQRScan(code);
+    };
 
-        window.logoutStudent = async (e) => {
-            e.preventDefault();
-            const ok = await window.ProVance.confirmModal({
-                title: 'تسجيل الخروج',
-                message: 'هل تريد تسجيل الخروج؟'
-            });
-            if (ok) await window.ProVance.logout('student-login.html');
-        };
-
-        async function init() {
-            const ok = await window.ProVance.requireStudentAuth();
-            if (!ok) return;
-            const session = await window.ProVance.getSession();
-            studentUserId = session.user.id;
+    async function processQRScan(code) {
+        try {
             const sb = window.ProVance.sb;
 
-            const { data, error } = await sb.from('student')
+            // ابحث عن الـ QR Code
+            const { data: qrCode, error } = await sb.from('qr_codes')
                 .select('*')
-                .eq('user_id', studentUserId)
+                .eq('code', code)
                 .maybeSingle();
 
-            if (error || !data) {
-                window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
+            if (error || !qrCode) {
+                window.ProVance.showToast('❌ كود QR غير صحيح', 'error');
                 return;
             }
 
-            loadStudentData(data);
-            await loadStats();
+            // Validate
+            const now = new Date();
+            const validUntil = new Date(qrCode.valid_until);
+
+            if (qrCode.status !== 'active') {
+                window.ProVance.showToast('⚠️ الـ QR ده مش نشط', 'warning');
+                return;
+            }
+
+            if (validUntil < now) {
+                window.ProVance.showToast('⏰ انتهت صلاحية الـ QR', 'error');
+                return;
+            }
+
+            if (qrCode.student_user_id !== studentUserId) {
+                window.ProVance.showToast('❌ الـ QR ده مش ليك', 'error');
+                return;
+            }
+
+            // سجّل الحضور
+            const expectedTime = qrCode.metadata?.interview_time
+                ? new Date(qrCode.metadata.interview_time)
+                : new Date(qrCode.valid_from);
+            const delayMins = Math.max(0, Math.floor((now - expectedTime) / 60000));
+            const status = delayMins > 15 ? 'late' : (delayMins < 0 ? 'early' : 'on_time');
+
+            const { error: logErr } = await sb.from('attendance_logs').insert({
+                qr_code_id: qrCode.id,
+                application_id: qrCode.application_id,
+                student_user_id: studentUserId,
+                student_name: studentData.full_name,
+                company_user_id: qrCode.company_user_id,
+                company_name: qrCode.company_name,
+                attendance_type: qrCode.qr_type,
+                expected_time: expectedTime.toISOString(),
+                delay_minutes: delayMins,
+                status,
+                is_valid: true
+            });
+
+            if (logErr) throw logErr;
+
+            // حدّث الـ QR scans count
+            await sb.from('qr_codes').update({
+                scans_count: (qrCode.scans_count || 0) + 1,
+                last_scanned_at: now.toISOString(),
+                is_used: qrCode.qr_type === 'interview'  // المقابلات تستخدم مرة واحدة
+            }).eq('id', qrCode.id);
+
+            // لو مقابلة، حدّث الـ application
+            if (qrCode.qr_type === 'interview' && qrCode.application_id) {
+                await sb.from('applications').update({ status: 'interview_done' }).eq('id', qrCode.application_id);
+            }
+
+            // لو حضور يومي، شيك الـ payment lock
+            if (qrCode.qr_type === 'daily_attendance' && qrCode.application_id) {
+                try {
+                    await sb.rpc('check_and_create_payment_lock', { p_application_id: qrCode.application_id });
+                } catch (e) {
+                    console.warn('Payment lock check failed:', e);
+                }
+            }
+
+            // إشعار للشركة
+            if (window.ProVance.sendNotification) {
+                await window.ProVance.sendNotification({
+                    userId: qrCode.company_user_id,
+                    userType: 'company',
+                    title: '✅ ' + (qrCode.qr_type === 'interview' ? 'حضور مقابلة' : 'حضور يومي'),
+                    message: `${studentData.full_name} مسح الـ QR Code ${delayMins > 0 ? `(متأخر ${delayMins} دقيقة)` : 'في الوقت'}`,
+                    type: 'success'
+                });
+            }
+
+            const successMsg = status === 'late'
+                ? `⚠️ تم التسجيل بتأخير ${delayMins} دقيقة`
+                : status === 'early'
+                ? '⚡ وصلت مبكراً!'
+                : '🎉 تم تسجيل الحضور بنجاح!';
+            window.ProVance.showToast(successMsg, status === 'on_time' || status === 'early' ? 'success' : 'warning');
+
+            closeModal('qrScannerModal');
+            await loadAll();
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+        }
+    }
+
+    // LOAD ALL
+    async function loadAll() {
+        const sb = window.ProVance.sb;
+        if (!sb) return;
+
+        try {
+            const [studentRes, appsRes, evalsRes, attRes, lockRes] = await Promise.all([
+                sb.from('student').select('*').eq('user_id', studentUserId).maybeSingle(),
+                sb.from('applications').select('*').eq('student_user_id', studentUserId).order('created_at', { ascending: false }),
+                sb.from('performance_evaluations').select('*').eq('student_user_id', studentUserId).eq('status', 'sent'),
+                sb.from('attendance_logs').select('*').eq('student_user_id', studentUserId).order('scanned_at', { ascending: false }).limit(50),
+                sb.from('payment_locks').select('*').eq('student_user_id', studentUserId).in('lock_status', ['locked', 'partial_paid']).maybeSingle()
+            ]);
+
+            studentData = studentRes.data;
+            allApplications = appsRes.data || [];
+            allEvaluations = evalsRes.data || [];
+            allAttendance = attRes.data || [];
+            paymentLock = lockRes.data;
+
+            if (!studentData) {
+                window.ProVance.showToast('بيانات الطالب غير موجودة', 'error');
+                setTimeout(() => window.location.href = 'student-login.html', 2000);
+                return;
+            }
+
+            renderProfile();
+        } catch (err) {
+            console.error('Load error:', err);
+            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
+        }
+    }
+
+    // INIT
+    async function init() {
+        const ok = window.ProVance.requireStudentAuth ? await window.ProVance.requireStudentAuth() : true;
+        if (!ok) return;
+
+        const session = window.ProVance.getSession ? await window.ProVance.getSession() : null;
+        if (session && session.user) {
+            studentUserId = session.user.id;
+            studentEmail = session.user.email;
+        } else if (window.ProVance.sb) {
+            const { data } = await window.ProVance.sb.auth.getSession();
+            if (data?.session?.user) {
+                studentUserId = data.session.user.id;
+                studentEmail = data.session.user.email;
+            }
         }
 
-        init();
-    })();
+        if (!studentUserId) {
+            window.location.href = 'student-login.html';
+            return;
+        }
+
+        await loadAll();
+
+        // Realtime
+        const sb = window.ProVance.sb;
+        if (sb) {
+            sb.channel('student-profile-' + studentUserId)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'student', filter: `user_id=eq.${studentUserId}` }, () => loadAll())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs', filter: `student_user_id=eq.${studentUserId}` }, () => loadAll())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_locks', filter: `student_user_id=eq.${studentUserId}` }, () => loadAll())
+                .subscribe();
+        }
+    }
+
+    init();
+})();
     </script>
 </body>
 </html>
