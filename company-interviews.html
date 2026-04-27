@@ -28,6 +28,7 @@
                         var(--bg);
         }
 
+        /* Layout */
         .layout { display: flex; min-height: 100vh; }
         .sidebar {
             width: 260px; background: rgba(20,18,40,0.7);
@@ -64,6 +65,7 @@
             border-radius: 10px; cursor: pointer;
         }
         .topbar-title { font-size: 1.5rem; font-weight: 800; }
+        .topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
         /* Tabs */
         .tabs-container {
@@ -98,7 +100,7 @@
         /* Stats */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
             gap: 12px; margin-bottom: 18px;
         }
         .stat-mini {
@@ -107,7 +109,7 @@
             display: flex; align-items: center; gap: 11px;
             transition: all .2s;
         }
-        .stat-mini:hover { border-color: var(--primary); }
+        .stat-mini:hover { border-color: var(--primary); transform: translateY(-2px); }
         .stat-mini-icon {
             width: 40px; height: 40px; border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
@@ -151,18 +153,16 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(240,147,251,0.4);
         }
-        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
         .btn-secondary:hover { background: var(--card-hover); }
         .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
         .btn-success:hover { background: rgba(16,185,129,0.25); }
         .btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
         .btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
-        .btn-danger:hover { background: rgba(239,68,68,0.2); }
         .btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
         .btn-sm { padding: 7px 12px; font-size: 0.8rem; }
 
-        /* Interview Cards Grid */
+        /* Interview Cards */
         .interviews-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -174,6 +174,7 @@
             display: flex; flex-direction: column; gap: 12px;
             transition: all .25s;
             position: relative;
+            overflow: hidden;
         }
         .interview-card:hover {
             border-color: var(--primary);
@@ -181,28 +182,34 @@
             box-shadow: 0 10px 30px rgba(240,147,251,0.15);
         }
         .interview-card.upcoming { border-color: rgba(79,172,254,0.4); }
-        .interview-card.live { border-color: var(--success); }
-        .interview-card.expired { opacity: 0.7; }
-        .interview-card.expired::after {
-            content: 'انتهت'; position: absolute; top: 10px; left: 10px;
-            background: rgba(239,68,68,0.15); color: var(--error);
-            padding: 4px 10px; border-radius: 8px;
-            font-size: 0.74rem; font-weight: 700;
+        .interview-card.live::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--success), #34d399);
+            animation: livePulse 2s infinite;
         }
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .interview-card.expired { opacity: 0.7; }
+
         .interview-card-header {
             display: flex; align-items: center; gap: 12px;
         }
         .student-avatar {
-            width: 52px; height: 52px; border-radius: 50%;
+            width: 56px; height: 56px; border-radius: 50%;
             background: var(--gradient);
             display: flex; align-items: center; justify-content: center;
-            color: #fff; font-weight: 800; font-size: 1.2rem;
+            color: #fff; font-weight: 800; font-size: 1.3rem;
             flex-shrink: 0; overflow: hidden;
         }
         .student-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .student-info { flex: 1; min-width: 0; }
-        .student-name { font-weight: 800; font-size: 1rem; }
-        .student-pos { color: var(--text-muted); font-size: 0.82rem; margin-top: 3px; }
+        .student-name { font-weight: 800; font-size: 1.05rem; }
+        .student-pos { color: var(--text-muted); font-size: 0.84rem; margin-top: 3px; }
 
         .interview-meta {
             display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
@@ -238,13 +245,8 @@
             background: rgba(16,185,129,0.08);
             border-color: rgba(16,185,129,0.25);
         }
-        .countdown-label {
-            font-size: 0.82rem; color: var(--text-muted);
-        }
-        .countdown-time {
-            font-size: 1.05rem; font-weight: 800;
-            color: var(--info);
-        }
+        .countdown-label { font-size: 0.82rem; color: var(--text-muted); }
+        .countdown-time { font-size: 1.05rem; font-weight: 800; color: var(--info); }
         .countdown.danger .countdown-time { color: var(--error); }
         .countdown.success .countdown-time { color: var(--success); }
 
@@ -256,14 +258,18 @@
             display: inline-flex; align-items: center; gap: 4px;
             padding: 3px 10px; border-radius: 14px;
             font-size: 0.74rem; font-weight: 700;
+            white-space: nowrap;
         }
         .status-badge.scheduled { background: rgba(79,172,254,0.15); color: var(--info); }
         .status-badge.attended { background: rgba(16,185,129,0.15); color: var(--success); }
         .status-badge.missed { background: rgba(239,68,68,0.15); color: var(--error); }
         .status-badge.late { background: rgba(245,158,11,0.15); color: var(--warning); }
         .status-badge.pending { background: rgba(148,163,184,0.15); color: var(--text-muted); }
-        .status-badge.live { background: rgba(16,185,129,0.2); color: var(--success); animation: pulse 2s infinite; }
-
+        .status-badge.live {
+            background: rgba(16,185,129,0.2);
+            color: var(--success);
+            animation: pulse 2s infinite;
+        }
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.6; }
@@ -283,7 +289,7 @@
         .modal-content {
             background: var(--bg-2); border: 1px solid var(--border);
             border-radius: 22px;
-            width: 100%; max-width: 600px;
+            width: 100%; max-width: 700px;
             max-height: 92vh; overflow-y: auto;
             padding: 28px; position: relative;
             animation: slideUp .3s ease-out;
@@ -298,7 +304,7 @@
             border-bottom: 1px solid var(--border);
         }
         .modal-title {
-            font-size: 1.25rem; font-weight: 800;
+            font-size: 1.2rem; font-weight: 800;
             display: flex; align-items: center; gap: 10px;
         }
         .modal-title i { color: var(--primary); }
@@ -351,7 +357,7 @@
             display: inline-block;
             margin: 14px 0;
         }
-        .qr-canvas-wrap img, .qr-canvas-wrap canvas {
+        .qr-canvas-wrap img {
             display: block;
             max-width: 240px;
             width: 100%;
@@ -409,83 +415,6 @@
             border-color: var(--primary);
         }
 
-        /* Calendar View */
-        .calendar-wrap {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 18px;
-        }
-        .calendar-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 16px;
-        }
-        .calendar-month {
-            font-size: 1.1rem; font-weight: 800;
-        }
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-        }
-        .calendar-day-header {
-            text-align: center;
-            padding: 8px;
-            font-weight: 700;
-            font-size: 0.82rem;
-            color: var(--text-muted);
-        }
-        .calendar-day {
-            aspect-ratio: 1;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all .2s;
-            font-size: 0.88rem;
-            position: relative;
-        }
-        .calendar-day:hover {
-            background: rgba(255,255,255,0.05);
-            border-color: var(--primary);
-        }
-        .calendar-day.today {
-            background: rgba(240,147,251,0.1);
-            border-color: var(--primary);
-            font-weight: 800;
-        }
-        .calendar-day.has-interview {
-            border-color: var(--info);
-        }
-        .calendar-day.has-interview::after {
-            content: '';
-            width: 6px; height: 6px;
-            background: var(--info);
-            border-radius: 50%;
-            position: absolute; bottom: 4px;
-        }
-        .calendar-day.empty {
-            opacity: 0.3;
-            cursor: default;
-        }
-
-        /* Empty State */
-        .empty-state {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 16px;
-        }
-        .empty-state i {
-            font-size: 4rem;
-            color: rgba(148,163,184,0.3);
-            margin-bottom: 16px;
-            display: block;
-        }
-        .empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
-
         /* Late Reports */
         .late-report-card {
             background: rgba(239,68,68,0.05);
@@ -505,8 +434,144 @@
         .late-body { flex: 1; min-width: 0; }
         .late-title { font-weight: 700; font-size: 0.94rem; }
         .late-reason { color: var(--text-muted); font-size: 0.86rem; margin-top: 4px; }
-        .late-meta { display: flex; gap: 12px; margin-top: 6px; font-size: 0.78rem; color: var(--text-muted); }
+        .late-meta { display: flex; gap: 12px; margin-top: 6px; font-size: 0.78rem; color: var(--text-muted); flex-wrap: wrap; }
 
+        /* Help Modal */
+        .help-section {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        .help-section h4 {
+            font-size: 0.95rem;
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+        .help-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        .help-section li {
+            padding: 5px 0;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            display: flex; align-items: flex-start; gap: 6px;
+        }
+        .help-section li i {
+            color: var(--success);
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        /* Data Policy */
+        .policy-toggle {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .policy-toggle-label {
+            display: flex; flex-direction: column; gap: 3px;
+        }
+        .policy-toggle-label strong { font-size: 0.92rem; }
+        .policy-toggle-label small { color: var(--text-muted); font-size: 0.78rem; }
+        .switch {
+            position: relative;
+            width: 50px; height: 26px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: all .3s;
+            flex-shrink: 0;
+        }
+        .switch.active { background: var(--primary); }
+        .switch::before {
+            content: '';
+            position: absolute;
+            right: 3px; top: 3px;
+            width: 20px; height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: all .3s;
+        }
+        .switch.active::before {
+            right: calc(100% - 23px);
+        }
+
+        /* Empty State */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            color: rgba(148,163,184,0.3);
+            margin-bottom: 16px;
+            display: block;
+        }
+        .empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
+
+        /* Quick Decision Buttons in Modal */
+        .decision-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 14px 0;
+        }
+        .decision-btn {
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            background: rgba(255,255,255,0.02);
+            cursor: pointer;
+            text-align: center;
+            transition: all .2s;
+        }
+        .decision-btn:hover {
+            transform: translateY(-2px);
+        }
+        .decision-btn.accept:hover {
+            border-color: var(--success);
+            background: rgba(16,185,129,0.05);
+        }
+        .decision-btn.reject:hover {
+            border-color: var(--error);
+            background: rgba(239,68,68,0.05);
+        }
+        .decision-btn-icon {
+            width: 50px; height: 50px;
+            border-radius: 14px;
+            margin: 0 auto 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            color: #fff;
+        }
+        .decision-btn.accept .decision-btn-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .decision-btn.reject .decision-btn-icon {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        .decision-btn-title {
+            font-weight: 800;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .decision-btn-desc {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        /* Animations */
         @keyframes shake {
             0%,100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -525,6 +590,7 @@
             .topbar-title { font-size: 1.2rem; }
             .stats-row { grid-template-columns: 1fr 1fr; }
             .interview-meta { grid-template-columns: 1fr; }
+            .decision-buttons { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -556,9 +622,17 @@
                 <h1 class="topbar-title">
                     <i class="fas fa-calendar-check" style="color:var(--primary)"></i> إدارة المقابلات
                 </h1>
-                <button class="btn btn-primary" onclick="openScheduleModal()">
-                    <i class="fas fa-plus"></i> جدولة مقابلة جديدة
-                </button>
+                <div class="topbar-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="openHelpModal()" title="دليل الاستخدام">
+                        <i class="fas fa-question-circle"></i> مساعدة
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="openDataPolicyModal()" title="إعدادات البيانات">
+                        <i class="fas fa-sliders-h"></i> الإعدادات
+                    </button>
+                    <button class="btn btn-primary" onclick="openScheduleModal()">
+                        <i class="fas fa-plus"></i> جدولة مقابلة جديدة
+                    </button>
+                </div>
             </div>
 
             <!-- Tabs -->
@@ -578,6 +652,9 @@
                 <button class="tab-btn" data-tab="late-reports" onclick="switchTab(event, 'late-reports')">
                     <i class="fas fa-exclamation-triangle"></i> تقارير التأخير
                     <span class="tab-badge" id="lateCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="logs" onclick="switchTab(event, 'logs')">
+                    <i class="fas fa-list"></i> سجل النشاط
                 </button>
             </div>
 
@@ -611,6 +688,13 @@
                         <div class="stat-mini-label">غيابات</div>
                     </div>
                 </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon warning"><i class="fas fa-percentage"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statAttendanceRate">0%</div>
+                        <div class="stat-mini-label">معدل الحضور</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Filters -->
@@ -622,37 +706,33 @@
                     <option value="week">هذا الأسبوع</option>
                     <option value="month">هذا الشهر</option>
                 </select>
+                <select id="filterSort">
+                    <option value="date_asc">الأقرب أولاً</option>
+                    <option value="date_desc">الأبعد أولاً</option>
+                    <option value="name">حسب الاسم</option>
+                </select>
             </div>
 
-            <!-- Tab: Upcoming -->
+            <!-- Tab Contents -->
             <div id="tab-upcoming" class="tab-content active">
                 <div class="interviews-grid" id="upcomingGrid">
                     <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
                 </div>
             </div>
-
-            <!-- Tab: Today -->
             <div id="tab-today" class="tab-content">
-                <div class="interviews-grid" id="todayGrid">
-                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
-                </div>
+                <div class="interviews-grid" id="todayGrid"></div>
             </div>
-
-            <!-- Tab: Past -->
             <div id="tab-past" class="tab-content">
-                <div class="interviews-grid" id="pastGrid">
-                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
-                </div>
+                <div class="interviews-grid" id="pastGrid"></div>
             </div>
-
-            <!-- Tab: Late Reports -->
             <div id="tab-late-reports" class="tab-content">
                 <div id="lateReportsList">
-                    <div class="empty-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h3>تقارير التأخير</h3>
-                        <p>هنا تظهر التقارير لما يحصل تأخير</p>
-                    </div>
+                    <div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>تقارير التأخير</h3><p>هنا تظهر التقارير لما يحصل تأخير</p></div>
+                </div>
+            </div>
+            <div id="tab-logs" class="tab-content">
+                <div id="activityLogs">
+                    <div class="empty-state"><i class="fas fa-list"></i><h3>سجل النشاط</h3><p>كل العمليات اللي بتتم على الصفحة</p></div>
                 </div>
             </div>
         </main>
@@ -660,12 +740,11 @@
 
     <div id="modalsContainer"></div>
 
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script>
 // ============================================================
-// ProVance: Interviews Management
+// ProVance: Interviews Management - Full Featured
 // ============================================================
 (function() {
     'use strict';
@@ -694,16 +773,24 @@
 
     console.log('✅ Interviews app initialized');
 
-    // STATE
-    let companyUserId = null;
-    let allInterviews = [];      // applications with interview_scheduled
-    let allQrCodes = [];          // qr_codes
-    let allLateReports = [];      // late_reports
-    let countdownTimers = [];     // active countdowns
+    const esc = window.ProVance.escapeHtml;
 
-    // Helpers
+    // ============ STATE ============
+    let companyUserId = null;
+    let companyName = null;
+    let allInterviews = [];
+    let allQrCodes = [];
+    let allLateReports = [];
+    let activityLogs = [];
+    let dataPolicy = {
+        autoArchiveOldInterviews: true,
+        autoCleanupArchive: true,
+        archiveAfterDays: 90,
+        cleanupAfterDays: 365
+    };
+
+    // ============ HELPERS ============
     function getInitial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
-    function escapeHtml(s) { return window.ProVance.escapeHtml(s); }
 
     function renderModal(html) {
         document.getElementById('modalsContainer').innerHTML = html;
@@ -717,11 +804,9 @@
         }
     };
 
-    // Format Helpers
     function formatDateTimeAr(d) {
         if (!d) return '-';
-        const dt = new Date(d);
-        return dt.toLocaleString('ar-EG', {
+        return new Date(d).toLocaleString('ar-EG', {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
         });
@@ -729,6 +814,10 @@
     function formatTimeAr(d) {
         if (!d) return '-';
         return new Date(d).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    }
+    function formatDateAr(d) {
+        if (!d) return '-';
+        return new Date(d).toLocaleDateString('ar-EG');
     }
     function getCountdown(target) {
         if (!target) return null;
@@ -741,16 +830,40 @@
             expired: false,
             hours, mins, secs,
             text: hours > 0 ? `${hours}س ${mins}د` : `${mins}د ${secs}ث`,
-            urgent: diff < 30 * 60 * 1000  // أقل من 30 دقيقة
+            urgent: diff < 30 * 60 * 1000
         };
     }
 
-    // TABS
+    // Activity Log
+    function addLog(action, details) {
+        const log = {
+            id: Date.now() + Math.random(),
+            timestamp: new Date().toISOString(),
+            action, details
+        };
+        activityLogs.unshift(log);
+        if (activityLogs.length > 100) activityLogs = activityLogs.slice(0, 100);
+        try {
+            localStorage.setItem('provance_interview_logs', JSON.stringify(activityLogs));
+        } catch (e) {}
+        renderActivityLogs();
+    }
+
+    function loadLogs() {
+        try {
+            const stored = localStorage.getItem('provance_interview_logs');
+            if (stored) activityLogs = JSON.parse(stored);
+        } catch (e) {}
+    }
+
+    // ============ TABS ============
     window.switchTab = (e, tabName) => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         e.currentTarget.classList.add('active');
         document.getElementById('tab-' + tabName).classList.add('active');
+
+        if (tabName === 'logs') renderActivityLogs();
     };
 
     window.logoutCompany = async (e) => {
@@ -762,20 +875,21 @@
         }
     };
 
-    // STATS
+    // ============ STATS ============
     function updateStats() {
         const now = Date.now();
         const upcoming = allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
         const past = allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
-        const attended = past.filter(i => i.status === 'interview_done' || i.status === 'accepted' || i.status === 'hired' || i.status === 'in_training' || i.status === 'completed');
+        const attended = past.filter(i => ['interview_done', 'accepted', 'hired', 'in_training', 'completed'].includes(i.status));
         const missed = past.filter(i => i.status === 'interview_scheduled');
+        const rate = past.length ? Math.round(attended.length / past.length * 100) : 0;
 
         document.getElementById('statTotal').textContent = allInterviews.length;
         document.getElementById('statUpcoming').textContent = upcoming.length;
         document.getElementById('statAttended').textContent = attended.length;
         document.getElementById('statMissed').textContent = missed.length;
+        document.getElementById('statAttendanceRate').textContent = rate + '%';
 
-        // Today's count
         const today = new Date(); today.setHours(0,0,0,0);
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
         const todayInts = allInterviews.filter(i => {
@@ -790,23 +904,20 @@
         document.getElementById('lateCount').textContent = allLateReports.length;
     }
 
-    // RENDER INTERVIEWS
+    // ============ RENDER INTERVIEW CARD ============
     function renderInterviewCard(i) {
         const photo = i.student_photo
-            ? `<img src="${i.student_photo}" alt="${escapeHtml(i.student_name)}">`
+            ? `<img src="${i.student_photo}" alt="${esc(i.student_name)}">`
             : `<span>${getInitial(i.student_name)}</span>`;
 
         const interviewDate = i.interview_date ? new Date(i.interview_date) : null;
         const now = Date.now();
         const isUpcoming = interviewDate && interviewDate.getTime() > now;
-        const isToday = interviewDate && new Date(interviewDate).toDateString() === new Date().toDateString();
         const isPast = interviewDate && interviewDate.getTime() <= now;
 
-        // QR validity (1 hour after interview)
         const qrValidUntil = interviewDate ? new Date(interviewDate.getTime() + 60 * 60 * 1000) : null;
         const qrStillValid = qrValidUntil && qrValidUntil.getTime() > now && interviewDate.getTime() <= now;
 
-        // Status
         let statusBadge = '';
         let cardClass = '';
         if (i.status === 'accepted' || i.status === 'hired' || i.status === 'in_training') {
@@ -828,7 +939,6 @@
             statusBadge = '<span class="status-badge pending">⏳ في الانتظار</span>';
         }
 
-        // Countdown
         let countdownHtml = '';
         if (isUpcoming) {
             const cd = getCountdown(i.interview_date);
@@ -851,18 +961,16 @@
             `;
         }
 
-        // Actions
         let actions = '';
         if (isUpcoming || qrStillValid) {
             actions += `<button class="btn btn-primary btn-sm" onclick="generateQRCode('${i.id}')"><i class="fas fa-qrcode"></i> QR Code</button>`;
-            actions += `<button class="btn btn-secondary btn-sm" onclick="rescheduleInterview('${i.id}')"><i class="fas fa-edit"></i> تعديل</button>`;
+            actions += `<button class="btn btn-secondary btn-sm" onclick="openRescheduleModal('${i.id}')"><i class="fas fa-edit"></i> تعديل</button>`;
         } else if (isPast && i.status === 'interview_scheduled') {
             actions += `<button class="btn btn-success btn-sm" onclick="markAttended('${i.id}')"><i class="fas fa-check"></i> حضر</button>`;
             actions += `<button class="btn btn-danger btn-sm" onclick="markMissed('${i.id}')"><i class="fas fa-times"></i> غاب</button>`;
         }
         if (i.status === 'interview_done') {
-            actions += `<button class="btn btn-success btn-sm" onclick="acceptStudent('${i.id}')"><i class="fas fa-thumbs-up"></i> قبول</button>`;
-            actions += `<button class="btn btn-danger btn-sm" onclick="rejectStudent('${i.id}')"><i class="fas fa-thumbs-down"></i> رفض</button>`;
+            actions += `<button class="btn btn-success btn-sm" onclick="openDecisionModal('${i.id}')"><i class="fas fa-gavel"></i> اتخاذ قرار</button>`;
         }
         actions += `<button class="btn btn-info btn-sm" onclick="viewInterviewDetails('${i.id}')"><i class="fas fa-eye"></i> التفاصيل</button>`;
 
@@ -871,16 +979,15 @@
                 <div class="interview-card-header">
                     <div class="student-avatar">${photo}</div>
                     <div class="student-info">
-                        <div class="student-name">${escapeHtml(i.student_name || '-')}</div>
-                        <div class="student-pos">${escapeHtml(i.internship_title || '-')}</div>
+                        <div class="student-name">${esc(i.student_name || '-')}</div>
+                        <div class="student-pos">${esc(i.internship_title || '-')}</div>
                     </div>
                     ${statusBadge}
                 </div>
-
                 <div class="interview-meta">
                     <div class="meta-item">
                         <span class="label">📅 التاريخ</span>
-                        <span class="value">${interviewDate ? interviewDate.toLocaleDateString('ar-EG') : '-'}</span>
+                        <span class="value">${interviewDate ? formatDateAr(interviewDate) : '-'}</span>
                     </div>
                     <div class="meta-item">
                         <span class="label">⏰ الوقت</span>
@@ -888,16 +995,14 @@
                     </div>
                     <div class="meta-item">
                         <span class="label">📍 المكان</span>
-                        <span class="value">${escapeHtml(i.interview_location || 'مقر الشركة')}</span>
+                        <span class="value">${esc(i.interview_location || 'مقر الشركة')}</span>
                     </div>
                     <div class="meta-item">
                         <span class="label">🎓 الجامعة</span>
-                        <span class="value">${escapeHtml(i.student_university || '-')}</span>
+                        <span class="value">${esc(i.student_university || '-')}</span>
                     </div>
                 </div>
-
                 ${countdownHtml}
-
                 <div class="interview-actions">${actions}</div>
             </div>
         `;
@@ -906,6 +1011,7 @@
     function renderAllTabs() {
         const search = document.getElementById('searchInterviews').value.toLowerCase().trim();
         const period = document.getElementById('filterPeriod').value;
+        const sort = document.getElementById('filterSort').value;
 
         const now = Date.now();
         const today = new Date(); today.setHours(0,0,0,0);
@@ -942,6 +1048,15 @@
             });
         }
 
+        // Sort
+        if (sort === 'date_asc') {
+            filtered.sort((a, b) => new Date(a.interview_date || 0) - new Date(b.interview_date || 0));
+        } else if (sort === 'date_desc') {
+            filtered.sort((a, b) => new Date(b.interview_date || 0) - new Date(a.interview_date || 0));
+        } else if (sort === 'name') {
+            filtered.sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
+        }
+
         const upcoming = filtered.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
         const todayInts = filtered.filter(i => {
             if (!i.interview_date) return false;
@@ -973,10 +1088,8 @@
         }
 
         const BLAME_LABELS = {
-            'student': 'الطالب',
-            'company': 'الشركة',
-            'both': 'الطرفين',
-            'force_majeure': 'قوة قاهرة'
+            'student': 'الطالب', 'company': 'الشركة',
+            'both': 'الطرفين', 'force_majeure': 'قوة قاهرة'
         };
 
         list.innerHTML = allLateReports.map(r => `
@@ -984,7 +1097,7 @@
                 <div class="late-icon"><i class="fas fa-exclamation-triangle"></i></div>
                 <div class="late-body">
                     <div class="late-title">تقرير تأخير - ${BLAME_LABELS[r.blame_target] || r.blame_target}</div>
-                    <div class="late-reason">${escapeHtml(r.reason)}</div>
+                    <div class="late-reason">${esc(r.reason)}</div>
                     <div class="late-meta">
                         <span><i class="fas fa-calendar"></i> ${formatDateTimeAr(r.created_at)}</span>
                         <span class="status-badge ${r.status === 'accepted' ? 'attended' : r.status === 'rejected' ? 'missed' : 'pending'}">
@@ -996,556 +1109,995 @@
         `).join('');
     }
 
-    // SCHEDULE INTERVIEW
-    window.openScheduleModal = async (appId = null) => {
-        // جيب الطلبات اللي ممكن تتجدول لها مقابلة
-        const sb = window.ProVance.sb;
-        const { data: pendingApps } = await sb.from('applications')
-            .select('*')
-            .eq('company_user_id', companyUserId)
-            .in('status', ['pending', 'reviewing'])
-            .order('created_at', { ascending: false });
-
-        const apps = pendingApps || [];
-        if (apps.length === 0 && !appId) {
-            window.ProVance.showToast('مفيش طلبات جاهزة لجدولة مقابلة', 'warning');
+    function renderActivityLogs() {
+        const list = document.getElementById('activityLogs');
+        if (!list) return;
+        if (activityLogs.length === 0) {
+            list.innerHTML = '<div class="empty-state"><i class="fas fa-list"></i><h3>سجل النشاط</h3><p>كل العمليات اللي بتتم على الصفحة تظهر هنا</p></div>';
             return;
         }
 
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const defaultDate = tomorrow.toISOString().slice(0,10);
-
-        const html = `
-            <div class="modal active" id="scheduleModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title">
-                            <i class="fas fa-calendar-plus"></i>
-                            <span>جدولة مقابلة</span>
+        list.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <h3 style="font-size:1rem;font-weight:800">سجل النشاط (${activityLogs.length})</h3>
+                <button class="btn btn-secondary btn-sm" onclick="clearActivityLogs()">
+                    <i class="fas fa-trash"></i> مسح السجل
+                </button>
+            </div>
+            ${activityLogs.map(log => `
+                <div class="late-report-card" style="background:rgba(79,172,254,0.05);border-color:rgba(79,172,254,0.2)">
+                    <div class="late-icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"><i class="fas fa-history"></i></div>
+                    <div class="late-body">
+                        <div class="late-title">${esc(log.action)}</div>
+                        ${log.details ? `<div class="late-reason">${esc(log.details)}</div>` : ''}
+                        <div class="late-meta">
+                            <span><i class="fas fa-clock"></i> ${formatDateTimeAr(log.timestamp)}</span>
                         </div>
-                        <button class="modal-close" onclick="closeModal('scheduleModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-user-graduate"></i> اختر الطالب <span class="req">*</span></label>
-                        <select id="schApp">
-                            <option value="">-- اختر --</option>
-                            ${apps.map(a => `<option value="${a.id}" ${appId === a.id ? 'selected' : ''}>${escapeHtml(a.student_name)} - ${escapeHtml(a.internship_title)}</option>`).join('')}
-                        </select>
-                    </div>
-
-                    <div class="grid-2">
-                        <div class="field">
-                            <label><i class="fas fa-calendar"></i> التاريخ <span class="req">*</span></label>
-                            <input type="date" id="schDate" value="${defaultDate}" min="${new Date().toISOString().slice(0,10)}">
-                        </div>
-                        <div class="field">
-                            <label><i class="fas fa-clock"></i> الوقت <span class="req">*</span></label>
-                            <input type="time" id="schTime" value="10:00">
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-map-marker-alt"></i> المكان</label>
-                        <input type="text" id="schLocation" placeholder="مثال: مقر الشركة، القاهرة">
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-link"></i> رابط المقابلة (اختياري)</label>
-                        <input type="text" id="schLink" placeholder="مثال: Zoom/Google Meet link" style="direction:ltr;text-align:right">
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-sticky-note"></i> ملاحظات للطالب</label>
-                        <textarea id="schNotes" rows="3" placeholder="مثال: احضر CV ورقي، البس رسمي..."></textarea>
-                    </div>
-
-                    <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:12px;border-radius:10px;margin-bottom:14px;font-size:0.86rem">
-                        <strong style="color:var(--warning)"><i class="fas fa-info-circle"></i> ملاحظة:</strong>
-                        <span style="color:var(--text-muted)"> سيتم توليد QR Code تلقائياً للمقابلة. الـ QR صالح لساعة واحدة بعد موعد المقابلة. لو الطالب ما حضرش في الـ ساعة دي، هيتم إرسال إشعار للطرفين لإبلاغ السبب.</span>
-                    </div>
-
-                    <div style="display:flex;gap:10px;margin-top:18px">
-                        <button class="btn btn-secondary" onclick="closeModal('scheduleModal')" style="flex:1;justify-content:center">إلغاء</button>
-                        <button class="btn btn-primary" onclick="saveSchedule()" style="flex:1;justify-content:center">
-                            <i class="fas fa-save"></i> جدولة
-                        </button>
                     </div>
                 </div>
-            </div>
+            `).join('')}
         `;
-        renderModal(html);
-    };
-
-    window.saveSchedule = async () => {
-        const appId = document.getElementById('schApp').value;
-        const date = document.getElementById('schDate').value;
-        const time = document.getElementById('schTime').value;
-        const location = document.getElementById('schLocation').value.trim();
-        const link = document.getElementById('schLink').value.trim();
-        const notes = document.getElementById('schNotes').value.trim();
-
-        if (!appId || !date || !time) {
-            window.ProVance.showToast('املأ الحقول الأساسية', 'warning');
-            return;
-        }
-
-        const interviewDate = new Date(`${date}T${time}:00`);
-
-        try {
-            const sb = window.ProVance.sb;
-            const { error } = await sb.from('applications').update({
-                status: 'interview_scheduled',
-                interview_date: interviewDate.toISOString(),
-                interview_location: location || null,
-                interview_link: link || null,
-                interview_notes: notes || null
-            }).eq('id', appId);
-
-            if (error) throw error;
-
-            // أنشئ QR Code للمقابلة
-            const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
-            const validUntil = new Date(interviewDate.getTime() + 60 * 60 * 1000); // ساعة بعد المقابلة
-
-            const { data: company } = await sb.from('companies').select('company_name').eq('user_id', companyUserId).maybeSingle();
-            const app = allInterviews.find(a => a.id === appId);
-
-            await sb.from('qr_codes').insert({
-                code: qrCodeStr,
-                qr_type: 'interview',
-                company_user_id: companyUserId,
-                company_name: company?.company_name,
-                application_id: appId,
-                student_user_id: app?.student_user_id,
-                student_name: app?.student_name,
-                metadata: {
-                    interview_time: interviewDate.toISOString(),
-                    interview_location: location,
-                    interview_link: link,
-                    interview_notes: notes
-                },
-                valid_from: interviewDate.toISOString(),
-                valid_until: validUntil.toISOString(),
-                status: 'active'
-            });
-
-            // إشعار للطالب
-            if (app && window.ProVance.sendNotification) {
-                await window.ProVance.sendNotification({
-                    userId: app.student_user_id,
-                    userType: 'student',
-                    title: '📅 موعد مقابلة جديد',
-                    message: `تم تحديد موعد مقابلتك مع ${app.company_name} يوم ${interviewDate.toLocaleString('ar-EG')}`,
-                    type: 'info',
-                    link: 'student-applications.html'
-                });
-            }
-
-            window.ProVance.showToast('تم جدولة المقابلة ✓', 'success');
-            closeModal('scheduleModal');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-        }
-    };
-
-    // GENERATE QR CODE
-    window.generateQRCode = async (interviewId) => {
-        const interview = allInterviews.find(i => i.id === interviewId);
-        if (!interview) return;
-
-        // ابحث عن QR موجود
-        let qrCode = allQrCodes.find(q => q.application_id === interviewId && q.qr_type === 'interview' && q.status === 'active');
-
-        if (!qrCode) {
-            // أنشئ QR جديد
-            const sb = window.ProVance.sb;
-            const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
-            const interviewDate = new Date(interview.interview_date);
-            const validUntil = new Date(interviewDate.getTime() + 60 * 60 * 1000);
-
-            const { data: company } = await sb.from('companies').select('company_name').eq('user_id', companyUserId).maybeSingle();
-
-            const { data: newQr, error } = await sb.from('qr_codes').insert({
-                code: qrCodeStr,
-                qr_type: 'interview',
-                company_user_id: companyUserId,
-                company_name: company?.company_name,
-                application_id: interviewId,
-                student_user_id: interview.student_user_id,
-                student_name: interview.student_name,
-                metadata: { interview_time: interview.interview_date },
-                valid_from: interviewDate.toISOString(),
-                valid_until: validUntil.toISOString(),
-                status: 'active'
-            }).select().single();
-
-            if (error) {
-                console.error(error);
-                window.ProVance.showToast('حدث خطأ في إنشاء الـ QR', 'error');
-                return;
-            }
-            qrCode = newQr;
-        }
-
-        // أعرض QR
-        const qrData = JSON.stringify({
-            type: 'interview',
-            code: qrCode.code,
-            company: qrCode.company_name,
-            student: qrCode.student_name,
-            valid_until: qrCode.valid_until
-        });
-
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrData)}&color=000000&bgcolor=FFFFFF`;
-
-        const validUntil = new Date(qrCode.valid_until);
-        const cd = getCountdown(validUntil.toISOString());
-
-        const html = `
-            <div class="modal active" id="qrModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title">
-                            <i class="fas fa-qrcode"></i>
-                            <span>QR Code للمقابلة</span>
-                        </div>
-                        <button class="modal-close" onclick="closeModal('qrModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="qr-display-card">
-                        <h3 style="font-size:1.05rem;margin-bottom:6px">${escapeHtml(interview.student_name)}</h3>
-                        <p style="color:var(--text-muted);font-size:0.86rem">${escapeHtml(interview.internship_title)}</p>
-
-                        <div class="qr-canvas-wrap">
-                            <img src="${qrUrl}" alt="QR Code" id="qrImg" onerror="this.style.background='#fff';this.style.padding='30px';this.alt='تعذر تحميل الـ QR'">
-                        </div>
-
-                        <div class="qr-validity" id="qrValidity">
-                            <i class="fas fa-clock"></i>
-                            <span>صالح حتى: ${formatDateTimeAr(validUntil)}</span>
-                        </div>
-
-                        <button class="copy-link-btn" onclick="copyQRCode('${qrCode.code}')">
-                            <i class="fas fa-copy"></i>
-                            <span>الكود: ${qrCode.code}</span>
-                        </button>
-
-                        <div class="qr-info">
-                            <div class="qr-info-row">
-                                <span class="label">📅 التاريخ:</span>
-                                <span class="value">${formatDateTimeAr(interview.interview_date)}</span>
-                            </div>
-                            <div class="qr-info-row">
-                                <span class="label">📍 المكان:</span>
-                                <span class="value">${escapeHtml(interview.interview_location || '-')}</span>
-                            </div>
-                            <div class="qr-info-row">
-                                <span class="label">⏱️ المدة:</span>
-                                <span class="value">ساعة كاملة</span>
-                            </div>
-                            <div class="qr-info-row">
-                                <span class="label">🎯 الحالة:</span>
-                                <span class="value">${qrCode.status === 'active' ? '✓ نشط' : '⏸ ' + qrCode.status}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="display:flex;gap:10px;margin-top:14px">
-                        <button class="btn btn-secondary" onclick="closeModal('qrModal')" style="flex:1;justify-content:center">إغلاق</button>
-                        <button class="btn btn-primary" onclick="printQR()" style="flex:1;justify-content:center">
-                            <i class="fas fa-print"></i> طباعة
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    window.copyQRCode = (code) => {
-        navigator.clipboard.writeText(code).then(() => {
-            window.ProVance.showToast('تم نسخ الكود ✓', 'success');
-        }).catch(() => {
-            window.ProVance.showToast('تعذر النسخ', 'error');
-        });
-    };
-
-    window.printQR = () => {
-        const img = document.getElementById('qrImg');
-        if (!img) return;
-        const printWin = window.open('', '_blank', 'width=600,height=600');
-        printWin.document.write(`
-            <html dir="rtl"><head><title>QR Code</title>
-            <style>
-                body { font-family: Arial; text-align: center; padding: 40px; }
-                img { max-width: 400px; }
-                h2 { margin-bottom: 20px; }
-            </style>
-            </head><body>
-            <h2>ProVance - QR Code للمقابلة</h2>
-            <img src="${img.src}">
-            <p>اطبع هذه الصفحة واعرضها للطالب لمسح الـ QR</p>
-            </body></html>
-        `);
-        printWin.document.close();
-        setTimeout(() => printWin.print(), 500);
-    };
-
-    // ACTIONS
-    window.markAttended = async (id) => {
-        const ok = await window.ProVance.confirmModal({
-            title: 'تأكيد الحضور',
-            message: 'هل تريد تسجيل أن الطالب حضر المقابلة؟'
-        });
-        if (!ok) return;
-
-        try {
-            await window.ProVance.sb.from('applications').update({ status: 'interview_done' }).eq('id', id);
-            window.ProVance.showToast('تم تسجيل الحضور ✓', 'success');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ', 'error');
-        }
-    };
-
-    window.markMissed = async (id) => {
-        const ok = await window.ProVance.confirmModal({
-            title: 'تأكيد الغياب',
-            message: 'هل تريد تسجيل أن الطالب غاب؟ هيتم إنشاء تقرير تأخير'
-        });
-        if (!ok) return;
-
-        try {
-            const sb = window.ProVance.sb;
-            const interview = allInterviews.find(i => i.id === id);
-
-            // أنشئ late report
-            await sb.from('late_reports').insert({
-                application_id: id,
-                reported_by: 'company',
-                reporter_user_id: companyUserId,
-                blame_target: 'student',
-                reason: 'الطالب لم يحضر المقابلة في الوقت المحدد',
-                expected_time: interview.interview_date,
-                status: 'pending'
-            });
-
-            // إشعار للطالب
-            if (interview && window.ProVance.sendNotification) {
-                await window.ProVance.sendNotification({
-                    userId: interview.student_user_id,
-                    userType: 'student',
-                    title: '⚠️ تم تسجيل غيابك',
-                    message: `الشركة سجلت أنك غبت عن مقابلة ${interview.internship_title}. يرجى إبلاغ سبب الغياب`,
-                    type: 'warning',
-                    link: 'student-applications.html'
-                });
-            }
-
-            window.ProVance.showToast('تم تسجيل الغياب', 'warning');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ', 'error');
-        }
-    };
-
-    window.acceptStudent = async (id) => {
-        const ok = await window.ProVance.confirmModal({
-            title: 'قبول الطالب',
-            message: 'هل تريد قبول الطالب وبدء التدريب؟'
-        });
-        if (!ok) return;
-
-        try {
-            const sb = window.ProVance.sb;
-            await sb.from('applications').update({ status: 'accepted' }).eq('id', id);
-
-            const interview = allInterviews.find(i => i.id === id);
-            if (interview && window.ProVance.sendNotification) {
-                await window.ProVance.sendNotification({
-                    userId: interview.student_user_id,
-                    userType: 'student',
-                    title: '🎉 مبروك! تم قبولك',
-                    message: `الشركة قبلتك في تدريب ${interview.internship_title}`,
-                    type: 'success'
-                });
-            }
-
-            window.ProVance.showToast('تم قبول الطالب 🎉', 'success');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ', 'error');
-        }
-    };
-
-    window.rejectStudent = async (id) => {
-        const reason = prompt('سبب الرفض:');
-        if (!reason || !reason.trim()) return;
-
-        try {
-            const sb = window.ProVance.sb;
-            await sb.from('applications').update({
-                status: 'rejected',
-                rejection_reason: reason.trim()
-            }).eq('id', id);
-
-            const interview = allInterviews.find(i => i.id === id);
-            if (interview && window.ProVance.sendNotification) {
-                await window.ProVance.sendNotification({
-                    userId: interview.student_user_id,
-                    userType: 'student',
-                    title: 'تحديث على طلبك',
-                    message: `للأسف لم يتم قبولك في ${interview.internship_title}. السبب: ${reason}`,
-                    type: 'warning'
-                });
-            }
-
-            window.ProVance.showToast('تم الرفض', 'success');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    window.rescheduleInterview = (id) => openScheduleModal(id);
-
-    window.viewInterviewDetails = (id) => {
-        const i = allInterviews.find(x => x.id === id);
-        if (!i) return;
-
-        const html = `
-            <div class="modal active" id="detailsModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title">
-                            <i class="fas fa-info-circle"></i>
-                            <span>تفاصيل المقابلة</span>
-                        </div>
-                        <button class="modal-close" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="qr-info">
-                        <div class="qr-info-row"><span class="label">👤 الطالب:</span><span class="value">${escapeHtml(i.student_name)}</span></div>
-                        <div class="qr-info-row"><span class="label">📧 البريد:</span><span class="value">${escapeHtml(i.student_email || '-')}</span></div>
-                        <div class="qr-info-row"><span class="label">📞 الهاتف:</span><span class="value">${escapeHtml(i.student_phone || '-')}</span></div>
-                        <div class="qr-info-row"><span class="label">🎓 الجامعة:</span><span class="value">${escapeHtml(i.student_university || '-')}</span></div>
-                        <div class="qr-info-row"><span class="label">💼 المنصب:</span><span class="value">${escapeHtml(i.internship_title)}</span></div>
-                        <div class="qr-info-row"><span class="label">📅 التاريخ:</span><span class="value">${formatDateTimeAr(i.interview_date)}</span></div>
-                        <div class="qr-info-row"><span class="label">📍 المكان:</span><span class="value">${escapeHtml(i.interview_location || '-')}</span></div>
-                        ${i.interview_link ? `<div class="qr-info-row"><span class="label">🔗 الرابط:</span><span class="value"><a href="${i.interview_link}" target="_blank" style="color:var(--primary)">فتح</a></span></div>` : ''}
-                        <div class="qr-info-row"><span class="label">📝 الحالة:</span><span class="value">${escapeHtml(i.status)}</span></div>
-                    </div>
-
-                    ${i.interview_notes ? `
-                        <div style="margin-top:14px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px">
-                            <strong>📋 ملاحظات:</strong>
-                            <p style="margin-top:6px;color:var(--text-muted)">${escapeHtml(i.interview_notes)}</p>
-                        </div>
-                    ` : ''}
-
-                    <div style="display:flex;gap:10px;margin-top:18px">
-                        <button class="btn btn-secondary" onclick="closeModal('detailsModal')" style="flex:1;justify-content:center">إغلاق</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    // COUNTDOWN UPDATER
-    function updateCountdowns() {
-        document.querySelectorAll('.countdown[data-target]').forEach(el => {
-            const target = el.getAttribute('data-target');
-            const cd = getCountdown(target);
-            if (!cd) return;
-            const timeEl = el.querySelector('.countdown-time');
-            if (cd.expired) {
-                el.classList.add('danger');
-                timeEl.textContent = 'انتهى الوقت';
-            } else {
-                if (cd.urgent) el.classList.add('danger');
-                timeEl.textContent = cd.text;
-            }
-        });
     }
 
-    // LOAD ALL
+    window.clearActivityLogs = async () => {
+        const ok = await window.ProVance.confirmModal({title: 'مسح السجل', message: 'هل تريد مسح كل سجل النشاط؟'});
+        if (!ok) return;
+        activityLogs = [];
+        try { localStorage.removeItem('provance_interview_logs'); } catch (e) {}
+        renderActivityLogs();
+        window.ProVance.showToast('تم مسح السجل', 'success');
+    };
+
+    // Expose state for part 2
+    window._interviewsState = {
+        get companyUserId() { return companyUserId; },
+        get companyName() { return companyName; },
+        get allInterviews() { return allInterviews; },
+        get allQrCodes() { return allQrCodes; },
+        get dataPolicy() { return dataPolicy; },
+        set dataPolicy(v) { dataPolicy = v; },
+        addLog,
+        renderAllTabs,
+        updateStats,
+        renderModal,
+        esc, getInitial,
+        formatDateAr, formatTimeAr, formatDateTimeAr, getCountdown
+    };
+
+    // Continue in part 2...
+})();
+// ============================================================
+// Interviews - Part 2: Modals & Actions
+// ============================================================
+(function() {
+    'use strict';
+
+    function waitForState(cb) {
+        if (window._interviewsState) cb(window._interviewsState);
+        else setTimeout(() => waitForState(cb), 100);
+    }
+
+    waitForState((State) => {
+        const { esc, getInitial, formatDateAr, formatTimeAr, formatDateTimeAr, getCountdown, addLog, renderModal } = State;
+
+        // ============ SCHEDULE MODAL ============
+        window.openScheduleModal = async (appId = null) => {
+            const sb = window.ProVance.sb;
+            const { data: pendingApps } = await sb.from('applications')
+                .select('*')
+                .eq('company_user_id', State.companyUserId)
+                .in('status', ['pending', 'reviewing'])
+                .order('created_at', { ascending: false });
+
+            const apps = pendingApps || [];
+            if (apps.length === 0 && !appId) {
+                window.ProVance.showToast('مفيش طلبات جاهزة لجدولة مقابلة', 'warning');
+                return;
+            }
+
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const defaultDate = tomorrow.toISOString().slice(0,10);
+
+            const html = `
+                <div class="modal active" id="scheduleModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <i class="fas fa-calendar-plus"></i>
+                                <span>جدولة مقابلة جديدة</span>
+                            </div>
+                            <button class="modal-close" onclick="closeModal('scheduleModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-user-graduate"></i> اختر الطالب <span class="req">*</span></label>
+                            <select id="schApp">
+                                <option value="">-- اختر --</option>
+                                ${apps.map(a => `<option value="${a.id}" ${appId === a.id ? 'selected' : ''}>${esc(a.student_name)} - ${esc(a.internship_title)}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="field">
+                                <label><i class="fas fa-calendar"></i> التاريخ <span class="req">*</span></label>
+                                <input type="date" id="schDate" value="${defaultDate}" min="${new Date().toISOString().slice(0,10)}">
+                            </div>
+                            <div class="field">
+                                <label><i class="fas fa-clock"></i> الوقت <span class="req">*</span></label>
+                                <input type="time" id="schTime" value="10:00">
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-map-marker-alt"></i> المكان</label>
+                            <input type="text" id="schLocation" placeholder="مثال: مقر الشركة، القاهرة">
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-link"></i> رابط المقابلة (اختياري - Zoom/Meet)</label>
+                            <input type="text" id="schLink" placeholder="https://zoom.us/..." style="direction:ltr;text-align:right">
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-sticky-note"></i> ملاحظات للطالب</label>
+                            <textarea id="schNotes" rows="3" placeholder="مثال: احضر CV ورقي، البس رسمي..."></textarea>
+                        </div>
+
+                        <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:12px;border-radius:10px;margin-bottom:14px;font-size:0.86rem">
+                            <strong style="color:var(--warning)"><i class="fas fa-info-circle"></i> ملاحظة:</strong>
+                            <span style="color:var(--text-muted)"> سيتم توليد QR Code تلقائياً للمقابلة. الـ QR صالح لساعة بعد الموعد. لو الطالب ما حضرش، هيتم إرسال إشعار للطرفين لإبلاغ السبب.</span>
+                        </div>
+
+                        <div style="display:flex;gap:10px">
+                            <button class="btn btn-secondary" onclick="closeModal('scheduleModal')" style="flex:1;justify-content:center">إلغاء</button>
+                            <button class="btn btn-primary" onclick="saveSchedule()" style="flex:1;justify-content:center">
+                                <i class="fas fa-save"></i> جدولة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        window.saveSchedule = async () => {
+            const appId = document.getElementById('schApp').value;
+            const date = document.getElementById('schDate').value;
+            const time = document.getElementById('schTime').value;
+            const location = document.getElementById('schLocation').value.trim();
+            const link = document.getElementById('schLink').value.trim();
+            const notes = document.getElementById('schNotes').value.trim();
+
+            if (!appId || !date || !time) {
+                window.ProVance.showToast('املأ الحقول الأساسية', 'warning');
+                return;
+            }
+
+            const interviewDate = new Date(`${date}T${time}:00`);
+
+            try {
+                const sb = window.ProVance.sb;
+                const { error } = await sb.from('applications').update({
+                    status: 'interview_scheduled',
+                    interview_date: interviewDate.toISOString(),
+                    interview_location: location || null,
+                    interview_link: link || null,
+                    interview_notes: notes || null
+                }).eq('id', appId);
+
+                if (error) throw error;
+
+                // أنشئ QR Code
+                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
+                const validUntil = new Date(interviewDate.getTime() + 60 * 60 * 1000);
+                const app = State.allInterviews.find(a => a.id === appId);
+
+                await sb.from('qr_codes').insert({
+                    code: qrCodeStr,
+                    qr_type: 'interview',
+                    company_user_id: State.companyUserId,
+                    company_name: State.companyName,
+                    application_id: appId,
+                    student_user_id: app?.student_user_id,
+                    student_name: app?.student_name,
+                    metadata: {
+                        interview_time: interviewDate.toISOString(),
+                        interview_location: location,
+                        interview_link: link,
+                        interview_notes: notes
+                    },
+                    valid_from: interviewDate.toISOString(),
+                    valid_until: validUntil.toISOString(),
+                    status: 'active'
+                });
+
+                if (app && window.ProVance.sendNotification) {
+                    await window.ProVance.sendNotification({
+                        userId: app.student_user_id,
+                        userType: 'student',
+                        title: '📅 موعد مقابلة جديد',
+                        message: `تم تحديد موعد مقابلتك مع ${app.company_name} يوم ${interviewDate.toLocaleString('ar-EG')}`,
+                        type: 'info',
+                        link: 'student-applications.html'
+                    });
+                }
+
+                addLog('جدولة مقابلة', `تم جدولة مقابلة مع ${app?.student_name || 'طالب'} يوم ${formatDateAr(interviewDate)}`);
+                window.ProVance.showToast('تم جدولة المقابلة ✓', 'success');
+                closeModal('scheduleModal');
+                window.dispatchEvent(new CustomEvent('reload-interviews'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+            }
+        };
+
+        // ============ RESCHEDULE MODAL ============
+        window.openRescheduleModal = (appId) => {
+            const interview = State.allInterviews.find(i => i.id === appId);
+            if (!interview) return;
+
+            const date = interview.interview_date ? interview.interview_date.slice(0, 10) : '';
+            const time = interview.interview_date ? interview.interview_date.slice(11, 16) : '10:00';
+
+            const html = `
+                <div class="modal active" id="rescheduleModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>إعادة جدولة المقابلة</span>
+                            </div>
+                            <button class="modal-close" onclick="closeModal('rescheduleModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div style="padding:14px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.2);border-radius:12px;margin-bottom:16px">
+                            <strong>${esc(interview.student_name)}</strong>
+                            <div style="color:var(--text-muted);font-size:0.86rem">${esc(interview.internship_title)}</div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="field">
+                                <label><i class="fas fa-calendar"></i> التاريخ الجديد</label>
+                                <input type="date" id="rsDate" value="${date}" min="${new Date().toISOString().slice(0,10)}">
+                            </div>
+                            <div class="field">
+                                <label><i class="fas fa-clock"></i> الوقت الجديد</label>
+                                <input type="time" id="rsTime" value="${time}">
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-comment-alt"></i> سبب التعديل (اختياري)</label>
+                            <textarea id="rsReason" rows="2" placeholder="مثال: المسؤول مش متاح في الموعد الأصلي"></textarea>
+                        </div>
+
+                        <div style="display:flex;gap:10px">
+                            <button class="btn btn-secondary" onclick="closeModal('rescheduleModal')" style="flex:1;justify-content:center">إلغاء</button>
+                            <button class="btn btn-primary" onclick="saveReschedule('${appId}')" style="flex:1;justify-content:center">
+                                <i class="fas fa-save"></i> حفظ التعديل
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        window.saveReschedule = async (appId) => {
+            const date = document.getElementById('rsDate').value;
+            const time = document.getElementById('rsTime').value;
+            const reason = document.getElementById('rsReason').value.trim();
+
+            if (!date || !time) {
+                window.ProVance.showToast('املأ التاريخ والوقت', 'warning');
+                return;
+            }
+
+            const newDate = new Date(`${date}T${time}:00`);
+            const interview = State.allInterviews.find(i => i.id === appId);
+
+            try {
+                const sb = window.ProVance.sb;
+                await sb.from('applications').update({
+                    interview_date: newDate.toISOString()
+                }).eq('id', appId);
+
+                // إلغاء الـ QR القديم وإنشاء جديد
+                await sb.from('qr_codes').update({ status: 'cancelled' })
+                    .eq('application_id', appId).eq('qr_type', 'interview').eq('status', 'active');
+
+                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
+                const validUntil = new Date(newDate.getTime() + 60 * 60 * 1000);
+
+                await sb.from('qr_codes').insert({
+                    code: qrCodeStr,
+                    qr_type: 'interview',
+                    company_user_id: State.companyUserId,
+                    company_name: State.companyName,
+                    application_id: appId,
+                    student_user_id: interview.student_user_id,
+                    student_name: interview.student_name,
+                    metadata: { interview_time: newDate.toISOString() },
+                    valid_from: newDate.toISOString(),
+                    valid_until: validUntil.toISOString(),
+                    status: 'active'
+                });
+
+                // إشعار للطالب
+                if (interview && window.ProVance.sendNotification) {
+                    await window.ProVance.sendNotification({
+                        userId: interview.student_user_id,
+                        userType: 'student',
+                        title: '📅 تم تعديل موعد المقابلة',
+                        message: `الموعد الجديد: ${newDate.toLocaleString('ar-EG')}${reason ? '. السبب: ' + reason : ''}`,
+                        type: 'info'
+                    });
+                }
+
+                addLog('تعديل مقابلة', `تم تعديل موعد ${interview?.student_name} ل${formatDateAr(newDate)}`);
+                window.ProVance.showToast('تم التعديل ✓', 'success');
+                closeModal('rescheduleModal');
+                window.dispatchEvent(new CustomEvent('reload-interviews'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+            }
+        };
+
+        // ============ DECISION MODAL (قبول/رفض) ============
+        window.openDecisionModal = (appId) => {
+            const interview = State.allInterviews.find(i => i.id === appId);
+            if (!interview) return;
+
+            const html = `
+                <div class="modal active" id="decisionModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <i class="fas fa-gavel"></i>
+                                <span>اتخاذ قرار</span>
+                            </div>
+                            <button class="modal-close" onclick="closeModal('decisionModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div style="padding:14px;background:rgba(240,147,251,0.05);border:1px solid rgba(240,147,251,0.2);border-radius:12px;margin-bottom:18px">
+                            <div style="display:flex;align-items:center;gap:12px">
+                                <div class="student-avatar" style="width:50px;height:50px;font-size:1.2rem">
+                                    ${interview.student_photo ? `<img src="${interview.student_photo}">` : `<span>${getInitial(interview.student_name)}</span>`}
+                                </div>
+                                <div>
+                                    <strong>${esc(interview.student_name)}</strong>
+                                    <div style="color:var(--text-muted);font-size:0.86rem">${esc(interview.internship_title)}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="decision-buttons">
+                            <div class="decision-btn accept" onclick="confirmDecision('${appId}', 'accept')">
+                                <div class="decision-btn-icon"><i class="fas fa-check"></i></div>
+                                <div class="decision-btn-title">قبول</div>
+                                <div class="decision-btn-desc">قبول الطالب وبدء التدريب</div>
+                            </div>
+                            <div class="decision-btn reject" onclick="confirmDecision('${appId}', 'reject')">
+                                <div class="decision-btn-icon"><i class="fas fa-times"></i></div>
+                                <div class="decision-btn-title">رفض</div>
+                                <div class="decision-btn-desc">رفض الطالب مع توضيح السبب</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        window.confirmDecision = async (appId, decision) => {
+            closeModal('decisionModal');
+
+            if (decision === 'reject') {
+                const reason = prompt('سبب الرفض (لازم تكتب سبب):');
+                if (!reason || !reason.trim()) {
+                    window.ProVance.showToast('لازم تكتب سبب الرفض', 'warning');
+                    return;
+                }
+                await window.rejectStudent(appId, reason.trim());
+            } else {
+                await window.acceptStudent(appId);
+            }
+        };
+
+        window.markAttended = async (id) => {
+            const ok = await window.ProVance.confirmModal({
+                title: 'تأكيد الحضور',
+                message: 'هل تريد تسجيل أن الطالب حضر المقابلة؟'
+            });
+            if (!ok) return;
+
+            try {
+                await window.ProVance.sb.from('applications').update({ status: 'interview_done' }).eq('id', id);
+                const interview = State.allInterviews.find(i => i.id === id);
+                addLog('تسجيل حضور', `${interview?.student_name} حضر المقابلة`);
+                window.ProVance.showToast('تم تسجيل الحضور ✓', 'success');
+                window.dispatchEvent(new CustomEvent('reload-interviews'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ', 'error');
+            }
+        };
+
+        window.markMissed = async (id) => {
+            const ok = await window.ProVance.confirmModal({
+                title: 'تأكيد الغياب',
+                message: 'هل تريد تسجيل أن الطالب غاب؟ هيتم إنشاء تقرير تأخير'
+            });
+            if (!ok) return;
+
+            try {
+                const sb = window.ProVance.sb;
+                const interview = State.allInterviews.find(i => i.id === id);
+
+                await sb.from('late_reports').insert({
+                    application_id: id,
+                    reported_by: 'company',
+                    reporter_user_id: State.companyUserId,
+                    blame_target: 'student',
+                    reason: 'الطالب لم يحضر المقابلة في الوقت المحدد',
+                    expected_time: interview.interview_date,
+                    status: 'pending'
+                });
+
+                if (interview && window.ProVance.sendNotification) {
+                    await window.ProVance.sendNotification({
+                        userId: interview.student_user_id,
+                        userType: 'student',
+                        title: '⚠️ تم تسجيل غيابك',
+                        message: `الشركة سجلت أنك غبت عن مقابلة ${interview.internship_title}. يرجى إبلاغ سبب الغياب`,
+                        type: 'warning',
+                        link: 'student-applications.html'
+                    });
+                }
+
+                addLog('تسجيل غياب', `${interview?.student_name} غاب عن المقابلة`);
+                window.ProVance.showToast('تم تسجيل الغياب', 'warning');
+                window.dispatchEvent(new CustomEvent('reload-interviews'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ', 'error');
+            }
+        };
+
+        window.acceptStudent = async (id) => {
+            try {
+                const sb = window.ProVance.sb;
+                await sb.from('applications').update({ status: 'accepted' }).eq('id', id);
+
+                const interview = State.allInterviews.find(i => i.id === id);
+                if (interview && window.ProVance.sendNotification) {
+                    await window.ProVance.sendNotification({
+                        userId: interview.student_user_id,
+                        userType: 'student',
+                        title: '🎉 مبروك! تم قبولك',
+                        message: `الشركة قبلتك في تدريب ${interview.internship_title}`,
+                        type: 'success'
+                    });
+                }
+
+                addLog('قبول طالب', `تم قبول ${interview?.student_name}`);
+                window.ProVance.showToast('تم قبول الطالب 🎉', 'success');
+                window.dispatchEvent(new CustomEvent('reload-interviews'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ', 'error');
+            }
+        };
+
+        window.rejectStudent = async (id, reason) => {
+            try {
+                const sb = window.ProVance.sb;
+                await sb.from('applications').update({
+                    status: 'rejected',
+                    rejection_reason: reason
+                }).eq('id', id);
+
+                const interview = State.allInterviews.find(i => i.id === id);
+                if (interview && window.ProVance.sendNotification) {
+                    await window.ProVance.sendNotification({
+                        userId: interview.student_user_id,
+                        userType: 'student',
+                        title: 'تحديث على طلبك',
+                        message: `للأسف لم يتم قبولك في ${interview.internship_title}. السبب: ${reason}`,
+                        type: 'warning'
+                    });
+                }
+
+                addLog('رفض طالب', `تم رفض ${interview?.student_name} - السبب: ${reason}`);
+                window.ProVance.showToast('تم الرفض', 'success');
+                window.dispatchEvent(new CustomEvent('reload-interviews'));
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        // ============ GENERATE QR ============
+        window.generateQRCode = async (interviewId) => {
+            const interview = State.allInterviews.find(i => i.id === interviewId);
+            if (!interview) return;
+
+            let qrCode = State.allQrCodes.find(q => q.application_id === interviewId && q.qr_type === 'interview' && q.status === 'active');
+
+            if (!qrCode) {
+                const sb = window.ProVance.sb;
+                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
+                const interviewDate = new Date(interview.interview_date);
+                const validUntil = new Date(interviewDate.getTime() + 60 * 60 * 1000);
+
+                const { data: newQr, error } = await sb.from('qr_codes').insert({
+                    code: qrCodeStr,
+                    qr_type: 'interview',
+                    company_user_id: State.companyUserId,
+                    company_name: State.companyName,
+                    application_id: interviewId,
+                    student_user_id: interview.student_user_id,
+                    student_name: interview.student_name,
+                    metadata: { interview_time: interview.interview_date },
+                    valid_from: interviewDate.toISOString(),
+                    valid_until: validUntil.toISOString(),
+                    status: 'active'
+                }).select().single();
+
+                if (error) {
+                    console.error(error);
+                    window.ProVance.showToast('حدث خطأ في إنشاء الـ QR', 'error');
+                    return;
+                }
+                qrCode = newQr;
+            }
+
+            const qrData = JSON.stringify({
+                type: 'interview',
+                code: qrCode.code,
+                company: qrCode.company_name,
+                student: qrCode.student_name,
+                valid_until: qrCode.valid_until
+            });
+
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrData)}&color=000000&bgcolor=FFFFFF`;
+            const validUntil = new Date(qrCode.valid_until);
+
+            const html = `
+                <div class="modal active" id="qrModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <i class="fas fa-qrcode"></i>
+                                <span>QR Code للمقابلة</span>
+                            </div>
+                            <button class="modal-close" onclick="closeModal('qrModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div class="qr-display-card">
+                            <h3 style="font-size:1.05rem;margin-bottom:6px">${esc(interview.student_name)}</h3>
+                            <p style="color:var(--text-muted);font-size:0.86rem">${esc(interview.internship_title)}</p>
+
+                            <div class="qr-canvas-wrap">
+                                <img src="${qrUrl}" alt="QR Code" id="qrImg" onerror="this.style.background='#fff';this.style.padding='30px';this.alt='تعذر تحميل الـ QR'">
+                            </div>
+
+                            <div class="qr-validity">
+                                <i class="fas fa-clock"></i>
+                                <span>صالح حتى: ${formatDateTimeAr(validUntil)}</span>
+                            </div>
+
+                            <button class="copy-link-btn" onclick="copyQRCode('${qrCode.code}')">
+                                <i class="fas fa-copy"></i>
+                                <span>الكود: ${qrCode.code}</span>
+                            </button>
+
+                            <div class="qr-info">
+                                <div class="qr-info-row">
+                                    <span class="label">📅 التاريخ:</span>
+                                    <span class="value">${formatDateTimeAr(interview.interview_date)}</span>
+                                </div>
+                                <div class="qr-info-row">
+                                    <span class="label">📍 المكان:</span>
+                                    <span class="value">${esc(interview.interview_location || '-')}</span>
+                                </div>
+                                <div class="qr-info-row">
+                                    <span class="label">⏱️ المدة:</span>
+                                    <span class="value">ساعة كاملة</span>
+                                </div>
+                                <div class="qr-info-row">
+                                    <span class="label">🎯 الحالة:</span>
+                                    <span class="value">${qrCode.status === 'active' ? '✓ نشط' : '⏸ ' + qrCode.status}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex;gap:10px;margin-top:14px">
+                            <button class="btn btn-secondary" onclick="closeModal('qrModal')" style="flex:1;justify-content:center">إغلاق</button>
+                            <button class="btn btn-primary" onclick="printQR()" style="flex:1;justify-content:center">
+                                <i class="fas fa-print"></i> طباعة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        window.copyQRCode = (code) => {
+            navigator.clipboard.writeText(code).then(() => {
+                window.ProVance.showToast('تم نسخ الكود ✓', 'success');
+            }).catch(() => {
+                window.ProVance.showToast('تعذر النسخ', 'error');
+            });
+        };
+
+        window.printQR = () => {
+            const img = document.getElementById('qrImg');
+            if (!img) return;
+            const printWin = window.open('', '_blank', 'width=600,height=600');
+            printWin.document.write(`
+                <html dir="rtl"><head><title>QR Code</title>
+                <style>
+                    body { font-family: Arial; text-align: center; padding: 40px; }
+                    img { max-width: 400px; }
+                    h2 { margin-bottom: 20px; }
+                </style>
+                </head><body>
+                <h2>ProVance - QR Code للمقابلة</h2>
+                <img src="${img.src}">
+                <p>اطبع هذه الصفحة واعرضها للطالب لمسح الـ QR</p>
+                </body></html>
+            `);
+            printWin.document.close();
+            setTimeout(() => printWin.print(), 500);
+        };
+
+        // ============ INTERVIEW DETAILS ============
+        window.viewInterviewDetails = (id) => {
+            const i = State.allInterviews.find(x => x.id === id);
+            if (!i) return;
+
+            const html = `
+                <div class="modal active" id="detailsModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <i class="fas fa-info-circle"></i>
+                                <span>تفاصيل المقابلة</span>
+                            </div>
+                            <button class="modal-close" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div style="display:flex;align-items:center;gap:14px;padding:14px;background:rgba(240,147,251,0.05);border:1px solid rgba(240,147,251,0.2);border-radius:14px;margin-bottom:14px">
+                            <div class="student-avatar" style="width:60px;height:60px;font-size:1.4rem">
+                                ${i.student_photo ? `<img src="${i.student_photo}">` : `<span>${getInitial(i.student_name)}</span>`}
+                            </div>
+                            <div style="flex:1">
+                                <h3 style="font-size:1.1rem;font-weight:800">${esc(i.student_name)}</h3>
+                                <div style="color:var(--text-muted);font-size:0.86rem">${esc(i.student_email || '-')}</div>
+                                <div style="color:var(--primary);font-size:0.84rem;margin-top:3px;font-weight:600">${esc(i.internship_title)}</div>
+                            </div>
+                        </div>
+
+                        <div class="qr-info">
+                            <div class="qr-info-row"><span class="label">📞 الهاتف:</span><span class="value">${esc(i.student_phone || '-')}</span></div>
+                            <div class="qr-info-row"><span class="label">🎓 الجامعة:</span><span class="value">${esc(i.student_university || '-')}</span></div>
+                            <div class="qr-info-row"><span class="label">📅 التاريخ:</span><span class="value">${formatDateTimeAr(i.interview_date)}</span></div>
+                            <div class="qr-info-row"><span class="label">📍 المكان:</span><span class="value">${esc(i.interview_location || '-')}</span></div>
+                            ${i.interview_link ? `<div class="qr-info-row"><span class="label">🔗 الرابط:</span><span class="value"><a href="${esc(i.interview_link)}" target="_blank" style="color:var(--primary)">فتح</a></span></div>` : ''}
+                            <div class="qr-info-row"><span class="label">📝 الحالة:</span><span class="value">${esc(i.status)}</span></div>
+                        </div>
+
+                        ${i.interview_notes ? `
+                            <div style="margin-top:14px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px">
+                                <strong>📋 ملاحظات:</strong>
+                                <p style="margin-top:6px;color:var(--text-muted)">${esc(i.interview_notes)}</p>
+                            </div>
+                        ` : ''}
+
+                        ${i.application_message ? `
+                            <div style="margin-top:14px;padding:12px;background:rgba(79,172,254,0.05);border-radius:10px;border:1px solid rgba(79,172,254,0.2)">
+                                <strong>💬 رسالة الطالب:</strong>
+                                <p style="margin-top:6px;color:var(--text-muted)">${esc(i.application_message)}</p>
+                            </div>
+                        ` : ''}
+
+                        <div style="display:flex;gap:10px;margin-top:18px">
+                            ${i.student_cv_url ? `<a href="${esc(i.student_cv_url)}" target="_blank" class="btn btn-info" style="flex:1;justify-content:center"><i class="fas fa-file-pdf"></i> فتح CV</a>` : ''}
+                            <button class="btn btn-secondary" onclick="closeModal('detailsModal')" style="flex:1;justify-content:center">إغلاق</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        // ============ HELP MODAL ============
+        window.openHelpModal = () => {
+            const html = `
+                <div class="modal active" id="helpModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <i class="fas fa-question-circle"></i>
+                                <span>دليل الاستخدام</span>
+                            </div>
+                            <button class="modal-close" onclick="closeModal('helpModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div class="help-section">
+                            <h4><i class="fas fa-calendar-plus"></i> جدولة مقابلة</h4>
+                            <ul>
+                                <li><i class="fas fa-check"></i> اختار الطالب من قائمة الطلبات الـ pending</li>
+                                <li><i class="fas fa-check"></i> حدد التاريخ والوقت والمكان</li>
+                                <li><i class="fas fa-check"></i> ضع رابط Zoom/Meet (اختياري)</li>
+                                <li><i class="fas fa-check"></i> سيتم إرسال إشعار للطالب تلقائياً</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-section">
+                            <h4><i class="fas fa-qrcode"></i> QR Code للمقابلة</h4>
+                            <ul>
+                                <li><i class="fas fa-check"></i> الـ QR صالح لساعة بعد موعد المقابلة</li>
+                                <li><i class="fas fa-check"></i> الطالب يمسحه من تطبيقه عند الحضور</li>
+                                <li><i class="fas fa-check"></i> يقدر يطبعه ويعرضه للطالب</li>
+                                <li><i class="fas fa-check"></i> يقدر ينسخ الكود ويبعته</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-section">
+                            <h4><i class="fas fa-gavel"></i> اتخاذ القرار</h4>
+                            <ul>
+                                <li><i class="fas fa-check"></i> بعد المقابلة، اضغط "اتخاذ قرار"</li>
+                                <li><i class="fas fa-check"></i> قبول → الطالب ينتقل لمرحلة التدريب</li>
+                                <li><i class="fas fa-check"></i> رفض → لازم تكتب سبب الرفض</li>
+                                <li><i class="fas fa-check"></i> الطالب يستلم إشعار بالنتيجة</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-section">
+                            <h4><i class="fas fa-exclamation-triangle"></i> تقارير التأخير</h4>
+                            <ul>
+                                <li><i class="fas fa-check"></i> لو الطالب غاب → اضغط "غاب" لتسجيل التقرير</li>
+                                <li><i class="fas fa-check"></i> الإدارة تراجع التقرير وتقرر العقوبة</li>
+                                <li><i class="fas fa-check"></i> 3 غيابات متتالية = تحذير من الإدارة</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-section">
+                            <h4><i class="fas fa-keyboard"></i> اختصارات مفيدة</h4>
+                            <ul>
+                                <li><i class="fas fa-check"></i> ESC = إغلاق المودال</li>
+                                <li><i class="fas fa-check"></i> Ctrl+R = تحديث البيانات</li>
+                                <li><i class="fas fa-check"></i> الصفحة تتحدث تلقائياً عند أي تغيير</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-top:14px">
+                            <button class="btn btn-primary" onclick="closeModal('helpModal')" style="width:100%;justify-content:center">
+                                <i class="fas fa-check"></i> فهمت
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        // ============ DATA POLICY MODAL ============
+        window.openDataPolicyModal = () => {
+            const policy = State.dataPolicy;
+            const html = `
+                <div class="modal active" id="dataPolicyModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <i class="fas fa-sliders-h"></i>
+                                <span>إعدادات سياسة البيانات</span>
+                            </div>
+                            <button class="modal-close" onclick="closeModal('dataPolicyModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:14px">
+                            <i class="fas fa-info-circle" style="color:var(--info)"></i>
+                            تحكم في كيفية إدارة البيانات القديمة والأرشفة
+                        </p>
+
+                        <div class="policy-toggle">
+                            <div class="policy-toggle-label">
+                                <strong>أرشفة المقابلات القديمة تلقائياً</strong>
+                                <small>المقابلات اللي عدا عليها أكتر من ${policy.archiveAfterDays} يوم</small>
+                            </div>
+                            <div class="switch ${policy.autoArchiveOldInterviews ? 'active' : ''}" onclick="togglePolicy('autoArchiveOldInterviews', this)"></div>
+                        </div>
+
+                        <div class="policy-toggle">
+                            <div class="policy-toggle-label">
+                                <strong>تنظيف الأرشيف تلقائياً</strong>
+                                <small>حذف الأرشيف اللي عدا عليه أكتر من ${policy.cleanupAfterDays} يوم</small>
+                            </div>
+                            <div class="switch ${policy.autoCleanupArchive ? 'active' : ''}" onclick="togglePolicy('autoCleanupArchive', this)"></div>
+                        </div>
+
+                        <div class="grid-2" style="margin-top:14px">
+                            <div class="field">
+                                <label><i class="fas fa-archive"></i> أرشفة بعد (يوم)</label>
+                                <input type="number" id="archiveAfterDays" min="30" max="365" value="${policy.archiveAfterDays}">
+                            </div>
+                            <div class="field">
+                                <label><i class="fas fa-trash"></i> حذف بعد (يوم)</label>
+                                <input type="number" id="cleanupAfterDays" min="90" max="3650" value="${policy.cleanupAfterDays}">
+                            </div>
+                        </div>
+
+                        <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:12px;border-radius:10px;margin:14px 0;font-size:0.84rem">
+                            <strong style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i> تنبيه:</strong>
+                            <span style="color:var(--text-muted)"> الإعدادات دي بتتطبق على بياناتك المخزّنة محلياً فقط، البيانات في الـ DB محفوظة بسياسة الإدارة العامة.</span>
+                        </div>
+
+                        <div style="display:flex;gap:10px">
+                            <button class="btn btn-secondary" onclick="closeModal('dataPolicyModal')" style="flex:1;justify-content:center">إلغاء</button>
+                            <button class="btn btn-primary" onclick="saveDataPolicy()" style="flex:1;justify-content:center">
+                                <i class="fas fa-save"></i> حفظ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        window.togglePolicy = (key, el) => {
+            State.dataPolicy[key] = !State.dataPolicy[key];
+            el.classList.toggle('active');
+        };
+
+        window.saveDataPolicy = () => {
+            const archiveAfterDays = parseInt(document.getElementById('archiveAfterDays').value) || 90;
+            const cleanupAfterDays = parseInt(document.getElementById('cleanupAfterDays').value) || 365;
+
+            State.dataPolicy = {
+                ...State.dataPolicy,
+                archiveAfterDays,
+                cleanupAfterDays
+            };
+
+            try {
+                localStorage.setItem('provance_data_policy', JSON.stringify(State.dataPolicy));
+            } catch (e) {}
+
+            addLog('تحديث الإعدادات', 'تم تحديث سياسة إدارة البيانات');
+            window.ProVance.showToast('تم الحفظ ✓', 'success');
+            closeModal('dataPolicyModal');
+        };
+
+        // Update countdowns every second
+        setInterval(() => {
+            document.querySelectorAll('.countdown[data-target]').forEach(el => {
+                const target = el.getAttribute('data-target');
+                const cd = getCountdown(target);
+                if (!cd) return;
+                const timeEl = el.querySelector('.countdown-time');
+                if (cd.expired) {
+                    el.classList.add('danger');
+                    timeEl.textContent = 'انتهى الوقت';
+                } else {
+                    if (cd.urgent) el.classList.add('danger');
+                    timeEl.textContent = cd.text;
+                }
+            });
+        }, 1000);
+
+        console.log('✅ Modals & actions registered');
+    });
+
+    // ============ MAIN INIT ============
+    let isInitialized = false;
     async function loadAll() {
+        if (!window._interviewsState) {
+            setTimeout(loadAll, 100);
+            return;
+        }
+        const State = window._interviewsState;
         const sb = window.ProVance.sb;
         if (!sb) return;
 
         try {
-            const [appsRes, qrRes, lateRes] = await Promise.all([
-                sb.from('applications').select('*').eq('company_user_id', companyUserId)
+            const session = await sb.auth.getSession();
+            const userId = session?.data?.session?.user?.id;
+            if (!userId) {
+                window.location.href = 'company-login.html';
+                return;
+            }
+
+            // Set companyUserId on first load
+            if (!State.companyUserId) {
+                State._companyUserId = userId;
+                Object.defineProperty(State, 'companyUserId', { get: () => userId, configurable: true });
+            }
+
+            const [companyRes, appsRes, qrRes, lateRes] = await Promise.all([
+                sb.from('companies').select('company_name').eq('user_id', userId).maybeSingle(),
+                sb.from('applications').select('*').eq('company_user_id', userId)
                     .in('status', ['interview_scheduled', 'interview_done', 'accepted', 'rejected', 'hired', 'in_training', 'completed'])
                     .order('interview_date', { ascending: true }),
-                sb.from('qr_codes').select('*').eq('company_user_id', companyUserId)
+                sb.from('qr_codes').select('*').eq('company_user_id', userId)
                     .eq('qr_type', 'interview').order('created_at', { ascending: false }),
-                sb.from('late_reports').select('*')
-                    .order('created_at', { ascending: false })
+                sb.from('late_reports').select('*').order('created_at', { ascending: false })
             ]);
 
-            allInterviews = appsRes.data || [];
-            allQrCodes = qrRes.data || [];
+            const companyName = companyRes.data?.company_name || 'الشركة';
+            Object.defineProperty(State, 'companyName', { get: () => companyName, configurable: true });
 
-            // فلتر late reports اللي تخص شركتنا
-            const myAppIds = new Set(allInterviews.map(a => a.id));
-            allLateReports = (lateRes.data || []).filter(r => myAppIds.has(r.application_id));
+            const interviews = appsRes.data || [];
+            const qrCodes = qrRes.data || [];
+            const myAppIds = new Set(interviews.map(a => a.id));
+            const lateReports = (lateRes.data || []).filter(r => myAppIds.has(r.application_id));
 
-            updateStats();
-            renderAllTabs();
+            Object.defineProperty(State, 'allInterviews', { get: () => interviews, configurable: true });
+            Object.defineProperty(State, 'allQrCodes', { get: () => qrCodes, configurable: true });
+            window._allLateReports = lateReports;
+
+            // patch the renderLateReports getter
+            const origLate = State.allLateReports;
+            Object.defineProperty(State, 'allLateReports', { get: () => lateReports, configurable: true });
+
+            State.updateStats();
+            State.renderAllTabs();
+
+            if (!isInitialized) {
+                isInitialized = true;
+                // Load data policy from localStorage
+                try {
+                    const stored = localStorage.getItem('provance_data_policy');
+                    if (stored) State.dataPolicy = JSON.parse(stored);
+                } catch (e) {}
+
+                // Realtime
+                sb.channel('interviews-' + userId)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `company_user_id=eq.${userId}` }, () => loadAll())
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'qr_codes', filter: `company_user_id=eq.${userId}` }, () => loadAll())
+                    .subscribe();
+
+                // Listeners
+                document.getElementById('searchInterviews').addEventListener('input', () => State.renderAllTabs());
+                document.getElementById('filterPeriod').addEventListener('change', () => State.renderAllTabs());
+                document.getElementById('filterSort').addEventListener('change', () => State.renderAllTabs());
+
+                window.addEventListener('reload-interviews', loadAll);
+
+                // ESC closes modals
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const modals = document.querySelectorAll('.modal.active');
+                        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
+                    }
+                });
+            }
         } catch (err) {
             console.error('Load error:', err);
             window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
         }
     }
 
-    // LISTENERS
-    document.getElementById('searchInterviews').addEventListener('input', renderAllTabs);
-    document.getElementById('filterPeriod').addEventListener('change', renderAllTabs);
-
-    // INIT
-    async function init() {
-        const ok = window.ProVance.requireCompanyAuth ? await window.ProVance.requireCompanyAuth() : true;
-        if (!ok) return;
-
-        const session = window.ProVance.getSession ? await window.ProVance.getSession() : null;
-        if (session && session.user) {
-            companyUserId = session.user.id;
-        } else if (window.ProVance.sb) {
-            const { data } = await window.ProVance.sb.auth.getSession();
-            if (data?.session?.user) companyUserId = data.session.user.id;
+    // Wait for state then load
+    function init() {
+        if (window._interviewsState) {
+            loadAll();
+        } else {
+            setTimeout(init, 100);
         }
-
-        if (!companyUserId) {
-            window.location.href = 'company-login.html';
-            return;
-        }
-
-        await loadAll();
-
-        // Realtime
-        const sb = window.ProVance.sb;
-        if (sb) {
-            sb.channel('interviews-' + companyUserId)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `company_user_id=eq.${companyUserId}` }, () => loadAll())
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'qr_codes', filter: `company_user_id=eq.${companyUserId}` }, () => loadAll())
-                .subscribe();
-        }
-
-        // Update countdowns every second
-        setInterval(updateCountdowns, 1000);
     }
-
     init();
 })();
+
+// لتسهيل الـ allLateReports (helper for late reports access)
+Object.defineProperty(window, '_lateReportsAccessor', {
+    get: () => window._allLateReports || []
+});
     </script>
 </body>
 </html>
