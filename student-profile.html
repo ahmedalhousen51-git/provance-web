@@ -61,7 +61,7 @@
         }
         .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .sidebar-name { font-weight: 800; font-size: 0.95rem; }
-        .sidebar-email { color: var(--text-muted); font-size: 0.78rem; margin-top: 3px; }
+        .sidebar-email { color: var(--text-muted); font-size: 0.78rem; margin-top: 3px; word-break: break-all; }
 
         .nav-item {
             display: flex; align-items: center; gap: 10px;
@@ -85,6 +85,44 @@
             border-radius: 10px; cursor: pointer;
         }
         .topbar-title { font-size: 1.5rem; font-weight: 800; }
+        .topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* Profile Completion Banner */
+        .completion-banner {
+            background: linear-gradient(135deg, rgba(79,172,254,0.1), rgba(0,242,254,0.05));
+            border: 1px solid rgba(79,172,254,0.25);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 18px;
+            display: flex; align-items: center; gap: 16px;
+            flex-wrap: wrap;
+        }
+        .completion-circle {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) calc(var(--percent) * 1%), rgba(255,255,255,0.06) 0);
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .completion-circle::before {
+            content: '';
+            position: absolute; inset: 6px;
+            background: var(--bg-2);
+            border-radius: 50%;
+        }
+        .completion-percent {
+            position: relative;
+            font-weight: 800;
+            font-size: 1.1rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .completion-text { flex: 1; min-width: 200px; }
+        .completion-title { font-weight: 800; font-size: 1.05rem; margin-bottom: 4px; }
+        .completion-desc { color: var(--text-muted); font-size: 0.86rem; }
 
         /* Welcome Card */
         .welcome-card {
@@ -156,10 +194,29 @@
         .payment-alert-title { font-size: 1.05rem; font-weight: 800; color: var(--warning); }
         .payment-alert-desc { color: var(--text-muted); font-size: 0.88rem; margin-top: 4px; }
 
+        /* Violations Alert */
+        .violations-alert {
+            background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(220,38,38,0.05));
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 18px;
+            display: flex; align-items: center; gap: 14px;
+            flex-wrap: wrap;
+        }
+        .violations-alert-icon {
+            width: 50px; height: 50px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: #fff;
+            flex-shrink: 0;
+        }
+
         /* Stats Row */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
             gap: 12px; margin-bottom: 18px;
         }
         .stat-card {
@@ -178,6 +235,7 @@
         .stat-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
         .stat-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
         .stat-icon.purple { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .stat-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
         .stat-num { font-size: 1.5rem; font-weight: 800; line-height: 1; }
         .stat-label { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
 
@@ -196,6 +254,7 @@
             display: flex; align-items: center; gap: 8px;
         }
         .section-title i { color: var(--primary); }
+        .section-actions { display: flex; gap: 6px; }
 
         /* Info Grid */
         .info-grid {
@@ -208,7 +267,9 @@
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 12px;
+            transition: all .2s;
         }
+        .info-item:hover { border-color: var(--border-strong); }
         .info-label {
             color: var(--text-muted);
             font-size: 0.78rem;
@@ -239,6 +300,12 @@
             border-radius: 14px;
             font-size: 0.85rem;
             font-weight: 600;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .skill-tag .remove-skill {
+            cursor: pointer;
+            color: var(--error);
+            font-size: 0.75rem;
         }
 
         /* Training History */
@@ -361,23 +428,6 @@
             border-radius: 16px;
             box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
         }
-        .qr-scanner-overlay::before,
-        .qr-scanner-overlay::after {
-            content: '';
-            position: absolute;
-            width: 30px; height: 30px;
-            border: 4px solid var(--primary);
-        }
-        .qr-scanner-overlay::before {
-            top: -4px; right: -4px;
-            border-bottom: none; border-left: none;
-            border-radius: 0 16px 0 0;
-        }
-        .qr-scanner-overlay::after {
-            bottom: -4px; left: -4px;
-            border-top: none; border-right: none;
-            border-radius: 0 0 0 16px;
-        }
         .qr-input-fallback {
             background: rgba(255,255,255,0.03);
             border: 1px dashed var(--border);
@@ -417,6 +467,33 @@
         }
         .avatar-upload-circle:hover::after { opacity: 1; }
 
+        /* Avatar Presets */
+        .avatar-presets {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            margin-top: 14px;
+        }
+        @media (max-width: 600px) { .avatar-presets { grid-template-columns: repeat(4, 1fr); } }
+        .preset-avatar {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: 1.5rem;
+            transition: all .15s;
+        }
+        .preset-avatar:hover {
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+        .preset-avatar.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79,172,254,0.2);
+        }
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -432,7 +509,7 @@
         .empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1rem; }
 
         /* QR History */
-        .qr-history-card {
+        .qr-history-card, .violation-card, .history-card {
             background: rgba(255,255,255,0.02);
             border: 1px solid var(--border);
             border-radius: 10px;
@@ -440,7 +517,15 @@
             margin-bottom: 8px;
             display: flex; align-items: center; gap: 12px;
         }
-        .qr-history-icon {
+        .violation-card {
+            background: rgba(239,68,68,0.05);
+            border-color: rgba(239,68,68,0.2);
+        }
+        .history-card {
+            background: rgba(79,172,254,0.03);
+            border-color: rgba(79,172,254,0.15);
+        }
+        .qr-history-icon, .violation-icon, .history-icon {
             width: 38px; height: 38px;
             border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
@@ -449,9 +534,11 @@
         }
         .qr-history-icon.interview { background: linear-gradient(135deg, #f093fb, #f5576c); }
         .qr-history-icon.daily { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-        .qr-history-body { flex: 1; min-width: 0; }
-        .qr-history-title { font-weight: 700; font-size: 0.92rem; }
-        .qr-history-meta { color: var(--text-muted); font-size: 0.78rem; margin-top: 3px; }
+        .violation-icon { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .history-icon { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .qr-history-body, .violation-body, .history-body { flex: 1; min-width: 0; }
+        .qr-history-title, .violation-title, .history-title { font-weight: 700; font-size: 0.92rem; }
+        .qr-history-meta, .violation-meta, .history-meta { color: var(--text-muted); font-size: 0.78rem; margin-top: 3px; }
 
         /* Status Badges */
         .badge {
@@ -463,6 +550,23 @@
         .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
         .badge-error { background: rgba(239,68,68,0.15); color: var(--error); }
         .badge-info { background: rgba(79,172,254,0.15); color: var(--info); }
+
+        /* Profile Contract */
+        .contract-doc {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            line-height: 1.8;
+            font-size: 0.92rem;
+        }
+        .contract-doc h4 {
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        .contract-doc ul { padding-right: 20px; }
+        .contract-doc li { margin-bottom: 6px; color: var(--text-muted); }
 
         @media (max-width: 1024px) {
             .sidebar { transform: translateX(100%); width: 280px; }
@@ -512,6 +616,17 @@
                 <h1 class="topbar-title">
                     <i class="fas fa-user" style="color:var(--primary)"></i> ملفي الشخصي
                 </h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="openEditHistory()">
+                        <i class="fas fa-history"></i> سجل التعديلات
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="openProfileContract()">
+                        <i class="fas fa-file-contract"></i> العقد
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="downloadCV()" id="btnDownloadCV" style="display:none">
+                        <i class="fas fa-download"></i> CV
+                    </button>
+                </div>
             </div>
 
             <!-- Welcome Card -->
@@ -530,8 +645,22 @@
                 </div>
             </div>
 
-            <!-- Payment Lock Alert (visible only if locked) -->
+            <!-- Profile Completion -->
+            <div class="completion-banner" id="completionBanner">
+                <div class="completion-circle" id="completionCircle" style="--percent: 0">
+                    <span class="completion-percent" id="completionPercent">0%</span>
+                </div>
+                <div class="completion-text">
+                    <div class="completion-title">اكمال البروفايل</div>
+                    <div class="completion-desc" id="completionDesc">كلما كان البروفايل مكتمل، كلما زادت فرصك في القبول</div>
+                </div>
+            </div>
+
+            <!-- Payment Lock Alert -->
             <div id="paymentLockAlert" style="display:none"></div>
+
+            <!-- Violations Alert -->
+            <div id="violationsAlert" style="display:none"></div>
 
             <!-- Stats -->
             <div class="stats-row">
@@ -561,6 +690,13 @@
                     <div>
                         <div class="stat-num" id="statApplications">0</div>
                         <div class="stat-label">طلبات تقديم</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon error"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div>
+                        <div class="stat-num" id="statViolations">0</div>
+                        <div class="stat-label">مخالفات</div>
                     </div>
                 </div>
             </div>
@@ -593,6 +729,21 @@
                 <div class="info-grid" id="educationInfoGrid"></div>
             </section>
 
+            <!-- Bio -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-pen-fancy"></i> نبذة عني
+                    </h2>
+                    <button class="btn btn-primary btn-sm" onclick="openEditBio()">
+                        <i class="fas fa-edit"></i> تعديل
+                    </button>
+                </div>
+                <div id="bioContent" style="color:var(--text-muted);line-height:1.7;font-size:0.92rem;font-style:italic">
+                    <span style="color:var(--text-dim)">لم تكتب نبذة بعد. اكتب نبذة عن نفسك ومهاراتك...</span>
+                </div>
+            </section>
+
             <!-- Skills -->
             <section class="section">
                 <div class="section-header">
@@ -611,7 +762,7 @@
                 </div>
             </section>
 
-            <!-- Social Links -->
+            <!-- Social -->
             <section class="section">
                 <div class="section-header">
                     <h2 class="section-title">
@@ -650,6 +801,22 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Violations -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-exclamation-triangle"></i> سجل المخالفات
+                    </h2>
+                </div>
+                <div id="violationsList">
+                    <div class="empty-state">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>لا توجد مخالفات</h3>
+                        <p>سجلك نظيف 🎉</p>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -659,7 +826,7 @@
     <script src="supabase-config.js"></script>
     <script>
 // ============================================================
-// ProVance: Student Profile
+// ProVance: Student Profile - Full Featured
 // ============================================================
 (function() {
     'use strict';
@@ -688,17 +855,35 @@
 
     console.log('✅ Student profile initialized');
 
-    // STATE
+    const esc = window.ProVance.escapeHtml;
+
+    // ============ STATE ============
     let studentUserId = null;
     let studentEmail = null;
     let studentData = null;
     let allApplications = [];
     let allEvaluations = [];
     let allAttendance = [];
+    let allViolations = [];
+    let editHistory = [];
     let paymentLock = null;
     let qrStream = null;
 
-    const esc = window.ProVance.escapeHtml;
+    // Avatar Presets - 12 colorful gradients
+    const AVATAR_PRESETS = [
+        { gradient: 'linear-gradient(135deg, #667eea, #764ba2)', emoji: '👨‍💻' },
+        { gradient: 'linear-gradient(135deg, #f093fb, #f5576c)', emoji: '👨‍🎓' },
+        { gradient: 'linear-gradient(135deg, #4facfe, #00f2fe)', emoji: '👩‍🎓' },
+        { gradient: 'linear-gradient(135deg, #43e97b, #38f9d7)', emoji: '🧑‍💼' },
+        { gradient: 'linear-gradient(135deg, #fa709a, #fee140)', emoji: '👩‍💻' },
+        { gradient: 'linear-gradient(135deg, #30cfd0, #330867)', emoji: '🧑‍🔬' },
+        { gradient: 'linear-gradient(135deg, #a8edea, #fed6e3)', emoji: '👩‍🏫' },
+        { gradient: 'linear-gradient(135deg, #ff9a9e, #fecfef)', emoji: '👨‍🏫' },
+        { gradient: 'linear-gradient(135deg, #ffecd2, #fcb69f)', emoji: '🧑‍🎨' },
+        { gradient: 'linear-gradient(135deg, #ff6e7f, #bfe9ff)', emoji: '👨‍🚀' },
+        { gradient: 'linear-gradient(135deg, #00c9ff, #92fe9d)', emoji: '👩‍🚀' },
+        { gradient: 'linear-gradient(135deg, #f857a6, #ff5858)', emoji: '🧑‍⚕️' }
+    ];
 
     function getInitial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
 
@@ -707,7 +892,6 @@
         document.body.style.overflow = 'hidden';
     }
     window.closeModal = (id) => {
-        // أوقف الكاميرا لو مفتوحة
         if (id === 'qrScannerModal' && qrStream) {
             qrStream.getTracks().forEach(t => t.stop());
             qrStream = null;
@@ -728,14 +912,8 @@
         }
     };
 
-    function formatDate(d) {
-        if (!d) return '-';
-        return new Date(d).toLocaleDateString('ar-EG');
-    }
-    function formatDateTime(d) {
-        if (!d) return '-';
-        return new Date(d).toLocaleString('ar-EG');
-    }
+    function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
+    function formatDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('ar-EG'); }
     function timeAgo(d) {
         if (!d) return '';
         const diff = Date.now() - new Date(d).getTime();
@@ -746,18 +924,100 @@
         if (hrs < 24) return `${hrs} ساعة`;
         return `${Math.floor(hrs/24)} يوم`;
     }
+    function calculateAge(birthDate) {
+        if (!birthDate) return null;
+        const today = new Date();
+        const birth = new Date(birthDate);
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+    }
 
-    // RENDER PROFILE
+    // ============ EDIT HISTORY (LOCAL) ============
+    function addEditHistory(action, details) {
+        const entry = {
+            id: Date.now() + Math.random(),
+            timestamp: new Date().toISOString(),
+            action, details
+        };
+        editHistory.unshift(entry);
+        if (editHistory.length > 50) editHistory = editHistory.slice(0, 50);
+        try {
+            localStorage.setItem('provance_edit_history_' + studentUserId, JSON.stringify(editHistory));
+        } catch (e) {}
+    }
+
+    function loadEditHistory() {
+        try {
+            const stored = localStorage.getItem('provance_edit_history_' + studentUserId);
+            if (stored) editHistory = JSON.parse(stored);
+        } catch (e) {}
+    }
+
+    // ============ PROFILE COMPLETION ============
+    function calculateCompletion() {
+        if (!studentData) return 0;
+        const fields = [
+            'full_name', 'email', 'phone', 'birth_date', 'gender', 'address',
+            'education_level', 'university', 'faculty', 'study_year', 'gpa',
+            'photo', 'bio', 'cv_url', 'linkedin'
+        ];
+        const filled = fields.filter(f => {
+            const v = studentData[f];
+            return v && String(v).trim() !== '';
+        }).length;
+        const skills = Array.isArray(studentData.skills) ? studentData.skills.length : 0;
+        const interests = Array.isArray(studentData.interested_fields) ? studentData.interested_fields.length : 0;
+
+        let score = (filled / fields.length) * 70;  // 70% للحقول
+        if (skills >= 3) score += 15; else score += (skills / 3) * 15;
+        if (interests >= 2) score += 15; else score += (interests / 2) * 15;
+        return Math.min(100, Math.round(score));
+    }
+
+    function renderCompletion() {
+        const percent = calculateCompletion();
+        const circle = document.getElementById('completionCircle');
+        const percentEl = document.getElementById('completionPercent');
+        const descEl = document.getElementById('completionDesc');
+
+        circle.style.setProperty('--percent', percent);
+        percentEl.textContent = percent + '%';
+
+        if (percent >= 90) {
+            descEl.textContent = '✨ ممتاز! بروفايلك مكتمل';
+            descEl.style.color = 'var(--success)';
+        } else if (percent >= 70) {
+            descEl.textContent = '👍 جيد، فيه شوية حقول لسه فاضلة';
+            descEl.style.color = 'var(--info)';
+        } else if (percent >= 40) {
+            descEl.textContent = '⚠️ بروفايلك محتاج اكمال عشان يلفت الشركات';
+            descEl.style.color = 'var(--warning)';
+        } else {
+            descEl.textContent = '❗ بروفايلك ناقص جداً - يرجى إكمال البيانات';
+            descEl.style.color = 'var(--error)';
+        }
+    }
+
+    // ============ RENDER PROFILE ============
     function renderProfile() {
         if (!studentData) return;
 
         // Sidebar
         document.getElementById('sidebarName').textContent = studentData.full_name || '-';
-        document.getElementById('sidebarEmail').textContent = studentData.email || '-';
+        document.getElementById('sidebarEmail').textContent = studentData.email || studentEmail || '-';
 
         const sidebarAvatar = document.getElementById('sidebarAvatar');
         if (studentData.photo) {
-            sidebarAvatar.innerHTML = `<img src="${studentData.photo}" alt="${esc(studentData.full_name)}">`;
+            if (studentData.photo.startsWith('preset:')) {
+                const idx = parseInt(studentData.photo.replace('preset:', '')) || 0;
+                const preset = AVATAR_PRESETS[idx] || AVATAR_PRESETS[0];
+                sidebarAvatar.style.background = preset.gradient;
+                sidebarAvatar.innerHTML = `<span style="font-size:2rem">${preset.emoji}</span>`;
+            } else {
+                sidebarAvatar.innerHTML = `<img src="${studentData.photo}" alt="${esc(studentData.full_name)}">`;
+            }
         } else {
             sidebarAvatar.innerHTML = `<span>${getInitial(studentData.full_name)}</span>`;
         }
@@ -766,14 +1026,20 @@
         const firstName = (studentData.full_name || 'طالب').split(' ')[0];
         document.getElementById('welcomeName').textContent = firstName;
 
+        // CV button
+        const cvBtn = document.getElementById('btnDownloadCV');
+        if (cvBtn) cvBtn.style.display = studentData.cv_url ? '' : 'none';
+
         // Personal Info
         const personalGrid = document.getElementById('personalInfoGrid');
         const genderLabel = { male: 'ذكر', female: 'أنثى', other: 'غير محدد' }[studentData.gender] || '-';
+        const age = calculateAge(studentData.birth_date);
+
         personalGrid.innerHTML = `
             ${infoItem('user', 'الاسم الكامل', studentData.full_name)}
-            ${infoItem('envelope', 'البريد الإلكتروني', studentData.email)}
+            ${infoItem('envelope', 'البريد الإلكتروني', studentData.email || studentEmail)}
             ${infoItem('phone', 'رقم الهاتف', studentData.phone)}
-            ${infoItem('birthday-cake', 'تاريخ الميلاد', studentData.birth_date ? formatDate(studentData.birth_date) : null)}
+            ${infoItem('birthday-cake', 'تاريخ الميلاد', studentData.birth_date ? formatDate(studentData.birth_date) + (age ? ` (${age} سنة)` : '') : null)}
             ${infoItem('venus-mars', 'النوع', studentData.gender ? genderLabel : null)}
             ${infoItem('map-marker-alt', 'العنوان', studentData.address)}
         `;
@@ -788,38 +1054,49 @@
             ${infoItem('graduation-cap', 'المستوى التعليمي', studentData.education_level ? eduLevels[studentData.education_level] || studentData.education_level : null)}
             ${infoItem('university', 'الجامعة', studentData.university)}
             ${infoItem('book', 'الكلية / التخصص', studentData.faculty)}
-            ${infoItem('calendar', 'سنة الدراسة', studentData.study_year)}
+            ${infoItem('calendar', 'سنة الدراسة', studentData.study_year === 'graduated' ? 'متخرج' : studentData.study_year)}
             ${infoItem('star', 'المعدل التراكمي', studentData.gpa)}
         `;
+
+        // Bio
+        const bioContent = document.getElementById('bioContent');
+        if (studentData.bio && studentData.bio.trim()) {
+            bioContent.innerHTML = esc(studentData.bio);
+            bioContent.style.fontStyle = 'normal';
+            bioContent.style.color = 'var(--text)';
+        } else {
+            bioContent.innerHTML = '<span style="color:var(--text-dim)">لم تكتب نبذة بعد. اكتب نبذة عن نفسك ومهاراتك...</span>';
+            bioContent.style.fontStyle = 'italic';
+            bioContent.style.color = 'var(--text-muted)';
+        }
 
         // Skills
         const skills = Array.isArray(studentData.skills) ? studentData.skills : [];
         const interests = Array.isArray(studentData.interested_fields) ? studentData.interested_fields : [];
-        const skillsList = document.getElementById('skillsList');
-        const interestsList = document.getElementById('interestsList');
 
-        skillsList.innerHTML = skills.length === 0
+        document.getElementById('skillsList').innerHTML = skills.length === 0
             ? '<span style="color:var(--text-dim);font-size:0.86rem">لا توجد مهارات مضافة</span>'
             : skills.map(s => `<span class="skill-tag">${esc(typeof s === 'string' ? s : (s.name || s))}</span>`).join('');
 
-        interestsList.innerHTML = interests.length === 0
+        document.getElementById('interestsList').innerHTML = interests.length === 0
             ? '<span style="color:var(--text-dim);font-size:0.86rem">لا توجد مجالات مضافة</span>'
             : interests.map(i => `<span class="skill-tag">${esc(typeof i === 'string' ? i : (i.name || i))}</span>`).join('');
 
         // Social
         const socialGrid = document.getElementById('socialInfoGrid');
         socialGrid.innerHTML = `
-            ${linkItem('linkedin', 'LinkedIn', studentData.linkedin)}
-            ${linkItem('github', 'GitHub', studentData.github)}
-            ${linkItem('globe', 'الموقع الشخصي', studentData.portfolio)}
-            ${linkItem('file-pdf', 'السيرة الذاتية (CV)', studentData.cv_url)}
+            ${linkItem('linkedin', 'LinkedIn', studentData.linkedin, 'linkedin')}
+            ${linkItem('github', 'GitHub', studentData.github, 'github')}
+            ${linkItem('globe', 'الموقع الشخصي', studentData.portfolio, 'globe')}
+            ${linkItem('file-pdf', 'السيرة الذاتية (CV)', studentData.cv_url, 'file-pdf')}
         `;
 
-        // Training History
         renderTrainingHistory();
         renderQRHistory();
+        renderViolations();
         updateStats();
         renderPaymentLock();
+        renderCompletion();
     }
 
     function infoItem(icon, label, value) {
@@ -832,11 +1109,12 @@
         `;
     }
 
-    function linkItem(icon, label, url) {
+    function linkItem(icon, label, url, iconType) {
         const isEmpty = !url;
+        const iconClass = (iconType === 'linkedin' || iconType === 'github') ? 'fab' : 'fas';
         return `
             <div class="info-item">
-                <div class="info-label"><i class="fa${icon === 'linkedin' || icon === 'github' ? 'b' : 's'} fa-${icon}"></i> ${label}</div>
+                <div class="info-label"><i class="${iconClass} fa-${icon}"></i> ${label}</div>
                 <div class="info-value ${isEmpty ? 'empty' : ''}">
                     ${isEmpty ? 'لم يُحدد' : `<a href="${esc(url)}" target="_blank" style="color:var(--primary);text-decoration:none">${esc(url.length > 35 ? url.substring(0, 35) + '...' : url)} <i class="fas fa-external-link-alt" style="font-size:0.75rem"></i></a>`}
                 </div>
@@ -920,6 +1198,65 @@
         }).join('');
     }
 
+    function renderViolations() {
+        const list = document.getElementById('violationsList');
+        const alert = document.getElementById('violationsAlert');
+
+        if (allViolations.length === 0) {
+            list.innerHTML = '<div class="empty-state"><i class="fas fa-shield-alt"></i><h3>لا توجد مخالفات</h3><p>سجلك نظيف 🎉</p></div>';
+            alert.style.display = 'none';
+            alert.innerHTML = '';
+            return;
+        }
+
+        // Show alert if active violations
+        const active = allViolations.filter(v => v.status === 'active');
+        if (active.length > 0) {
+            alert.style.display = 'flex';
+            alert.className = 'violations-alert';
+            alert.innerHTML = `
+                <div class="violations-alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div style="flex:1;min-width:200px">
+                    <div style="font-weight:800;color:var(--error);font-size:1.05rem">⚠️ لديك ${active.length} مخالفة نشطة</div>
+                    <div style="color:var(--text-muted);font-size:0.88rem;margin-top:4px">يرجى مراجعة المخالفات والتواصل مع الإدارة لو لازم</div>
+                </div>
+            `;
+        } else {
+            alert.style.display = 'none';
+        }
+
+        const SEVERITY_LABELS = {
+            'minor': '🟡 بسيطة',
+            'moderate': '🟠 متوسطة',
+            'major': '🔴 كبيرة',
+            'critical': '⛔ حرجة'
+        };
+
+        list.innerHTML = allViolations.map(v => {
+            const statusBadge = {
+                'active': '<span class="badge badge-error">⚠ نشطة</span>',
+                'resolved': '<span class="badge badge-success">✓ تم الحل</span>',
+                'appealed': '<span class="badge badge-warning">📝 قيد الاستئناف</span>',
+                'cancelled': '<span class="badge badge-info">✕ ملغية</span>'
+            }[v.status] || '';
+
+            return `
+                <div class="violation-card">
+                    <div class="violation-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="violation-body">
+                        <div class="violation-title">${esc(v.title || v.violation_type)}</div>
+                        ${v.description ? `<div class="violation-meta">${esc(v.description)}</div>` : ''}
+                        <div class="violation-meta">
+                            <span style="margin-left:8px">${SEVERITY_LABELS[v.severity] || v.severity}</span>
+                            ${statusBadge}
+                            <span style="margin-right:8px"><i class="fas fa-calendar"></i> ${formatDate(v.created_at)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
     function updateStats() {
         const completed = allApplications.filter(a => a.status === 'completed').length;
         const totalApplications = allApplications.length;
@@ -928,11 +1265,13 @@
         const avgRating = evaluations.length
             ? (evaluations.reduce((s, e) => s + Number(e.overall_score), 0) / evaluations.length).toFixed(1)
             : '0';
+        const violationsCount = allViolations.filter(v => v.status === 'active').length;
 
         document.getElementById('statTrainings').textContent = completed;
         document.getElementById('statRating').textContent = avgRating;
         document.getElementById('statAttendance').textContent = attendanceCount;
         document.getElementById('statApplications').textContent = totalApplications;
+        document.getElementById('statViolations').textContent = violationsCount;
     }
 
     function renderPaymentLock() {
@@ -943,613 +1282,907 @@
             return;
         }
 
-        alert.style.display = 'block';
+        alert.style.display = 'flex';
+        alert.className = 'payment-alert';
         alert.innerHTML = `
-            <div class="payment-alert">
-                <div class="payment-alert-icon"><i class="fas fa-lock"></i></div>
-                <div class="payment-alert-body">
-                    <div class="payment-alert-title">⚠️ مطلوب دفع رسوم التدريب</div>
-                    <div class="payment-alert-desc">
-                        لقد حضرت ${paymentLock.days_attended} أيام تدريب. لاستكمال التدريب، يجب دفع
-                        <strong style="color:var(--text)"> ${paymentLock.remaining_amount} ${paymentLock.currency}</strong>
-                        قبل ${formatDate(paymentLock.payment_deadline)}.
-                    </div>
+            <div class="payment-alert-icon"><i class="fas fa-lock"></i></div>
+            <div class="payment-alert-body">
+                <div class="payment-alert-title">⚠️ مطلوب دفع رسوم التدريب</div>
+                <div class="payment-alert-desc">
+                    لقد حضرت ${paymentLock.days_attended} أيام تدريب. لاستكمال التدريب، يجب دفع
+                    <strong style="color:var(--text)"> ${paymentLock.remaining_amount} ${paymentLock.currency}</strong>
+                    قبل ${formatDate(paymentLock.payment_deadline)}.
                 </div>
-                <a href="Student_-payments.html" class="btn btn-warning">
-                    <i class="fas fa-credit-card"></i> ادفع الآن
-                </a>
             </div>
+            <a href="Student_-payments.html" class="btn btn-warning">
+                <i class="fas fa-credit-card"></i> ادفع الآن
+            </a>
         `;
     }
 
-    // EDIT PERSONAL INFO
-    window.openEditPersonal = () => {
-        const html = `
-            <div class="modal active" id="editPersonalModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-id-card"></i><span>تعديل البيانات الشخصية</span></div>
-                        <button class="modal-close" onclick="closeModal('editPersonalModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-user"></i> الاسم الكامل <span class="req">*</span></label>
-                        <input type="text" id="ep_full_name" value="${esc(studentData.full_name || '')}">
-                    </div>
-
-                    <div class="grid-2">
-                        <div class="field">
-                            <label><i class="fas fa-phone"></i> رقم الهاتف</label>
-                            <input type="tel" id="ep_phone" value="${esc(studentData.phone || '')}" style="direction:ltr;text-align:right">
-                        </div>
-                        <div class="field">
-                            <label><i class="fas fa-birthday-cake"></i> تاريخ الميلاد</label>
-                            <input type="date" id="ep_birth_date" value="${studentData.birth_date || ''}">
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-venus-mars"></i> النوع</label>
-                        <select id="ep_gender">
-                            <option value="">-- اختر --</option>
-                            <option value="male" ${studentData.gender === 'male' ? 'selected' : ''}>ذكر</option>
-                            <option value="female" ${studentData.gender === 'female' ? 'selected' : ''}>أنثى</option>
-                            <option value="other" ${studentData.gender === 'other' ? 'selected' : ''}>غير محدد</option>
-                        </select>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-map-marker-alt"></i> العنوان</label>
-                        <textarea id="ep_address" rows="2" placeholder="مثال: القاهرة، مدينة نصر">${esc(studentData.address || '')}</textarea>
-                    </div>
-
-                    <div style="display:flex;gap:10px;margin-top:14px">
-                        <button class="btn btn-secondary" onclick="closeModal('editPersonalModal')" style="flex:1;justify-content:center">إلغاء</button>
-                        <button class="btn btn-primary" onclick="savePersonal()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderModal(html);
+    // Expose for part 2
+    window._studentProfileState = {
+        get studentUserId() { return studentUserId; },
+        set studentUserId(v) { studentUserId = v; },
+        get studentEmail() { return studentEmail; },
+        set studentEmail(v) { studentEmail = v; },
+        get studentData() { return studentData; },
+        set studentData(v) { studentData = v; },
+        get allApplications() { return allApplications; },
+        set allApplications(v) { allApplications = v; },
+        get allEvaluations() { return allEvaluations; },
+        set allEvaluations(v) { allEvaluations = v; },
+        get allAttendance() { return allAttendance; },
+        set allAttendance(v) { allAttendance = v; },
+        get allViolations() { return allViolations; },
+        set allViolations(v) { allViolations = v; },
+        get paymentLock() { return paymentLock; },
+        set paymentLock(v) { paymentLock = v; },
+        get qrStream() { return qrStream; },
+        set qrStream(v) { qrStream = v; },
+        get editHistory() { return editHistory; },
+        AVATAR_PRESETS,
+        addEditHistory, loadEditHistory,
+        renderProfile, esc, getInitial,
+        formatDate, formatDateTime, timeAgo, calculateAge
     };
 
-    window.savePersonal = async () => {
-        const data = {
-            full_name: document.getElementById('ep_full_name').value.trim(),
-            phone: document.getElementById('ep_phone').value.trim() || null,
-            birth_date: document.getElementById('ep_birth_date').value || null,
-            gender: document.getElementById('ep_gender').value || null,
-            address: document.getElementById('ep_address').value.trim() || null
-        };
+})();
+// ============================================================
+// Student Profile - Part 2: Modals & Init
+// ============================================================
+(function() {
+    'use strict';
 
-        if (!data.full_name) {
-            window.ProVance.showToast('الاسم مطلوب', 'warning');
-            return;
+    function waitForState(cb) {
+        if (window._studentProfileState) cb(window._studentProfileState);
+        else setTimeout(() => waitForState(cb), 100);
+    }
+
+    waitForState((State) => {
+        const { esc, getInitial, formatDate, formatDateTime, addEditHistory, AVATAR_PRESETS } = State;
+
+        function renderModal(html) {
+            document.getElementById('modalsContainer').innerHTML = html;
+            document.body.style.overflow = 'hidden';
         }
 
-        try {
-            const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', studentUserId);
-            if (error) throw error;
-            window.ProVance.showToast('تم الحفظ ✓', 'success');
-            closeModal('editPersonalModal');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-        }
-    };
+        // ============ EDIT PERSONAL ============
+        window.openEditPersonal = () => {
+            const studentData = State.studentData;
+            const html = `
+                <div class="modal active" id="editPersonalModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title"><i class="fas fa-id-card"></i><span>تعديل البيانات الشخصية</span></div>
+                            <button class="modal-close" onclick="closeModal('editPersonalModal')"><i class="fas fa-times"></i></button>
+                        </div>
 
-    // EDIT EDUCATION
-    window.openEditEducation = () => {
-        const html = `
-            <div class="modal active" id="editEducationModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-graduation-cap"></i><span>تعديل التعليم</span></div>
-                        <button class="modal-close" onclick="closeModal('editEducationModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-graduation-cap"></i> المستوى التعليمي</label>
-                        <select id="ed_level">
-                            <option value="">-- اختر --</option>
-                            <option value="high_school" ${studentData.education_level === 'high_school' ? 'selected' : ''}>ثانوي</option>
-                            <option value="diploma" ${studentData.education_level === 'diploma' ? 'selected' : ''}>دبلوم</option>
-                            <option value="bachelor" ${studentData.education_level === 'bachelor' ? 'selected' : ''}>بكالوريوس</option>
-                            <option value="master" ${studentData.education_level === 'master' ? 'selected' : ''}>ماجستير</option>
-                            <option value="phd" ${studentData.education_level === 'phd' ? 'selected' : ''}>دكتوراه</option>
-                        </select>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-university"></i> اسم الجامعة</label>
-                        <input type="text" id="ed_university" value="${esc(studentData.university || '')}" placeholder="مثال: جامعة القاهرة">
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-book"></i> الكلية / التخصص</label>
-                        <input type="text" id="ed_faculty" value="${esc(studentData.faculty || '')}" placeholder="مثال: علوم الحاسب">
-                    </div>
-
-                    <div class="grid-2">
                         <div class="field">
-                            <label><i class="fas fa-calendar"></i> سنة الدراسة</label>
-                            <select id="ed_year">
-                                <option value="">--</option>
-                                ${[1,2,3,4,5,6].map(y => `<option value="${y}" ${studentData.study_year == y ? 'selected' : ''}>${y}</option>`).join('')}
-                                <option value="graduated" ${studentData.study_year === 'graduated' ? 'selected' : ''}>متخرج</option>
+                            <label><i class="fas fa-user"></i> الاسم الكامل <span class="req">*</span></label>
+                            <input type="text" id="ep_full_name" value="${esc(studentData.full_name || '')}">
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="field">
+                                <label><i class="fas fa-phone"></i> رقم الهاتف</label>
+                                <input type="tel" id="ep_phone" value="${esc(studentData.phone || '')}" style="direction:ltr;text-align:right">
+                            </div>
+                            <div class="field">
+                                <label><i class="fas fa-birthday-cake"></i> تاريخ الميلاد</label>
+                                <input type="date" id="ep_birth_date" value="${studentData.birth_date || ''}">
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-venus-mars"></i> النوع</label>
+                            <select id="ep_gender">
+                                <option value="">-- اختر --</option>
+                                <option value="male" ${studentData.gender === 'male' ? 'selected' : ''}>ذكر</option>
+                                <option value="female" ${studentData.gender === 'female' ? 'selected' : ''}>أنثى</option>
+                                <option value="other" ${studentData.gender === 'other' ? 'selected' : ''}>غير محدد</option>
                             </select>
                         </div>
+
                         <div class="field">
-                            <label><i class="fas fa-star"></i> المعدل التراكمي</label>
-                            <input type="text" id="ed_gpa" value="${esc(studentData.gpa || '')}" placeholder="مثال: 3.5">
+                            <label><i class="fas fa-map-marker-alt"></i> العنوان</label>
+                            <textarea id="ep_address" rows="2" placeholder="مثال: القاهرة، مدينة نصر">${esc(studentData.address || '')}</textarea>
+                        </div>
+
+                        <div style="display:flex;gap:10px;margin-top:14px">
+                            <button class="btn btn-secondary" onclick="closeModal('editPersonalModal')" style="flex:1;justify-content:center">إلغاء</button>
+                            <button class="btn btn-primary" onclick="savePersonal()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
                         </div>
                     </div>
-
-                    <div style="display:flex;gap:10px;margin-top:14px">
-                        <button class="btn btn-secondary" onclick="closeModal('editEducationModal')" style="flex:1;justify-content:center">إلغاء</button>
-                        <button class="btn btn-primary" onclick="saveEducation()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
-                    </div>
                 </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    window.saveEducation = async () => {
-        const data = {
-            education_level: document.getElementById('ed_level').value || null,
-            university: document.getElementById('ed_university').value.trim() || null,
-            faculty: document.getElementById('ed_faculty').value.trim() || null,
-            study_year: document.getElementById('ed_year').value || null,
-            gpa: document.getElementById('ed_gpa').value.trim() || null
+            `;
+            renderModal(html);
         };
 
-        try {
-            const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', studentUserId);
-            if (error) throw error;
-            window.ProVance.showToast('تم الحفظ ✓', 'success');
-            closeModal('editEducationModal');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-        }
-    };
+        window.savePersonal = async () => {
+            const data = {
+                full_name: document.getElementById('ep_full_name').value.trim(),
+                phone: document.getElementById('ep_phone').value.trim() || null,
+                birth_date: document.getElementById('ep_birth_date').value || null,
+                gender: document.getElementById('ep_gender').value || null,
+                address: document.getElementById('ep_address').value.trim() || null
+            };
 
-    // EDIT SKILLS
-    window.openEditSkills = () => {
-        const skills = Array.isArray(studentData.skills) ? studentData.skills : [];
-        const interests = Array.isArray(studentData.interested_fields) ? studentData.interested_fields : [];
+            if (!data.full_name) {
+                window.ProVance.showToast('الاسم مطلوب', 'warning');
+                return;
+            }
 
-        const skillsStr = skills.map(s => typeof s === 'string' ? s : (s.name || s)).join(', ');
-        const interestsStr = interests.map(i => typeof i === 'string' ? i : (i.name || i)).join(', ');
-
-        const html = `
-            <div class="modal active" id="editSkillsModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-tools"></i><span>تعديل المهارات</span></div>
-                        <button class="modal-close" onclick="closeModal('editSkillsModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-tools"></i> المهارات</label>
-                        <textarea id="sk_skills" rows="3" placeholder="اكتب المهارات مفصولة بفاصلة، مثال: HTML, CSS, JavaScript">${esc(skillsStr)}</textarea>
-                        <div style="color:var(--text-muted);font-size:0.78rem;margin-top:4px"><i class="fas fa-info-circle"></i> افصل بين المهارات بفاصلة (,)</div>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-bullseye"></i> المجالات المهتم بها</label>
-                        <textarea id="sk_interests" rows="3" placeholder="مثال: تطوير الويب, تطبيقات الموبايل, الذكاء الاصطناعي">${esc(interestsStr)}</textarea>
-                    </div>
-
-                    <div style="display:flex;gap:10px;margin-top:14px">
-                        <button class="btn btn-secondary" onclick="closeModal('editSkillsModal')" style="flex:1;justify-content:center">إلغاء</button>
-                        <button class="btn btn-primary" onclick="saveSkills()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    window.saveSkills = async () => {
-        const skillsStr = document.getElementById('sk_skills').value.trim();
-        const interestsStr = document.getElementById('sk_interests').value.trim();
-
-        const skills = skillsStr ? skillsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
-        const interests = interestsStr ? interestsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
-
-        try {
-            const { error } = await window.ProVance.sb.from('student').update({
-                skills: skills,
-                interested_fields: interests
-            }).eq('user_id', studentUserId);
-            if (error) throw error;
-            window.ProVance.showToast('تم الحفظ ✓', 'success');
-            closeModal('editSkillsModal');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-        }
-    };
-
-    // EDIT SOCIAL
-    window.openEditSocial = () => {
-        const html = `
-            <div class="modal active" id="editSocialModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-link"></i><span>تعديل الروابط</span></div>
-                        <button class="modal-close" onclick="closeModal('editSocialModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fab fa-linkedin"></i> LinkedIn</label>
-                        <input type="url" id="so_linkedin" value="${esc(studentData.linkedin || '')}" placeholder="https://linkedin.com/in/..." style="direction:ltr;text-align:right">
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fab fa-github"></i> GitHub</label>
-                        <input type="url" id="so_github" value="${esc(studentData.github || '')}" placeholder="https://github.com/..." style="direction:ltr;text-align:right">
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-globe"></i> الموقع الشخصي</label>
-                        <input type="url" id="so_portfolio" value="${esc(studentData.portfolio || '')}" placeholder="https://..." style="direction:ltr;text-align:right">
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-file-pdf"></i> رابط السيرة الذاتية (CV)</label>
-                        <input type="url" id="so_cv" value="${esc(studentData.cv_url || '')}" placeholder="https://drive.google.com/..." style="direction:ltr;text-align:right">
-                        <div style="color:var(--text-muted);font-size:0.78rem;margin-top:4px"><i class="fas fa-info-circle"></i> ارفع الـ CV على Google Drive وضع الرابط هنا</div>
-                    </div>
-
-                    <div style="display:flex;gap:10px;margin-top:14px">
-                        <button class="btn btn-secondary" onclick="closeModal('editSocialModal')" style="flex:1;justify-content:center">إلغاء</button>
-                        <button class="btn btn-primary" onclick="saveSocial()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    window.saveSocial = async () => {
-        const data = {
-            linkedin: document.getElementById('so_linkedin').value.trim() || null,
-            github: document.getElementById('so_github').value.trim() || null,
-            portfolio: document.getElementById('so_portfolio').value.trim() || null,
-            cv_url: document.getElementById('so_cv').value.trim() || null
+            try {
+                const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', State.studentUserId);
+                if (error) throw error;
+                addEditHistory('تعديل البيانات الشخصية', 'تم تحديث الاسم/الهاتف/التاريخ/النوع/العنوان');
+                window.ProVance.showToast('تم الحفظ ✓', 'success');
+                closeModal('editPersonalModal');
+                window.dispatchEvent(new CustomEvent('reload-profile'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+            }
         };
 
-        try {
-            const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', studentUserId);
-            if (error) throw error;
-            window.ProVance.showToast('تم الحفظ ✓', 'success');
-            closeModal('editSocialModal');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-        }
-    };
-
-    // EDIT AVATAR
-    window.openEditAvatar = () => {
-        const currentAvatar = studentData.photo
-            ? `<img src="${studentData.photo}" alt="">`
-            : `<span>${getInitial(studentData.full_name)}</span>`;
-
-        const html = `
-            <div class="modal active" id="editAvatarModal">
-                <div class="modal-content" style="max-width:480px">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-camera"></i><span>تغيير الصورة الشخصية</span></div>
-                        <button class="modal-close" onclick="closeModal('editAvatarModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="avatar-upload">
-                        <div class="avatar-upload-circle" id="avatarPreview" onclick="document.getElementById('avatarFile').click()">
-                            ${currentAvatar}
+        // ============ EDIT EDUCATION ============
+        window.openEditEducation = () => {
+            const studentData = State.studentData;
+            const html = `
+                <div class="modal active" id="editEducationModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title"><i class="fas fa-graduation-cap"></i><span>تعديل التعليم</span></div>
+                            <button class="modal-close" onclick="closeModal('editEducationModal')"><i class="fas fa-times"></i></button>
                         </div>
-                        <input type="file" id="avatarFile" accept="image/*" style="display:none" onchange="previewAvatar(event)">
-                        <div style="color:var(--text-muted);font-size:0.84rem;margin-top:8px">اضغط على الصورة لاختيار صورة جديدة</div>
-                    </div>
 
-                    <div class="field">
-                        <label><i class="fas fa-link"></i> أو ضع رابط صورة مباشر</label>
-                        <input type="url" id="av_url" value="${esc(studentData.photo || '')}" placeholder="https://..." style="direction:ltr;text-align:right">
-                    </div>
+                        <div class="field">
+                            <label><i class="fas fa-graduation-cap"></i> المستوى التعليمي</label>
+                            <select id="ed_level">
+                                <option value="">-- اختر --</option>
+                                <option value="high_school" ${studentData.education_level === 'high_school' ? 'selected' : ''}>ثانوي</option>
+                                <option value="diploma" ${studentData.education_level === 'diploma' ? 'selected' : ''}>دبلوم</option>
+                                <option value="bachelor" ${studentData.education_level === 'bachelor' ? 'selected' : ''}>بكالوريوس</option>
+                                <option value="master" ${studentData.education_level === 'master' ? 'selected' : ''}>ماجستير</option>
+                                <option value="phd" ${studentData.education_level === 'phd' ? 'selected' : ''}>دكتوراه</option>
+                            </select>
+                        </div>
 
-                    <div style="display:flex;gap:10px;margin-top:14px">
-                        <button class="btn btn-secondary" onclick="closeModal('editAvatarModal')" style="flex:1;justify-content:center">إلغاء</button>
-                        <button class="btn btn-primary" onclick="saveAvatar()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                        <div class="field">
+                            <label><i class="fas fa-university"></i> اسم الجامعة</label>
+                            <input type="text" id="ed_university" value="${esc(studentData.university || '')}" placeholder="مثال: جامعة القاهرة">
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-book"></i> الكلية / التخصص</label>
+                            <input type="text" id="ed_faculty" value="${esc(studentData.faculty || '')}" placeholder="مثال: علوم الحاسب">
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="field">
+                                <label><i class="fas fa-calendar"></i> سنة الدراسة</label>
+                                <select id="ed_year">
+                                    <option value="">--</option>
+                                    ${[1,2,3,4,5,6].map(y => `<option value="${y}" ${studentData.study_year == y ? 'selected' : ''}>${y}</option>`).join('')}
+                                    <option value="graduated" ${studentData.study_year === 'graduated' ? 'selected' : ''}>متخرج</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label><i class="fas fa-star"></i> المعدل التراكمي</label>
+                                <input type="text" id="ed_gpa" value="${esc(studentData.gpa || '')}" placeholder="مثال: 3.5">
+                            </div>
+                        </div>
+
+                        <div style="display:flex;gap:10px;margin-top:14px">
+                            <button class="btn btn-secondary" onclick="closeModal('editEducationModal')" style="flex:1;justify-content:center">إلغاء</button>
+                            <button class="btn btn-primary" onclick="saveEducation()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    window.previewAvatar = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        if (file.size > 2 * 1024 * 1024) {
-            window.ProVance.showToast('الصورة كبيرة - الحد الأقصى 2MB', 'warning');
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            document.getElementById('avatarPreview').innerHTML = `<img src="${ev.target.result}" alt="">`;
-            document.getElementById('av_url').value = ev.target.result;
+            `;
+            renderModal(html);
         };
-        reader.readAsDataURL(file);
-    };
 
-    window.saveAvatar = async () => {
-        const url = document.getElementById('av_url').value.trim();
+        window.saveEducation = async () => {
+            const data = {
+                education_level: document.getElementById('ed_level').value || null,
+                university: document.getElementById('ed_university').value.trim() || null,
+                faculty: document.getElementById('ed_faculty').value.trim() || null,
+                study_year: document.getElementById('ed_year').value || null,
+                gpa: document.getElementById('ed_gpa').value.trim() || null
+            };
 
-        try {
-            const { error } = await window.ProVance.sb.from('student').update({ photo: url || null }).eq('user_id', studentUserId);
-            if (error) throw error;
-            window.ProVance.showToast('تم تغيير الصورة ✓', 'success');
-            closeModal('editAvatarModal');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+            try {
+                const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', State.studentUserId);
+                if (error) throw error;
+                addEditHistory('تعديل التعليم', 'تم تحديث بيانات التعليم');
+                window.ProVance.showToast('تم الحفظ ✓', 'success');
+                closeModal('editEducationModal');
+                window.dispatchEvent(new CustomEvent('reload-profile'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+            }
+        };
+
+        // ============ EDIT BIO ============
+        window.openEditBio = () => {
+            const studentData = State.studentData;
+            const html = `
+                <div class="modal active" id="editBioModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title"><i class="fas fa-pen-fancy"></i><span>تعديل النبذة</span></div>
+                            <button class="modal-close" onclick="closeModal('editBioModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-pen-fancy"></i> نبذة عنك</label>
+                            <textarea id="bio_text" rows="6" placeholder="اكتب نبذة عن نفسك، مهاراتك، طموحاتك، اهتماماتك...">${esc(studentData.bio || '')}</textarea>
+                            <div style="color:var(--text-muted);font-size:0.78rem;margin-top:4px">
+                                <i class="fas fa-info-circle"></i> هذه النبذة هتظهر للشركات لما تشوف بروفايلك
+                            </div>
+                        </div>
+
+                        <div style="display:flex;gap:10px;margin-top:14px">
+                            <button class="btn btn-secondary" onclick="closeModal('editBioModal')" style="flex:1;justify-content:center">إلغاء</button>
+                            <button class="btn btn-primary" onclick="saveBio()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        window.saveBio = async () => {
+            const bio = document.getElementById('bio_text').value.trim() || null;
+            try {
+                const { error } = await window.ProVance.sb.from('student').update({ bio }).eq('user_id', State.studentUserId);
+                if (error) throw error;
+                addEditHistory('تعديل النبذة', bio ? 'تم تحديث النبذة' : 'تم مسح النبذة');
+                window.ProVance.showToast('تم الحفظ ✓', 'success');
+                closeModal('editBioModal');
+                window.dispatchEvent(new CustomEvent('reload-profile'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+            }
+        };
+
+        // ============ EDIT SKILLS ============
+        window.openEditSkills = () => {
+            const studentData = State.studentData;
+            const skills = Array.isArray(studentData.skills) ? studentData.skills : [];
+            const interests = Array.isArray(studentData.interested_fields) ? studentData.interested_fields : [];
+
+            const skillsStr = skills.map(s => typeof s === 'string' ? s : (s.name || s)).join(', ');
+            const interestsStr = interests.map(i => typeof i === 'string' ? i : (i.name || i)).join(', ');
+
+            const html = `
+                <div class="modal active" id="editSkillsModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title"><i class="fas fa-tools"></i><span>تعديل المهارات</span></div>
+                            <button class="modal-close" onclick="closeModal('editSkillsModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-tools"></i> المهارات</label>
+                            <textarea id="sk_skills" rows="3" placeholder="اكتب المهارات مفصولة بفاصلة، مثال: HTML, CSS, JavaScript">${esc(skillsStr)}</textarea>
+                            <div style="color:var(--text-muted);font-size:0.78rem;margin-top:4px"><i class="fas fa-info-circle"></i> افصل بين المهارات بفاصلة (,)</div>
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-bullseye"></i> المجالات المهتم بها</label>
+                            <textarea id="sk_interests" rows="3" placeholder="مثال: تطوير الويب, تطبيقات الموبايل, الذكاء الاصطناعي">${esc(interestsStr)}</textarea>
+                        </div>
+
+                        <div style="display:flex;gap:10px;margin-top:14px">
+                            <button class="btn btn-secondary" onclick="closeModal('editSkillsModal')" style="flex:1;justify-content:center">إلغاء</button>
+                            <button class="btn btn-primary" onclick="saveSkills()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        window.saveSkills = async () => {
+            const skillsStr = document.getElementById('sk_skills').value.trim();
+            const interestsStr = document.getElementById('sk_interests').value.trim();
+
+            const skills = skillsStr ? skillsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const interests = interestsStr ? interestsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            try {
+                const { error } = await window.ProVance.sb.from('student').update({
+                    skills, interested_fields: interests
+                }).eq('user_id', State.studentUserId);
+                if (error) throw error;
+                addEditHistory('تعديل المهارات', `${skills.length} مهارة، ${interests.length} مجال`);
+                window.ProVance.showToast('تم الحفظ ✓', 'success');
+                closeModal('editSkillsModal');
+                window.dispatchEvent(new CustomEvent('reload-profile'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+            }
+        };
+
+        // ============ EDIT SOCIAL ============
+        window.openEditSocial = () => {
+            const studentData = State.studentData;
+            const html = `
+                <div class="modal active" id="editSocialModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title"><i class="fas fa-link"></i><span>تعديل الروابط</span></div>
+                            <button class="modal-close" onclick="closeModal('editSocialModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fab fa-linkedin"></i> LinkedIn</label>
+                            <input type="url" id="so_linkedin" value="${esc(studentData.linkedin || '')}" placeholder="https://linkedin.com/in/..." style="direction:ltr;text-align:right">
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fab fa-github"></i> GitHub</label>
+                            <input type="url" id="so_github" value="${esc(studentData.github || '')}" placeholder="https://github.com/..." style="direction:ltr;text-align:right">
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-globe"></i> الموقع الشخصي</label>
+                            <input type="url" id="so_portfolio" value="${esc(studentData.portfolio || '')}" placeholder="https://..." style="direction:ltr;text-align:right">
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-file-pdf"></i> رابط السيرة الذاتية (CV)</label>
+                            <input type="url" id="so_cv" value="${esc(studentData.cv_url || '')}" placeholder="https://drive.google.com/..." style="direction:ltr;text-align:right">
+                            <div style="color:var(--text-muted);font-size:0.78rem;margin-top:4px"><i class="fas fa-info-circle"></i> ارفع الـ CV على Google Drive وضع الرابط هنا</div>
+                        </div>
+
+                        <div style="display:flex;gap:10px;margin-top:14px">
+                            <button class="btn btn-secondary" onclick="closeModal('editSocialModal')" style="flex:1;justify-content:center">إلغاء</button>
+                            <button class="btn btn-primary" onclick="saveSocial()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        window.saveSocial = async () => {
+            const data = {
+                linkedin: document.getElementById('so_linkedin').value.trim() || null,
+                github: document.getElementById('so_github').value.trim() || null,
+                portfolio: document.getElementById('so_portfolio').value.trim() || null,
+                cv_url: document.getElementById('so_cv').value.trim() || null
+            };
+
+            try {
+                const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', State.studentUserId);
+                if (error) throw error;
+                addEditHistory('تعديل الروابط', 'تم تحديث LinkedIn/GitHub/Portfolio/CV');
+                window.ProVance.showToast('تم الحفظ ✓', 'success');
+                closeModal('editSocialModal');
+                window.dispatchEvent(new CustomEvent('reload-profile'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+            }
+        };
+
+        // ============ EDIT AVATAR (مع PRESETS) ============
+        window.openEditAvatar = () => {
+            const studentData = State.studentData;
+            let currentAvatar;
+            if (studentData.photo) {
+                if (studentData.photo.startsWith('preset:')) {
+                    const idx = parseInt(studentData.photo.replace('preset:', '')) || 0;
+                    const preset = AVATAR_PRESETS[idx] || AVATAR_PRESETS[0];
+                    currentAvatar = `<span style="font-size:3rem">${preset.emoji}</span>`;
+                } else {
+                    currentAvatar = `<img src="${studentData.photo}" alt="">`;
+                }
+            } else {
+                currentAvatar = `<span>${getInitial(studentData.full_name)}</span>`;
+            }
+
+            const presetsHtml = AVATAR_PRESETS.map((p, i) => {
+                const isSelected = studentData.photo === `preset:${i}`;
+                return `<div class="preset-avatar ${isSelected ? 'selected' : ''}" style="background:${p.gradient}" onclick="selectPreset(${i})">${p.emoji}</div>`;
+            }).join('');
+
+            const html = `
+                <div class="modal active" id="editAvatarModal">
+                    <div class="modal-content" style="max-width:520px">
+                        <div class="modal-header">
+                            <div class="modal-title"><i class="fas fa-camera"></i><span>تغيير الصورة الشخصية</span></div>
+                            <button class="modal-close" onclick="closeModal('editAvatarModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div class="avatar-upload">
+                            <div class="avatar-upload-circle" id="avatarPreview" onclick="document.getElementById('avatarFile').click()">
+                                ${currentAvatar}
+                            </div>
+                            <input type="file" id="avatarFile" accept="image/*" style="display:none" onchange="previewAvatar(event)">
+                            <div style="color:var(--text-muted);font-size:0.84rem;margin-top:8px">اضغط على الصورة لرفع صورة جديدة</div>
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-link"></i> أو ضع رابط صورة مباشر</label>
+                            <input type="url" id="av_url" value="${esc(studentData.photo && !studentData.photo.startsWith('preset:') ? studentData.photo : '')}" placeholder="https://..." style="direction:ltr;text-align:right">
+                        </div>
+
+                        <div class="field">
+                            <label><i class="fas fa-palette"></i> أو اختر صورة جاهزة</label>
+                            <div class="avatar-presets">${presetsHtml}</div>
+                        </div>
+
+                        <div style="display:flex;gap:10px;margin-top:14px">
+                            <button class="btn btn-secondary" onclick="closeModal('editAvatarModal')" style="flex:1;justify-content:center">إلغاء</button>
+                            <button class="btn btn-primary" onclick="saveAvatar()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        window.selectPreset = (idx) => {
+            const preset = AVATAR_PRESETS[idx];
+            document.getElementById('avatarPreview').style.background = preset.gradient;
+            document.getElementById('avatarPreview').innerHTML = `<span style="font-size:3rem">${preset.emoji}</span>`;
+            document.getElementById('av_url').value = `preset:${idx}`;
+            document.querySelectorAll('.preset-avatar').forEach(el => el.classList.remove('selected'));
+            document.querySelectorAll('.preset-avatar')[idx].classList.add('selected');
+        };
+
+        window.previewAvatar = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                window.ProVance.showToast('الصورة كبيرة - الحد الأقصى 2MB', 'warning');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById('avatarPreview').innerHTML = `<img src="${ev.target.result}" alt="">`;
+                document.getElementById('av_url').value = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.saveAvatar = async () => {
+            const url = document.getElementById('av_url').value.trim();
+            try {
+                const { error } = await window.ProVance.sb.from('student').update({ photo: url || null }).eq('user_id', State.studentUserId);
+                if (error) throw error;
+                addEditHistory('تغيير الصورة', 'تم تغيير الصورة الشخصية');
+                window.ProVance.showToast('تم تغيير الصورة ✓', 'success');
+                closeModal('editAvatarModal');
+                window.dispatchEvent(new CustomEvent('reload-profile'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+            }
+        };
+
+        // ============ QR SCANNER ============
+        window.openQRScanner = () => {
+            const html = `
+                <div class="modal active" id="qrScannerModal">
+                    <div class="modal-content" style="max-width:500px">
+                        <div class="modal-header">
+                            <div class="modal-title"><i class="fas fa-qrcode"></i><span>مسح QR Code</span></div>
+                            <button class="modal-close" onclick="closeModal('qrScannerModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div class="qr-scanner-wrap" id="scannerWrap">
+                            <video id="qrVideo" autoplay playsinline muted></video>
+                            <div class="qr-scanner-overlay"></div>
+                        </div>
+
+                        <p style="text-align:center;color:var(--text-muted);font-size:0.86rem;margin-bottom:14px">
+                            <i class="fas fa-info-circle"></i> وجّه الكاميرا نحو الـ QR Code
+                        </p>
+
+                        <div class="qr-input-fallback">
+                            <label style="display:block;margin-bottom:8px;font-weight:600;font-size:0.88rem">
+                                <i class="fas fa-keyboard"></i> أو أدخل الكود يدوياً
+                            </label>
+                            <div style="display:flex;gap:8px">
+                                <input type="text" id="manualQrCode" placeholder="مثال: INT-A1B2C3D4..." style="flex:1;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Courier New',monospace">
+                                <button class="btn btn-primary btn-sm" onclick="processManualCode()">
+                                    <i class="fas fa-check"></i> تأكيد
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+            startQRCamera();
+        };
+
+        async function startQRCamera() {
+            try {
+                const video = document.getElementById('qrVideo');
+                State.qrStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                video.srcObject = State.qrStream;
+            } catch (err) {
+                console.warn('Camera unavailable:', err);
+                const wrap = document.getElementById('scannerWrap');
+                if (wrap) {
+                    wrap.innerHTML = `
+                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);gap:10px;padding:20px;text-align:center">
+                            <i class="fas fa-camera-slash" style="font-size:3rem"></i>
+                            <p>الكاميرا غير متاحة. استخدم الإدخال اليدوي أدناه</p>
+                        </div>
+                    `;
+                }
+            }
         }
-    };
 
-    // QR SCANNER
-    window.openQRScanner = () => {
-        const html = `
-            <div class="modal active" id="qrScannerModal">
-                <div class="modal-content" style="max-width:500px">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-qrcode"></i><span>مسح QR Code</span></div>
-                        <button class="modal-close" onclick="closeModal('qrScannerModal')"><i class="fas fa-times"></i></button>
+        window.processManualCode = async () => {
+            const code = document.getElementById('manualQrCode').value.trim().toUpperCase();
+            if (!code) {
+                window.ProVance.showToast('أدخل كود الـ QR', 'warning');
+                return;
+            }
+            await processQRScan(code);
+        };
+
+        async function processQRScan(code) {
+            try {
+                const sb = window.ProVance.sb;
+                const { data: qrCode, error } = await sb.from('qr_codes').select('*').eq('code', code).maybeSingle();
+
+                if (error || !qrCode) {
+                    window.ProVance.showToast('❌ كود QR غير صحيح', 'error');
+                    return;
+                }
+
+                const now = new Date();
+                const validUntil = new Date(qrCode.valid_until);
+
+                if (qrCode.status !== 'active') {
+                    window.ProVance.showToast('⚠️ الـ QR ده مش نشط', 'warning');
+                    return;
+                }
+
+                if (validUntil < now) {
+                    window.ProVance.showToast('⏰ انتهت صلاحية الـ QR', 'error');
+                    return;
+                }
+
+                // تحقق من أن QR ده ليه (للمقابلات فقط - الحضور اليومي عام)
+                if (qrCode.qr_type === 'interview' && qrCode.student_user_id && qrCode.student_user_id !== State.studentUserId) {
+                    window.ProVance.showToast('❌ الـ QR ده مش ليك', 'error');
+                    return;
+                }
+
+                const expectedTime = qrCode.metadata?.interview_time
+                    ? new Date(qrCode.metadata.interview_time)
+                    : new Date(qrCode.valid_from);
+                const delayMins = Math.max(0, Math.floor((now - expectedTime) / 60000));
+                const status = delayMins > 15 ? 'late' : (delayMins < 0 ? 'early' : 'on_time');
+
+                // ابحث عن application للحضور اليومي
+                let appId = qrCode.application_id;
+                if (qrCode.qr_type === 'daily_attendance' && !appId) {
+                    const myApp = State.allApplications.find(a =>
+                        a.company_user_id === qrCode.company_user_id &&
+                        ['hired', 'in_training'].includes(a.status)
+                    );
+                    if (myApp) appId = myApp.id;
+                }
+
+                const { error: logErr } = await sb.from('attendance_logs').insert({
+                    qr_code_id: qrCode.id,
+                    application_id: appId,
+                    student_user_id: State.studentUserId,
+                    student_name: State.studentData.full_name,
+                    company_user_id: qrCode.company_user_id,
+                    company_name: qrCode.company_name,
+                    attendance_type: qrCode.qr_type,
+                    expected_time: expectedTime.toISOString(),
+                    delay_minutes: delayMins,
+                    status,
+                    is_valid: true
+                });
+
+                if (logErr) throw logErr;
+
+                await sb.from('qr_codes').update({
+                    scans_count: (qrCode.scans_count || 0) + 1,
+                    last_scanned_at: now.toISOString(),
+                    is_used: qrCode.qr_type === 'interview'
+                }).eq('id', qrCode.id);
+
+                if (qrCode.qr_type === 'interview' && qrCode.application_id) {
+                    await sb.from('applications').update({ status: 'interview_done' }).eq('id', qrCode.application_id);
+                }
+
+                if (qrCode.qr_type === 'daily_attendance' && appId) {
+                    try {
+                        await sb.rpc('check_and_create_payment_lock', { p_application_id: appId });
+                    } catch (e) { console.warn('Payment lock check failed:', e); }
+                }
+
+                if (window.ProVance.sendNotification) {
+                    await window.ProVance.sendNotification({
+                        userId: qrCode.company_user_id,
+                        userType: 'company',
+                        title: '✅ ' + (qrCode.qr_type === 'interview' ? 'حضور مقابلة' : 'حضور يومي'),
+                        message: `${State.studentData.full_name} مسح الـ QR Code ${delayMins > 0 ? `(متأخر ${delayMins} دقيقة)` : 'في الوقت'}`,
+                        type: 'success'
+                    });
+                }
+
+                const successMsg = status === 'late'
+                    ? `⚠️ تم التسجيل بتأخير ${delayMins} دقيقة`
+                    : status === 'early'
+                    ? '⚡ وصلت مبكراً!'
+                    : '🎉 تم تسجيل الحضور بنجاح!';
+                window.ProVance.showToast(successMsg, status === 'on_time' || status === 'early' ? 'success' : 'warning');
+
+                closeModal('qrScannerModal');
+                window.dispatchEvent(new CustomEvent('reload-profile'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+            }
+        }
+
+        // ============ EDIT HISTORY MODAL ============
+        window.openEditHistory = () => {
+            const html = `
+                <div class="modal active" id="editHistoryModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title"><i class="fas fa-history"></i><span>سجل التعديلات</span></div>
+                            <button class="modal-close" onclick="closeModal('editHistoryModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        ${State.editHistory.length === 0 ? `
+                            <div class="empty-state">
+                                <i class="fas fa-history"></i>
+                                <h3>لا توجد تعديلات بعد</h3>
+                                <p>كل تعديلاتك على البروفايل هتتسجل هنا</p>
+                            </div>
+                        ` : `
+                            <div style="max-height:400px;overflow-y:auto">
+                                ${State.editHistory.map(h => `
+                                    <div class="history-card">
+                                        <div class="history-icon"><i class="fas fa-edit"></i></div>
+                                        <div class="history-body">
+                                            <div class="history-title">${esc(h.action)}</div>
+                                            ${h.details ? `<div class="history-meta">${esc(h.details)}</div>` : ''}
+                                            <div class="history-meta">
+                                                <i class="fas fa-clock"></i> ${formatDateTime(h.timestamp)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div style="display:flex;gap:10px;margin-top:14px">
+                                <button class="btn btn-danger" onclick="clearEditHistory()" style="flex:1;justify-content:center">
+                                    <i class="fas fa-trash"></i> مسح السجل
+                                </button>
+                                <button class="btn btn-secondary" onclick="closeModal('editHistoryModal')" style="flex:1;justify-content:center">إغلاق</button>
+                            </div>
+                        `}
                     </div>
+                </div>
+            `;
+            renderModal(html);
+        };
 
-                    <div class="qr-scanner-wrap" id="scannerWrap">
-                        <video id="qrVideo" autoplay playsinline muted></video>
-                        <div class="qr-scanner-overlay"></div>
-                    </div>
+        window.clearEditHistory = async () => {
+            const ok = await window.ProVance.confirmModal({title: 'مسح السجل', message: 'هل تريد مسح سجل التعديلات؟'});
+            if (!ok) return;
+            State.editHistory.length = 0;
+            try { localStorage.removeItem('provance_edit_history_' + State.studentUserId); } catch (e) {}
+            closeModal('editHistoryModal');
+            window.ProVance.showToast('تم المسح', 'success');
+        };
 
-                    <p style="text-align:center;color:var(--text-muted);font-size:0.86rem;margin-bottom:14px">
-                        <i class="fas fa-info-circle"></i> وجّه الكاميرا نحو الـ QR Code
-                    </p>
+        // ============ PROFILE CONTRACT ============
+        window.openProfileContract = () => {
+            const studentData = State.studentData;
+            const html = `
+                <div class="modal active" id="profileContractModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title"><i class="fas fa-file-contract"></i><span>اتفاقية الاستخدام</span></div>
+                            <button class="modal-close" onclick="closeModal('profileContractModal')"><i class="fas fa-times"></i></button>
+                        </div>
 
-                    <div class="qr-input-fallback">
-                        <label style="display:block;margin-bottom:8px;font-weight:600;font-size:0.88rem">
-                            <i class="fas fa-keyboard"></i> أو أدخل الكود يدوياً
-                        </label>
-                        <div style="display:flex;gap:8px">
-                            <input type="text" id="manualQrCode" placeholder="مثال: INT-A1B2C3D4..." style="flex:1;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Courier New',monospace">
-                            <button class="btn btn-primary btn-sm" onclick="processManualCode()">
-                                <i class="fas fa-check"></i> تأكيد
+                        <div class="contract-doc">
+                            <h4>📋 شروط استخدام منصة ProVance</h4>
+                            <p style="margin-bottom:12px">بإنشائك حساب على المنصة، أنت توافق على الشروط التالية:</p>
+
+                            <h4>1. صحة البيانات</h4>
+                            <ul>
+                                <li>كل البيانات اللي بتدخلها لازم تكون صحيحة وحديثة</li>
+                                <li>أنت مسؤول عن تحديث بياناتك بشكل دوري</li>
+                                <li>تقديم بيانات مزيفة قد يؤدي إلى حظر الحساب</li>
+                            </ul>
+
+                            <h4>2. التقديم على الفرص</h4>
+                            <ul>
+                                <li>يمكنك التقديم على 3 فرص كحد أقصى في نفس الوقت</li>
+                                <li>يمكنك سحب طلبك قبل قبول الشركة</li>
+                                <li>الالتزام بمواعيد المقابلات إجباري</li>
+                            </ul>
+
+                            <h4>3. الحضور والمواعيد</h4>
+                            <ul>
+                                <li>3 غيابات متتالية = تحذير من الإدارة</li>
+                                <li>4 غيابات = إيقاف مؤقت 7 أيام</li>
+                                <li>5+ غيابات = حظر دائم من المنصة</li>
+                            </ul>
+
+                            <h4>4. الدفع</h4>
+                            <ul>
+                                <li>بعد 3 أيام تدريب، يقفل الحساب لحد ما تدفع رسوم التدريب</li>
+                                <li>الدفع كامل أو جزئي (50%)</li>
+                                <li>الأسعار محددة من الإدارة لكل شركة</li>
+                            </ul>
+
+                            <h4>5. الخصوصية</h4>
+                            <ul>
+                                <li>بياناتك محمية ولن تُشارك مع طرف ثالث</li>
+                                <li>الشركات تشوف فقط البيانات الضرورية</li>
+                                <li>يمكنك حذف حسابك في أي وقت</li>
+                            </ul>
+
+                            <h4>6. التواصل خارج المنصة</h4>
+                            <ul>
+                                <li>كل التواصل لازم يتم من خلال المنصة</li>
+                                <li>بيانات الشركة الحساسة (تليفون/عنوان دقيق) مخفية</li>
+                                <li>محاولة الـ bypass = حظر فوري</li>
+                            </ul>
+
+                            <p style="margin-top:18px;padding:12px;background:rgba(79,172,254,0.05);border-radius:10px;border:1px solid rgba(79,172,254,0.2);text-align:center">
+                                <strong>✓ أنت موافق على الشروط دي بمجرد استخدام المنصة</strong><br>
+                                <small style="color:var(--text-muted)">تاريخ التسجيل: ${studentData.created_at ? formatDate(studentData.created_at) : '-'}</small>
+                            </p>
+                        </div>
+
+                        <div style="display:flex;gap:10px;margin-top:14px">
+                            <button class="btn btn-secondary" onclick="printContract()" style="flex:1;justify-content:center">
+                                <i class="fas fa-print"></i> طباعة
+                            </button>
+                            <button class="btn btn-primary" onclick="closeModal('profileContractModal')" style="flex:1;justify-content:center">
+                                <i class="fas fa-check"></i> فهمت
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
-        renderModal(html);
+            `;
+            renderModal(html);
+        };
 
-        // Try to start camera
-        startQRCamera();
-    };
+        window.printContract = () => {
+            const doc = document.querySelector('.contract-doc');
+            if (!doc) return;
+            const printWin = window.open('', '_blank', 'width=800,height=900');
+            printWin.document.write(`
+                <html dir="rtl"><head><title>ProVance - اتفاقية الاستخدام</title>
+                <style>
+                    body { font-family: Arial; padding: 40px; line-height: 1.8; }
+                    h2 { color: #4facfe; }
+                    h4 { color: #4facfe; margin-top: 18px; }
+                    ul { padding-right: 20px; }
+                </style>
+                </head><body>
+                <h2>ProVance - اتفاقية الاستخدام</h2>
+                ${doc.innerHTML}
+                </body></html>
+            `);
+            printWin.document.close();
+            setTimeout(() => printWin.print(), 500);
+        };
 
-    async function startQRCamera() {
-        try {
-            const video = document.getElementById('qrVideo');
-            qrStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' }
-            });
-            video.srcObject = qrStream;
-            // Note: للـ scan الفعلي، نحتاج jsQR library
-            // دلوقتي بنعتمد على manual input
-        } catch (err) {
-            console.warn('Camera unavailable:', err);
-            const wrap = document.getElementById('scannerWrap');
-            if (wrap) {
-                wrap.innerHTML = `
-                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);gap:10px;padding:20px;text-align:center">
-                        <i class="fas fa-camera-slash" style="font-size:3rem"></i>
-                        <p>الكاميرا غير متاحة. استخدم الإدخال اليدوي أدناه</p>
-                    </div>
-                `;
+        // ============ DOWNLOAD CV ============
+        window.downloadCV = () => {
+            if (!State.studentData?.cv_url) {
+                window.ProVance.showToast('مفيش CV مرفوع', 'warning');
+                return;
             }
-        }
-    }
+            window.open(State.studentData.cv_url, '_blank');
+        };
 
-    window.processManualCode = async () => {
-        const code = document.getElementById('manualQrCode').value.trim().toUpperCase();
-        if (!code) {
-            window.ProVance.showToast('أدخل كود الـ QR', 'warning');
+        console.log('✅ Profile modals registered');
+    });
+
+    // ============ MAIN INIT ============
+    let isInitialized = false;
+    async function loadAll() {
+        if (!window._studentProfileState) {
+            setTimeout(loadAll, 100);
             return;
         }
-
-        await processQRScan(code);
-    };
-
-    async function processQRScan(code) {
-        try {
-            const sb = window.ProVance.sb;
-
-            // ابحث عن الـ QR Code
-            const { data: qrCode, error } = await sb.from('qr_codes')
-                .select('*')
-                .eq('code', code)
-                .maybeSingle();
-
-            if (error || !qrCode) {
-                window.ProVance.showToast('❌ كود QR غير صحيح', 'error');
-                return;
-            }
-
-            // Validate
-            const now = new Date();
-            const validUntil = new Date(qrCode.valid_until);
-
-            if (qrCode.status !== 'active') {
-                window.ProVance.showToast('⚠️ الـ QR ده مش نشط', 'warning');
-                return;
-            }
-
-            if (validUntil < now) {
-                window.ProVance.showToast('⏰ انتهت صلاحية الـ QR', 'error');
-                return;
-            }
-
-            if (qrCode.student_user_id !== studentUserId) {
-                window.ProVance.showToast('❌ الـ QR ده مش ليك', 'error');
-                return;
-            }
-
-            // سجّل الحضور
-            const expectedTime = qrCode.metadata?.interview_time
-                ? new Date(qrCode.metadata.interview_time)
-                : new Date(qrCode.valid_from);
-            const delayMins = Math.max(0, Math.floor((now - expectedTime) / 60000));
-            const status = delayMins > 15 ? 'late' : (delayMins < 0 ? 'early' : 'on_time');
-
-            const { error: logErr } = await sb.from('attendance_logs').insert({
-                qr_code_id: qrCode.id,
-                application_id: qrCode.application_id,
-                student_user_id: studentUserId,
-                student_name: studentData.full_name,
-                company_user_id: qrCode.company_user_id,
-                company_name: qrCode.company_name,
-                attendance_type: qrCode.qr_type,
-                expected_time: expectedTime.toISOString(),
-                delay_minutes: delayMins,
-                status,
-                is_valid: true
-            });
-
-            if (logErr) throw logErr;
-
-            // حدّث الـ QR scans count
-            await sb.from('qr_codes').update({
-                scans_count: (qrCode.scans_count || 0) + 1,
-                last_scanned_at: now.toISOString(),
-                is_used: qrCode.qr_type === 'interview'  // المقابلات تستخدم مرة واحدة
-            }).eq('id', qrCode.id);
-
-            // لو مقابلة، حدّث الـ application
-            if (qrCode.qr_type === 'interview' && qrCode.application_id) {
-                await sb.from('applications').update({ status: 'interview_done' }).eq('id', qrCode.application_id);
-            }
-
-            // لو حضور يومي، شيك الـ payment lock
-            if (qrCode.qr_type === 'daily_attendance' && qrCode.application_id) {
-                try {
-                    await sb.rpc('check_and_create_payment_lock', { p_application_id: qrCode.application_id });
-                } catch (e) {
-                    console.warn('Payment lock check failed:', e);
-                }
-            }
-
-            // إشعار للشركة
-            if (window.ProVance.sendNotification) {
-                await window.ProVance.sendNotification({
-                    userId: qrCode.company_user_id,
-                    userType: 'company',
-                    title: '✅ ' + (qrCode.qr_type === 'interview' ? 'حضور مقابلة' : 'حضور يومي'),
-                    message: `${studentData.full_name} مسح الـ QR Code ${delayMins > 0 ? `(متأخر ${delayMins} دقيقة)` : 'في الوقت'}`,
-                    type: 'success'
-                });
-            }
-
-            const successMsg = status === 'late'
-                ? `⚠️ تم التسجيل بتأخير ${delayMins} دقيقة`
-                : status === 'early'
-                ? '⚡ وصلت مبكراً!'
-                : '🎉 تم تسجيل الحضور بنجاح!';
-            window.ProVance.showToast(successMsg, status === 'on_time' || status === 'early' ? 'success' : 'warning');
-
-            closeModal('qrScannerModal');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-        }
-    }
-
-    // LOAD ALL
-    async function loadAll() {
+        const State = window._studentProfileState;
         const sb = window.ProVance.sb;
         if (!sb) return;
 
         try {
-            const [studentRes, appsRes, evalsRes, attRes, lockRes] = await Promise.all([
-                sb.from('student').select('*').eq('user_id', studentUserId).maybeSingle(),
-                sb.from('applications').select('*').eq('student_user_id', studentUserId).order('created_at', { ascending: false }),
-                sb.from('performance_evaluations').select('*').eq('student_user_id', studentUserId).eq('status', 'sent'),
-                sb.from('attendance_logs').select('*').eq('student_user_id', studentUserId).order('scanned_at', { ascending: false }).limit(50),
-                sb.from('payment_locks').select('*').eq('student_user_id', studentUserId).in('lock_status', ['locked', 'partial_paid']).maybeSingle()
+            const session = await sb.auth.getSession();
+            const userId = session?.data?.session?.user?.id;
+            const userEmail = session?.data?.session?.user?.email;
+
+            if (!userId) {
+                window.location.href = 'student-login.html';
+                return;
+            }
+
+            State.studentUserId = userId;
+            State.studentEmail = userEmail;
+
+            const [studentRes, appsRes, evalsRes, attRes, lockRes, violationsRes] = await Promise.all([
+                sb.from('student').select('*').eq('user_id', userId).maybeSingle(),
+                sb.from('applications').select('*').eq('student_user_id', userId).order('created_at', { ascending: false }),
+                sb.from('performance_evaluations').select('*').eq('student_user_id', userId).eq('status', 'sent'),
+                sb.from('attendance_logs').select('*').eq('student_user_id', userId).order('scanned_at', { ascending: false }).limit(50),
+                sb.from('payment_locks').select('*').eq('student_user_id', userId).in('lock_status', ['locked', 'partial_paid']).maybeSingle(),
+                sb.from('penalties').select('*').eq('target_user_id', userId).order('created_at', { ascending: false })
             ]);
 
-            studentData = studentRes.data;
-            allApplications = appsRes.data || [];
-            allEvaluations = evalsRes.data || [];
-            allAttendance = attRes.data || [];
-            paymentLock = lockRes.data;
+            State.studentData = studentRes.data;
+            State.allApplications = appsRes.data || [];
+            State.allEvaluations = evalsRes.data || [];
+            State.allAttendance = attRes.data || [];
+            State.paymentLock = lockRes.data;
+            State.allViolations = violationsRes.data || [];
 
-            if (!studentData) {
+            if (!State.studentData) {
                 window.ProVance.showToast('بيانات الطالب غير موجودة', 'error');
                 setTimeout(() => window.location.href = 'student-login.html', 2000);
                 return;
             }
 
-            renderProfile();
+            if (!isInitialized) {
+                isInitialized = true;
+                State.loadEditHistory();
+
+                // Realtime
+                sb.channel('student-profile-' + userId)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'student', filter: `user_id=eq.${userId}` }, () => loadAll())
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs', filter: `student_user_id=eq.${userId}` }, () => loadAll())
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_locks', filter: `student_user_id=eq.${userId}` }, () => loadAll())
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'penalties', filter: `target_user_id=eq.${userId}` }, () => loadAll())
+                    .subscribe();
+
+                window.addEventListener('reload-profile', loadAll);
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const modals = document.querySelectorAll('.modal.active');
+                        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
+                    }
+                });
+            }
+
+            State.renderProfile();
         } catch (err) {
             console.error('Load error:', err);
             window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
         }
     }
 
-    // INIT
-    async function init() {
-        const ok = window.ProVance.requireStudentAuth ? await window.ProVance.requireStudentAuth() : true;
-        if (!ok) return;
-
-        const session = window.ProVance.getSession ? await window.ProVance.getSession() : null;
-        if (session && session.user) {
-            studentUserId = session.user.id;
-            studentEmail = session.user.email;
-        } else if (window.ProVance.sb) {
-            const { data } = await window.ProVance.sb.auth.getSession();
-            if (data?.session?.user) {
-                studentUserId = data.session.user.id;
-                studentEmail = data.session.user.email;
-            }
-        }
-
-        if (!studentUserId) {
-            window.location.href = 'student-login.html';
-            return;
-        }
-
-        await loadAll();
-
-        // Realtime
-        const sb = window.ProVance.sb;
-        if (sb) {
-            sb.channel('student-profile-' + studentUserId)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'student', filter: `user_id=eq.${studentUserId}` }, () => loadAll())
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs', filter: `student_user_id=eq.${studentUserId}` }, () => loadAll())
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_locks', filter: `student_user_id=eq.${studentUserId}` }, () => loadAll())
-                .subscribe();
+    function init() {
+        if (window._studentProfileState) {
+            loadAll();
+        } else {
+            setTimeout(init, 100);
         }
     }
-
     init();
 })();
     </script>
