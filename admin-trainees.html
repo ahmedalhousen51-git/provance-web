@@ -3,675 +3,906 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>إدارة الطلاب - ProVance</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <title>إدارة المتدربين - ProVance Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #ef4444; --secondary: #dc2626;
-            --gradient: linear-gradient(135deg, #ef4444, #dc2626);
-            --bg: #0a0e27; --bg-2: #1a1535;
-            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
-            --border: rgba(255,255,255,0.08);
-            --text: #fff; --text-muted: #94a3b8;
-            --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        .bg-anim {
-            position: fixed; inset: 0; z-index: -1;
-            background:
-                radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%),
-                radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%),
-                var(--bg);
-        }
-        .layout { display: flex; min-height: 100vh; }
-        .sidebar {
-            width: 260px; background: rgba(20,18,40,0.7);
-            backdrop-filter: blur(20px); border-left: 1px solid var(--border);
-            padding: 24px 16px; position: fixed; inset: 0 0 0 auto;
-            z-index: 100; transition: transform .3s;
-            display: flex; flex-direction: column;
-        }
-        .sidebar-logo {
-            display: flex; align-items: center; gap: 10px;
-            padding: 0 8px 20px; border-bottom: 1px solid var(--border);
-            margin-bottom: 16px; justify-content: center;
-        }
-        .sidebar-logo img { height: 32px; max-width: 100%; }
-        .admin-badge {
-            background: var(--gradient); color: #fff;
-            padding: 5px 12px; border-radius: 14px;
-            font-size: 0.75rem; font-weight: 800;
-            text-align: center; margin-bottom: 14px;
-            display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px 14px; color: var(--text-muted);
-            text-decoration: none; border-radius: 10px;
-            font-size: 0.92rem; font-weight: 600;
-            margin-bottom: 4px; transition: all .2s;
-        }
-        .nav-item:hover { background: var(--card); color: var(--text); }
-        .nav-item.active { background: var(--gradient); color: #fff; }
-        .nav-item i { width: 18px; }
-        .main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
-        .topbar {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 22px; gap: 14px; flex-wrap: wrap;
-        }
-        .menu-toggle {
-            display: none; background: var(--card); border: 1px solid var(--border);
-            color: var(--text); width: 42px; height: 42px;
-            border-radius: 10px; cursor: pointer;
-        }
-        .topbar-title { font-size: 1.5rem; font-weight: 800; }
-
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .stat-mini {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 12px; padding: 14px;
-            display: flex; align-items: center; gap: 11px;
-        }
-        .stat-mini-icon {
-            width: 40px; height: 40px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; color: #fff;
-        }
-        .stat-mini-icon.cyan { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-        .stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .stat-mini-icon.purple { background: linear-gradient(135deg, #f093fb, #f5576c); }
-        .stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
-        .stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
-
-        .filters {
-            display: flex; gap: 10px; margin-bottom: 18px;
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 12px; padding: 12px;
-            flex-wrap: wrap;
-        }
-        .filters input, .filters select {
-            padding: 9px 14px; background: rgba(255,255,255,0.04);
-            border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text); font-family: inherit; font-size: 0.9rem;
-        }
-        .filters input { flex: 1; min-width: 200px; }
-        .filters input:focus, .filters select:focus { outline: none; border-color: var(--primary); }
-
-        .students-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-            gap: 14px;
-        }
-        .student-card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 18px;
-            display: flex; flex-direction: column; gap: 12px;
-            transition: all .2s;
-        }
-        .student-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-3px);
-        }
-        .student-header {
-            display: flex; align-items: center; gap: 12px;
-        }
-        .student-avatar {
-            width: 52px; height: 52px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; font-weight: 800; font-size: 1.2rem;
-            flex-shrink: 0; overflow: hidden;
-        }
-        .student-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .student-name-info { flex: 1; min-width: 0; }
-        .student-name { font-weight: 800; font-size: 1rem; }
-        .student-meta { color: var(--text-muted); font-size: 0.8rem; margin-top: 3px; }
-        .student-info {
-            display: flex; flex-direction: column; gap: 6px;
-            font-size: 0.85rem;
-        }
-        .student-info-row {
-            display: flex; align-items: center; gap: 6px;
-            color: var(--text-muted);
-        }
-        .student-info-row i { color: var(--primary); width: 14px; }
-        .student-status-row {
-            display: flex; gap: 6px; flex-wrap: wrap;
-        }
-        .student-status {
-            display: inline-flex; align-items: center; gap: 4px;
-            padding: 3px 10px; border-radius: 14px;
-            font-size: 0.74rem; font-weight: 700;
-        }
-        .status-active { background: rgba(16,185,129,0.15); color: var(--success); }
-        .status-suspended { background: rgba(148,163,184,0.15); color: var(--text-muted); }
-        .status-looking { background: rgba(79,172,254,0.15); color: var(--info); }
-        .status-in_training { background: rgba(16,185,129,0.15); color: var(--success); }
-        .status-completed { background: rgba(245,158,11,0.15); color: var(--warning); }
-
-        .student-actions {
-            display: flex; gap: 6px;
-            margin-top: auto; padding-top: 12px;
-            border-top: 1px solid var(--border);
-        }
-        .btn {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 8px 12px; border: none; border-radius: 9px;
-            font-weight: 700; font-family: inherit; font-size: 0.82rem;
-            cursor: pointer; transition: all .2s; text-decoration: none;
-        }
-        .btn-secondary {
-            background: var(--card); border: 1px solid var(--border); color: var(--text);
-        }
-        .btn-secondary:hover { background: var(--card-hover); }
-        .btn-warning {
-            background: rgba(245,158,11,0.1); color: var(--warning);
-            border: 1px solid rgba(245,158,11,0.3);
-        }
-        .btn-warning:hover { background: rgba(245,158,11,0.2); }
-        .btn-success {
-            background: rgba(16,185,129,0.15); color: var(--success);
-            border: 1px solid rgba(16,185,129,0.3);
-        }
-        .btn-success:hover { background: rgba(16,185,129,0.25); }
-        .student-actions .btn { flex: 1; justify-content: center; }
-
-        .empty-state {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-        }
-        .empty-state i {
-            font-size: 4rem;
-            color: rgba(148,163,184,0.3);
-            margin-bottom: 16px;
-        }
-
-        /* Modal */
-        .modal {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(5px);
-            z-index: 200; display: none;
-            align-items: center; justify-content: center;
-            padding: 20px;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: var(--bg-2); border: 1px solid var(--border);
-            border-radius: 20px;
-            width: 100%; max-width: 600px;
-            max-height: 90vh; overflow-y: auto;
-            padding: 28px;
-        }
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; padding-bottom: 14px;
-            border-bottom: 1px solid var(--border);
-        }
-        .modal-title { font-size: 1.2rem; font-weight: 800; }
-        .modal-close {
-            background: var(--card); border: 1px solid var(--border);
-            color: var(--text); width: 36px; height: 36px;
-            border-radius: 50%; cursor: pointer;
-        }
-        .detail-row {
-            display: flex; justify-content: space-between;
-            padding: 8px 0; border-bottom: 1px solid var(--border);
-            font-size: 0.92rem; gap: 12px;
-        }
-        .detail-row:last-child { border-bottom: none; }
-        .detail-row .label { color: var(--text-muted); }
-        .detail-row .value { font-weight: 600; text-align: left; word-break: break-word; }
-        .detail-row .value a { color: var(--primary); text-decoration: none; }
-        .detail-section-title {
-            font-size: 0.95rem; font-weight: 800;
-            margin: 16px 0 8px; color: var(--primary);
-            padding-bottom: 6px; border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; gap: 6px;
-        }
-        .skill-tag {
-            display: inline-block;
-            padding: 4px 10px;
-            background: rgba(79,172,254,0.1);
-            border: 1px solid rgba(79,172,254,0.3);
-            color: var(--info);
-            border-radius: 14px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            margin: 2px;
-        }
-
-        @media (max-width: 1024px) {
-            .sidebar { transform: translateX(100%); width: 280px; }
-            .sidebar.open { transform: translateX(0); }
-            .main { margin-right: 0; }
-            .menu-toggle { display: flex; align-items: center; justify-content: center; }
-        }
+:root { --primary: #ef4444; --secondary: #dc2626; --gradient: linear-gradient(135deg, #ef4444, #dc2626); --bg: #0a0e27; --bg-2: #1a1535; --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6); --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%), var(--bg); }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
+.sidebar-logo { display: flex; align-items: center; justify-content: center; padding: 0 8px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.sidebar-logo img { height: 32px; max-width: 100%; }
+.admin-badge { background: var(--gradient); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; text-align: center; margin-bottom: 14px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: var(--gradient); color: #fff; }
+.nav-item i { width: 18px; }
+.main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
+.menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
+.topbar-title { font-size: 1.5rem; font-weight: 800; }
+.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.stat-mini { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 11px; }
+.stat-mini-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #fff; flex-shrink: 0; }
+.stat-mini-icon.red { background: var(--gradient); }
+.stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.stat-mini-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-mini-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+.stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+.tabs-container { display: flex; gap: 8px; margin-bottom: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 6px; overflow-x: auto; }
+.tab-btn { padding: 11px 18px; background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.92rem; font-weight: 700; border-radius: 10px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; transition: all .2s; }
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.tab-btn.active { background: var(--gradient); color: #fff; box-shadow: 0 6px 16px rgba(239,68,68,0.3); }
+.tab-badge { background: rgba(255,255,255,0.15); padding: 1px 8px; border-radius: 10px; font-size: 0.72rem; }
+.tab-content { display: none; animation: fadeIn .3s; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.filters-bar { display: flex; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.filters-bar input, .filters-bar select { padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.9rem; }
+.filters-bar input { flex: 1; min-width: 200px; }
+.filters-bar input:focus, .filters-bar select:focus { outline: none; border-color: var(--primary); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.88rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
+.btn-primary { background: var(--gradient); color: #fff; }
+.btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(239,68,68,0.4); }
+.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+.btn-secondary:hover { background: var(--card-hover); }
+.btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+.btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+.btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+.btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
+.btn-sm { padding: 7px 12px; font-size: 0.8rem; }
+.trainees-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; }
+.trainee-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: all .25s; position: relative; }
+.trainee-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+.trainee-card.has-violations { border-color: rgba(245,158,11,0.4); }
+.trainee-card.banned { border-color: var(--error); background: rgba(239,68,68,0.04); }
+.trainee-card.banned::after { content: 'محظور'; position: absolute; top: 12px; left: 12px; background: var(--error); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 800; }
+.trainee-header { display: flex; align-items: center; gap: 12px; }
+.trainee-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.3rem; flex-shrink: 0; overflow: hidden; }
+.trainee-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.trainee-info { flex: 1; min-width: 0; }
+.trainee-name { font-weight: 800; font-size: 1.05rem; }
+.trainee-uni { color: var(--text-muted); font-size: 0.84rem; margin-top: 2px; }
+.strikes-display { display: flex; gap: 4px; align-items: center; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 10px; justify-content: center; }
+.strike-circle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; transition: all .2s; }
+.strike-circle.active { background: linear-gradient(135deg, #ef4444, #dc2626); border-color: var(--error); color: #fff; }
+.strike-circle.warning { background: linear-gradient(135deg, #f59e0b, #f97316); border-color: var(--warning); color: #fff; }
+.strikes-label { color: var(--text-muted); font-size: 0.84rem; margin-right: 8px; }
+.trainee-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.82rem; color: var(--text-muted); padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.trainee-meta span { display: flex; align-items: center; gap: 4px; }
+.trainee-meta i { color: var(--primary); }
+.trainee-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+.trainee-actions .btn { flex: 1; justify-content: center; padding: 9px; min-width: 90px; }
+.violation-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+.violation-card.minor { border-color: rgba(245,158,11,0.2); background: rgba(245,158,11,0.02); }
+.violation-card.major { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.04); }
+.violation-card.critical { border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.08); }
+.violation-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1rem; flex-shrink: 0; }
+.violation-icon.minor { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.violation-icon.major { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.violation-icon.critical { background: linear-gradient(135deg, #b91c1c, #991b1b); }
+.violation-body { flex: 1; min-width: 0; }
+.violation-title { font-weight: 800; font-size: 0.95rem; }
+.violation-meta { color: var(--text-muted); font-size: 0.82rem; margin-top: 3px; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .25s; }
+.modal.active { display: flex; }
+.modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto; padding: 28px; position: relative; animation: slideUp .3s ease-out; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.modal-title i { color: var(--primary); }
+.modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
+.field { margin-bottom: 16px; }
+.field label { display: block; color: var(--text); font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
+.field label i { color: var(--primary); margin-left: 4px; }
+.field label .req { color: var(--error); }
+.field input, .field select, .field textarea { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.95rem; font-family: inherit; transition: all .2s; }
+.field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.06); box-shadow: 0 0 0 4px rgba(239,68,68,0.1); }
+.severity-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.severity-btn { padding: 12px; background: rgba(255,255,255,0.02); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer; transition: all .2s; text-align: center; }
+.severity-btn.minor:hover, .severity-btn.minor.selected { border-color: var(--warning); background: rgba(245,158,11,0.1); color: var(--warning); }
+.severity-btn.major:hover, .severity-btn.major.selected { border-color: var(--error); background: rgba(239,68,68,0.1); color: var(--error); }
+.severity-btn.critical:hover, .severity-btn.critical.selected { border-color: #b91c1c; background: rgba(185,28,28,0.1); color: #b91c1c; }
+.modal-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.modal-section-title { font-size: 0.94rem; font-weight: 800; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.modal-section-title i { color: var(--primary); }
+.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.info-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+.info-label { color: var(--text-muted); font-size: 0.76rem; display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+.info-label i { color: var(--primary); }
+.info-value { font-weight: 700; font-size: 0.92rem; word-break: break-word; }
+.empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+.empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
+.empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 14px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+.badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
+.badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+.badge-error { background: rgba(239,68,68,0.15); color: var(--error); }
+.badge-info { background: rgba(79,172,254,0.15); color: var(--info); }
+.help-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.help-section h4 { font-size: 0.95rem; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--primary); }
+.help-section ul { list-style: none; padding: 0; }
+.help-section li { padding: 5px 0; color: var(--text-muted); font-size: 0.88rem; display: flex; align-items: flex-start; gap: 6px; }
+.help-section li i { color: var(--success); flex-shrink: 0; margin-top: 4px; }
+@media (max-width: 1024px) {
+    .sidebar { transform: translateX(100%); width: 280px; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-right: 0; }
+    .menu-toggle { display: flex; align-items: center; justify-content: center; }
+}
+@media (max-width: 600px) {
+    .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
+    .topbar-title { font-size: 1.2rem; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+}
     </style>
 </head>
 <body>
     <div class="bg-anim"></div>
-
     <div class="layout">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">
                 <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
             </div>
-            <div class="admin-badge"><i class="fas fa-shield-alt"></i><span>أدمن</span></div>
+            <div class="admin-badge"><i class="fas fa-shield-alt"></i> ADMIN PANEL</div>
             <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
             <a href="admin-campany.html" class="nav-item"><i class="fas fa-building"></i> الشركات</a>
-            <a href="admin-trainees.html" class="nav-item active"><i class="fas fa-user-graduate"></i> الطلاب</a>
+            <a href="admin-trainees.html" class="nav-item active"><i class="fas fa-users"></i> المتدربين</a>
             <a href="admin-notification.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
             <a href="#" onclick="logoutAdmin(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
             </a>
         </aside>
-
         <main class="main">
             <div class="topbar">
                 <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="topbar-title">
-                    <i class="fas fa-user-graduate" style="color:var(--primary)"></i> إدارة الطلاب
-                </h1>
+                <h1 class="topbar-title"><i class="fas fa-users" style="color:var(--primary)"></i> إدارة المتدربين</h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="openHelpModal()">
+                        <i class="fas fa-question-circle"></i> مساعدة
+                    </button>
+                </div>
             </div>
 
             <div class="stats-row">
                 <div class="stat-mini">
-                    <div class="stat-mini-icon cyan"><i class="fas fa-users"></i></div>
+                    <div class="stat-mini-icon red"><i class="fas fa-users"></i></div>
                     <div>
                         <div class="stat-mini-num" id="statTotal">0</div>
-                        <div class="stat-mini-label">إجمالي الطلاب</div>
+                        <div class="stat-mini-label">إجمالي المتدربين</div>
                     </div>
                 </div>
                 <div class="stat-mini">
-                    <div class="stat-mini-icon success"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-mini-icon success"><i class="fas fa-check"></i></div>
                     <div>
-                        <div class="stat-mini-num" id="statActive">0</div>
-                        <div class="stat-mini-label">حسابات نشطة</div>
+                        <div class="stat-mini-num" id="statClean">0</div>
+                        <div class="stat-mini-label">سجل نظيف</div>
                     </div>
                 </div>
                 <div class="stat-mini">
-                    <div class="stat-mini-icon warning"><i class="fas fa-search"></i></div>
+                    <div class="stat-mini-icon warning"><i class="fas fa-exclamation-triangle"></i></div>
                     <div>
-                        <div class="stat-mini-num" id="statLooking">0</div>
-                        <div class="stat-mini-label">يبحثون عن تدريب</div>
+                        <div class="stat-mini-num" id="statWithViolations">0</div>
+                        <div class="stat-mini-label">عندهم مخالفات</div>
                     </div>
                 </div>
                 <div class="stat-mini">
-                    <div class="stat-mini-icon purple"><i class="fas fa-graduation-cap"></i></div>
+                    <div class="stat-mini-icon error"><i class="fas fa-ban"></i></div>
                     <div>
-                        <div class="stat-mini-num" id="statInTraining">0</div>
-                        <div class="stat-mini-label">في تدريب</div>
+                        <div class="stat-mini-num" id="statBanned">0</div>
+                        <div class="stat-mini-label">محظورين</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon info"><i class="fas fa-clipboard-list"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statTotalViolations">0</div>
+                        <div class="stat-mini-label">إجمالي المخالفات</div>
                     </div>
                 </div>
             </div>
 
-            <div class="filters">
-                <input type="text" id="searchInput" placeholder="🔍 ابحث بالاسم، البريد، أو الجامعة...">
-                <select id="statusFilter">
-                    <option value="">كل الحالات</option>
-                    <option value="active">نشط</option>
-                    <option value="suspended">موقوف</option>
+            <div class="tabs-container">
+                <button class="tab-btn active" data-tab="all" onclick="switchTab(event, 'all')">
+                    <i class="fas fa-users"></i> كل المتدربين
+                    <span class="tab-badge" id="allCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="violations" onclick="switchTab(event, 'violations')">
+                    <i class="fas fa-exclamation-triangle"></i> عندهم مخالفات
+                    <span class="tab-badge" id="violationsCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="banned" onclick="switchTab(event, 'banned')">
+                    <i class="fas fa-ban"></i> محظورين
+                    <span class="tab-badge" id="bannedCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="violations-log" onclick="switchTab(event, 'violations-log')">
+                    <i class="fas fa-list"></i> سجل المخالفات
+                </button>
+            </div>
+
+            <div class="filters-bar">
+                <input type="text" id="searchTrainee" placeholder="🔍 ابحث باسم الطالب أو البريد...">
+                <select id="filterStrikes">
+                    <option value="">كل الـ Strikes</option>
+                    <option value="0">0 (نظيف)</option>
+                    <option value="1">1 strike</option>
+                    <option value="2">2 strikes</option>
+                    <option value="3">3 strikes (محظور)</option>
                 </select>
-                <select id="trainingFilter">
-                    <option value="">كل حالات التدريب</option>
-                    <option value="looking">يبحث</option>
-                    <option value="in_training">في تدريب</option>
-                    <option value="completed">أكمل</option>
+                <select id="filterSort">
+                    <option value="newest">الأحدث أولاً</option>
+                    <option value="strikes_desc">أكثر strikes</option>
+                    <option value="name">حسب الاسم</option>
                 </select>
             </div>
 
-            <div class="students-grid" id="studentsList">
-                <div class="empty-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>جاري التحميل...</p>
+            <div id="tab-all" class="tab-content active">
+                <div class="trainees-grid" id="allGrid">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
+                </div>
+            </div>
+            <div id="tab-violations" class="tab-content">
+                <div class="trainees-grid" id="violationsGrid"></div>
+            </div>
+            <div id="tab-banned" class="tab-content">
+                <div class="trainees-grid" id="bannedGrid"></div>
+            </div>
+            <div id="tab-violations-log" class="tab-content">
+                <div id="violationsLogList">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i></div>
                 </div>
             </div>
         </main>
     </div>
-
-    <!-- Details Modal -->
-    <div class="modal" id="detailsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">تفاصيل الطالب</h3>
-                <button class="modal-close" onclick="closeDetailsModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div id="detailsContent"></div>
-        </div>
-    </div>
+    <div id="modalsContainer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script>
-    (function() {
-        'use strict';
-        let allStudents = [];
+// ============================================================
+// ProVance Admin: Trainees & Violations (3-Strike System)
+// ============================================================
+(function() {
+    'use strict';
 
-        const EDU_LEVELS = {
-            'high_school': 'طالب ثانوية',
-            'diploma': 'دبلوم',
-            'university': 'طالب جامعي',
-            'graduate': 'خريج',
-            'postgraduate': 'دراسات عليا'
+    if (!window.ProVance) { window.ProVance = {}; console.error('⚠️ supabase-config.js مش متحمل'); }
+    if (typeof window.ProVance.escapeHtml !== 'function') {
+        window.ProVance.escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    if (typeof window.ProVance.showToast !== 'function') {
+        window.ProVance.showToast = (msg, type) => {
+            const t = document.createElement('div');
+            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+            t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (c[type]||'#4facfe') + ';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
         };
-        const STATUS_LABELS = {
-            'active': '✓ نشط',
-            'suspended': '⏸ موقوف'
-        };
-        const TRAINING_LABELS = {
-            'looking': '🔍 يبحث',
-            'in_training': '🎓 في تدريب',
-            'completed': '✓ أكمل'
-        };
-        const LANG_LEVELS = {
-            'beginner': 'مبتدئ', 'intermediate': 'متوسط',
-            'advanced': 'متقدم', 'native': 'لغة أم'
-        };
+    }
+    if (typeof window.ProVance.confirmModal !== 'function') {
+        window.ProVance.confirmModal = async ({title, message}) => confirm((title||'') + '\n' + (message||''));
+    }
 
-        function getInitial(name) {
-            return (name || '?').trim().charAt(0).toUpperCase();
+    console.log('✅ Admin Trainees initialized');
+
+    const esc = window.ProVance.escapeHtml;
+
+    let adminUserId = null;
+    let allStudents = [];
+    let allViolations = [];
+    let strikesMap = {};  // user_id => count
+
+    function getInitial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
+    function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
+    function formatDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('ar-EG'); }
+
+    function renderModal(html) {
+        document.getElementById('modalsContainer').innerHTML = html;
+        document.body.style.overflow = 'hidden';
+    }
+    window.closeModal = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+        if (document.querySelectorAll('.modal').length === 0) document.body.style.overflow = '';
+    };
+
+    window.logoutAdmin = async (e) => {
+        e.preventDefault();
+        const ok = await window.ProVance.confirmModal({title: 'تسجيل الخروج', message: 'هل تريد تسجيل الخروج؟'});
+        if (ok) {
+            if (window.ProVance.logout) await window.ProVance.logout('admin-login.html');
+            else window.location.href = 'admin-login.html';
         }
-        function calcAge(birth) {
-            if (!birth) return null;
-            const b = new Date(birth);
-            const t = new Date();
-            let age = t.getFullYear() - b.getFullYear();
-            const m = t.getMonth() - b.getMonth();
-            if (m < 0 || (m === 0 && t.getDate() < b.getDate())) age--;
-            return age;
-        }
+    };
 
-        function renderList(items) {
-            const list = document.getElementById('studentsList');
-            if (items.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-user-graduate"></i>
-                        <h3>لا يوجد طلاب</h3>
-                    </div>
-                `;
-                return;
+    window.switchTab = (e, tabName) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.add('active');
+
+        if (tabName === 'violations-log') renderViolationsLog();
+    };
+
+    function getStrikes(userId) {
+        return strikesMap[userId] || 0;
+    }
+
+    function isBanned(userId) {
+        return getStrikes(userId) >= 3;
+    }
+
+    function renderStrikesDisplay(count) {
+        let circles = '';
+        for (let i = 1; i <= 3; i++) {
+            if (i <= count) {
+                const cls = i === 3 ? 'active' : 'warning';
+                circles += `<div class="strike-circle ${cls}">${i}</div>`;
+            } else {
+                circles += `<div class="strike-circle">${i}</div>`;
             }
+        }
+        return `
+            <div class="strikes-display">
+                <span class="strikes-label">Strikes:</span>
+                ${circles}
+                <span style="margin-right:8px;font-weight:800;color:${count >= 3 ? 'var(--error)' : count >= 1 ? 'var(--warning)' : 'var(--success)'}">${count}/3</span>
+            </div>
+        `;
+    }
 
-            list.innerHTML = items.map(s => {
-                const status = s.status || 'active';
-                const trainingStatus = s.training_status || 'looking';
-                const photo = s.photo
-                    ? `<img src="${s.photo}" alt="${s.full_name}">`
-                    : `<span>${getInitial(s.full_name)}</span>`;
-                const safeName = window.ProVance.escapeHtml(s.full_name).replace(/'/g, "&#39;");
+    function renderTraineeCard(s) {
+        const photo = s.photo
+            ? `<img src="${s.photo}" alt="">`
+            : `<span>${getInitial(s.full_name)}</span>`;
 
-                return `
-                    <div class="student-card">
-                        <div class="student-header">
-                            <div class="student-avatar">${photo}</div>
-                            <div class="student-name-info">
-                                <div class="student-name">${window.ProVance.escapeHtml(s.full_name || '-')}</div>
-                                <div class="student-meta">${EDU_LEVELS[s.education_level] || s.education_level || '-'}</div>
-                            </div>
-                        </div>
-                        <div class="student-info">
-                            <div class="student-info-row">
-                                <i class="fas fa-envelope"></i>
-                                <span style="direction:ltr">${s.email || '-'}</span>
-                            </div>
-                            ${s.university ? `<div class="student-info-row"><i class="fas fa-university"></i> ${window.ProVance.escapeHtml(s.university)}</div>` : ''}
-                            ${s.city ? `<div class="student-info-row"><i class="fas fa-map-marker-alt"></i> ${window.ProVance.escapeHtml(s.city)}</div>` : ''}
-                            <div class="student-info-row">
-                                <i class="fas fa-calendar"></i> سجّل ${window.ProVance.timeAgo(s.created_at)}
-                            </div>
-                        </div>
-                        <div class="student-status-row">
-                            <span class="student-status status-${status}">${STATUS_LABELS[status]}</span>
-                            <span class="student-status status-${trainingStatus}">${TRAINING_LABELS[trainingStatus]}</span>
-                        </div>
-                        <div class="student-actions">
-                            <button class="btn btn-secondary" onclick="showDetails('${s.user_id}')">
-                                <i class="fas fa-eye"></i> عرض
-                            </button>
-                            ${status === 'active' ? `
-                                <button class="btn btn-warning" onclick="suspendStudent('${s.user_id}', '${safeName}')">
-                                    <i class="fas fa-pause"></i> إيقاف
-                                </button>
-                            ` : `
-                                <button class="btn btn-success" onclick="activateStudent('${s.user_id}', '${safeName}')">
-                                    <i class="fas fa-play"></i> تفعيل
-                                </button>
-                            `}
-                        </div>
+        const strikes = getStrikes(s.user_id);
+        const banned = isBanned(s.user_id);
+
+        return `
+            <div class="trainee-card ${strikes > 0 ? 'has-violations' : ''} ${banned ? 'banned' : ''}">
+                <div class="trainee-header">
+                    <div class="trainee-avatar">${photo}</div>
+                    <div class="trainee-info">
+                        <div class="trainee-name">${esc(s.full_name || '-')}</div>
+                        <div class="trainee-uni">${esc(s.university || s.email || '-')}</div>
                     </div>
-                `;
-            }).join('');
-        }
-
-        function applyFilters() {
-            const search = document.getElementById('searchInput').value.toLowerCase().trim();
-            const status = document.getElementById('statusFilter').value;
-            const training = document.getElementById('trainingFilter').value;
-
-            let filtered = allStudents;
-            if (status) filtered = filtered.filter(s => (s.status || 'active') === status);
-            if (training) filtered = filtered.filter(s => (s.training_status || 'looking') === training);
-            if (search) {
-                filtered = filtered.filter(s =>
-                    (s.full_name || '').toLowerCase().includes(search) ||
-                    (s.email || '').toLowerCase().includes(search) ||
-                    (s.university || '').toLowerCase().includes(search)
-                );
-            }
-            renderList(filtered);
-        }
-
-        function updateStats() {
-            const total = allStudents.length;
-            const active = allStudents.filter(s => (s.status || 'active') === 'active').length;
-            const looking = allStudents.filter(s => (s.training_status || 'looking') === 'looking').length;
-            const inTraining = allStudents.filter(s => s.training_status === 'in_training').length;
-
-            document.getElementById('statTotal').textContent = total;
-            document.getElementById('statActive').textContent = active;
-            document.getElementById('statLooking').textContent = looking;
-            document.getElementById('statInTraining').textContent = inTraining;
-        }
-
-        async function loadStudents() {
-            const sb = window.ProVance.sb;
-            const { data, error } = await sb.from('student')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error(error);
-                window.ProVance.showToast('خطأ في تحميل الطلاب', 'error');
-                return;
-            }
-            allStudents = data || [];
-            updateStats();
-            applyFilters();
-        }
-
-        window.showDetails = (userId) => {
-            const s = allStudents.find(x => x.user_id === userId);
-            if (!s) return;
-
-            const skills = Array.isArray(s.skills) ? s.skills : [];
-            const interests = Array.isArray(s.interested_fields) ? s.interested_fields : [];
-            const langs = Array.isArray(s.languages) ? s.languages : [];
-            const exps = Array.isArray(s.experience) ? s.experience : [];
-            const age = calcAge(s.birth_date);
-
-            const content = document.getElementById('detailsContent');
-            content.innerHTML = `
-                <div style="text-align:center; margin-bottom: 18px;">
-                    <div class="student-avatar" style="width: 80px; height: 80px; margin: 0 auto 10px; font-size: 2rem;">
-                        ${s.photo ? `<img src="${s.photo}">` : getInitial(s.full_name)}
-                    </div>
-                    <h3 style="font-size: 1.3rem; font-weight: 800;">${window.ProVance.escapeHtml(s.full_name || '-')}</h3>
                 </div>
 
-                <div class="detail-section-title"><i class="fas fa-user"></i> معلومات شخصية</div>
-                <div class="detail-row"><span class="label">البريد</span><span class="value" style="direction:ltr">${s.email || '-'}</span></div>
-                <div class="detail-row"><span class="label">الهاتف</span><span class="value" style="direction:ltr">${s.phone || '-'}</span></div>
-                ${age ? `<div class="detail-row"><span class="label">العمر</span><span class="value">${age} سنة</span></div>` : ''}
-                <div class="detail-row"><span class="label">النوع</span><span class="value">${s.gender === 'female' ? 'أنثى' : s.gender === 'male' ? 'ذكر' : '-'}</span></div>
-                <div class="detail-row"><span class="label">المدينة</span><span class="value">${window.ProVance.escapeHtml(s.city || '-')}</span></div>
-                ${s.address ? `<div class="detail-row"><span class="label">العنوان</span><span class="value">${window.ProVance.escapeHtml(s.address)}</span></div>` : ''}
+                ${renderStrikesDisplay(strikes)}
 
-                <div class="detail-section-title"><i class="fas fa-graduation-cap"></i> المعلومات الأكاديمية</div>
-                <div class="detail-row"><span class="label">المرحلة</span><span class="value">${EDU_LEVELS[s.education_level] || '-'}</span></div>
-                <div class="detail-row"><span class="label">الجامعة</span><span class="value">${window.ProVance.escapeHtml(s.university || '-')}</span></div>
-                <div class="detail-row"><span class="label">الكلية</span><span class="value">${window.ProVance.escapeHtml(s.faculty || '-')}</span></div>
-                ${s.major ? `<div class="detail-row"><span class="label">التخصص</span><span class="value">${window.ProVance.escapeHtml(s.major)}</span></div>` : ''}
-                <div class="detail-row"><span class="label">سنة الدراسة</span><span class="value">${s.study_year === 'graduated' ? 'متخرج' : s.study_year ? `السنة ${s.study_year}` : '-'}</span></div>
-                ${s.gpa ? `<div class="detail-row"><span class="label">المعدل</span><span class="value">${window.ProVance.escapeHtml(s.gpa)}</span></div>` : ''}
+                <div class="trainee-meta">
+                    <span><i class="fas fa-envelope"></i> ${esc(s.email || '-').substring(0, 25)}${(s.email||'').length > 25 ? '...' : ''}</span>
+                    ${s.phone ? `<span><i class="fas fa-phone"></i> ${esc(s.phone)}</span>` : ''}
+                    <span><i class="fas fa-calendar"></i> ${formatDate(s.created_at)}</span>
+                </div>
 
-                ${skills.length > 0 ? `
-                <div class="detail-section-title"><i class="fas fa-tools"></i> المهارات</div>
-                <div>${skills.map(sk => `<span class="skill-tag">${window.ProVance.escapeHtml(sk)}</span>`).join('')}</div>
-                ` : ''}
+                <div class="trainee-actions">
+                    <button class="btn btn-info btn-sm" onclick="viewTraineeDetails('${s.user_id}')" style="flex:1;justify-content:center">
+                        <i class="fas fa-eye"></i> التفاصيل
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="openAddViolation('${s.user_id}')" style="flex:1;justify-content:center">
+                        <i class="fas fa-exclamation-triangle"></i> إضافة مخالفة
+                    </button>
+                </div>
+            </div>
+        `;
+    }
 
-                ${langs.length > 0 ? `
-                <div class="detail-section-title"><i class="fas fa-language"></i> اللغات</div>
-                <div>${langs.map(l => `<span class="skill-tag">${window.ProVance.escapeHtml(l.name || l)} ${l.level ? '(' + (LANG_LEVELS[l.level] || l.level) + ')' : ''}</span>`).join('')}</div>
-                ` : ''}
+    function renderTrainees() {
+        const search = document.getElementById('searchTrainee').value.toLowerCase().trim();
+        const strikesFilter = document.getElementById('filterStrikes').value;
+        const sort = document.getElementById('filterSort').value;
 
-                ${interests.length > 0 ? `
-                <div class="detail-section-title"><i class="fas fa-heart"></i> المجالات المهتم بها</div>
-                <div>${interests.map(i => `<span class="skill-tag">${window.ProVance.escapeHtml(i)}</span>`).join('')}</div>
-                ` : ''}
+        let filtered = allStudents.slice();
 
-                ${exps.length > 0 ? `
-                <div class="detail-section-title"><i class="fas fa-briefcase"></i> الخبرات</div>
-                ${exps.map(e => `
-                    <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; margin-bottom:8px;">
-                        <strong>${window.ProVance.escapeHtml(e.title || '-')}</strong>
-                        ${e.company ? ` - ${window.ProVance.escapeHtml(e.company)}` : ''}
-                        ${e.start || e.end ? `<div style="color:var(--text-muted); font-size:0.82rem; margin-top:4px;">${e.start || ''} - ${e.end || 'الآن'}</div>` : ''}
-                        ${e.description ? `<div style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">${window.ProVance.escapeHtml(e.description)}</div>` : ''}
-                    </div>
-                `).join('')}
-                ` : ''}
-
-                ${s.linkedin || s.github || s.portfolio || s.cv_url ? `
-                <div class="detail-section-title"><i class="fas fa-link"></i> الروابط</div>
-                ${s.linkedin ? `<div class="detail-row"><span class="label">LinkedIn</span><span class="value"><a href="${s.linkedin}" target="_blank">رابط</a></span></div>` : ''}
-                ${s.github ? `<div class="detail-row"><span class="label">GitHub</span><span class="value"><a href="${s.github}" target="_blank">رابط</a></span></div>` : ''}
-                ${s.portfolio ? `<div class="detail-row"><span class="label">Portfolio</span><span class="value"><a href="${s.portfolio}" target="_blank">رابط</a></span></div>` : ''}
-                ${s.cv_url ? `<div class="detail-row"><span class="label">السيرة الذاتية</span><span class="value"><a href="${s.cv_url}" target="_blank"><i class="fas fa-download"></i> تحميل</a></span></div>` : ''}
-                ` : ''}
-
-                <div class="detail-section-title"><i class="fas fa-clock"></i> النشاط</div>
-                <div class="detail-row"><span class="label">تاريخ التسجيل</span><span class="value">${window.ProVance.formatDateTime(s.created_at)}</span></div>
-                <div class="detail-row"><span class="label">حالة الحساب</span><span class="value"><span class="student-status status-${s.status || 'active'}">${STATUS_LABELS[s.status || 'active']}</span></span></div>
-                <div class="detail-row"><span class="label">حالة التدريب</span><span class="value"><span class="student-status status-${s.training_status || 'looking'}">${TRAINING_LABELS[s.training_status || 'looking']}</span></span></div>
-            `;
-
-            document.getElementById('detailsModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        };
-
-        window.closeDetailsModal = () => {
-            document.getElementById('detailsModal').classList.remove('active');
-            document.body.style.overflow = '';
-        };
-
-        window.suspendStudent = async (userId, name) => {
-            const ok = await window.ProVance.confirmModal({
-                title: 'إيقاف الطالب',
-                message: `هل تريد إيقاف "${name}"؟ لن يستطيع الدخول أو التقديم على فرص.`,
-                confirmText: 'نعم، إيقاف',
-                type: 'danger'
-            });
-            if (!ok) return;
-
-            try {
-                const sb = window.ProVance.sb;
-                await sb.from('student').update({ status: 'suspended' }).eq('user_id', userId);
-                await window.ProVance.sendNotification({
-                    userId,
-                    userType: 'student',
-                    title: 'تم إيقاف حسابك',
-                    message: 'تم إيقاف حسابك مؤقتاً. للاستفسار تواصل مع الإدارة على support@provance.com',
-                    type: 'warning'
-                });
-                window.ProVance.showToast('تم الإيقاف', 'warning');
-                await loadStudents();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        window.activateStudent = async (userId, name) => {
-            const ok = await window.ProVance.confirmModal({
-                title: 'إعادة تفعيل',
-                message: `هل تريد إعادة تفعيل "${name}"؟`
-            });
-            if (!ok) return;
-
-            try {
-                const sb = window.ProVance.sb;
-                await sb.from('student').update({ status: 'active' }).eq('user_id', userId);
-                await window.ProVance.sendNotification({
-                    userId,
-                    userType: 'student',
-                    title: '✅ تم تفعيل حسابك',
-                    message: 'تم إعادة تفعيل حسابك بنجاح، يمكنك الآن الدخول والتقديم على فرص التدريب',
-                    type: 'success'
-                });
-                window.ProVance.showToast('تم التفعيل', 'success');
-                await loadStudents();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        document.getElementById('searchInput').addEventListener('input', applyFilters);
-        document.getElementById('statusFilter').addEventListener('change', applyFilters);
-        document.getElementById('trainingFilter').addEventListener('change', applyFilters);
-
-        window.logoutAdmin = async (e) => {
-            e.preventDefault();
-            const ok = await window.ProVance.confirmModal({
-                title: 'تسجيل الخروج',
-                message: 'هل تريد تسجيل الخروج؟'
-            });
-            if (ok) await window.ProVance.logout('admin-login.html');
-        };
-
-        async function init() {
-            const ok = await window.ProVance.requireAdminAuth();
-            if (!ok) return;
-            await loadStudents();
-
-            const sb = window.ProVance.sb;
-            sb.channel('admin-students')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'student' }, () => {
-                    loadStudents();
-                })
-                .subscribe();
+        if (search) {
+            filtered = filtered.filter(s =>
+                (s.full_name || '').toLowerCase().includes(search) ||
+                (s.email || '').toLowerCase().includes(search) ||
+                (s.university || '').toLowerCase().includes(search)
+            );
         }
-        init();
-    })();
+
+        if (strikesFilter !== '') {
+            const target = parseInt(strikesFilter);
+            filtered = filtered.filter(s => getStrikes(s.user_id) === target);
+        }
+
+        if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        else if (sort === 'name') filtered.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+        else if (sort === 'strikes_desc') filtered.sort((a, b) => getStrikes(b.user_id) - getStrikes(a.user_id));
+
+        const withViolations = filtered.filter(s => getStrikes(s.user_id) > 0);
+        const banned = filtered.filter(s => isBanned(s.user_id));
+
+        document.getElementById('allCount').textContent = filtered.length;
+        document.getElementById('violationsCount').textContent = withViolations.length;
+        document.getElementById('bannedCount').textContent = banned.length;
+
+        document.getElementById('allGrid').innerHTML = filtered.length === 0
+            ? '<div class="empty-state"><i class="fas fa-users"></i><h3>لا يوجد متدربين</h3></div>'
+            : filtered.map(renderTraineeCard).join('');
+
+        document.getElementById('violationsGrid').innerHTML = withViolations.length === 0
+            ? '<div class="empty-state"><i class="fas fa-shield-alt"></i><h3>كل المتدربين سجلهم نظيف 🎉</h3></div>'
+            : withViolations.map(renderTraineeCard).join('');
+
+        document.getElementById('bannedGrid').innerHTML = banned.length === 0
+            ? '<div class="empty-state"><i class="fas fa-shield-alt"></i><h3>مفيش متدربين محظورين</h3></div>'
+            : banned.map(renderTraineeCard).join('');
+    }
+
+    function renderViolationsLog() {
+        const list = document.getElementById('violationsLogList');
+
+        if (allViolations.length === 0) {
+            list.innerHTML = '<div class="empty-state"><i class="fas fa-clipboard-list"></i><h3>لا توجد مخالفات في السجل</h3></div>';
+            return;
+        }
+
+        const SEVERITY_LABELS = {
+            'minor': '🟡 بسيطة',
+            'moderate': '🟠 متوسطة',
+            'major': '🔴 كبيرة',
+            'critical': '⛔ حرجة'
+        };
+
+        const SEVERITY_CLASS = {
+            'minor': 'minor', 'moderate': 'minor',
+            'major': 'major', 'critical': 'critical'
+        };
+
+        list.innerHTML = allViolations.map(v => {
+            const student = allStudents.find(s => s.user_id === v.target_user_id);
+            const sev = SEVERITY_CLASS[v.severity] || 'minor';
+
+            const statusBadge = {
+                'active': '<span class="badge badge-error">⚠ نشطة</span>',
+                'resolved': '<span class="badge badge-success">✓ تم الحل</span>',
+                'appealed': '<span class="badge badge-warning">📝 قيد الاستئناف</span>',
+                'cancelled': '<span class="badge badge-info">✕ ملغية</span>'
+            }[v.status] || '';
+
+            return `
+                <div class="violation-card ${sev}">
+                    <div class="violation-icon ${sev}"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="violation-body">
+                        <div class="violation-title">${esc(v.title || v.violation_type)}</div>
+                        ${v.description ? `<div class="violation-meta">${esc(v.description)}</div>` : ''}
+                        <div class="violation-meta" style="margin-top:5px">
+                            <strong>${esc(student?.full_name || 'متدرب')}</strong>
+                            <span style="margin:0 6px">•</span>
+                            ${SEVERITY_LABELS[v.severity] || v.severity}
+                            <span style="margin:0 6px">•</span>
+                            ${formatDateTime(v.created_at)}
+                            <span style="margin-right:8px">${statusBadge}</span>
+                        </div>
+                    </div>
+                    ${v.status === 'active' ? `
+                        <button class="btn btn-success btn-sm" onclick="resolveViolation('${v.id}')">
+                            <i class="fas fa-check"></i> حل
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateStats() {
+        const total = allStudents.length;
+        const withViolations = allStudents.filter(s => getStrikes(s.user_id) > 0).length;
+        const banned = allStudents.filter(s => isBanned(s.user_id)).length;
+        const clean = total - withViolations;
+        const totalViolations = allViolations.filter(v => v.status === 'active').length;
+
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statClean').textContent = clean;
+        document.getElementById('statWithViolations').textContent = withViolations;
+        document.getElementById('statBanned').textContent = banned;
+        document.getElementById('statTotalViolations').textContent = totalViolations;
+    }
+
+    // ADD VIOLATION
+    let selectedSeverity = null;
+
+    window.openAddViolation = (userId) => {
+        const student = allStudents.find(s => s.user_id === userId);
+        if (!student) return;
+
+        const currentStrikes = getStrikes(userId);
+
+        const html = `
+            <div class="modal active" id="addViolationModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-exclamation-triangle"></i><span>إضافة مخالفة</span></div>
+                        <button class="modal-close" onclick="closeModal('addViolationModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div style="padding:14px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:12px;margin-bottom:14px">
+                        <strong style="font-size:1.05rem">${esc(student.full_name)}</strong>
+                        <div style="color:var(--text-muted);font-size:0.86rem;margin-top:3px">${esc(student.email)}</div>
+                        <div style="margin-top:8px">
+                            <span class="badge ${currentStrikes >= 3 ? 'badge-error' : currentStrikes >= 1 ? 'badge-warning' : 'badge-success'}">
+                                Strikes الحالية: ${currentStrikes}/3
+                            </span>
+                        </div>
+                    </div>
+
+                    ${currentStrikes >= 3 ? '<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);padding:12px;border-radius:10px;margin-bottom:14px;color:var(--error);font-size:0.86rem"><i class="fas fa-ban"></i> الطالب محظور بالفعل</div>' : ''}
+
+                    <div class="field">
+                        <label><i class="fas fa-tag"></i> نوع المخالفة <span class="req">*</span></label>
+                        <select id="violation_type">
+                            <option value="">-- اختر --</option>
+                            <option value="absence">غياب متكرر</option>
+                            <option value="late">تأخر متكرر</option>
+                            <option value="misbehavior">سوء سلوك</option>
+                            <option value="cheating">غش / انتحال</option>
+                            <option value="harassment">تحرش / تنمر</option>
+                            <option value="bypass_attempt">محاولة الـ bypass</option>
+                            <option value="fake_data">بيانات مزيفة</option>
+                            <option value="other">أخرى</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-heading"></i> العنوان <span class="req">*</span></label>
+                        <input type="text" id="violation_title" placeholder="مثال: غياب 5 أيام بدون عذر">
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-align-right"></i> التفاصيل</label>
+                        <textarea id="violation_desc" rows="3" placeholder="اشرح المخالفة بالتفصيل..."></textarea>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-exclamation"></i> الخطورة <span class="req">*</span></label>
+                        <div class="severity-buttons">
+                            <button class="severity-btn minor" onclick="selectSeverity(this, 'minor')">
+                                🟡 بسيطة
+                                <div style="font-size:0.74rem;color:var(--text-muted);margin-top:2px">تحذير فقط</div>
+                            </button>
+                            <button class="severity-btn major" onclick="selectSeverity(this, 'major')">
+                                🔴 كبيرة
+                                <div style="font-size:0.74rem;color:var(--text-muted);margin-top:2px">+1 strike</div>
+                            </button>
+                            <button class="severity-btn major" onclick="selectSeverity(this, 'moderate')">
+                                🟠 متوسطة
+                                <div style="font-size:0.74rem;color:var(--text-muted);margin-top:2px">+1 strike</div>
+                            </button>
+                            <button class="severity-btn critical" onclick="selectSeverity(this, 'critical')">
+                                ⛔ حرجة
+                                <div style="font-size:0.74rem;color:var(--text-muted);margin-top:2px">حظر فوري</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:12px;border-radius:10px;margin-bottom:14px;font-size:0.84rem;color:var(--text-muted)">
+                        <i class="fas fa-info-circle" style="color:var(--warning)"></i>
+                        <strong>3-Strike System:</strong> أول مخالفة بسيطة = تحذير، الثانية والثالثة الكبرى تزود strike، 3 strikes = حظر دائم
+                    </div>
+
+                    <div style="display:flex;gap:10px">
+                        <button class="btn btn-secondary" onclick="closeModal('addViolationModal')" style="flex:1;justify-content:center">إلغاء</button>
+                        <button class="btn btn-primary" onclick="saveViolation('${userId}')" style="flex:1;justify-content:center">
+                            <i class="fas fa-save"></i> إضافة المخالفة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+        selectedSeverity = null;
+    };
+
+    window.selectSeverity = (el, severity) => {
+        document.querySelectorAll('.severity-btn').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedSeverity = severity;
+    };
+
+    window.saveViolation = async (userId) => {
+        const type = document.getElementById('violation_type').value;
+        const title = document.getElementById('violation_title').value.trim();
+        const desc = document.getElementById('violation_desc').value.trim();
+
+        if (!type || !title || !selectedSeverity) {
+            window.ProVance.showToast('املأ كل الحقول المطلوبة', 'warning');
+            return;
+        }
+
+        try {
+            const sb = window.ProVance.sb;
+            const student = allStudents.find(s => s.user_id === userId);
+
+            const { error } = await sb.from('penalties').insert({
+                target_user_id: userId,
+                target_name: student?.full_name,
+                target_type: 'student',
+                violation_type: type,
+                title,
+                description: desc || null,
+                severity: selectedSeverity,
+                status: 'active',
+                created_by_admin_id: adminUserId
+            });
+
+            if (error) throw error;
+
+            // إشعار للطالب
+            if (window.ProVance.sendNotification) {
+                await window.ProVance.sendNotification({
+                    userId: userId,
+                    userType: 'student',
+                    title: '⚠️ تم تسجيل مخالفة في حسابك',
+                    message: `${title} - الخطورة: ${selectedSeverity}`,
+                    type: 'warning',
+                    link: 'student-profile.html'
+                });
+            }
+
+            window.ProVance.showToast('تم تسجيل المخالفة', 'success');
+            closeModal('addViolationModal');
+            window.dispatchEvent(new CustomEvent('reload-trainees'));
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+        }
+    };
+
+    window.resolveViolation = async (id) => {
+        const ok = await window.ProVance.confirmModal({
+            title: 'حل المخالفة',
+            message: 'هل تريد إغلاق هذه المخالفة؟ ده هيقلل عدد strikes للطالب'
+        });
+        if (!ok) return;
+
+        try {
+            await window.ProVance.sb.from('penalties').update({
+                status: 'resolved',
+                resolved_at: new Date().toISOString()
+            }).eq('id', id);
+            window.ProVance.showToast('تم الحل', 'success');
+            window.dispatchEvent(new CustomEvent('reload-trainees'));
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ', 'error');
+        }
+    };
+
+    // VIEW DETAILS
+    window.viewTraineeDetails = (userId) => {
+        const s = allStudents.find(x => x.user_id === userId);
+        if (!s) return;
+
+        const photo = s.photo
+            ? `<img src="${s.photo}" alt="">`
+            : `<span>${getInitial(s.full_name)}</span>`;
+
+        const userViolations = allViolations.filter(v => v.target_user_id === userId);
+        const strikes = getStrikes(userId);
+        const banned = isBanned(userId);
+
+        const html = `
+            <div class="modal active" id="detailsModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-user"></i><span>تفاصيل المتدرب</span></div>
+                        <button class="modal-close" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:14px;margin-bottom:14px">
+                        <div class="trainee-avatar" style="width:70px;height:70px">${photo}</div>
+                        <div style="flex:1">
+                            <h3 style="font-size:1.2rem;font-weight:800">${esc(s.full_name)}</h3>
+                            <div style="color:var(--text-muted);font-size:0.88rem;margin-top:3px">${esc(s.email)}</div>
+                            ${banned ? '<span class="badge badge-error" style="margin-top:5px;display:inline-flex">⛔ محظور</span>' : ''}
+                        </div>
+                    </div>
+
+                    ${renderStrikesDisplay(strikes)}
+
+                    <div class="modal-section">
+                        <div class="modal-section-title"><i class="fas fa-info-circle"></i> البيانات</div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-phone"></i> الهاتف</div>
+                                <div class="info-value">${esc(s.phone || '-')}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-university"></i> الجامعة</div>
+                                <div class="info-value">${esc(s.university || '-')}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-book"></i> الكلية</div>
+                                <div class="info-value">${esc(s.faculty || '-')}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-calendar"></i> التسجيل</div>
+                                <div class="info-value">${formatDate(s.created_at)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-section">
+                        <div class="modal-section-title"><i class="fas fa-clipboard-list"></i> سجل المخالفات (${userViolations.length})</div>
+                        ${userViolations.length === 0
+                            ? '<div style="text-align:center;color:var(--success);padding:14px"><i class="fas fa-shield-alt"></i> سجل نظيف</div>'
+                            : userViolations.slice(0, 10).map(v => `
+                                <div class="violation-card ${v.severity === 'critical' ? 'critical' : v.severity === 'major' ? 'major' : 'minor'}" style="margin-bottom:8px">
+                                    <div class="violation-icon ${v.severity === 'critical' ? 'critical' : v.severity === 'major' ? 'major' : 'minor'}">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="violation-body">
+                                        <div class="violation-title">${esc(v.title)}</div>
+                                        <div class="violation-meta">${formatDateTime(v.created_at)} • ${v.status}</div>
+                                    </div>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        <button class="btn btn-secondary" onclick="closeModal('detailsModal')" style="flex:1;justify-content:center">إغلاق</button>
+                        <button class="btn btn-warning" onclick="closeModal('detailsModal');openAddViolation('${userId}')" style="flex:1;justify-content:center">
+                            <i class="fas fa-exclamation-triangle"></i> إضافة مخالفة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    // HELP MODAL
+    window.openHelpModal = () => {
+        const html = `
+            <div class="modal active" id="helpModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-question-circle"></i><span>دليل إدارة المتدربين</span></div>
+                        <button class="modal-close" onclick="closeModal('helpModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-exclamation-triangle"></i> نظام Strikes</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> <strong>Strike واحد:</strong> تحذير - الطالب يستلم إشعار</li>
+                            <li><i class="fas fa-check"></i> <strong>Strikes اثنين:</strong> تحذير نهائي + إشعار للشركة</li>
+                            <li><i class="fas fa-check"></i> <strong>3 Strikes:</strong> حظر دائم من المنصة</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-tags"></i> أنواع المخالفات</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> غياب متكرر بدون عذر</li>
+                            <li><i class="fas fa-check"></i> تأخر متكرر</li>
+                            <li><i class="fas fa-check"></i> سوء سلوك أو تحرش</li>
+                            <li><i class="fas fa-check"></i> غش أو انتحال</li>
+                            <li><i class="fas fa-check"></i> محاولة الـ bypass للمنصة</li>
+                            <li><i class="fas fa-check"></i> تقديم بيانات مزيفة</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-thermometer-half"></i> مستويات الخطورة</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> <strong>🟡 بسيطة:</strong> تحذير فقط (مفيش strike)</li>
+                            <li><i class="fas fa-check"></i> <strong>🟠 متوسطة / 🔴 كبيرة:</strong> +1 strike</li>
+                            <li><i class="fas fa-check"></i> <strong>⛔ حرجة:</strong> حظر فوري بدون انتظار</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-undo"></i> حل المخالفة</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> يمكنك حل أي مخالفة لو الطالب صلح</li>
+                            <li><i class="fas fa-check"></i> الحل يقلل strikes الطالب</li>
+                            <li><i class="fas fa-check"></i> الطالب يستلم إشعار بإلغاء المخالفة</li>
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="closeModal('helpModal')" style="width:100%;justify-content:center;margin-top:14px">
+                        <i class="fas fa-check"></i> فهمت
+                    </button>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    // LOAD ALL
+    let isInitialized = false;
+    async function loadAll() {
+        const sb = window.ProVance.sb;
+        if (!sb) return;
+
+        try {
+            const session = await sb.auth.getSession();
+            const userId = session?.data?.session?.user?.id;
+            if (!userId) {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+            adminUserId = userId;
+
+            // Verify admin
+            const { data: adminCheck } = await sb.from('admins').select('user_id').eq('user_id', userId).maybeSingle();
+            if (!adminCheck) {
+                window.ProVance.showToast('غير مصرح بالوصول', 'error');
+                setTimeout(() => window.location.href = 'admin-login.html', 1500);
+                return;
+            }
+
+            const [studentsRes, violationsRes, strikesRes] = await Promise.all([
+                sb.from('student').select('*').order('created_at', { ascending: false }),
+                sb.from('penalties').select('*').eq('target_type', 'student').order('created_at', { ascending: false }),
+                sb.from('user_strikes_summary').select('*')
+            ]);
+
+            allStudents = studentsRes.data || [];
+            allViolations = violationsRes.data || [];
+
+            strikesMap = {};
+            (strikesRes.data || []).forEach(s => { strikesMap[s.user_id] = s.strikes_count || 0; });
+
+            // Fallback: count from violations if summary table empty
+            if (Object.keys(strikesMap).length === 0) {
+                allViolations.forEach(v => {
+                    if (v.status === 'active' && ['major', 'critical', 'moderate'].includes(v.severity)) {
+                        strikesMap[v.target_user_id] = (strikesMap[v.target_user_id] || 0) + 1;
+                    }
+                });
+            }
+
+            renderTrainees();
+            updateStats();
+
+            if (!isInitialized) {
+                isInitialized = true;
+                sb.channel('admin-trainees')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'student' }, () => loadAll())
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'penalties' }, () => loadAll())
+                    .subscribe();
+
+                window.addEventListener('reload-trainees', loadAll);
+
+                document.getElementById('searchTrainee').addEventListener('input', renderTrainees);
+                document.getElementById('filterStrikes').addEventListener('change', renderTrainees);
+                document.getElementById('filterSort').addEventListener('change', renderTrainees);
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const modals = document.querySelectorAll('.modal.active');
+                        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Load error:', err);
+            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
+        }
+    }
+
+    loadAll();
+})();
     </script>
 </body>
 </html>
