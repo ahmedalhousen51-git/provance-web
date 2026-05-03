@@ -1100,8 +1100,14 @@
         }
 
         
-        // Helper: استنى لحد ما supabase-config يحمّل
-        async function waitForSupabase(maxWait = 5000) {
+        // Helper: استنى لحد ما supabase client يكون جاهز (يستعمل الـ helper من supabase-config.js)
+        async function waitForSupabase(maxWait = 10000) {
+            // أولاً جرب الـ helper المحسّن من supabase-config
+            if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
+                const sb = await window.ProVance.waitForSupabaseClient(maxWait);
+                if (sb && typeof sb.from === 'function') return sb;
+            }
+            // Fallback - polling عادي
             const start = Date.now();
             while (Date.now() - start < maxWait) {
                 if (window.ProVance && window.ProVance.sb && typeof window.ProVance.sb.from === 'function') {
