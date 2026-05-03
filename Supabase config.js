@@ -1,5 +1,11 @@
 /* ============================================================
- * ProVance - Supabase Configuration v2 (Robust)
+ * ProVance - Supabase Configuration v3 (Bulletproof)
+ * ============================================================
+ * الحل الجذري لمشكلة تحميل الـ Supabase library:
+ * 1. لو الـ library في window.supabase → استخدمه
+ * 2. لو مش موجود → حمّله ديناميكياً من CDN
+ * 3. fallback CDN لو الأول فشل
+ * 4. wait يستنى لحد ما يجهز (15 ثانية)
  * ============================================================ */
 
 (function () {
@@ -8,22 +14,71 @@
     const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
 
+    // Multiple CDN fallbacks
+    const CDN_URLS = [
+        'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
+        'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
+        'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
+    ];
+
     let _sbInstance = null;
-    let _initAttempts = 0;
-    const MAX_INIT_ATTEMPTS = 50; // 5 seconds total
+    let _libLoadPromise = null;
 
     // ============================================================
-    // Supabase Client (with retry)
+    // Dynamic library loader (loads if missing)
     // ============================================================
+    function loadSupabaseLibrary() {
+        if (typeof supabase !== 'undefined' && supabase.createClient) {
+            return Promise.resolve(true);
+        }
+        if (_libLoadPromise) return _libLoadPromise;
+
+        _libLoadPromise = new Promise(function(resolve) {
+            let urlIndex = 0;
+
+            function tryLoadFromUrl(url) {
+                console.log('🔄 محاولة تحميل Supabase من:', url);
+                const script = document.createElement('script');
+                script.src = url;
+                script.async = false;
+
+                script.onload = function() {
+                    if (typeof supabase !== 'undefined' && supabase.createClient) {
+                        console.log('✅ تحميل Supabase نجح من:', url);
+                        resolve(true);
+                    } else {
+                        tryNext();
+                    }
+                };
+
+                script.onerror = function() {
+                    console.warn('⚠️ فشل تحميل Supabase من:', url);
+                    tryNext();
+                };
+
+                document.head.appendChild(script);
+            }
+
+            function tryNext() {
+                urlIndex++;
+                if (urlIndex < CDN_URLS.length) {
+                    tryLoadFromUrl(CDN_URLS[urlIndex]);
+                } else {
+                    console.error('❌ فشل تحميل Supabase من جميع CDNs');
+                    resolve(false);
+                }
+            }
+
+            tryLoadFromUrl(CDN_URLS[urlIndex]);
+        });
+
+        return _libLoadPromise;
+    }
+
     function getSupabase() {
         if (_sbInstance) return _sbInstance;
 
-        // Check if Supabase library is loaded
         if (typeof supabase === 'undefined' || !supabase.createClient) {
-            _initAttempts++;
-            if (_initAttempts === 1) {
-                console.warn('⏳ في انتظار تحميل مكتبة Supabase...');
-            }
             return null;
         }
 
@@ -44,13 +99,22 @@
         }
     }
 
-    // Async wait helper - try for up to 10 seconds
     async function waitForSupabaseClient(maxWaitMs) {
-        if (typeof maxWaitMs !== 'number') maxWaitMs = 10000;
+        if (typeof maxWaitMs !== 'number') maxWaitMs = 15000;
+
+        if (typeof supabase === 'undefined' || !supabase.createClient) {
+            console.log('⏳ Supabase library مش موجودة، جاري تحميلها...');
+            const loaded = await loadSupabaseLibrary();
+            if (!loaded) {
+                console.error('❌ تعذر تحميل Supabase library');
+                return null;
+            }
+        }
+
         const start = Date.now();
         let sb = getSupabase();
         while (!sb && (Date.now() - start) < maxWaitMs) {
-            await new Promise(r => setTimeout(r, 100));
+            await new Promise(r => setTimeout(r, 200));
             sb = getSupabase();
         }
         return sb;
@@ -60,7 +124,7 @@
     // Auth Helpers
     // ============================================================
     async function getSession() {
-        const sb = getSupabase();
+        const sb = await waitForSupabaseClient();
         if (!sb) return null;
         try {
             const { data: { session } } = await sb.auth.getSession();
@@ -84,10 +148,8 @@
     async function requireCompanyAuth() {
         const sb = await waitForSupabaseClient();
         if (!sb) { redirectTo('company-login.html'); return null; }
-
         const session = await getSession();
         if (!session) { redirectTo('company-login.html'); return null; }
-
         const { data: company } = await sb.from('companies').select('*').eq('user_id', session.user.id).maybeSingle();
         if (!company) {
             await sb.auth.signOut();
@@ -100,10 +162,8 @@
     async function requireStudentAuth() {
         const sb = await waitForSupabaseClient();
         if (!sb) { redirectTo('student-login.html'); return null; }
-
         const session = await getSession();
         if (!session) { redirectTo('student-login.html'); return null; }
-
         const { data: student } = await sb.from('student').select('*').eq('user_id', session.user.id).maybeSingle();
         if (!student) {
             await sb.auth.signOut();
@@ -116,10 +176,8 @@
     async function requireAdminAuth() {
         const sb = await waitForSupabaseClient();
         if (!sb) { redirectTo('admin-login.html'); return null; }
-
         const session = await getSession();
         if (!session) { redirectTo('admin-login.html'); return null; }
-
         const { data: admin } = await sb.from('admins').select('*').eq('user_id', session.user.id).maybeSingle();
         if (!admin) {
             await sb.auth.signOut();
@@ -131,7 +189,9 @@
 
     async function logout(redirectUrl) {
         const sb = getSupabase();
-        if (sb) await sb.auth.signOut();
+        if (sb) {
+            try { await sb.auth.signOut(); } catch (e) {}
+        }
         try { localStorage.clear(); } catch (e) {}
         if (redirectUrl) window.location.href = redirectUrl;
     }
@@ -268,27 +328,21 @@
     }
 
     // ============================================================
-    // Export to Global Scope
+    // Export
     // ============================================================
     window.ProVance = {
-        // Client
         getSupabase: getSupabase,
         waitForSupabaseClient: waitForSupabaseClient,
+        loadSupabaseLibrary: loadSupabaseLibrary,
         get sb() { return getSupabase(); },
-
-        // Auth
         getSession: getSession,
         getUser: getUser,
         requireCompanyAuth: requireCompanyAuth,
         requireStudentAuth: requireStudentAuth,
         requireAdminAuth: requireAdminAuth,
         logout: logout,
-
-        // UI
         showToast: showToast,
         confirmModal: confirmModal,
-
-        // Helpers
         escapeHtml: escapeHtml,
         formatDate: formatDate,
         formatDateTime: formatDateTime,
@@ -296,26 +350,23 @@
         isValidEmail: isValidEmail,
         isValidEgyptianPhone: isValidEgyptianPhone,
         debounce: debounce,
-
-        // Notifications
         sendNotification: sendNotification,
         notifyAdmins: notifyAdmins,
         getUnreadNotificationsCount: getUnreadNotificationsCount
     };
 
-    // Backward compatibility
     window.showToast = showToast;
     window.logout = logout;
     window.getSB = getSupabase;
 
-    // Auto-init: try to create client immediately when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            getSupabase(); // attempt early init
+    // 🚀 AUTO-LOAD: تحميل تلقائي للمكتبة لو مش موجودة
+    if (typeof supabase === 'undefined' || !supabase.createClient) {
+        loadSupabaseLibrary().then(function(loaded) {
+            if (loaded) getSupabase();
         });
     } else {
         getSupabase();
     }
 
-    console.log('✅ supabase-config.js loaded (v2 robust)');
+    console.log('✅ supabase-config.js loaded (v3 bulletproof)');
 })();
