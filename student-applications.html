@@ -2,2473 +2,805 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProVance - طلبات التدريب</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>طلباتي - ProVance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* أنماط CSS المتبقية كما هي */
         :root {
-            --primary: #6C63FF;
-            --primary-dark: #5A52D5;
-            --secondary: #FF6584;
-            --accent: #36D1DC;
-            --bg-dark: #0F0F1E;
-            --bg-darker: #0A0A14;
-            --bg-secondary: #1A1A2E;
-            --bg-card: #23233A;
-            --bg-input: rgba(255, 255, 255, 0.05);
-            --text-primary: #FFFFFF;
-            --text-secondary: #B8B5C9;
-            --text-muted: #8B889E;
-            --success: #4ECDC4;
-            --warning: #FFE66D;
-            --error: #FF6B6B;
-            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            --spacing-xs: 0.5rem;
-            --spacing-sm: 1rem;
-            --spacing-md: 1.5rem;
-            --spacing-lg: 2rem;
-            --spacing-xl: 3rem;
-            --spacing-xxl: 5rem;
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 20px;
-            --transition-base: 0.3s ease;
-            --transition-bounce: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.2);
-            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.3);
-            --shadow-glow: 0 0 30px rgba(108, 99, 255, 0.4);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-primary);
-            line-height: 1.6;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* باقي الأنماط تبقى كما هي */
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .shape {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(60px);
-            opacity: 0.08;
-            animation: float 20s infinite ease-in-out;
-        }
-
-        .shape-1 {
-            width: 400px;
-            height: 400px;
-            background: var(--primary);
-            top: -100px;
-            right: -100px;
-            animation-delay: 0s;
-        }
-
-        .shape-2 {
-            width: 300px;
-            height: 300px;
-            background: var(--secondary);
-            bottom: -100px;
-            left: -100px;
-            animation-delay: 5s;
-        }
-
-        .shape-3 {
-            width: 250px;
-            height: 250px;
-            background: var(--accent);
-            top: 40%;
-            left: 30%;
-            animation-delay: 10s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(50px, 50px) scale(1.05); }
-        }
-
-        .nav-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(26, 26, 46, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(108, 99, 255, 0.2);
-            padding: var(--spacing-sm) 0;
-            z-index: 100;
-            animation: slideDown 0.5s ease;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .nav-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 var(--spacing-lg);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-logo {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-            font-size: 1.8rem;
-            font-weight: 900;
-            color: var(--primary);
-        }
-
-        .student-nav-links {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md);
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-            padding: var(--spacing-sm) var(--spacing-md);
-            color: var(--text-secondary);
-            text-decoration: none;
-            border-radius: var(--radius-md);
-            transition: all var(--transition-bounce);
-            font-weight: 600;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            background: var(--primary);
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .applications-container {
-            max-width: 1400px;
-            margin: 100px auto 60px;
-            padding: 0 var(--spacing-lg);
-            animation: fadeInUp 0.8s ease;
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .applications-hero {
-            text-align: center;
-            margin-bottom: var(--spacing-xxl);
-            position: relative;
-            overflow: hidden;
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-xxl) var(--spacing-xl);
-            background: var(--gradient-primary);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-            padding: var(--spacing-sm) var(--spacing-lg);
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-xl);
-            margin-bottom: var(--spacing-lg);
-            color: white;
-            font-weight: 700;
-            animation: badgePulse 2s infinite;
-        }
-
-        @keyframes badgePulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
-        }
-
-        .hero-title {
-            font-size: 3.5rem;
-            margin-bottom: var(--spacing-sm);
-            font-weight: 900;
-            line-height: 1.1;
-            color: white;
-        }
-
-        .hero-subtitle {
-            font-size: 1.3rem;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: var(--spacing-xl);
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-            line-height: 1.6;
-        }
-
-        .hero-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--spacing-md);
-            margin-top: var(--spacing-xl);
-        }
-
-        .hero-stat {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-lg);
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all var(--transition-bounce);
-        }
-
-        .hero-stat:hover {
-            transform: translateY(-5px);
-        }
-
-        .hero-stat-number {
-            display: block;
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: var(--spacing-xs);
-            color: white;
-        }
-
-        .hero-stat-label {
-            font-size: 1.1rem;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 600;
-        }
-
-        /* قسم حالة الطلبات الجديد */
-        .applications-status-section {
-            background: var(--bg-secondary);
-            border: 2px solid rgba(108, 99, 255, 0.3);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-lg);
-            margin-bottom: var(--spacing-lg);
-            box-shadow: var(--shadow-md);
-            animation: slideInLeft 0.6s ease;
-        }
-
-        @keyframes slideInLeft {
-            from { transform: translateX(-30px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .status-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-md);
-        }
-
-        .status-title {
-            font-size: 1.5rem;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-        }
-
-        .status-content {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xl);
-            flex-wrap: wrap;
-        }
-
-        .status-info {
-            flex: 1;
-            min-width: 250px;
-        }
-
-        .status-info p {
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-xs);
-            font-size: 1.1rem;
-        }
-
-        .status-info strong {
-            color: var(--text-primary);
-            font-size: 1.2rem;
-        }
-
-        .status-progress-container {
-            flex: 2;
-            min-width: 300px;
-        }
-
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: var(--spacing-xs);
-        }
-
-        .progress-label {
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        .progress-value {
-            color: var(--primary);
-            font-weight: 700;
-        }
-
-        .progress-bar {
-            height: 24px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            margin-bottom: var(--spacing-sm);
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            border-radius: 12px;
-            transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-        }
-
-        .progress-text {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-
-        .progress-tip {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            text-align: center;
-            font-style: italic;
-        }
-
-        .filter-section {
-            background: var(--bg-secondary);
-            border: 1px solid rgba(108, 99, 255, 0.2);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-xl);
-            margin-bottom: var(--spacing-xl);
-            box-shadow: var(--shadow-md);
-        }
-
-        .filter-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-lg);
-        }
-
-        .filter-title {
-            font-size: 1.8rem;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-        }
-
-        .filter-actions {
-            display: flex;
-            gap: var(--spacing-sm);
-        }
-
-        .filter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--spacing-md);
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-xs);
-        }
-
-        .filter-label {
-            color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: var(--spacing-xs);
-        }
-
-        .filter-select {
-            width: 100%;
-            padding: var(--spacing-md);
-            background: var(--bg-input);
-            border: 2px solid rgba(108, 99, 255, 0.2);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-size: 1rem;
-            transition: all var(--transition-bounce);
-            outline: none;
-        }
-
-        .filter-select:focus {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        .btn {
-            padding: var(--spacing-sm) var(--spacing-lg);
-            border: none;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--transition-bounce);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-        }
-
-        .btn-primary {
-            background: var(--gradient-primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-glow);
-        }
-
-        .btn-secondary {
-            background: var(--bg-input);
-            color: var(--text-primary);
-            border: 1px solid rgba(108, 99, 255, 0.3);
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--primary);
-            transform: translateY(-3px);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, var(--error) 0%, #ff4757 100%);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 30px rgba(255, 107, 107, 0.4);
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, var(--warning) 0%, #ffb347 100%);
-            color: var(--bg-dark);
-        }
-
-        .btn-warning:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 30px rgba(255, 230, 109, 0.4);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--success) 0%, #11998e 100%);
-            color: white;
-        }
-
-        .btn-success:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 30px rgba(78, 205, 196, 0.4);
-        }
-
-        .applications-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-            gap: var(--spacing-lg);
-            margin-bottom: var(--spacing-xl);
-        }
-
-        .application-card {
-            background: var(--bg-card);
-            border: 1px solid rgba(108, 99, 255, 0.1);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-lg);
-            transition: all var(--transition-bounce);
-            position: relative;
-            overflow: hidden;
-            animation: cardEntrance 0.6s ease;
-        }
-
-        @keyframes cardEntrance {
-            0% { opacity: 0; transform: translateY(30px) scale(0.9); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .application-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--primary);
-        }
-
-        .application-header {
-            display: flex;
-            align-items: flex-start;
-            gap: var(--spacing-md);
-            margin-bottom: var(--spacing-md);
-        }
-
-        .company-logo {
-            width: 70px;
-            height: 70px;
-            border-radius: var(--radius-lg);
-            background: var(--bg-input);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            color: var(--primary);
-            flex-shrink: 0;
-            border: 2px solid rgba(108, 99, 255, 0.2);
-        }
-
-        .application-info {
-            flex: 1;
-        }
-
-        .application-title {
-            font-size: 1.5rem;
-            font-weight: 800;
-            margin-bottom: var(--spacing-xs);
-            color: var(--text-primary);
-        }
-
-        .company-name {
-            color: var(--primary);
-            font-weight: 700;
-            margin-bottom: var(--spacing-xs);
-            font-size: 1.1rem;
-        }
-
-        .application-status {
-            display: inline-block;
-            padding: 6px 16px;
-            border-radius: var(--radius-xl);
-            font-size: 0.85rem;
-            font-weight: 700;
-            margin-bottom: var(--spacing-sm);
-        }
-
-        .status-pending {
-            background: rgba(255, 230, 109, 0.15);
-            color: var(--warning);
-            border: 1px solid var(--warning);
-        }
-
-        .status-accepted {
-            background: rgba(78, 205, 196, 0.15);
-            color: var(--success);
-            border: 1px solid var(--success);
-        }
-
-        .status-rejected {
-            background: rgba(255, 107, 107, 0.15);
-            color: var(--error);
-            border: 1px solid var(--error);
-        }
-
-        .application-meta {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md);
-            margin-bottom: var(--spacing-md);
-            flex-wrap: wrap;
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .meta-item i {
-            color: var(--primary);
-        }
-
-        .application-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: var(--spacing-md);
-        }
-
-        .application-date {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .application-actions {
-            display: flex;
-            gap: var(--spacing-sm);
-        }
-
-        .application-details {
-            display: none;
-            background: var(--bg-card);
-            border: 2px solid var(--primary);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-xl);
-            margin-bottom: var(--spacing-xl);
-            box-shadow: var(--shadow-lg);
-            animation: detailsEntrance 0.6s ease-out;
-        }
-
-        @keyframes detailsEntrance {
-            0% { opacity: 0; transform: translateY(30px) scale(0.95); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .details-header {
-            display: flex;
-            align-items: flex-start;
-            gap: var(--spacing-lg);
-            margin-bottom: var(--spacing-xl);
-            padding-bottom: var(--spacing-lg);
-            border-bottom: 2px solid rgba(108, 99, 255, 0.2);
-        }
-
-        .details-logo {
-            width: 100px;
-            height: 100px;
-            border-radius: var(--radius-lg);
-            background: var(--bg-input);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            color: var(--primary);
-            flex-shrink: 0;
-            border: 3px solid var(--primary);
-        }
-
-        .details-info {
-            flex: 1;
-        }
-
-        .details-title {
-            font-size: 2.2rem;
-            font-weight: 900;
-            margin-bottom: var(--spacing-sm);
-            color: var(--text-primary);
-        }
-
-        .details-company {
-            font-size: 1.5rem;
-            color: var(--primary);
-            font-weight: 700;
-            margin-bottom: var(--spacing-md);
-        }
-
-        .details-description {
-            color: var(--text-secondary);
-            line-height: 1.8;
-            margin-bottom: var(--spacing-lg);
-            font-size: 1.1rem;
-        }
-
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: var(--spacing-lg);
-            margin-bottom: var(--spacing-xl);
-        }
-
-        .details-section {
-            background: var(--bg-secondary);
-            border: 1px solid rgba(108, 99, 255, 0.2);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-lg);
-            transition: all var(--transition-bounce);
-        }
-
-        .details-section:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-        }
-
-        .section-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: var(--spacing-md);
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-        }
-
-        /* أنماط جديدة لسياسة الرد */
-        .policy-response {
-            background: rgba(78, 205, 196, 0.1);
-            border-color: var(--success);
-        }
-
-        .response-item {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-            margin-bottom: var(--spacing-sm);
-            padding: var(--spacing-sm);
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius-md);
-            transition: all 0.3s ease;
-        }
-
-        .response-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .response-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-        }
-
-        .response-info {
-            flex: 1;
-        }
-
-        .response-label {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-
-        .response-value {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-        }
-
-        .details-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: var(--spacing-md);
-            padding-top: var(--spacing-lg);
-            border-top: 2px solid rgba(108, 99, 255, 0.2);
-        }
-
-        .no-applications {
-            text-align: center;
-            padding: var(--spacing-xxl) var(--spacing-xl);
-            grid-column: 1 / -1;
-        }
-
-        .no-applications-icon {
-            font-size: 5rem;
-            color: var(--text-muted);
-            margin-bottom: var(--spacing-lg);
-        }
-
-        .no-applications-title {
-            font-size: 2rem;
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-md);
-        }
-
-        .no-applications-text {
-            color: var(--text-muted);
-            margin-bottom: var(--spacing-xl);
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .page-footer {
-            background: var(--bg-secondary);
-            border-top: 1px solid rgba(108, 99, 255, 0.2);
-            padding: var(--spacing-xl) 0;
-            margin-top: var(--spacing-xl);
-        }
-
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 var(--spacing-lg);
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: var(--spacing-xl);
-        }
-
-        .footer-section h3 {
-            font-size: 1.5rem;
-            margin-bottom: var(--spacing-md);
-            color: var(--primary);
-            font-weight: 800;
-        }
-
-        .footer-links {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-sm);
-        }
-
-        .footer-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: all var(--transition-bounce);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-        }
-
-        .footer-link:hover {
-            color: var(--primary);
-            transform: translateX(5px);
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: var(--spacing-lg);
-            margin-top: var(--spacing-lg);
-            border-top: 1px solid rgba(108, 99, 255, 0.2);
-            color: var(--text-muted);
-        }
-
-        @media (max-width: 768px) {
-            .nav-content {
-                flex-direction: column;
-                gap: var(--spacing-sm);
-            }
-            
-            .applications-container {
-                margin: 120px auto 40px;
-                padding: 0 var(--spacing-sm);
-            }
-            
-            .hero-title {
-                font-size: 2.5rem;
-            }
-            
-            .hero-subtitle {
-                font-size: 1.1rem;
-            }
-            
-            .applications-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .details-header {
-                flex-direction: column;
-            }
-            
-            .details-logo {
-                width: 80px;
-                height: 80px;
-                font-size: 2rem;
-            }
-            
-            .details-title {
-                font-size: 1.8rem;
-            }
-            
-            .details-actions {
-                flex-direction: column;
-            }
-            
-            .application-footer {
-                flex-direction: column;
-                gap: var(--spacing-md);
-                align-items: flex-start;
-            }
-            
-            .application-actions {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .status-content {
-                flex-direction: column;
-            }
-            
-            .status-info, .status-progress-container {
-                min-width: 100%;
-            }
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .w-full {
-            width: 100%;
-        }
-        
-        /* أنماط إضافية */
-        .info-grid {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-sm);
-        }
-        
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: var(--spacing-sm) 0;
-            border-bottom: 1px solid rgba(108, 99, 255, 0.1);
-        }
-        
-        .timeline {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-md);
-        }
-        
-        .timeline-item {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md);
-        }
-        
-        .timeline-date {
-            background: var(--primary);
-            color: white;
-            padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--radius-md);
-            min-width: 120px;
-            text-align: center;
-        }
-        
-        .timeline-content {
-            flex: 1;
-            padding: var(--spacing-sm);
-            background: var(--bg-input);
-            border-radius: var(--radius-md);
-        }
-        
-        .attachments {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-sm);
-        }
-        
-        .attachment-item {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-            padding: var(--spacing-sm);
-            background: var(--bg-input);
-            border-radius: var(--radius-md);
-        }
-        
-        .attachment-item i {
-            color: var(--error);
-        }
-
-        /* أنماط جديدة للتكامل مع صفحة التدريب */
-        .card-status-indicator {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 2px solid var(--bg-card);
-        }
-        
-        .pending-indicator {
-            background: var(--warning);
-            box-shadow: 0 0 10px var(--warning);
-        }
-        
-        .accepted-indicator {
-            background: var(--success);
-            box-shadow: 0 0 10px var(--success);
-        }
-        
-        .rejected-indicator {
-            background: var(--error);
-            box-shadow: 0 0 10px var(--error);
-        }
-        
-        .applications-quick-actions {
-            display: flex;
-            justify-content: center;
-            gap: var(--spacing-md);
-            margin: var(--spacing-xl) 0;
-            flex-wrap: wrap;
-        }
-        
-        .action-card {
-            background: var(--bg-card);
-            border: 2px solid rgba(108, 99, 255, 0.2);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-lg);
-            text-align: center;
-            transition: all var(--transition-bounce);
-            min-width: 200px;
-            cursor: pointer;
-        }
-        
-        .action-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .action-icon {
-            font-size: 2.5rem;
-            margin-bottom: var(--spacing-md);
-            color: var(--primary);
-        }
-        
-        .action-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: var(--spacing-xs);
-            color: var(--text-primary);
-        }
-        
-        .action-description {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        .status-explanation {
-            margin-top: var(--spacing-md);
-            padding: var(--spacing-md);
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius-md);
-            border-right: 4px solid var(--primary);
-        }
-        
-        .status-explanation h4 {
-            color: var(--primary);
-            margin-bottom: var(--spacing-xs);
-        }
-        
-        .status-explanation p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            line-height: 1.6;
-        }
-        
-        /* نمط التأكيد على الإلغاء */
-        .cancel-confirmation {
-            background: rgba(255, 107, 107, 0.1);
-            border: 2px solid var(--error);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-lg);
-            margin: var(--spacing-md) 0;
-        }
-        
-        .cancel-confirmation h4 {
-            color: var(--error);
-            margin-bottom: var(--spacing-sm);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-        }
-        
-        .cancel-confirmation ul {
-            padding-right: var(--spacing-lg);
-            margin-bottom: var(--spacing-md);
-        }
-        
-        .cancel-confirmation li {
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-xs);
-            line-height: 1.5;
-        }
-        
-        .cancel-actions {
-            display: flex;
-            gap: var(--spacing-md);
-            justify-content: flex-end;
-            margin-top: var(--spacing-lg);
+            --primary: #4facfe; --secondary: #00f2fe;
+            --gradient: linear-gradient(135deg, #4facfe, #00f2fe);
+            --bg: #0a0e27; --bg-2: #1a1535;
+            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+            --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
+            --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+        .bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(79,172,254,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(0,242,254,0.06), transparent 45%), var(--bg); }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
+        .sidebar-logo { display: flex; align-items: center; justify-content: center; padding: 0 8px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .sidebar-logo img { height: 32px; max-width: 100%; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
+        .nav-item:hover { background: var(--card); color: var(--text); }
+        .nav-item.active { background: var(--gradient); color: #fff; }
+        .nav-item i { width: 18px; }
+        .main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
+        .menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
+        .topbar-title { font-size: 1.5rem; font-weight: 800; }
+        .topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .quota-banner { background: linear-gradient(135deg, rgba(79,172,254,0.1), rgba(0,242,254,0.05)); border: 1px solid rgba(79,172,254,0.25); border-radius: 18px; padding: 20px; margin-bottom: 18px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .quota-banner.warning { background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.05)); border-color: rgba(245,158,11,0.3); }
+        .quota-banner.full { background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.05)); border-color: rgba(239,68,68,0.3); }
+        .quota-circle { width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(var(--primary) calc(var(--percent) * 1%), rgba(255,255,255,0.06) 0); display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+        .quota-banner.warning .quota-circle { background: conic-gradient(var(--warning) calc(var(--percent) * 1%), rgba(255,255,255,0.06) 0); }
+        .quota-banner.full .quota-circle { background: conic-gradient(var(--error) calc(var(--percent) * 1%), rgba(255,255,255,0.06) 0); }
+        .quota-circle::before { content: ''; position: absolute; inset: 7px; background: var(--bg-2); border-radius: 50%; }
+        .quota-num { position: relative; font-weight: 800; font-size: 1.4rem; color: var(--primary); }
+        .quota-banner.warning .quota-num { color: var(--warning); }
+        .quota-banner.full .quota-num { color: var(--error); }
+        .quota-text { flex: 1; min-width: 200px; }
+        .quota-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 4px; }
+        .quota-desc { color: var(--text-muted); font-size: 0.92rem; }
+        .tabs-container { display: flex; gap: 8px; margin-bottom: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 6px; overflow-x: auto; }
+        .tab-btn { padding: 11px 18px; background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.92rem; font-weight: 700; border-radius: 10px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; transition: all .2s; }
+        .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+        .tab-btn.active { background: var(--gradient); color: #fff; box-shadow: 0 6px 16px rgba(79,172,254,0.3); }
+        .tab-badge { background: rgba(255,255,255,0.15); padding: 1px 8px; border-radius: 10px; font-size: 0.72rem; }
+        .tab-content { display: none; animation: fadeIn .3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .stat-mini { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 11px; }
+        .stat-mini-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; flex-shrink: 0; }
+        .stat-mini-icon.cyan { background: var(--gradient); }
+        .stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+        .stat-mini-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+        .stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.88rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
+        .btn-primary { background: var(--gradient); color: #fff; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(79,172,254,0.4); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+        .btn-secondary:hover { background: var(--card-hover); }
+        .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+        .btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+        .btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+        .btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
+        .btn-sm { padding: 7px 12px; font-size: 0.8rem; }
+        .applications-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+        .app-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: all .25s; position: relative; }
+        .app-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(79,172,254,0.15); }
+        .app-card.has-update { border-color: rgba(245,158,11,0.4); box-shadow: 0 0 0 2px rgba(245,158,11,0.15); }
+        .app-card.has-update::before { content: 'تحديث'; position: absolute; top: 12px; left: 12px; background: var(--warning); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 800; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .app-card-header { display: flex; align-items: center; gap: 12px; }
+        .company-logo { width: 56px; height: 56px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.3rem; flex-shrink: 0; overflow: hidden; }
+        .company-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .company-info { flex: 1; min-width: 0; }
+        .company-name { font-weight: 800; font-size: 1.05rem; }
+        .position-name { color: var(--text-muted); font-size: 0.84rem; margin-top: 3px; }
+        .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 14px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+        .status-badge.pending { background: rgba(148,163,184,0.15); color: var(--text-muted); }
+        .status-badge.reviewing { background: rgba(79,172,254,0.15); color: var(--info); }
+        .status-badge.interview { background: rgba(240,147,251,0.15); color: #f093fb; }
+        .status-badge.accepted { background: rgba(16,185,129,0.15); color: var(--success); }
+        .status-badge.rejected { background: rgba(239,68,68,0.15); color: var(--error); }
+        .status-badge.withdrawn { background: rgba(148,163,184,0.15); color: var(--text-muted); }
+        .status-timeline { display: flex; gap: 4px; margin: 10px 0; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .timeline-step { flex: 1; text-align: center; font-size: 0.72rem; color: var(--text-dim); padding: 6px 4px; background: rgba(255,255,255,0.02); border-radius: 8px; position: relative; }
+        .timeline-step.active { color: var(--success); background: rgba(16,185,129,0.1); font-weight: 700; }
+        .timeline-step.current { color: var(--primary); background: rgba(79,172,254,0.1); font-weight: 700; animation: pulse 2s infinite; }
+        .timeline-step.rejected { color: var(--error); background: rgba(239,68,68,0.1); font-weight: 700; }
+        .app-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.82rem; color: var(--text-muted); }
+        .app-meta span { display: flex; align-items: center; gap: 4px; }
+        .app-meta i { color: var(--primary); }
+        .app-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+        .app-actions .btn { flex: 1; justify-content: center; padding: 9px; min-width: 90px; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .25s; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 700px; max-height: 92vh; overflow-y: auto; padding: 28px; position: relative; animation: slideUp .3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-content::-webkit-scrollbar { width: 6px; }
+        .modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+        .modal-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .modal-title i { color: var(--primary); }
+        .modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+        .modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 14px; }
+        .info-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+        .info-label { color: var(--text-muted); font-size: 0.76rem; display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+        .info-label i { color: var(--primary); }
+        .info-value { font-weight: 700; font-size: 0.92rem; word-break: break-word; }
+        .modal-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+        .modal-section-title { font-size: 0.94rem; font-weight: 800; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+        .modal-section-title i { color: var(--primary); }
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+        .empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
+        .empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
+        .filters-bar { display: flex; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+        .filters-bar input, .filters-bar select { padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.9rem; }
+        .filters-bar input { flex: 1; min-width: 200px; }
+        .filters-bar input:focus, .filters-bar select:focus { outline: none; border-color: var(--primary); }
+        .help-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+        .help-section h4 { font-size: 0.95rem; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--primary); }
+        .help-section ul { list-style: none; padding: 0; }
+        .help-section li { padding: 5px 0; color: var(--text-muted); font-size: 0.88rem; display: flex; align-items: flex-start; gap: 6px; }
+        .help-section li i { color: var(--success); flex-shrink: 0; margin-top: 4px; }
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(100%); width: 280px; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-right: 0; }
+            .menu-toggle { display: flex; align-items: center; justify-content: center; }
+        }
+        @media (max-width: 600px) {
+            .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
+            .topbar-title { font-size: 1.2rem; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
 <body>
-    <!-- الخلفية المتحركة -->
-    <div class="bg-animation">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
+    <div class="bg-anim"></div>
+    <div class="layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
+            </div>
+            <a href="student-internship.html" class="nav-item"><i class="fas fa-search"></i> فرص التدريب</a>
+            <a href="student-applications.html" class="nav-item active"><i class="fas fa-file-alt"></i> طلباتي</a>
+            <a href="student-profile.html" class="nav-item"><i class="fas fa-user"></i> ملفي</a>
+            <a href="Student_-payments.html" class="nav-item"><i class="fas fa-credit-card"></i> المدفوعات</a>
+            <a href="student-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+            <a href="#" onclick="logoutStudent(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
+                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+            </a>
+        </aside>
+        <main class="main">
+            <div class="topbar">
+                <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="topbar-title"><i class="fas fa-file-alt" style="color:var(--primary)"></i> طلباتي</h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="openHelpModal()">
+                        <i class="fas fa-question-circle"></i> مساعدة
+                    </button>
+                    <a href="student-internship.html" class="btn btn-primary">
+                        <i class="fas fa-search"></i> ابحث عن فرص
+                    </a>
+                </div>
+            </div>
+
+            <div class="quota-banner" id="quotaBanner">
+                <div class="quota-circle" id="quotaCircle" style="--percent: 0">
+                    <span class="quota-num" id="quotaNum">0/3</span>
+                </div>
+                <div class="quota-text">
+                    <div class="quota-title" id="quotaTitle">طلبات نشطة</div>
+                    <div class="quota-desc" id="quotaDesc">لديك حد أقصى 3 طلبات نشطة في نفس الوقت</div>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-mini">
+                    <div class="stat-mini-icon cyan"><i class="fas fa-paper-plane"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statTotal">0</div>
+                        <div class="stat-mini-label">إجمالي الطلبات</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon warning"><i class="fas fa-clock"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statActive">0</div>
+                        <div class="stat-mini-label">نشطة</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon success"><i class="fas fa-check"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statAccepted">0</div>
+                        <div class="stat-mini-label">مقبولة</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon error"><i class="fas fa-times"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statRejected">0</div>
+                        <div class="stat-mini-label">مرفوضة</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tabs-container">
+                <button class="tab-btn active" data-tab="active" onclick="switchTab(event, 'active')">
+                    <i class="fas fa-clock"></i> نشطة
+                    <span class="tab-badge" id="activeCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="interviews" onclick="switchTab(event, 'interviews')">
+                    <i class="fas fa-calendar-check"></i> مقابلات
+                    <span class="tab-badge" id="interviewsCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="accepted" onclick="switchTab(event, 'accepted')">
+                    <i class="fas fa-check-circle"></i> مقبولة
+                    <span class="tab-badge" id="acceptedCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="rejected" onclick="switchTab(event, 'rejected')">
+                    <i class="fas fa-times-circle"></i> مرفوضة
+                    <span class="tab-badge" id="rejectedCount">0</span>
+                </button>
+                <button class="tab-btn" data-tab="all" onclick="switchTab(event, 'all')">
+                    <i class="fas fa-list"></i> الكل
+                </button>
+            </div>
+
+            <div class="filters-bar">
+                <input type="text" id="searchApps" placeholder="🔍 ابحث باسم الشركة أو الفرصة...">
+                <select id="filterSort">
+                    <option value="newest">الأحدث أولاً</option>
+                    <option value="oldest">الأقدم أولاً</option>
+                </select>
+            </div>
+
+            <div id="tab-active" class="tab-content active">
+                <div class="applications-grid" id="activeGrid">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
+                </div>
+            </div>
+            <div id="tab-interviews" class="tab-content">
+                <div class="applications-grid" id="interviewsGrid"></div>
+            </div>
+            <div id="tab-accepted" class="tab-content">
+                <div class="applications-grid" id="acceptedGrid"></div>
+            </div>
+            <div id="tab-rejected" class="tab-content">
+                <div class="applications-grid" id="rejectedGrid"></div>
+            </div>
+            <div id="tab-all" class="tab-content">
+                <div class="applications-grid" id="allGrid"></div>
+            </div>
+        </main>
     </div>
+    <div id="modalsContainer"></div>
 
-    <!-- رأس التنقل -->
-    <header class="nav-header">
-        <div class="nav-content">
-            <div class="nav-logo">
-                <i class="fas fa-rocket"></i>
-                <span>ProVance</span>
-            </div>
-            <div class="student-nav-links">
-                <a href="student-internship.html" class="nav-link">
-                    <i class="fas fa-briefcase"></i>
-                    <span>فرص التدريب</span>
-                </a>
-                <a href="student-applications.html" class="nav-link active">
-                   <i class="fas fa-user-tie"></i>
-                    <span>طلباتي</span>
-                </a>
-                <a href="student-profile.html" class="nav-link">
-                    <i class="fas fa-user"></i>
-                    <span>الملف الشخصي</span>
-                </a>
-                <a href="student-login.html" class="nav-link" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>تسجيل الخروج</span>
-                </a>
-            </div>
-        </div>
-    </header>
-
-    <!-- الحاوية الرئيسية -->
-    <main class="applications-container">
-        <!-- قسم البطل -->
-        <section class="applications-hero">
-            <div class="hero-content">
-                <div class="hero-badge">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span>تتبع طلباتك</span>
-                </div>
-                <h1 class="hero-title">طلبات التدريب الخاصة بي</h1>
-                <p class="hero-subtitle">تابع حالة طلباتك للتدريب، وكن على اطلاع بآخر التحديثات</p>
-                
-                <div class="hero-stats">
-                    <div class="hero-stat">
-                        <span class="hero-stat-number" id="totalApplications">0</span>
-                        <span class="hero-stat-label">إجمالي الطلبات</span>
-                    </div>
-                    <div class="hero-stat">
-                        <span class="hero-stat-number" id="pendingApplications">0</span>
-                        <span class="hero-stat-label">طلبات قيد المراجعة</span>
-                    </div>
-                    <div class="hero-stat">
-                        <span class="hero-stat-number" id="availableApplications">0</span>
-                        <span class="hero-stat-label">طلبات متاحة</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- قسم حالة الطلبات الجديد -->
-        <section class="applications-status-section" id="applicationsStatusSection">
-            <div class="status-header">
-                <h2 class="status-title">
-                    <i class="fas fa-chart-line"></i>
-                    حالة طلباتك الحالية
-                </h2>
-            </div>
-            <div class="status-content">
-                <div class="status-info">
-                    <p>يمكنك التقديم على <strong id="remainingApplications">3</strong> تدريب إضافي</p>
-                    <p>الطلبات المرفوضة والمقبولة <strong>لا تحتسب</strong> من الحد الأقصى</p>
-                    <p>يمكنك إلغاء الطلبات قيد المراجعة والتقديم على تدريبات أخرى</p>
-                </div>
-                <div class="status-progress-container">
-                    <div class="progress-header">
-                        <span class="progress-label">الطلبات قيد المراجعة</span>
-                        <span class="progress-value" id="progressText">0/3</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-                        <div class="progress-text" id="progressPercentage">0%</div>
-                    </div>
-                    <p class="progress-tip" id="progressTip">يمكنك التقديم على 3 تدريبات في نفس الوقت</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- أفعال سريعة -->
-        <div class="applications-quick-actions">
-            <div class="action-card" id="goToInternships">
-                <div class="action-icon">
-                    <i class="fas fa-briefcase"></i>
-                </div>
-                <h3 class="action-title">تصفح فرص التدريب</h3>
-                <p class="action-description">استعرض فرص التدريب المتاحة وقم بالتقديم</p>
-            </div>
-            <div class="action-card" id="filterPending">
-                <div class="action-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <h3 class="action-title">الطلبات قيد المراجعة</h3>
-                <p class="action-description">عرض الطلبات التي لم يتم الرد عليها بعد</p>
-            </div>
-            <div class="action-card" id="viewAccepted">
-                <div class="action-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <h3 class="action-title">الطلبات المقبولة</h3>
-                <p class="action-description">عرض التدريبات التي تم قبولك فيها</p>
-            </div>
-        </div>
-
-        <!-- فلتر الطلبات -->
-        <section class="filter-section">
-            <div class="filter-header">
-                <h2 class="filter-title">
-                    <i class="fas fa-filter"></i>
-                    تصفية الطلبات
-                </h2>
-                <div class="filter-actions">
-                    <button class="btn btn-secondary" id="resetFilters">
-                        <i class="fas fa-undo"></i>
-                        إعادة تعيين
-                    </button>
-                </div>
-            </div>
-            <div class="filter-grid">
-                <div class="filter-group">
-                    <label class="filter-label">حالة الطلب</label>
-                    <select class="filter-select" id="statusFilter">
-                        <option value="">جميع الحالات</option>
-                        <option value="pending">قيد المراجعة</option>
-                        <option value="accepted">مقبول</option>
-                        <option value="rejected">مرفوض</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label">تاريخ التقديم</label>
-                    <select class="filter-select" id="dateFilter">
-                        <option value="">جميع التواريخ</option>
-                        <option value="week">آخر أسبوع</option>
-                        <option value="month">آخر شهر</option>
-                        <option value="3months">آخر 3 أشهر</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label">اسم الشركة</label>
-                    <input type="text" class="filter-select" id="companyFilter" placeholder="ابحث باسم الشركة...">
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label">ترتيب حسب</label>
-                    <select class="filter-select" id="sortFilter">
-                        <option value="newest">الأحدث أولاً</option>
-                        <option value="oldest">الأقدم أولاً</option>
-                        <option value="status">حالة الطلب</option>
-                    </select>
-                </div>
-            </div>
-        </section>
-
-        <!-- شبكة الطلبات -->
-        <section class="applications-grid" id="applicationsGrid">
-            <!-- سيتم ملء الطلبات ديناميكياً باستخدام JavaScript -->
-        </section>
-
-        <!-- تفاصيل الطلب -->
-        <section class="application-details" id="applicationDetails">
-            <!-- سيتم ملء التفاصيل ديناميكياً -->
-        </section>
-    </main>
-
-    <!-- الفوتر -->
-    <footer class="page-footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>عن ProVance</h3>
-                <p>منصة رائدة تربط الطلاب والمتدربين بأفضل فرص التدريب في الشركات الرائدة في السوق.</p>
-            </div>
-            <div class="footer-section">
-                <h3>روابط سريعة</h3>
-                <div class="footer-links">
-                    <a href="student-internship.html" class="footer-link">
-                        <i class="fas fa-briefcase"></i>
-                        <span>فرص التدريب</span>
-                    </a>
-                    <a href="student-applications.html" class="footer-link">
-                        <i class="fas fa-file-alt"></i>
-                        <span>طلباتي</span>
-                    </a>
-                    <a href="student-profile.html" class="footer-link">
-                        <i class="fas fa-user"></i>
-                        <span>الملف الشخصي</span>
-                    </a>
-                </div>
-            </div>
-            <div class="footer-section">
-                <h3>اتصل بنا</h3>
-                <div class="footer-links">
-                    <a href="https://www.facebook.com/share/17DP3PJ2FF/" target="_blank" class="footer-link">
-                        <i class="fab fa-facebook"></i>
-                        <span>ProVance</span>
-                    </a>
-                    <a href="https://www.instagram.com/pro.vance1?igsh=MWI2Nm1sbnpud3BhYw==" target="_blank" class="footer-link">
-                        <i class="fab fa-instagram"></i>
-                        <span>ProVance</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>© 2024 ProVance. جميع الحقوق محفوظة</p>
-        </div>
-    </footer>
-
-    <!-- نافذة تأكيد الإلغاء -->
-    <div id="cancelConfirmationModal" style="
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 1000;
-        align-items: center;
-        justify-content: center;
-        animation: fadeIn 0.3s ease;
-    ">
-        <div style="
-            background: var(--bg-card);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-xl);
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: scaleIn 0.3s ease;
-        ">
-            <div class="cancel-confirmation">
-                <h4><i class="fas fa-exclamation-triangle"></i> تأكيد إلغاء الطلب</h4>
-                <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
-                    هل أنت متأكد من إلغاء هذا الطلب؟
-                </p>
-                <div style="margin-bottom: var(--spacing-md);">
-                    <p style="color: var(--text-primary); font-weight: 600;">تأثيرات الإلغاء:</p>
-                    <ul>
-                        <li>سيتم تحرير مقعد في هذا التدريب</li>
-                        <li>يمكنك التقديم على تدريب آخر بدلاً منه</li>
-                        <li>سيزيد عدد الطلبات المتاحة لديك</li>
-                        <li>لن تتمكن الشركة من رؤية طلبك بعد الآن</li>
-                    </ul>
-                </div>
-                <div class="cancel-actions">
-                    <button class="btn btn-secondary" id="cancelCancelBtn">
-                        <i class="fas fa-times"></i>
-                        <span>إلغاء الأمر</span>
-                    </button>
-                    <button class="btn btn-danger" id="confirmCancelBtn">
-                        <i class="fas fa-check"></i>
-                        <span>تأكيد الإلغاء</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <script>
-        // ============================================
-        // بيانات الطلبات المخزنة
-        // ============================================
-        let applicationsData = [];
-        let studentData = {
-            pendingApplicationsCount: 0,
-            maxPendingApplications: 3
+// ============================================================
+// ProVance: Student Applications - Full Featured
+// ============================================================
+(function() {
+    'use strict';
+
+    if (!window.ProVance) {
+        console.error('⚠️ supabase-config.js مش متحمل');
+        window.ProVance = {};
+    }
+    if (typeof window.ProVance.escapeHtml !== 'function') {
+        window.ProVance.escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    if (typeof window.ProVance.showToast !== 'function') {
+        window.ProVance.showToast = (msg, type) => {
+            const t = document.createElement('div');
+            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+            t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (c[type]||'#4facfe') + ';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
         };
-        let applicationToCancel = null;
+    }
+    if (typeof window.ProVance.confirmModal !== 'function') {
+        window.ProVance.confirmModal = async ({title, message}) => confirm((title||'') + '\n' + (message||''));
+    }
 
-        // ============================================
-        // تهيئة التطبيق
-        // ============================================
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('%c📋 ProVance Applications System', 'color: #667eea; font-size: 24px; font-weight: bold;');
-            console.log('%c✅ نظام الطلبات المتكامل - الإصدار 2.0', 'color: #4ECDC4; font-size: 14px;');
-            
-            // التحقق من حالة الدخول
-            checkLoginStatus();
-            initializeApp();
-            
-            // إضافة مستمع للأحداث من صفحة التدريب
-            setupMessageListeners();
+    console.log('✅ Student Applications initialized');
+
+    const esc = window.ProVance.escapeHtml;
+
+    // STATE
+    let studentUserId = null;
+    let allApplications = [];
+    const MAX_ACTIVE = 3;
+
+    function getInitial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
+
+    function renderModal(html) {
+        document.getElementById('modalsContainer').innerHTML = html;
+        document.body.style.overflow = 'hidden';
+    }
+    window.closeModal = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+        if (document.querySelectorAll('.modal').length === 0) {
+            document.body.style.overflow = '';
+        }
+    };
+
+    window.logoutStudent = async (e) => {
+        e.preventDefault();
+        const ok = await window.ProVance.confirmModal({title: 'تسجيل الخروج', message: 'هل تريد تسجيل الخروج؟'});
+        if (ok) {
+            if (window.ProVance.logout) await window.ProVance.logout('student-login.html');
+            else window.location.href = 'student-login.html';
+        }
+    };
+
+    function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
+    function formatDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('ar-EG'); }
+    function timeAgo(d) {
+        if (!d) return '';
+        const diff = Date.now() - new Date(d).getTime();
+        const mins = Math.floor(diff/60000);
+        if (mins < 1) return 'الآن';
+        if (mins < 60) return `${mins} د`;
+        const hrs = Math.floor(mins/60);
+        if (hrs < 24) return `${hrs} س`;
+        return `${Math.floor(hrs/24)} يوم`;
+    }
+
+    window.switchTab = (e, tabName) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.add('active');
+    };
+
+    function getStatusInfo(status) {
+        const map = {
+            'pending': { cls: 'pending', label: '⏳ في الانتظار', step: 1 },
+            'reviewing': { cls: 'reviewing', label: '👁️ قيد المراجعة', step: 2 },
+            'interview_scheduled': { cls: 'interview', label: '📅 مقابلة مجدولة', step: 3 },
+            'interview_done': { cls: 'interview', label: '✓ تمت المقابلة', step: 3 },
+            'accepted': { cls: 'accepted', label: '✅ مقبول', step: 4 },
+            'hired': { cls: 'accepted', label: '🎉 تم التعيين', step: 4 },
+            'in_training': { cls: 'accepted', label: '🎓 قيد التدريب', step: 4 },
+            'completed': { cls: 'accepted', label: '🏆 أكمل', step: 4 },
+            'rejected': { cls: 'rejected', label: '❌ مرفوض', step: -1 },
+            'withdrawn': { cls: 'withdrawn', label: '↩️ منسحب', step: -1 }
+        };
+        return map[status] || { cls: 'pending', label: status, step: 1 };
+    }
+
+    function renderTimeline(status) {
+        const info = getStatusInfo(status);
+        const isRejected = status === 'rejected';
+        const isWithdrawn = status === 'withdrawn';
+
+        const steps = [
+            { num: 1, label: 'تقديم' },
+            { num: 2, label: 'مراجعة' },
+            { num: 3, label: 'مقابلة' },
+            { num: 4, label: 'قبول' }
+        ];
+
+        return `
+            <div class="status-timeline">
+                ${steps.map(s => {
+                    let cls = '';
+                    if (isRejected || isWithdrawn) {
+                        if (s.num <= info.step || info.step === -1) cls = 'rejected';
+                    } else {
+                        if (s.num < info.step) cls = 'active';
+                        else if (s.num === info.step) cls = 'current';
+                    }
+                    return `<div class="timeline-step ${cls}">${s.label}</div>`;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    function isActiveApp(a) {
+        return ['pending', 'reviewing', 'interview_scheduled', 'interview_done', 'accepted'].includes(a.status);
+    }
+
+    function renderQuota() {
+        const activeCount = allApplications.filter(isActiveApp).length;
+        const banner = document.getElementById('quotaBanner');
+        const circle = document.getElementById('quotaCircle');
+        const numEl = document.getElementById('quotaNum');
+        const titleEl = document.getElementById('quotaTitle');
+        const descEl = document.getElementById('quotaDesc');
+
+        const percent = (activeCount / MAX_ACTIVE) * 100;
+        circle.style.setProperty('--percent', percent);
+        numEl.textContent = `${activeCount}/${MAX_ACTIVE}`;
+
+        banner.classList.remove('warning', 'full');
+
+        if (activeCount >= MAX_ACTIVE) {
+            banner.classList.add('full');
+            titleEl.textContent = '⚠️ وصلت للحد الأقصى';
+            descEl.textContent = 'لازم تسحب أحد الطلبات النشطة عشان تقدر تقدم على فرصة جديدة';
+        } else if (activeCount >= 2) {
+            banner.classList.add('warning');
+            titleEl.textContent = `${activeCount} طلبات نشطة`;
+            descEl.textContent = `يمكنك التقديم على ${MAX_ACTIVE - activeCount} فرصة إضافية`;
+        } else if (activeCount === 1) {
+            titleEl.textContent = 'طلب واحد نشط';
+            descEl.textContent = `يمكنك التقديم على ${MAX_ACTIVE - activeCount} فرص إضافية`;
+        } else {
+            titleEl.textContent = 'لا توجد طلبات نشطة';
+            descEl.textContent = `يمكنك التقديم على حتى ${MAX_ACTIVE} فرص في نفس الوقت`;
+        }
+    }
+
+    function updateStats() {
+        const active = allApplications.filter(isActiveApp).length;
+        const accepted = allApplications.filter(a => ['hired', 'in_training', 'completed'].includes(a.status)).length;
+        const rejected = allApplications.filter(a => a.status === 'rejected').length;
+        const interviews = allApplications.filter(a => ['interview_scheduled', 'interview_done'].includes(a.status)).length;
+
+        document.getElementById('statTotal').textContent = allApplications.length;
+        document.getElementById('statActive').textContent = active;
+        document.getElementById('statAccepted').textContent = accepted;
+        document.getElementById('statRejected').textContent = rejected;
+
+        document.getElementById('activeCount').textContent = active;
+        document.getElementById('interviewsCount').textContent = interviews;
+        document.getElementById('acceptedCount').textContent = accepted;
+        document.getElementById('rejectedCount').textContent = rejected;
+    }
+
+    function renderAppCard(a) {
+        const logo = a.company_logo
+            ? `<img src="${a.company_logo}" alt="${esc(a.company_name)}">`
+            : `<span>${getInitial(a.company_name)}</span>`;
+
+        const info = getStatusInfo(a.status);
+        const isRecent = a.updated_at && (Date.now() - new Date(a.updated_at).getTime()) < 24 * 60 * 60 * 1000 && a.status !== 'pending';
+
+        let actions = '';
+        if (a.status === 'interview_scheduled' && a.interview_date) {
+            const interviewTime = new Date(a.interview_date);
+            const isUpcoming = interviewTime.getTime() > Date.now();
+            if (isUpcoming) {
+                actions += `<button class="btn btn-primary btn-sm" onclick="viewInterviewDetails('${a.id}')"><i class="fas fa-calendar-check"></i> تفاصيل المقابلة</button>`;
+            }
+        }
+        actions += `<button class="btn btn-info btn-sm" onclick="viewApplicationDetails('${a.id}')"><i class="fas fa-eye"></i> التفاصيل</button>`;
+        if (['pending', 'reviewing'].includes(a.status)) {
+            actions += `<button class="btn btn-danger btn-sm" onclick="withdrawApp('${a.id}')"><i class="fas fa-times"></i> سحب</button>`;
+        }
+
+        return `
+            <div class="app-card ${isRecent ? 'has-update' : ''}">
+                <div class="app-card-header">
+                    <div class="company-logo">${logo}</div>
+                    <div class="company-info">
+                        <div class="company-name">${esc(a.company_name || '-')}</div>
+                        <div class="position-name">${esc(a.internship_title || '-')}</div>
+                    </div>
+                    <span class="status-badge ${info.cls}">${info.label}</span>
+                </div>
+
+                ${renderTimeline(a.status)}
+
+                <div class="app-meta">
+                    <span><i class="fas fa-paper-plane"></i> قُدّم ${timeAgo(a.created_at)}</span>
+                    ${a.interview_date ? `<span><i class="fas fa-calendar"></i> ${formatDate(a.interview_date)}</span>` : ''}
+                    ${a.rejection_reason ? `<span style="color:var(--error)"><i class="fas fa-info-circle"></i> سبب الرفض موضح</span>` : ''}
+                </div>
+
+                <div class="app-actions">${actions}</div>
+            </div>
+        `;
+    }
+
+    function renderApplications() {
+        const search = document.getElementById('searchApps').value.toLowerCase().trim();
+        const sort = document.getElementById('filterSort').value;
+
+        let filtered = allApplications.slice();
+
+        if (search) {
+            filtered = filtered.filter(a =>
+                (a.company_name || '').toLowerCase().includes(search) ||
+                (a.internship_title || '').toLowerCase().includes(search)
+            );
+        }
+
+        if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        else filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+        const active = filtered.filter(isActiveApp);
+        const interviews = filtered.filter(a => ['interview_scheduled', 'interview_done'].includes(a.status));
+        const accepted = filtered.filter(a => ['accepted', 'hired', 'in_training', 'completed'].includes(a.status));
+        const rejected = filtered.filter(a => a.status === 'rejected');
+
+        document.getElementById('activeGrid').innerHTML = active.length === 0
+            ? '<div class="empty-state"><i class="fas fa-paper-plane"></i><h3>مفيش طلبات نشطة</h3><p>قدم على فرصة من تاب "ابحث عن فرص"</p></div>'
+            : active.map(renderAppCard).join('');
+
+        document.getElementById('interviewsGrid').innerHTML = interviews.length === 0
+            ? '<div class="empty-state"><i class="fas fa-calendar-check"></i><h3>مفيش مقابلات</h3></div>'
+            : interviews.map(renderAppCard).join('');
+
+        document.getElementById('acceptedGrid').innerHTML = accepted.length === 0
+            ? '<div class="empty-state"><i class="fas fa-check-circle"></i><h3>مفيش طلبات مقبولة</h3></div>'
+            : accepted.map(renderAppCard).join('');
+
+        document.getElementById('rejectedGrid').innerHTML = rejected.length === 0
+            ? '<div class="empty-state"><i class="fas fa-times-circle"></i><h3>مفيش طلبات مرفوضة</h3></div>'
+            : rejected.map(renderAppCard).join('');
+
+        document.getElementById('allGrid').innerHTML = filtered.length === 0
+            ? '<div class="empty-state"><i class="fas fa-list"></i><h3>مفيش طلبات بعد</h3></div>'
+            : filtered.map(renderAppCard).join('');
+    }
+
+    // VIEW DETAILS
+    window.viewApplicationDetails = (id) => {
+        const a = allApplications.find(x => x.id === id);
+        if (!a) return;
+
+        const logo = a.company_logo
+            ? `<img src="${a.company_logo}" alt="">`
+            : `<span>${getInitial(a.company_name)}</span>`;
+
+        const info = getStatusInfo(a.status);
+
+        const html = `
+            <div class="modal active" id="detailsModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-file-alt"></i><span>تفاصيل الطلب</span></div>
+                        <button class="modal-close" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:14px;padding:14px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.2);border-radius:14px;margin-bottom:14px">
+                        <div class="company-logo" style="width:60px;height:60px">${logo}</div>
+                        <div style="flex:1">
+                            <h3 style="font-size:1.1rem;font-weight:800">${esc(a.company_name)}</h3>
+                            <div style="color:var(--primary);font-size:0.86rem;margin-top:3px;font-weight:600">${esc(a.internship_title)}</div>
+                        </div>
+                        <span class="status-badge ${info.cls}">${info.label}</span>
+                    </div>
+
+                    ${renderTimeline(a.status)}
+
+                    <div class="modal-section">
+                        <div class="modal-section-title"><i class="fas fa-info-circle"></i> معلومات الطلب</div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-calendar"></i> تاريخ التقديم</div>
+                                <div class="info-value">${formatDateTime(a.created_at)}</div>
+                            </div>
+                            ${a.updated_at && a.updated_at !== a.created_at ? `
+                                <div class="info-item">
+                                    <div class="info-label"><i class="fas fa-sync"></i> آخر تحديث</div>
+                                    <div class="info-value">${formatDateTime(a.updated_at)}</div>
+                                </div>
+                            ` : ''}
+                            ${a.interview_date ? `
+                                <div class="info-item">
+                                    <div class="info-label"><i class="fas fa-calendar-check"></i> موعد المقابلة</div>
+                                    <div class="info-value">${formatDateTime(a.interview_date)}</div>
+                                </div>
+                            ` : ''}
+                            ${a.interview_location ? `
+                                <div class="info-item">
+                                    <div class="info-label"><i class="fas fa-map-marker-alt"></i> مكان المقابلة</div>
+                                    <div class="info-value">${esc(a.interview_location)}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    ${a.application_message ? `
+                        <div class="modal-section">
+                            <div class="modal-section-title"><i class="fas fa-comment"></i> رسالتك</div>
+                            <div style="color:var(--text-muted);line-height:1.6;font-size:0.9rem">${esc(a.application_message)}</div>
+                        </div>
+                    ` : ''}
+
+                    ${a.interview_notes ? `
+                        <div class="modal-section">
+                            <div class="modal-section-title"><i class="fas fa-sticky-note"></i> ملاحظات المقابلة</div>
+                            <div style="color:var(--text-muted);line-height:1.6;font-size:0.9rem">${esc(a.interview_notes)}</div>
+                        </div>
+                    ` : ''}
+
+                    ${a.interview_link ? `
+                        <div class="modal-section" style="background:rgba(79,172,254,0.05);border-color:rgba(79,172,254,0.2)">
+                            <div class="modal-section-title"><i class="fas fa-link" style="color:var(--info)"></i> رابط المقابلة (Online)</div>
+                            <a href="${esc(a.interview_link)}" target="_blank" class="btn btn-info" style="width:100%;justify-content:center">
+                                <i class="fas fa-external-link-alt"></i> فتح الرابط
+                            </a>
+                        </div>
+                    ` : ''}
+
+                    ${a.rejection_reason ? `
+                        <div class="modal-section" style="background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.2)">
+                            <div class="modal-section-title"><i class="fas fa-info-circle" style="color:var(--error)"></i> سبب الرفض</div>
+                            <div style="color:var(--text);line-height:1.6;font-size:0.9rem">${esc(a.rejection_reason)}</div>
+                            <div style="margin-top:10px;padding:10px;background:rgba(79,172,254,0.05);border-radius:8px;font-size:0.84rem;color:var(--text-muted)">
+                                <i class="fas fa-lightbulb" style="color:var(--info)"></i>
+                                خد السبب ده كملاحظة لتطوير نفسك في المستقبل!
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        ${['pending', 'reviewing'].includes(a.status) ? `
+                            <button class="btn btn-danger" onclick="closeModal('detailsModal');withdrawApp('${a.id}')" style="flex:1;justify-content:center">
+                                <i class="fas fa-times"></i> سحب الطلب
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-secondary" onclick="closeModal('detailsModal')" style="flex:1;justify-content:center">إغلاق</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    window.viewInterviewDetails = (id) => {
+        viewApplicationDetails(id);
+    };
+
+    // WITHDRAW
+    window.withdrawApp = async (id) => {
+        const a = allApplications.find(x => x.id === id);
+        if (!a) return;
+
+        const ok = await window.ProVance.confirmModal({
+            title: 'سحب الطلب',
+            message: `هل تريد سحب طلبك على "${a.internship_title}"؟\nملاحظة: ده هيحرر مكان لتقدم على فرصة تانية.`
         });
+        if (!ok) return;
 
-        // ============================================
-        // التحقق من حالة الدخول
-        // ============================================
-        function checkLoginStatus() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            if (isLoggedIn !== 'true') {
+        try {
+            const sb = window.ProVance.sb;
+            await sb.from('applications').update({
+                status: 'withdrawn',
+                withdrawn_at: new Date().toISOString()
+            }).eq('id', id);
+
+            if (window.ProVance.sendNotification) {
+                await window.ProVance.sendNotification({
+                    userId: a.company_user_id,
+                    userType: 'company',
+                    title: '↩️ الطالب سحب طلبه',
+                    message: `${a.student_name || 'طالب'} سحب طلبه على ${a.internship_title}`,
+                    type: 'info'
+                });
+            }
+
+            window.ProVance.showToast('تم سحب الطلب', 'success');
+            window.dispatchEvent(new CustomEvent('reload-apps'));
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ', 'error');
+        }
+    };
+
+    // HELP MODAL
+    window.openHelpModal = () => {
+        const html = `
+            <div class="modal active" id="helpModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-question-circle"></i><span>دليل الاستخدام</span></div>
+                        <button class="modal-close" onclick="closeModal('helpModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-paper-plane"></i> التقديم على الفرص</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> يمكنك التقديم على ${MAX_ACTIVE} فرص كحد أقصى في نفس الوقت</li>
+                            <li><i class="fas fa-check"></i> اختر فرصك بعناية - مش لازم تقدم على كل حاجة</li>
+                            <li><i class="fas fa-check"></i> لو وصلت للحد الأقصى، اسحب طلب عشان تقدم على غيره</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-stream"></i> مراحل الطلب</h4>
+                        <ul>
+                            <li><i class="fas fa-circle" style="color:var(--text-muted)"></i> <strong>تقديم:</strong> طلبك مرسل ومستني الشركة تشوفه</li>
+                            <li><i class="fas fa-eye"></i> <strong>مراجعة:</strong> الشركة بدأت تدرس طلبك</li>
+                            <li><i class="fas fa-calendar-check"></i> <strong>مقابلة:</strong> تم تحديد موعد للمقابلة</li>
+                            <li><i class="fas fa-check"></i> <strong>قبول:</strong> مبروك! اتقبلت في التدريب</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-times-circle"></i> لو اترفضت</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> اقرأ سبب الرفض - ده هيساعدك تتطور</li>
+                            <li><i class="fas fa-check"></i> الرفض مش نهاية - فيه فرص كتير غيرها</li>
+                            <li><i class="fas fa-check"></i> الرفض مش بياخد من حد الـ 3 فرص</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-undo"></i> سحب الطلب</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> يمكنك سحب الطلب في أي وقت قبل القبول</li>
+                            <li><i class="fas fa-check"></i> السحب يحرر مكان لفرصة جديدة</li>
+                            <li><i class="fas fa-check"></i> الشركة هتستلم إشعار بالسحب</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-calendar-check"></i> المقابلات</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> الالتزام بالموعد إجباري</li>
+                            <li><i class="fas fa-check"></i> هيوصلك QR Code من الشركة</li>
+                            <li><i class="fas fa-check"></i> امسح QR من ملفك الشخصي عند الحضور</li>
+                            <li><i class="fas fa-check"></i> الـ QR صالح لساعة بعد الموعد</li>
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="closeModal('helpModal')" style="width:100%;justify-content:center;margin-top:14px">
+                        <i class="fas fa-check"></i> فهمت
+                    </button>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    // LOAD
+    let isInitialized = false;
+    async function loadAll() {
+        const sb = window.ProVance.sb;
+        if (!sb) return;
+
+        try {
+            const session = await sb.auth.getSession();
+            const userId = session?.data?.session?.user?.id;
+            if (!userId) {
                 window.location.href = 'student-login.html';
                 return;
             }
-            
-            // تحميل بيانات المستخدم
-            const userName = localStorage.getItem('userName');
-            const userId = localStorage.getItem('userId');
-            if (userName) {
-                updateUserDisplay(userName);
-            }
-            
-            // تحميل طلبات المستخدم
-            loadApplicationsData();
-        }
+            studentUserId = userId;
 
-        function updateUserDisplay(userName) {
-            console.log('مرحباً، ' + userName);
-        }
+            const { data } = await sb.from('applications')
+                .select('*')
+                .eq('student_user_id', userId)
+                .order('created_at', { ascending: false });
 
-        function initializeApp() {
-            loadStudentData();
+            allApplications = data || [];
+
+            renderQuota();
+            updateStats();
             renderApplications();
-            attachEventListeners();
-            updateStats();
-            updateApplicationsStatus();
-            
-            // استقبال الأحداث من صفحة التدريب
-            checkForNewApplications();
-        }
 
-        // ============================================
-        // تحميل بيانات الطلبات (محدث)
-        // ============================================
-        function loadApplicationsData() {
-            const savedApplications = localStorage.getItem('studentApplications');
-            
-            if (savedApplications) {
-                applicationsData = JSON.parse(savedApplications);
-                
-                // تصفية الطلبات الخاصة بالمستخدم الحالي فقط
-                const userId = localStorage.getItem('userId') || '1';
-                applicationsData = applicationsData.filter(app => 
-                    app.studentId == userId || !app.studentId
-                );
-            } else {
-                // بيانات افتراضية مع التوافق مع صفحة التدريب الجديدة
-                applicationsData = [
-                    {
-                        id: 1,
-                        internshipId: 1,
-                        title: "مطور ويب متدرب",
-                        company: "شركة التقنية المتطورة",
-                        logo: "💻",
-                        status: "pending",
-                        date: "2024-03-15",
-                        branch: "الفرع الرئيسي - الرياض",
-                        field: "تطوير الويب",
-                        salary: "مجاني",
-                        duration: "3 أشهر",
-                        message: "أرغب في تطوير مهاراتي في مجال تطوير الويب والتعلم على يد متخصصين.",
-                        cv: "تم الرفع",
-                        lastUpdate: "2024-03-20",
-                        companyPolicy: {
-                            maxResponseDays: 7,
-                            maxResponseAfterInterview: 3
-                        },
-                        studentId: "1",
-                        studentLevel: "beginner",
-                        applicationTime: "2024-03-15T10:30:00Z"
-                    },
-                    {
-                        id: 2,
-                        internshipId: 2,
-                        title: "مصمم جرافيك",
-                        company: "وكالة الإبداع الرقمي",
-                        logo: "🎨",
-                        status: "accepted",
-                        date: "2024-02-10",
-                        branch: "الفرع الرئيسي - جدة",
-                        field: "تصميم جرافيك",
-                        salary: "1500 ريال",
-                        duration: "2 شهر",
-                        message: "لدي شغف كبير بالتصميم وأرغب في تطوير مهاراتي في هذا المجال.",
-                        cv: "تم الرفع",
-                        lastUpdate: "2024-02-15",
-                        companyPolicy: {
-                            maxResponseDays: 10,
-                            maxResponseAfterInterview: 5
-                        },
-                        studentId: "1",
-                        studentLevel: "intermediate",
-                        applicationTime: "2024-02-10T14:20:00Z"
-                    }
-                ];
-                
-                localStorage.setItem('studentApplications', JSON.stringify(applicationsData));
-            }
-            
-            console.log('تم تحميل بيانات الطلبات:', applicationsData.length, 'طلب');
-        }
+            if (!isInitialized) {
+                isInitialized = true;
+                sb.channel('apps-' + userId)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `student_user_id=eq.${userId}` }, () => loadAll())
+                    .subscribe();
 
-        // ============================================
-        // تحميل بيانات الطالب
-        // ============================================
-        function loadStudentData() {
-            const savedData = localStorage.getItem('studentData');
-            if (savedData) {
-                const parsedData = JSON.parse(savedData);
-                studentData = { ...studentData, ...parsedData };
-            }
-            
-            // حساب عدد الطلبات قيد المراجعة
-            updatePendingCount();
-        }
+                window.addEventListener('reload-apps', loadAll);
 
-        function updatePendingCount() {
-            const pendingApps = applicationsData.filter(app => app.status === 'pending');
-            studentData.pendingApplicationsCount = pendingApps.length;
-        }
+                document.getElementById('searchApps').addEventListener('input', renderApplications);
+                document.getElementById('filterSort').addEventListener('change', renderApplications);
 
-        // ============================================
-        // عرض الطلبات (محدث مع المؤشرات)
-        // ============================================
-        function renderApplications() {
-            const grid = document.getElementById('applicationsGrid');
-            if (!grid) return;
-            
-            grid.innerHTML = '';
-            
-            const filteredApplications = filterApplications();
-            
-            if (filteredApplications.length === 0) {
-                grid.innerHTML = `
-                    <div class="no-applications">
-                        <div class="no-applications-icon">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <h3 class="no-applications-title">لا توجد طلبات تدريب</h3>
-                        <p class="no-applications-text">لم تقم بتقديم أي طلبات تدريب بعد. ابدأ رحلتك الآن وقدم على فرص التدريب المناسبة لك.</p>
-                        <a href="student-internship.html" class="btn btn-primary">
-                            <i class="fas fa-briefcase"></i>
-                            <span>تصفح فرص التدريب</span>
-                        </a>
-                    </div>
-                `;
-                return;
-            }
-            
-            filteredApplications.forEach(application => {
-                const card = document.createElement('div');
-                card.className = 'application-card';
-                card.setAttribute('data-id', application.id);
-                
-                const statusClass = `status-${application.status}`;
-                const statusText = getStatusText(application.status);
-                const indicatorClass = `${application.status}-indicator`;
-                
-                // عرض التاريخ الميلادي فقط باستخدام دالة التنسيق
-                const displayDate = formatDate(application.date);
-                
-                card.innerHTML = `
-                    <div class="card-status-indicator ${indicatorClass}"></div>
-                    <div class="application-header">
-                        <div class="company-logo">
-                            ${application.logo}
-                        </div>
-                        <div class="application-info">
-                            <h3 class="application-title">${application.title}</h3>
-                            <div class="company-name">${application.company}</div>
-                            <div class="application-status ${statusClass}">${statusText}</div>
-                        </div>
-                    </div>
-                    <div class="application-meta">
-                        <div class="meta-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>${application.branch}</span>
-                        </div>
-                        <div class="meta-item">
-                            <i class="fas fa-clock"></i>
-                            <span>${application.duration}</span>
-                        </div>
-                        <div class="meta-item">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <span>${application.salary}</span>
-                        </div>
-                    </div>
-                    <div class="application-footer">
-                        <div class="application-date">
-                            <i class="fas fa-calendar-alt"></i>
-                            <span>تم التقديم في: ${displayDate}</span>
-                        </div>
-                        <div class="application-actions">
-                            <button class="btn btn-secondary view-details-btn">
-                                <i class="fas fa-eye"></i>
-                                <span>عرض التفاصيل</span>
-                            </button>
-                            ${application.status === 'pending' ? `
-                                <button class="btn btn-warning cancel-btn">
-                                    <i class="fas fa-times"></i>
-                                    <span>إلغاء الطلب</span>
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-                
-                grid.appendChild(card);
-            });
-            
-            attachApplicationEventListeners();
-        }
-
-        // ============================================
-        // عرض تفاصيل الطلب مع إضافة قسم سياسة الرد
-        // ============================================
-        function renderApplicationDetails(application) {
-            const detailsSection = document.getElementById('applicationDetails');
-            if (!detailsSection) return;
-            
-            const statusClass = `status-${application.status}`;
-            const statusText = getStatusText(application.status);
-            
-            // تنسيق التواريخ الميلادية
-            const formattedDate = formatDate(application.date);
-            const formattedLastUpdate = formatDate(application.lastUpdate);
-            
-            detailsSection.innerHTML = `
-                <div class="details-header">
-                    <div class="details-logo">
-                        ${application.logo}
-                    </div>
-                    <div class="details-info">
-                        <h2 class="details-title">${application.title}</h2>
-                        <div class="details-company">${application.company}</div>
-                        <div class="application-status ${statusClass}">${statusText}</div>
-                        <p class="details-description">${application.message}</p>
-                    </div>
-                </div>
-                
-                <div class="details-grid">
-                    <div class="details-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-info-circle"></i>
-                            معلومات الطلب
-                        </h3>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <strong>الفرع:</strong> ${application.branch}
-                            </div>
-                            <div class="info-item">
-                                <strong>المجال:</strong> ${application.field}
-                            </div>
-                            <div class="info-item">
-                                <strong>المدة:</strong> ${application.duration}
-                            </div>
-                            <div class="info-item">
-                                <strong>الراتب:</strong> ${application.salary}
-                            </div>
-                            <div class="info-item">
-                                <strong>تاريخ التقديم:</strong> ${formattedDate}
-                            </div>
-                            <div class="info-item">
-                                <strong>آخر تحديث:</strong> ${formattedLastUpdate}
-                            </div>
-                            ${application.studentLevel ? `
-                            <div class="info-item">
-                                <strong>مستواك عند التقديم:</strong> ${getLevelText(application.studentLevel)}
-                            </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                    
-                    <!-- قسم سياسة الرد الجديد -->
-                    <div class="details-section policy-response">
-                        <h3 class="section-title">
-                            <i class="fas fa-clock"></i>
-                            سياسة الرد من الشركة
-                        </h3>
-                        <div class="response-list">
-                            <div class="response-item">
-                                <div class="response-icon">
-                                    <i class="fas fa-hourglass-half"></i>
-                                </div>
-                                <div class="response-info">
-                                    <div class="response-label">الحد الأقصى للرد على الطلبات</div>
-                                    <div class="response-value">
-                                        ${application.companyPolicy?.maxResponseDays || '7'} يوم
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="response-item">
-                                <div class="response-icon">
-                                    <i class="fas fa-user-clock"></i>
-                                </div>
-                                <div class="response-info">
-                                    <div class="response-label">الحد الأقصى للرد على المتدرب بعد المقابلة الشخصية</div>
-                                    <div class="response-value">
-                                        ${application.companyPolicy?.maxResponseAfterInterview || '3'} يوم
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="margin-top: var(--spacing-md); padding: var(--spacing-sm); background: rgba(255, 255, 255, 0.05); border-radius: var(--radius-md);">
-                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
-                                <i class="fas fa-info-circle" style="color: var(--primary); margin-left: 5px;"></i>
-                                هذه هي السياسة التي حددتها الشركة للرد على المتقدمين. ستتلقى تحديثات في حالة تغيير هذه السياسة.
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="details-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-history"></i>
-                            سجل الطلب
-                        </h3>
-                        <div class="timeline">
-                            <div class="timeline-item">
-                                <div class="timeline-date">${formattedDate}</div>
-                                <div class="timeline-content">تقديم الطلب</div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-date">${formattedLastUpdate}</div>
-                                <div class="timeline-content">${getStatusUpdateText(application.status)}</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    ${application.status === 'pending' ? `
-                    <div class="details-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-exclamation-circle"></i>
-                            إمكانية الإلغاء
-                        </h3>
-                        <div class="status-explanation">
-                            <h4>يمكنك إلغاء هذا الطلب</h4>
-                            <p>
-                                هذا الطلب لا يزال قيد المراجعة من قبل الشركة. يمكنك إلغاؤه لتحرير مقعد في هذا التدريب والتقديم على تدريب آخر بدلاً منه.
-                            </p>
-                            <p>
-                                <strong>ملاحظة:</strong> بعد الإلغاء، ستتاح لك فرصة للتقديم على تدريب آخر وسيتم تحديث حالة طلباتك في صفحة "فرص التدريب".
-                            </p>
-                        </div>
-                    </div>
-                    ` : application.status === 'accepted' ? `
-                    <div class="details-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-check-circle"></i>
-                            قبول الطلب
-                        </h3>
-                        <div class="status-explanation">
-                            <h4>مبروك! تم قبول طلبك</h4>
-                            <p>
-                                تم قبولك في هذا التدريب. يمكنك الآن التواصل مع الشركة لبدء فترة التدريب.
-                            </p>
-                            <p>
-                                <strong>ملاحظة:</strong> هذا الطلب لا يحتسب من الحد الأقصى للطلبات قيد المراجعة (3 طلبات).
-                            </p>
-                        </div>
-                    </div>
-                    ` : `
-                    <div class="details-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-times-circle"></i>
-                            رفض الطلب
-                        </h3>
-                        <div class="status-explanation">
-                            <h4>تم رفض طلبك</h4>
-                            <p>
-                                لقد تم رفض طلبك لهذا التدريب. لا تقلق، يمكنك التقديم على تدريبات أخرى.
-                            </p>
-                            <p>
-                                <strong>ملاحظة:</strong> هذا الطلب لا يحتسب من الحد الأقصى للطلبات قيد المراجعة (3 طلبات).
-                            </p>
-                        </div>
-                    </div>
-                    `}
-                    
-                    <div class="details-section">
-                        <h3 class="section-title">
-                            <i class="fas fa-paperclip"></i>
-                            المرفقات
-                        </h3>
-                        <div class="attachments">
-                            <div class="attachment-item">
-                                <i class="fas fa-file-pdf"></i>
-                                <span>السيرة الذاتية: ${application.cv}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="details-actions">
-                    <button class="btn btn-secondary" id="backToListBtn">
-                        <i class="fas fa-arrow-right"></i>
-                        <span>العودة للقائمة</span>
-                    </button>
-                    ${application.status === 'pending' ? `
-                        <button class="btn btn-danger" id="cancelApplicationBtn">
-                            <i class="fas fa-times"></i>
-                            <span>إلغاء الطلب</span>
-                        </button>
-                    ` : ''}
-                    ${application.status === 'accepted' ? `
-                        <button class="btn btn-success" id="contactCompanyBtn">
-                            <i class="fas fa-phone-alt"></i>
-                            <span>الاتصال بالشركة</span>
-                        </button>
-                    ` : ''}
-                </div>
-            `;
-            
-            detailsSection.style.display = 'block';
-            attachDetailsEventListeners(application);
-            
-            // إخفاء قائمة البطاقات
-            const grid = document.getElementById('applicationsGrid');
-            if (grid) grid.style.display = 'none';
-            
-            // التمرير إلى الأعلى
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // ============================================
-        // تصفية الطلبات
-        // ============================================
-        function filterApplications() {
-            const statusFilter = document.getElementById('statusFilter')?.value;
-            const dateFilter = document.getElementById('dateFilter')?.value;
-            const companyFilter = document.getElementById('companyFilter')?.value.toLowerCase();
-            const sortFilter = document.getElementById('sortFilter')?.value;
-            
-            let filtered = [...applicationsData];
-            
-            // تصفية بالحالة
-            if (statusFilter) {
-                filtered = filtered.filter(app => app.status === statusFilter);
-            }
-            
-            // تصفية بالتاريخ (باستخدام التواريخ الميلادية)
-            if (dateFilter) {
-                const now = new Date();
-                filtered = filtered.filter(app => {
-                    const appDate = new Date(app.date);
-                    const diffTime = now - appDate;
-                    const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                    
-                    switch (dateFilter) {
-                        case 'week': return diffDays <= 7;
-                        case 'month': return diffDays <= 30;
-                        case '3months': return diffDays <= 90;
-                        default: return true;
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const modals = document.querySelectorAll('.modal.active');
+                        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
                     }
                 });
             }
-            
-            // تصفية بالشركة
-            if (companyFilter) {
-                filtered = filtered.filter(app => 
-                    app.company.toLowerCase().includes(companyFilter)
-                );
-            }
-            
-            // الترتيب (باستخدام التواريخ الميلادية)
-            filtered.sort((a, b) => {
-                switch (sortFilter) {
-                    case 'newest':
-                        return new Date(b.date) - new Date(a.date);
-                    case 'oldest':
-                        return new Date(a.date) - new Date(b.date);
-                    case 'status':
-                        const statusOrder = { 'pending': 1, 'accepted': 2, 'rejected': 3 };
-                        return statusOrder[a.status] - statusOrder[b.status];
-                    default:
-                        return new Date(b.date) - new Date(a.date);
-                }
-            });
-            
-            return filtered;
+        } catch (err) {
+            console.error('Load error:', err);
+            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
         }
+    }
 
-        // ============================================
-        // مستمعي الأحداث (محدث)
-        // ============================================
-        function attachEventListeners() {
-            // تصفية النتائج
-            const statusFilter = document.getElementById('statusFilter');
-            const dateFilter = document.getElementById('dateFilter');
-            const companyFilter = document.getElementById('companyFilter');
-            const sortFilter = document.getElementById('sortFilter');
-            const resetFilters = document.getElementById('resetFilters');
-            
-            if (statusFilter) statusFilter.addEventListener('change', function() {
-                renderApplications();
-                updateStats();
-                updateApplicationsStatus();
-            });
-            if (dateFilter) dateFilter.addEventListener('change', renderApplications);
-            if (companyFilter) companyFilter.addEventListener('input', renderApplications);
-            if (sortFilter) sortFilter.addEventListener('change', renderApplications);
-            if (resetFilters) resetFilters.addEventListener('click', resetAllFilters);
-            
-            // تسجيل الخروج
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    localStorage.removeItem('isLoggedIn');
-                    localStorage.removeItem('userEmail');
-                    localStorage.removeItem('userName');
-                    localStorage.removeItem('userId');
-                    window.location.href = 'student-login.html';
-                });
-            }
-            
-            // الأفعال السريعة
-            const goToInternships = document.getElementById('goToInternships');
-            const filterPending = document.getElementById('filterPending');
-            const viewAccepted = document.getElementById('viewAccepted');
-            
-            if (goToInternships) {
-                goToInternships.addEventListener('click', function() {
-                    window.location.href = 'student-internship.html';
-                });
-            }
-            
-            if (filterPending) {
-                filterPending.addEventListener('click', function() {
-                    if (statusFilter) {
-                        statusFilter.value = 'pending';
-                        renderApplications();
-                        updateStats();
-                        updateApplicationsStatus();
-                    }
-                });
-            }
-            
-            if (viewAccepted) {
-                viewAccepted.addEventListener('click', function() {
-                    if (statusFilter) {
-                        statusFilter.value = 'accepted';
-                        renderApplications();
-                        updateStats();
-                        updateApplicationsStatus();
-                    }
-                });
-            }
-            
-            // نافذة تأكيد الإلغاء
-            const cancelCancelBtn = document.getElementById('cancelCancelBtn');
-            const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-            const cancelModal = document.getElementById('cancelConfirmationModal');
-            
-            if (cancelCancelBtn) {
-                cancelCancelBtn.addEventListener('click', function() {
-                    applicationToCancel = null;
-                    cancelModal.style.display = 'none';
-                });
-            }
-            
-            if (confirmCancelBtn) {
-                confirmCancelBtn.addEventListener('click', function() {
-                    if (applicationToCancel) {
-                        performCancelApplication(applicationToCancel);
-                    }
-                    cancelModal.style.display = 'none';
-                });
-            }
-            
-            // إغلاق النافذة عند النقر خارجها
-            if (cancelModal) {
-                cancelModal.addEventListener('click', function(e) {
-                    if (e.target === cancelModal) {
-                        applicationToCancel = null;
-                        cancelModal.style.display = 'none';
-                    }
-                });
-            }
-            
-            // تحديث تلقائي كل 20 ثانية
-            setInterval(() => {
-                checkForNewApplications();
-            }, 20000);
-        }
-
-        function attachApplicationEventListeners() {
-            // عرض التفاصيل
-            const viewButtons = document.querySelectorAll('.view-details-btn');
-            viewButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const card = this.closest('.application-card');
-                    const applicationId = parseInt(card.getAttribute('data-id'));
-                    const application = applicationsData.find(app => app.id === applicationId);
-                    
-                    if (application) {
-                        renderApplicationDetails(application);
-                    }
-                });
-            });
-            
-            // إلغاء الطلب من البطاقة
-            const cancelButtons = document.querySelectorAll('.cancel-btn');
-            cancelButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const card = this.closest('.application-card');
-                    const applicationId = parseInt(card.getAttribute('data-id'));
-                    const application = applicationsData.find(app => app.id === applicationId);
-                    
-                    if (application) {
-                        showCancelConfirmation(application);
-                    }
-                });
-            });
-            
-            // النقر على البطاقة لعرض التفاصيل
-            const cards = document.querySelectorAll('.application-card');
-            cards.forEach(card => {
-                card.addEventListener('click', function(e) {
-                    if (!e.target.closest('button')) {
-                        const applicationId = parseInt(this.getAttribute('data-id'));
-                        const application = applicationsData.find(app => app.id === applicationId);
-                        
-                        if (application) {
-                            renderApplicationDetails(application);
-                        }
-                    }
-                });
-            });
-        }
-
-        function attachDetailsEventListeners(application) {
-            // العودة للقائمة
-            const backButton = document.getElementById('backToListBtn');
-            if (backButton) {
-                backButton.addEventListener('click', function() {
-                    hideApplicationDetails();
-                });
-            }
-            
-            // إلغاء الطلب من صفحة التفاصيل
-            const cancelButton = document.getElementById('cancelApplicationBtn');
-            if (cancelButton) {
-                cancelButton.addEventListener('click', function() {
-                    showCancelConfirmation(application);
-                });
-            }
-            
-            // الاتصال بالشركة
-            const contactButton = document.getElementById('contactCompanyBtn');
-            if (contactButton) {
-                contactButton.addEventListener('click', function() {
-                    showNotification('سيتم تزويدك بمعلومات الاتصال خلال 24 ساعة', 'info');
-                });
-            }
-        }
-
-        // ============================================
-        // عرض تأكيد الإلغاء
-        // ============================================
-        function showCancelConfirmation(application) {
-            applicationToCancel = application;
-            const modal = document.getElementById('cancelConfirmationModal');
-            if (modal) {
-                modal.style.display = 'flex';
-            }
-        }
-
-        // ============================================
-        // تنفيذ إلغاء الطلب
-        // ============================================
-        function performCancelApplication(application) {
-            // العثور على الطلب في البيانات
-            const appIndex = applicationsData.findIndex(app => app.id === application.id);
-            
-            if (appIndex !== -1) {
-                // تحديث حالة الطلب
-                applicationsData[appIndex].status = 'cancelled';
-                applicationsData[appIndex].lastUpdate = new Date().toISOString().split('T')[0];
-                
-                // حفظ البيانات المحدثة
-                localStorage.setItem('studentApplications', JSON.stringify(applicationsData));
-                
-                // تحديث العداد
-                updatePendingCount();
-                
-                // إرسال إشعار إلى صفحة التدريب
-                window.postMessage({
-                    type: 'APPLICATION_CANCELLED',
-                    internshipId: application.internshipId,
-                    status: 'pending',
-                    applicationId: application.id
-                }, '*');
-                
-                // إرسال إشعار لتحديث حالة الطلبات
-                window.postMessage({
-                    type: 'PENDING_APPLICATIONS_UPDATED'
-                }, '*');
-                
-                // إعادة التحميل
-                renderApplications();
-                hideApplicationDetails();
-                updateStats();
-                updateApplicationsStatus();
-                
-                showNotification('تم إلغاء الطلب بنجاح! يمكنك الآن التقديم على تدريب آخر.', 'success');
-                
-                console.log('تم إلغاء الطلب:', application.id);
-            }
-        }
-
-        // ============================================
-        // إعادة تعيين الفلاتر
-        // ============================================
-        function resetAllFilters() {
-            const statusFilter = document.getElementById('statusFilter');
-            const dateFilter = document.getElementById('dateFilter');
-            const companyFilter = document.getElementById('companyFilter');
-            const sortFilter = document.getElementById('sortFilter');
-            
-            if (statusFilter) statusFilter.value = '';
-            if (dateFilter) dateFilter.value = '';
-            if (companyFilter) companyFilter.value = '';
-            if (sortFilter) sortFilter.value = 'newest';
-            
-            renderApplications();
-            updateStats();
-            updateApplicationsStatus();
-        }
-
-        // ============================================
-        // إخفاء تفاصيل الطلب
-        // ============================================
-        function hideApplicationDetails() {
-            const detailsSection = document.getElementById('applicationDetails');
-            const grid = document.getElementById('applicationsGrid');
-            
-            if (detailsSection) detailsSection.style.display = 'none';
-            if (grid) grid.style.display = 'grid';
-        }
-
-        // ============================================
-        // تحديث الإحصائيات (محدث)
-        // ============================================
-        function updateStats() {
-            const totalApplications = document.getElementById('totalApplications');
-            const pendingApplications = document.getElementById('pendingApplications');
-            const availableApplications = document.getElementById('availableApplications');
-            
-            if (totalApplications) {
-                totalApplications.textContent = applicationsData.length;
-            }
-            
-            if (pendingApplications) {
-                const pending = applicationsData.filter(app => app.status === 'pending').length;
-                pendingApplications.textContent = pending;
-            }
-            
-            if (availableApplications) {
-                const available = studentData.maxPendingApplications - studentData.pendingApplicationsCount;
-                availableApplications.textContent = Math.max(0, available);
-            }
-        }
-
-        // ============================================
-        // تحديث حالة الطلبات
-        // ============================================
-        function updateApplicationsStatus() {
-            const remainingApplications = document.getElementById('remainingApplications');
-            const progressText = document.getElementById('progressText');
-            const progressFill = document.getElementById('progressFill');
-            const progressPercentage = document.getElementById('progressPercentage');
-            const progressTip = document.getElementById('progressTip');
-            
-            if (remainingApplications) {
-                const remaining = studentData.maxPendingApplications - studentData.pendingApplicationsCount;
-                remainingApplications.textContent = Math.max(0, remaining);
-            }
-            
-            if (progressText) {
-                progressText.textContent = `${studentData.pendingApplicationsCount}/${studentData.maxPendingApplications}`;
-            }
-            
-            if (progressFill && progressPercentage) {
-                const percentage = (studentData.pendingApplicationsCount / studentData.maxPendingApplications) * 100;
-                progressFill.style.width = `${percentage}%`;
-                progressPercentage.textContent = `${Math.round(percentage)}%`;
-                
-                // تغيير اللون حسب النسبة
-                if (percentage >= 100) {
-                    progressFill.style.background = 'linear-gradient(90deg, var(--error), #ff4757)';
-                    if (progressTip) {
-                        progressTip.textContent = 'لقد وصلت للحد الأقصى! قم بإلغاء أحد الطلبات لتقديم طلب جديد';
-                        progressTip.style.color = 'var(--error)';
-                    }
-                } else if (percentage >= 70) {
-                    progressFill.style.background = 'linear-gradient(90deg, var(--warning), #ffb347)';
-                    if (progressTip) {
-                        progressTip.textContent = 'اقتربت من الحد الأقصى! لديك مساحة محدودة لإضافة طلبات جديدة';
-                        progressTip.style.color = 'var(--warning)';
-                    }
-                } else {
-                    progressFill.style.background = 'linear-gradient(90deg, var(--primary), var(--secondary))';
-                    if (progressTip) {
-                        progressTip.textContent = 'يمكنك التقديم على 3 تدريبات في نفس الوقت';
-                        progressTip.style.color = 'var(--text-muted)';
-                    }
-                }
-            }
-        }
-
-        // ============================================
-        // إعداد مستمعي الرسائل من صفحة التدريب
-        // ============================================
-        function setupMessageListeners() {
-            window.addEventListener('message', function(event) {
-                // التحقق من مصدر الرسالة (اختياري)
-                if (event.data && event.data.type) {
-                    console.log('تم استلام رسالة:', event.data.type);
-                    
-                    switch (event.data.type) {
-                        case 'INTERNSHIP_APPLIED':
-                            // تم تقديم طلب جديد من صفحة التدريب
-                            handleNewApplication(event.data.application);
-                            break;
-                            
-                        case 'PENDING_APPLICATIONS_UPDATED':
-                            // طلب تحديث حالة الطلبات
-                            checkForNewApplications();
-                            break;
-                            
-                        case 'APPLICATION_ADDED':
-                            // تمت إضافة طلب جديد
-                            checkForNewApplications();
-                            break;
-                    }
-                }
-            });
-        }
-
-        // ============================================
-        // معالجة طلب جديد من صفحة التدريب
-        // ============================================
-        function handleNewApplication(newApplication) {
-            console.log('تم استلام طلب جديد من صفحة التدريب:', newApplication);
-            
-            // إضافة الطلب الجديد للبيانات المحلية
-            applicationsData.push(newApplication);
-            
-            // حفظ البيانات المحدثة
-            localStorage.setItem('studentApplications', JSON.stringify(applicationsData));
-            
-            // تحديث العداد
-            updatePendingCount();
-            
-            // تحديث الواجهة
-            renderApplications();
-            updateStats();
-            updateApplicationsStatus();
-            
-            showNotification('تمت إضافة طلب جديد إلى قائمتك', 'success');
-        }
-
-        // ============================================
-        // التحقق من وجود طلبات جديدة
-        // ============================================
-        function checkForNewApplications() {
-            // تحميل البيانات المخزنة مرة أخرى للتأكد من التحديثات
-            loadApplicationsData();
-            
-            // تحديث العداد
-            updatePendingCount();
-            
-            // تحديث الواجهة
-            updateStats();
-            updateApplicationsStatus();
-            
-            console.log('تم التحقق من التحديثات. الطلبات قيد المراجعة:', studentData.pendingApplicationsCount);
-        }
-
-        // ============================================
-        // دوال مساعدة - التواريخ الميلادية فقط
-        // ============================================
-        function getStatusText(status) {
-            const statuses = {
-                'pending': 'قيد المراجعة',
-                'accepted': 'مقبول',
-                'rejected': 'مرفوض',
-                'cancelled': 'ملغي'
-            };
-            return statuses[status] || status;
-        }
-
-        function getStatusUpdateText(status) {
-            const updates = {
-                'pending': 'قيد المراجعة',
-                'accepted': 'تم قبول الطلب',
-                'rejected': 'تم رفض الطلب',
-                'cancelled': 'تم إلغاء الطلب'
-            };
-            return updates[status] || 'تم تحديث حالة الطلب';
-        }
-
-        // دالة لتنسيق التواريخ الميلادية فقط
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) {
-                return dateString;
-            }
-            
-            // استخدام التقويم الميلادي فقط
-            return date.toLocaleDateString('ar', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                calendar: 'gregory' // التأكيد على استخدام التقويم الميلادي
-            });
-        }
-
-        // دالة للحصول على نص مستوى الطالب
-        function getLevelText(level) {
-            const levels = {
-                'beginner': 'مبتدئ (أول مرة)',
-                'intermediate': 'متوسط (تدريب واحد)',
-                'advanced': 'خبير (تدريبين أو أكثر)'
-            };
-            return levels[level] || level;
-        }
-
-        // ============================================
-        // دالة الإشعارات (محدثة)
-        // ============================================
-        function showNotification(message, type = 'info') {
-            // إزالة أي إشعارات سابقة
-            const oldNotifications = document.querySelectorAll('.notification');
-            oldNotifications.forEach(notification => notification.remove());
-            
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            
-            const icons = {
-                success: 'fas fa-check-circle',
-                error: 'fas fa-exclamation-circle',
-                info: 'fas fa-info-circle',
-                warning: 'fas fa-exclamation-triangle'
-            };
-            
-            const colors = {
-                success: 'var(--success)',
-                error: 'var(--error)',
-                info: 'var(--primary)',
-                warning: 'var(--warning)'
-            };
-            
-            notification.style.cssText = `
-                position: fixed;
-                top: 100px;
-                right: 20px;
-                background: var(--bg-card);
-                border: 2px solid ${colors[type]};
-                border-radius: 12px;
-                padding: 16px 20px;
-                max-width: 400px;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                animation: slideInRight 0.3s ease;
-                z-index: 10000;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            `;
-            
-            notification.innerHTML = `
-                <div style="color: ${colors[type]}; font-size: 20px;">
-                    <i class="${icons[type]}"></i>
-                </div>
-                <div style="flex: 1; color: var(--text-primary); font-weight: 600;">${message}</div>
-                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px;">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // إضافة أنيميشن CSS إذا لم تكن موجودة
-            if (!document.querySelector('#notification-styles')) {
-                const style = document.createElement('style');
-                style.id = 'notification-styles';
-                style.textContent = `
-                    @keyframes slideInRight {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    
-                    @keyframes slideOutRight {
-                        from { transform: translateX(0); opacity: 1; }
-                        to { transform: translateX(100%); opacity: 0; }
-                    }
-                    
-                    @keyframes fadeIn {
-                        from { opacity: 0; }
-                        to { opacity: 1; }
-                    }
-                    
-                    @keyframes scaleIn {
-                        from { transform: scale(0.9); opacity: 0; }
-                        to { transform: scale(1); opacity: 1; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            // إزالة الإشعار تلقائياً بعد 5 ثوانٍ
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.style.animation = 'slideOutRight 0.3s ease';
-                    setTimeout(() => {
-                        if (notification.parentElement) {
-                            notification.remove();
-                        }
-                    }, 300);
-                }
-            }, 5000);
-        }
-
-        // ============================================
-        // تصدير الدوال للاستخدام الخارجي
-        // ============================================
-        window.ApplicationsManager = {
-            applicationsData,
-            studentData,
-            renderApplications,
-            updateApplicationsStatus,
-            updatePendingCount,
-            performCancelApplication,
-            showNotification
-        };
+    loadAll();
+})();
     </script>
 </body>
 </html>
