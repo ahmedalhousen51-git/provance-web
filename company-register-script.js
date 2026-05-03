@@ -3578,34 +3578,66 @@ async function handleFormSubmit(event) {
             return;
         }
 
+        if (!authData || !authData.user) {
+            notificationSystem.show('خطأ في التسجيل', 'حدث خطأ في إنشاء الحساب، حاول مرة أخرى', 'error');
+            resetBtn();
+            return;
+        }
+
         const userId = authData.user.id;
 
-        // 2. حفظ بيانات الشركة في جدول companies
+        // 2. حفظ بيانات الشركة في جدول companies (كل الحقول الكاملة)
         const { error: dbError } = await sb.from('companies').insert({
-            user_id:        userId,
-            company_name:   formData.companyInfo.name,
-            company_bio:    formData.companyInfo.bio || '',
-            company_field:  formData.companyInfo.field || '',
-            company_location: formData.companyInfo.location || '',
-            employees_count: formData.companyInfo.employeesCount || '',
-            logo:           state.companyLogoData || '',
-            email:          email,
-            website:        formData.companyInfo.website || '',
-            primary_phone:  formData.contactInfo.primaryPhone || '',
-            whatsapp:       formData.contactInfo.whatsappNumber || '',
-            inquiry_email:  formData.contactInfo.inquiryEmail || '',
-            linkedin:       formData.contactInfo.linkedinUrl || '',
-            training_fields: JSON.stringify(formData.trainingInfo.fields || []),
-            status:         'pending',
-            agreed_at:      new Date().toISOString()
+            user_id:           userId,
+            company_name:      formData.companyInfo.name,
+            email:             email,
+            company_bio:       formData.companyInfo.bio || '',
+            company_field:     formData.companyInfo.field || '',
+            company_location:  formData.companyInfo.location || '',
+            employees_count:   formData.companyInfo.employeesCount || '',
+            logo:              state.companyLogoData || formData.companyInfo.logo || '',
+            website:           formData.companyInfo.website || '',
+            primary_phone:     formData.contactInfo.primaryPhone || '',
+            secondary_phone:   formData.contactInfo.secondaryPhone || '',
+            whatsapp:          formData.contactInfo.whatsappNumber || '',
+            inquiry_email:     formData.contactInfo.inquiryEmail || '',
+            linkedin:          formData.contactInfo.linkedinUrl || '',
+            facebook:          formData.contactInfo.facebookUrl || '',
+            training_fields:   formData.trainingInfo.fields || [],
+            training_details:  formData.trainingInfo.details || {},
+            branch_locations:  formData.companyInfo.branchLocations || [],
+            training_notes:    formData.trainingDetails.requiredItems || '',
+            is_startup:        formData.trainingDetails.isStartup || false,
+            max_response_days: parseInt(formData.trainingDetails.maxResponseDays) || 7,
+            status:            'pending',
+            agreed_at:         new Date().toISOString()
         });
 
         if (dbError) {
-            console.warn('DB warning:', dbError.message);
+            console.error('DB error:', dbError);
+            // محاولة حذف الـ auth user اللي اتعمل لأن الـ DB save فشل
+            let msg = 'حدث خطأ في حفظ بيانات الشركة';
+            const errMsg = (dbError.message || '').toLowerCase();
+            if (errMsg.includes('duplicate') || errMsg.includes('unique')) {
+                msg = 'البيانات دي مسجلة قبل كده';
+            } else if (errMsg.includes('row-level security') || errMsg.includes('rls') || errMsg.includes('policy')) {
+                msg = 'مش مصرح بحفظ البيانات. تواصل مع الإدارة';
+            } else if (errMsg.includes('column') && errMsg.includes('does not exist')) {
+                msg = 'مشكلة في قاعدة البيانات: ' + dbError.message;
+            } else if (dbError.message) {
+                msg = 'خطأ: ' + dbError.message;
+            }
+            notificationSystem.show('فشل في حفظ البيانات', msg, 'error');
+            resetBtn();
+            return;
         }
 
         // 3. حفظ التدريبات في Supabase أيضاً
-        await saveInternshipsToSupabase(sb, userId, formData);
+        const internshipsResult = await saveInternshipsToSupabase(sb, userId, formData);
+        if (!internshipsResult.success) {
+            console.warn('Internships save warning:', internshipsResult.error);
+            // مش هنوقف العملية، نكمل عادي
+        }
 
         // 4. نجاح
         if (submitBtn) {
@@ -3638,28 +3670,49 @@ async function handleFormSubmit(event) {
 async function saveInternshipsToSupabase(sb, userId, formData) {
     try {
         const fields = formData.trainingInfo.fields || [];
+        if (fields.length === 0) {
+            return { success: true, count: 0 };
+        }
+
+        const inserts = [];
         for (const field of fields) {
             const details = formData.trainingInfo.details[field] || {};
-            await sb.from('internships').insert({
-                company_user_id: userId,
-                company_name:    formData.companyInfo.name,
-                company_logo:    formData.companyInfo.logo || '',
-                company_location: formData.companyInfo.location || '',
-                title:           `تدريب في ${field}`,
-                field:           field,
-                duration:        details.duration || '3 أشهر',
-                max_applicants:  parseInt(details.count) || 5,
-                trainee_type:    formData.trainingInfo.traineeType || 'first-time',
-                description:     formData.companyInfo.bio || '',
-                salary_min:      details.minSalary || '',
-                salary_max:      details.maxSalary || '',
-                requirements:    details.trainingRequirements || '',
-                status:          'pending',
-                created_at:      new Date().toISOString()
+            const result = await sb.from('internships').insert({
+                company_user_id:    userId,
+                company_name:       formData.companyInfo.name,
+                company_logo:       state.companyLogoData || formData.companyInfo.logo || '',
+                company_location:   formData.companyInfo.location || '',
+                title:              `تدريب في ${field}`,
+                field:              field,
+                description:        formData.companyInfo.bio || '',
+                duration:           details.duration || '3 أشهر',
+                max_applicants:     parseInt(details.count) || 5,
+                trainee_type:       formData.trainingInfo.traineeType || 'first-time',
+                requirements:       details.trainingRequirements || '',
+                knowledge_benefits: details.knowledgeBenefits || '',
+                financial_benefits: details.financialBenefits || '',
+                salary_min:         details.minSalary || '',
+                salary_max:         details.maxSalary || '',
+                salary_currency:    'EGP',
+                status:             'pending'
             });
+
+            if (result.error) {
+                console.error('Internship insert error for field:', field, result.error);
+                inserts.push({ field, success: false, error: result.error.message });
+            } else {
+                inserts.push({ field, success: true });
+            }
         }
+
+        const failed = inserts.filter(i => !i.success);
+        if (failed.length > 0) {
+            return { success: false, error: `فشل حفظ ${failed.length} من ${fields.length} تدريبات`, details: failed };
+        }
+        return { success: true, count: fields.length };
     } catch (err) {
-        console.warn('Internships save warning:', err.message);
+        console.error('Internships save error:', err);
+        return { success: false, error: err.message || 'خطأ غير متوقع' };
     }
 }
 
