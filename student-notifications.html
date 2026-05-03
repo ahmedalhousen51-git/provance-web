@@ -3,626 +3,404 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>الإشعارات - ProVance</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <title>إشعارات الطالب - ProVance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        :root {
-            --primary: #4facfe;
-            --secondary: #00f2fe;
-            --gradient: linear-gradient(135deg, #4facfe, #00f2fe);
-            --bg: #0a0e27;
-            --bg-2: #1a1535;
-            --card: rgba(255,255,255,0.04);
-            --card-hover: rgba(255,255,255,0.06);
-            --border: rgba(255,255,255,0.08);
-            --text: #fff;
-            --text-muted: #94a3b8;
-            --error: #ef4444;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --info: #4facfe;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Cairo', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-        .bg-anim {
-            position: fixed; inset: 0; z-index: -1;
-            background:
-                radial-gradient(circle at 20% 20%, rgba(79,172,254,0.08), transparent 45%),
-                radial-gradient(circle at 80% 80%, rgba(0,242,254,0.06), transparent 45%),
-                var(--bg);
-        }
-        .layout { display: flex; min-height: 100vh; }
-        .sidebar {
-            width: 260px;
-            background: rgba(20,18,40,0.7);
-            backdrop-filter: blur(20px);
-            border-left: 1px solid var(--border);
-            padding: 24px 16px;
-            position: fixed;
-            inset: 0 0 0 auto;
-            z-index: 100;
-            transition: transform .3s;
-            display: flex;
-            flex-direction: column;
-        }
-        .sidebar-logo {
-            display: flex; align-items: center; gap: 10px;
-            padding: 0 8px 20px;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 16px;
-        }
-        .sidebar-logo-icon {
-            width: 40px; height: 40px;
-            background: var(--gradient);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem;
-        }
-        .sidebar-logo-text {
-            font-size: 1.2rem; font-weight: 800;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px 14px;
-            color: var(--text-muted);
-            text-decoration: none;
-            border-radius: 10px;
-            font-size: 0.92rem;
-            font-weight: 600;
-            margin-bottom: 4px;
-            transition: all .2s;
-        }
-        .nav-item:hover { background: var(--card); color: var(--text); }
-        .nav-item.active { background: var(--gradient); color: #fff; }
-        .nav-item i { width: 18px; }
-
-        .main {
-            flex: 1;
-            margin-right: 260px;
-            padding: 24px;
-            min-width: 0;
-        }
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            gap: 14px;
-            flex-wrap: wrap;
-        }
-        .menu-toggle {
-            display: none;
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            width: 42px; height: 42px;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        .topbar-title { font-size: 1.5rem; font-weight: 800; }
-        .topbar-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            font-family: inherit;
-            font-size: 0.88rem;
-            cursor: pointer;
-            transition: all .2s;
-        }
-        .btn-secondary {
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-        .btn-secondary:hover { background: var(--card-hover); }
-        .btn-primary { background: var(--gradient); color: #fff; }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-            overflow-x: auto;
-        }
-        .tab {
-            padding: 12px 20px;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-family: inherit;
-            font-size: 0.92rem;
-            font-weight: 700;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all .2s;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .tab:hover { color: var(--text); }
-        .tab.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-        .tab-count {
-            background: var(--card);
-            color: var(--text);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.78rem;
-        }
-        .tab.active .tab-count {
-            background: var(--gradient);
-        }
-
-        /* Notifications List */
-        .notifications {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .notif {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 16px 18px;
-            display: flex;
-            gap: 14px;
-            align-items: flex-start;
-            transition: all .2s;
-            cursor: pointer;
-            position: relative;
-        }
-        .notif:hover {
-            background: var(--card-hover);
-            transform: translateX(-3px);
-        }
-        .notif.unread {
-            background: rgba(79,172,254,0.05);
-            border-color: rgba(79,172,254,0.2);
-        }
-        .notif.unread::before {
-            content: '';
-            position: absolute;
-            top: 18px;
-            right: 4px;
-            width: 8px;
-            height: 8px;
-            background: var(--primary);
-            border-radius: 50%;
-        }
-
-        .notif-icon {
-            width: 44px; height: 44px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            color: #fff;
-            flex-shrink: 0;
-        }
-        .notif-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .notif-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .notif-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .notif-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-        .notif-icon.default { background: var(--gradient); }
-
-        .notif-body { flex: 1; min-width: 0; }
-        .notif-title {
-            font-weight: 700;
-            font-size: 0.98rem;
-            margin-bottom: 4px;
-        }
-        .notif-msg {
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            line-height: 1.6;
-            margin-bottom: 6px;
-        }
-        .notif-time {
-            color: rgba(148,163,184,0.6);
-            font-size: 0.78rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .notif-actions {
-            display: flex;
-            gap: 6px;
-            flex-shrink: 0;
-        }
-        .notif-action-btn {
-            width: 32px; height: 32px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all .2s;
-        }
-        .notif-action-btn:hover {
-            color: var(--text);
-            background: var(--card-hover);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-        }
-        .empty-state i {
-            font-size: 3.5rem;
-            color: rgba(148,163,184,0.3);
-            margin-bottom: 16px;
-        }
-        .empty-state h3 {
-            font-size: 1.2rem;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-
-        .skeleton-notif {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 16px;
-            display: flex;
-            gap: 14px;
-            margin-bottom: 10px;
-        }
-        .skeleton-circle {
-            width: 44px; height: 44px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.04);
-            flex-shrink: 0;
-            animation: skel 1.5s infinite;
-        }
-        .skeleton-line {
-            height: 14px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 6px;
-            margin-bottom: 6px;
-            animation: skel 1.5s infinite;
-        }
-        @keyframes skel {
-            0%,100% { opacity: 0.5; }
-            50% { opacity: 0.8; }
-        }
-
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(100%);
-                width: 280px;
-            }
-            .sidebar.open { transform: translateX(0); }
-            .main { margin-right: 0; }
-            .menu-toggle { display: flex; align-items: center; justify-content: center; }
-        }
-        @media (max-width: 600px) {
-            .notif { padding: 14px; }
-            .notif-icon { width: 38px; height: 38px; }
-        }
+:root { --primary: #4facfe; --secondary: #00f2fe; --gradient: linear-gradient(135deg, #4facfe, #00f2fe); --bg: #0a0e27; --bg-2: #1a1535; --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6); --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, #4facfe15, transparent 45%), radial-gradient(circle at 80% 80%, #00f2fe10, transparent 45%), var(--bg); }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
+.sidebar-logo { display: flex; align-items: center; justify-content: center; padding: 0 8px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.sidebar-logo img { height: 32px; max-width: 100%; }
+.admin-badge { background: var(--gradient); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; text-align: center; margin-bottom: 14px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: var(--gradient); color: #fff; }
+.nav-item i { width: 18px; }
+.main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
+.menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
+.topbar-title { font-size: 1.5rem; font-weight: 800; }
+.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.stat-mini { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 11px; }
+.stat-mini-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #fff; flex-shrink: 0; }
+.stat-mini-icon.primary { background: var(--gradient); }
+.stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.stat-mini-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+.stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+.tabs-container { display: flex; gap: 8px; margin-bottom: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 6px; overflow-x: auto; }
+.tab-btn { padding: 11px 18px; background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.92rem; font-weight: 700; border-radius: 10px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; transition: all .2s; }
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.tab-btn.active { background: var(--gradient); color: #fff; }
+.tab-badge { background: rgba(255,255,255,0.15); padding: 1px 8px; border-radius: 10px; font-size: 0.72rem; }
+.tab-content { display: none; animation: fadeIn .3s; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.88rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
+.btn-primary { background: var(--gradient); color: #fff; }
+.btn-primary:hover:not(:disabled) { transform: translateY(-2px); }
+.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+.btn-secondary:hover { background: var(--card-hover); }
+.btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+.btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
+.btn-sm { padding: 7px 12px; font-size: 0.8rem; }
+.notif-list { display: flex; flex-direction: column; gap: 8px; }
+.notif-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; transition: all .2s; cursor: pointer; }
+.notif-card:hover { background: var(--card-hover); border-color: var(--primary); transform: translateX(-3px); }
+.notif-card.unread { background: rgba(79,172,254,0.04); border-color: rgba(79,172,254,0.2); position: relative; }
+.notif-card.unread::after { content: ''; position: absolute; top: 14px; left: 14px; width: 8px; height: 8px; background: var(--info); border-radius: 50%; box-shadow: 0 0 8px var(--info); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.notif-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; flex-shrink: 0; }
+.notif-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+.notif-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.notif-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.notif-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.notif-icon.primary { background: var(--gradient); }
+.notif-body { flex: 1; min-width: 0; }
+.notif-title { font-weight: 800; font-size: 0.96rem; margin-bottom: 3px; }
+.notif-message { color: var(--text-muted); font-size: 0.86rem; line-height: 1.5; }
+.notif-meta { display: flex; gap: 10px; margin-top: 6px; font-size: 0.78rem; color: var(--text-dim); flex-wrap: wrap; }
+.notif-meta i { color: var(--primary); }
+.notif-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.notif-btn { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text-muted); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.notif-btn:hover { color: var(--text); background: var(--card-hover); }
+.notif-btn.delete:hover { background: rgba(239,68,68,0.15); color: var(--error); border-color: rgba(239,68,68,0.3); }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+.empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
+.empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
+.filters-bar { display: flex; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.filters-bar input, .filters-bar select { padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.9rem; }
+.filters-bar input { flex: 1; min-width: 200px; }
+.filters-bar input:focus, .filters-bar select:focus { outline: none; border-color: var(--primary); }
+@media (max-width: 1024px) {
+    .sidebar { transform: translateX(100%); width: 280px; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-right: 0; }
+    .menu-toggle { display: flex; align-items: center; justify-content: center; }
+}
+@media (max-width: 600px) { .topbar-title { font-size: 1.2rem; } .stats-row { grid-template-columns: 1fr 1fr; } }
     </style>
 </head>
 <body>
     <div class="bg-anim"></div>
-
     <div class="layout">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">
-                <img src="assets/logo.png" alt="ProVance" style="height: 32px; width: auto; max-width: 100%; display: block;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div style="display:none; align-items: center; gap: 10px;">
-                    <div class="sidebar-logo-icon"><i class="fas fa-rocket"></i></div>
-                    <span class="sidebar-logo-text">ProVance</span>
-                </div>
+                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
             </div>
-            <a href="student-internship.html" class="nav-item"><i class="fas fa-bullhorn"></i> فرص التدريب</a>
+            
+            
+            <a href="student-internship.html" class="nav-item"><i class="fas fa-search"></i> فرص التدريب</a>
             <a href="student-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلباتي</a>
-            <a href="student-profile.html" class="nav-item"><i class="fas fa-user-graduate"></i> ملفي</a>
-            <a href="student-notifications.html" class="nav-item active"><i class="fas fa-bell"></i> الإشعارات</a>
+            <a href="student-profile.html" class="nav-item"><i class="fas fa-user"></i> ملفي</a>
             <a href="Student_-payments.html" class="nav-item"><i class="fas fa-credit-card"></i> المدفوعات</a>
+            <a href="student-notifications.html" class="nav-item active"><i class="fas fa-bell"></i> الإشعارات</a>
             <a href="#" onclick="logoutStudent(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
             </a>
         </aside>
-
         <main class="main">
             <div class="topbar">
                 <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="topbar-title">
-                    <i class="fas fa-bell" style="color:var(--primary)"></i> الإشعارات
-                </h1>
+                <h1 class="topbar-title"><i class="fas fa-bell" style="color:var(--primary)"></i> إشعارات الطالب</h1>
                 <div class="topbar-actions">
-                    <button class="btn btn-secondary" onclick="markAllRead()">
-                        <i class="fas fa-check-double"></i>
-                        <span>قراءة الكل</span>
+                    <button class="btn btn-secondary btn-sm" onclick="markAllRead()">
+                        <i class="fas fa-check-double"></i> تعليم الكل كمقروء
                     </button>
-                    <button class="btn btn-secondary" onclick="loadNotifications(currentFilter)" title="تحديث">
-                        <i class="fas fa-sync"></i>
+                    <button class="btn btn-danger btn-sm" onclick="clearAll()">
+                        <i class="fas fa-trash"></i> مسح الكل
                     </button>
                 </div>
             </div>
 
-            <div class="tabs">
-                <button class="tab active" data-filter="all" onclick="switchTab('all')">
-                    <i class="fas fa-bell"></i> الكل
-                    <span class="tab-count" id="countAll">0</span>
+            <div class="stats-row">
+                <div class="stat-mini">
+                    <div class="stat-mini-icon primary"><i class="fas fa-bell"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statTotal">0</div>
+                        <div class="stat-mini-label">إجمالي الإشعارات</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon warning"><i class="fas fa-envelope"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statUnread">0</div>
+                        <div class="stat-mini-label">غير مقروءة</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon success"><i class="fas fa-check"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statRead">0</div>
+                        <div class="stat-mini-label">مقروءة</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon info"><i class="fas fa-clock"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statToday">0</div>
+                        <div class="stat-mini-label">إشعارات اليوم</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tabs-container">
+                <button class="tab-btn active" data-tab="all" onclick="switchTab(event, 'all')">
+                    <i class="fas fa-list"></i> الكل
+                    <span class="tab-badge" id="allCount">0</span>
                 </button>
-                <button class="tab" data-filter="unread" onclick="switchTab('unread')">
-                    <i class="fas fa-circle"></i> غير مقروءة
-                    <span class="tab-count" id="countUnread">0</span>
+                <button class="tab-btn" data-tab="unread" onclick="switchTab(event, 'unread')">
+                    <i class="fas fa-envelope"></i> غير مقروءة
+                    <span class="tab-badge" id="unreadCount">0</span>
                 </button>
-                <button class="tab" data-filter="application" onclick="switchTab('application')">
-                    <i class="fas fa-file-alt"></i> الطلبات
-                </button>
-                <button class="tab" data-filter="interview" onclick="switchTab('interview')">
-                    <i class="fas fa-calendar"></i> المقابلات
+                <button class="tab-btn" data-tab="read" onclick="switchTab(event, 'read')">
+                    <i class="fas fa-check-double"></i> مقروءة
+                    <span class="tab-badge" id="readCount">0</span>
                 </button>
             </div>
 
-            <div class="notifications" id="notificationsList">
-                <div class="skeleton-notif">
-                    <div class="skeleton-circle"></div>
-                    <div style="flex:1">
-                        <div class="skeleton-line" style="width:60%"></div>
-                        <div class="skeleton-line" style="width:90%"></div>
-                    </div>
+            <div class="filters-bar">
+                <input type="text" id="searchNotifs" placeholder="🔍 ابحث في الإشعارات...">
+                <select id="filterType">
+                    <option value="">كل الأنواع</option>
+                    <option value="info">معلومات</option>
+                    <option value="success">نجاح</option>
+                    <option value="warning">تحذير</option>
+                    <option value="error">خطأ</option>
+                </select>
+            </div>
+
+            <div id="tab-all" class="tab-content active">
+                <div class="notif-list" id="allList">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
                 </div>
-                <div class="skeleton-notif">
-                    <div class="skeleton-circle"></div>
-                    <div style="flex:1">
-                        <div class="skeleton-line" style="width:50%"></div>
-                        <div class="skeleton-line" style="width:80%"></div>
-                    </div>
-                </div>
+            </div>
+            <div id="tab-unread" class="tab-content">
+                <div class="notif-list" id="unreadList"></div>
+            </div>
+            <div id="tab-read" class="tab-content">
+                <div class="notif-list" id="readList"></div>
             </div>
         </main>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script>
-    (function() {
-        'use strict';
-        let allNotifications = [];
-        let currentFilter = 'all';
-        let userId = null;
+(function() {
+    'use strict';
 
-        const ICON_MAP = {
-            'success': 'check-circle',
-            'error': 'exclamation-circle',
-            'warning': 'exclamation-triangle',
-            'info': 'info-circle'
+    if (!window.ProVance) { window.ProVance = {}; }
+    if (typeof window.ProVance.escapeHtml !== 'function') {
+        window.ProVance.escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    if (typeof window.ProVance.showToast !== 'function') {
+        window.ProVance.showToast = (msg, type) => {
+            const t = document.createElement('div');
+            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+            t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (c[type]||'#4facfe') + ';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
         };
-        const TYPE_ICON_MAP = {
-            'application': 'file-alt',
-            'interview': 'calendar-check',
-            'approval': 'check-circle',
-            'rejection': 'times-circle'
-        };
+    }
+    if (typeof window.ProVance.confirmModal !== 'function') {
+        window.ProVance.confirmModal = async ({title, message}) => confirm((title||'') + '\n' + (message||''));
+    }
 
-        function getNotifIcon(notif) {
-            if (notif.icon) return notif.icon;
-            if (notif.related_type && TYPE_ICON_MAP[notif.related_type]) return TYPE_ICON_MAP[notif.related_type];
-            return ICON_MAP[notif.type] || 'bell';
+    console.log('✅ Notifications initialized');
+
+    const esc = window.ProVance.escapeHtml;
+    let userId = null;
+    let allNotifications = [];
+
+    window.logoutStudent = async (e) => {
+        e.preventDefault();
+        const ok = await window.ProVance.confirmModal({title: 'تسجيل الخروج', message: 'هل تريد تسجيل الخروج؟'});
+        if (ok) {
+            if (window.ProVance.logout) await window.ProVance.logout('student-login.html');
+            else window.location.href = 'student-login.html';
+        }
+    };
+
+    function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
+    function timeAgo(d) {
+        if (!d) return '';
+        const diff = Date.now() - new Date(d).getTime();
+        const mins = Math.floor(diff/60000);
+        if (mins < 1) return 'الآن';
+        if (mins < 60) return mins + ' دقيقة';
+        const hrs = Math.floor(mins/60);
+        if (hrs < 24) return hrs + ' ساعة';
+        return Math.floor(hrs/24) + ' يوم';
+    }
+
+    window.switchTab = (e, tabName) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.add('active');
+    };
+
+    function getIconType(type) {
+        return ['success', 'warning', 'error', 'info'].includes(type) ? type : 'primary';
+    }
+
+    function getIconName(type) {
+        return { 'success': 'check-circle', 'warning': 'exclamation-triangle', 'error': 'times-circle', 'info': 'info-circle' }[type] || 'bell';
+    }
+
+    function renderNotifCard(n) {
+        const type = getIconType(n.type);
+        const icon = getIconName(n.type);
+        return '<div class="notif-card ' + (n.is_read ? '' : 'unread') + '" onclick="handleNotifClick(\'' + n.id + '\', \'' + esc(n.link || '') + '\')">' +
+            '<div class="notif-icon ' + type + '"><i class="fas fa-' + icon + '"></i></div>' +
+            '<div class="notif-body">' +
+                '<div class="notif-title">' + esc(n.title || '-') + '</div>' +
+                '<div class="notif-message">' + esc(n.message || '') + '</div>' +
+                '<div class="notif-meta"><i class="fas fa-clock"></i> ' + timeAgo(n.created_at) + ' • ' + formatDate(n.created_at) + '</div>' +
+            '</div>' +
+            '<div class="notif-actions" onclick="event.stopPropagation()">' +
+                (!n.is_read ? '<button class="notif-btn" onclick="markRead(\'' + n.id + '\')" title="تعليم كمقروء"><i class="fas fa-check"></i></button>' : '') +
+                '<button class="notif-btn delete" onclick="deleteNotif(\'' + n.id + '\')" title="حذف"><i class="fas fa-trash"></i></button>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function renderNotifs() {
+        const search = document.getElementById('searchNotifs').value.toLowerCase().trim();
+        const typeFilter = document.getElementById('filterType').value;
+
+        let filtered = allNotifications.slice();
+
+        if (search) {
+            filtered = filtered.filter(n =>
+                (n.title || '').toLowerCase().includes(search) ||
+                (n.message || '').toLowerCase().includes(search)
+            );
         }
 
-        function getNotifClass(notif) {
-            if (['success', 'error', 'warning', 'info'].includes(notif.type)) return notif.type;
-            return 'default';
-        }
+        if (typeFilter) filtered = filtered.filter(n => n.type === typeFilter);
 
-        function renderNotifications(notifs) {
-            const list = document.getElementById('notificationsList');
-            if (notifs.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-bell-slash"></i>
-                        <h3>لا توجد إشعارات</h3>
-                        <p>ستظهر إشعاراتك هنا</p>
-                    </div>
-                `;
+        const unread = filtered.filter(n => !n.is_read);
+        const read = filtered.filter(n => n.is_read);
+
+        document.getElementById('allCount').textContent = filtered.length;
+        document.getElementById('unreadCount').textContent = unread.length;
+        document.getElementById('readCount').textContent = read.length;
+
+        document.getElementById('allList').innerHTML = filtered.length === 0
+            ? '<div class="empty-state"><i class="fas fa-bell-slash"></i><h3>لا توجد إشعارات</h3></div>'
+            : filtered.map(renderNotifCard).join('');
+
+        document.getElementById('unreadList').innerHTML = unread.length === 0
+            ? '<div class="empty-state"><i class="fas fa-envelope-open"></i><h3>كل إشعاراتك مقروءة 🎉</h3></div>'
+            : unread.map(renderNotifCard).join('');
+
+        document.getElementById('readList').innerHTML = read.length === 0
+            ? '<div class="empty-state"><i class="fas fa-bell-slash"></i><h3>لا توجد إشعارات مقروءة</h3></div>'
+            : read.map(renderNotifCard).join('');
+    }
+
+    function updateStats() {
+        const total = allNotifications.length;
+        const unread = allNotifications.filter(n => !n.is_read).length;
+        const read = total - unread;
+        const today = new Date(); today.setHours(0,0,0,0);
+        const todayCount = allNotifications.filter(n => new Date(n.created_at) >= today).length;
+
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statUnread').textContent = unread;
+        document.getElementById('statRead').textContent = read;
+        document.getElementById('statToday').textContent = todayCount;
+    }
+
+    window.handleNotifClick = async (id, link) => {
+        await markRead(id);
+        if (link && link !== 'undefined') window.location.href = link;
+    };
+
+    window.markRead = async (id) => {
+        try {
+            await window.ProVance.sb.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id);
+            window.dispatchEvent(new CustomEvent('reload-notifs'));
+        } catch (err) { console.error(err); }
+    };
+
+    window.markAllRead = async () => {
+        const ok = await window.ProVance.confirmModal({title: 'تعليم الكل كمقروء', message: 'هل تريد تعليم كل الإشعارات كمقروءة؟'});
+        if (!ok) return;
+        try {
+            await window.ProVance.sb.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('user_id', userId).eq('is_read', false);
+            window.ProVance.showToast('تم ✓', 'success');
+            window.dispatchEvent(new CustomEvent('reload-notifs'));
+        } catch (err) { window.ProVance.showToast('حدث خطأ', 'error'); }
+    };
+
+    window.deleteNotif = async (id) => {
+        const ok = await window.ProVance.confirmModal({title: 'حذف الإشعار', message: 'هل تريد حذف هذا الإشعار؟'});
+        if (!ok) return;
+        try {
+            await window.ProVance.sb.from('notifications').delete().eq('id', id);
+            window.ProVance.showToast('تم الحذف', 'success');
+            window.dispatchEvent(new CustomEvent('reload-notifs'));
+        } catch (err) { window.ProVance.showToast('حدث خطأ', 'error'); }
+    };
+
+    window.clearAll = async () => {
+        const ok = await window.ProVance.confirmModal({title: 'مسح كل الإشعارات', message: 'هل تريد حذف كل الإشعارات؟ لا يمكن التراجع.'});
+        if (!ok) return;
+        try {
+            await window.ProVance.sb.from('notifications').delete().eq('user_id', userId);
+            window.ProVance.showToast('تم المسح', 'success');
+            window.dispatchEvent(new CustomEvent('reload-notifs'));
+        } catch (err) { window.ProVance.showToast('حدث خطأ', 'error'); }
+    };
+
+    let isInitialized = false;
+    async function loadAll() {
+        const sb = window.ProVance.sb;
+        if (!sb) return;
+        try {
+            const session = await sb.auth.getSession();
+            const uid = session?.data?.session?.user?.id;
+            if (!uid) {
+                window.location.href = 'student-login.html';
                 return;
             }
+            userId = uid;
 
-            list.innerHTML = notifs.map(n => {
-                const iconClass = getNotifClass(n);
-                const icon = getNotifIcon(n);
-                const time = window.ProVance.timeAgo(n.created_at);
-                const actionUrl = n.action_url || '';
+            const { data } = await sb.from('notifications').select('*').eq('user_id', uid).eq('user_type', 'student').order('created_at', { ascending: false }).limit(200);
+            allNotifications = data || [];
 
-                return `
-                    <div class="notif ${n.is_read ? '' : 'unread'}" onclick="handleNotifClick('${n.id}', '${actionUrl}')">
-                        <div class="notif-icon ${iconClass}">
-                            <i class="fas fa-${icon}"></i>
-                        </div>
-                        <div class="notif-body">
-                            <div class="notif-title">${window.ProVance.escapeHtml(n.title || 'إشعار')}</div>
-                            <div class="notif-msg">${window.ProVance.escapeHtml(n.message || '')}</div>
-                            <div class="notif-time">
-                                <i class="fas fa-clock"></i> ${time}
-                            </div>
-                        </div>
-                        <div class="notif-actions" onclick="event.stopPropagation()">
-                            ${!n.is_read ? `
-                                <button class="notif-action-btn" onclick="markAsRead('${n.id}')" title="قراءة">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                            ` : ''}
-                            <button class="notif-action-btn" onclick="deleteNotif('${n.id}')" title="حذف">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+            updateStats();
+            renderNotifs();
 
-        function applyFilter(filter) {
-            let filtered = allNotifications;
-            if (filter === 'unread') filtered = filtered.filter(n => !n.is_read);
-            else if (filter === 'application') filtered = filtered.filter(n => n.related_type === 'application' || (n.title || '').includes('طلب'));
-            else if (filter === 'interview') filtered = filtered.filter(n => n.related_type === 'interview' || (n.title || '').includes('مقابلة'));
+            if (!isInitialized) {
+                isInitialized = true;
+                sb.channel('notifs-' + uid)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: 'user_id=eq.' + uid }, () => loadAll())
+                    .subscribe();
 
-            renderNotifications(filtered);
-        }
+                window.addEventListener('reload-notifs', loadAll);
 
-        async function loadNotifications() {
-            try {
-                const sb = window.ProVance.sb;
-                const { data, error } = await sb.from('notifications')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false })
-                    .limit(100);
-
-                if (error) throw error;
-
-                allNotifications = data || [];
-
-                document.getElementById('countAll').textContent = allNotifications.length;
-                document.getElementById('countUnread').textContent = allNotifications.filter(n => !n.is_read).length;
-
-                applyFilter(currentFilter);
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('خطأ في تحميل الإشعارات', 'error');
-                document.getElementById('notificationsList').innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h3>حدث خطأ</h3>
-                        <p>لم نتمكن من تحميل الإشعارات</p>
-                    </div>
-                `;
+                document.getElementById('searchNotifs').addEventListener('input', renderNotifs);
+                document.getElementById('filterType').addEventListener('change', renderNotifs);
             }
-        }
+        } catch (err) { console.error(err); }
+    }
 
-        window.switchTab = (filter) => {
-            currentFilter = filter;
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
-            applyFilter(filter);
-        };
-
-        window.markAsRead = async (id) => {
-            try {
-                const sb = window.ProVance.sb;
-                await sb.from('notifications')
-                    .update({ is_read: true, read_at: new Date().toISOString() })
-                    .eq('id', id);
-                const n = allNotifications.find(x => x.id === id);
-                if (n) { n.is_read = true; n.read_at = new Date().toISOString(); }
-                document.getElementById('countUnread').textContent = allNotifications.filter(x => !x.is_read).length;
-                applyFilter(currentFilter);
-            } catch (err) { console.error(err); }
-        };
-
-        window.markAllRead = async () => {
-            const unread = allNotifications.filter(n => !n.is_read);
-            if (unread.length === 0) {
-                window.ProVance.showToast('لا توجد إشعارات غير مقروءة', 'info');
-                return;
-            }
-            try {
-                const sb = window.ProVance.sb;
-                await sb.from('notifications')
-                    .update({ is_read: true, read_at: new Date().toISOString() })
-                    .eq('user_id', userId)
-                    .eq('is_read', false);
-                allNotifications.forEach(n => { n.is_read = true; n.read_at = new Date().toISOString(); });
-                document.getElementById('countUnread').textContent = 0;
-                applyFilter(currentFilter);
-                window.ProVance.showToast('تم وضع علامة قراءة على الكل', 'success');
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        window.deleteNotif = async (id) => {
-            const ok = await window.ProVance.confirmModal({
-                title: 'حذف الإشعار',
-                message: 'هل تريد حذف هذا الإشعار؟',
-                type: 'danger'
-            });
-            if (!ok) return;
-
-            try {
-                const sb = window.ProVance.sb;
-                await sb.from('notifications').delete().eq('id', id);
-                allNotifications = allNotifications.filter(n => n.id !== id);
-                document.getElementById('countAll').textContent = allNotifications.length;
-                document.getElementById('countUnread').textContent = allNotifications.filter(n => !n.is_read).length;
-                applyFilter(currentFilter);
-                window.ProVance.showToast('تم الحذف', 'success');
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        window.handleNotifClick = async (id, actionUrl) => {
-            await markAsRead(id);
-            if (actionUrl) {
-                setTimeout(() => window.location.href = actionUrl, 300);
-            }
-        };
-
-        window.logoutStudent = async (e) => {
-            e.preventDefault();
-            const ok = await window.ProVance.confirmModal({
-                title: 'تسجيل الخروج',
-                message: 'هل تريد تسجيل الخروج؟',
-                confirmText: 'نعم'
-            });
-            if (ok) await window.ProVance.logout('student-login.html');
-        };
-
-        async function init() {
-            const ok = await window.ProVance.requireStudentAuth();
-            if (!ok) return;
-            const session = await window.ProVance.getSession();
-            userId = session.user.id;
-            window.currentFilter = 'all';
-            loadNotifications();
-
-            // Realtime
-            const sb = window.ProVance.sb;
-            sb.channel('notif-' + userId)
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => {
-                    loadNotifications();
-                    window.ProVance.showToast('🔔 إشعار جديد', 'info');
-                })
-                .subscribe();
-        }
-
-        init();
-    })();
+    loadAll();
+})();
     </script>
 </body>
 </html>
