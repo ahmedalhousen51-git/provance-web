@@ -777,7 +777,6 @@
                                 <option value="3">السنة الثالثة</option>
                                 <option value="4">السنة الرابعة</option>
                                 <option value="5">السنة الخامسة</option>
-                                <option value="6">السنة السادسة</option>
                                 <option value="graduated">متخرج</option>
                             </select>
                             <span class="field-error" id="studyYearErr"></span>
@@ -1098,6 +1097,19 @@
                 document.body.appendChild(toast);
                 setTimeout(function(){ toast.remove(); }, 4000);
             };
+        }
+
+        
+        // Helper: استنى لحد ما supabase-config يحمّل
+        async function waitForSupabase(maxWait = 5000) {
+            const start = Date.now();
+            while (Date.now() - start < maxWait) {
+                if (window.ProVance && window.ProVance.sb && typeof window.ProVance.sb.from === 'function') {
+                    return window.ProVance.sb;
+                }
+                await new Promise(r => setTimeout(r, 100));
+            }
+            return null;
         }
 
         console.log('✅ Form initialized successfully');
@@ -1762,7 +1774,7 @@
                 setTimeout(() => window.location.href = 'student-internship.html', 1800);
             } catch (err) {
                 console.error('Network/general error:', err);
-                const msg = '⚠️ مشكلة في الاتصال بالخادم، تأكد من الإنترنت وحاول تاني';
+                const msg = '⚠️ مشكلة في الاتصال، تأكد من الإنترنت وحاول مرة أخرى';
                 window.ProVance.showToast(msg, 'error');
                 showServerErrorBanner(msg);
                 btn.classList.remove('loading');
