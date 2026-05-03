@@ -3,745 +3,780 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>إدارة الشركات - ProVance</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <title>إدارة الشركات - ProVance Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #ef4444; --secondary: #dc2626;
-            --gradient: linear-gradient(135deg, #ef4444, #dc2626);
-            --bg: #0a0e27; --bg-2: #1a1535;
-            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
-            --border: rgba(255,255,255,0.08);
-            --text: #fff; --text-muted: #94a3b8;
-            --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        .bg-anim {
-            position: fixed; inset: 0; z-index: -1;
-            background:
-                radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%),
-                radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%),
-                var(--bg);
-        }
-        .layout { display: flex; min-height: 100vh; }
-        .sidebar {
-            width: 260px; background: rgba(20,18,40,0.7);
-            backdrop-filter: blur(20px); border-left: 1px solid var(--border);
-            padding: 24px 16px; position: fixed; inset: 0 0 0 auto;
-            z-index: 100; transition: transform .3s;
-            display: flex; flex-direction: column;
-        }
-        .sidebar-logo {
-            display: flex; align-items: center; gap: 10px;
-            padding: 0 8px 20px; border-bottom: 1px solid var(--border);
-            margin-bottom: 16px; justify-content: center;
-        }
-        .sidebar-logo img { height: 32px; max-width: 100%; }
-        .admin-badge {
-            background: var(--gradient); color: #fff;
-            padding: 5px 12px; border-radius: 14px;
-            font-size: 0.75rem; font-weight: 800;
-            text-align: center; margin-bottom: 14px;
-            display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px 14px; color: var(--text-muted);
-            text-decoration: none; border-radius: 10px;
-            font-size: 0.92rem; font-weight: 600;
-            margin-bottom: 4px; transition: all .2s;
-        }
-        .nav-item:hover { background: var(--card); color: var(--text); }
-        .nav-item.active { background: var(--gradient); color: #fff; }
-        .nav-item i { width: 18px; }
-        .main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
-        .topbar {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 22px; gap: 14px; flex-wrap: wrap;
-        }
-        .menu-toggle {
-            display: none; background: var(--card); border: 1px solid var(--border);
-            color: var(--text); width: 42px; height: 42px;
-            border-radius: 10px; cursor: pointer;
-        }
-        .topbar-title { font-size: 1.5rem; font-weight: 800; }
-
-        /* Stats Mini */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .stat-mini {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
-            display: flex;
-            align-items: center;
-            gap: 11px;
-        }
-        .stat-mini-icon {
-            width: 40px; height: 40px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; color: #fff;
-        }
-        .stat-mini-icon.purple { background: linear-gradient(135deg, #f093fb, #f5576c); }
-        .stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .stat-mini-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
-        .stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
-
-        /* Filters */
-        .filters {
-            display: flex; gap: 10px; margin-bottom: 18px;
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 12px; padding: 12px;
-            flex-wrap: wrap;
-        }
-        .filters input, .filters select {
-            padding: 9px 14px; background: rgba(255,255,255,0.04);
-            border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text); font-family: inherit; font-size: 0.9rem;
-        }
-        .filters input { flex: 1; min-width: 200px; }
-        .filters input:focus, .filters select:focus {
-            outline: none; border-color: var(--primary);
-        }
-
-        /* Table */
-        .companies-list {
-            display: flex; flex-direction: column; gap: 12px;
-        }
-        .company-row {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 16px;
-            display: flex;
-            gap: 14px;
-            align-items: center;
-            transition: all .2s;
-        }
-        .company-row:hover {
-            border-color: var(--primary);
-            background: var(--card-hover);
-        }
-        .company-row.pending {
-            border-right: 3px solid var(--warning);
-        }
-        .company-logo {
-            width: 50px; height: 50px;
-            border-radius: 12px;
-            background: var(--gradient);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-weight: 800;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-            overflow: hidden;
-        }
-        .company-logo img { width: 100%; height: 100%; object-fit: cover; }
-        .company-body { flex: 1; min-width: 0; }
-        .company-name { font-weight: 800; font-size: 1rem; }
-        .company-meta {
-            display: flex; flex-wrap: wrap; gap: 12px;
-            color: var(--text-muted); font-size: 0.82rem; margin-top: 5px;
-        }
-        .company-meta span { display: flex; align-items: center; gap: 4px; }
-        .company-meta i { color: var(--primary); }
-
-        .company-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 10px;
-            border-radius: 14px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            margin-top: 6px;
-        }
-        .status-pending { background: rgba(245,158,11,0.15); color: var(--warning); }
-        .status-approved { background: rgba(16,185,129,0.15); color: var(--success); }
-        .status-rejected { background: rgba(239,68,68,0.15); color: var(--error); }
-        .status-suspended { background: rgba(148,163,184,0.15); color: var(--text-muted); }
-
-        .company-actions {
-            display: flex; gap: 6px; flex-shrink: 0;
-            flex-wrap: wrap;
-        }
-        .btn {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 8px 14px; border: none; border-radius: 9px;
-            font-weight: 700; font-family: inherit; font-size: 0.82rem;
-            cursor: pointer; transition: all .2s; text-decoration: none;
-            white-space: nowrap;
-        }
-        .btn-primary { background: var(--gradient); color: #fff; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(239,68,68,0.4); }
-        .btn-success {
-            background: rgba(16,185,129,0.15); color: var(--success);
-            border: 1px solid rgba(16,185,129,0.3);
-        }
-        .btn-success:hover { background: rgba(16,185,129,0.25); }
-        .btn-danger {
-            background: rgba(239,68,68,0.1); color: var(--error);
-            border: 1px solid rgba(239,68,68,0.3);
-        }
-        .btn-danger:hover { background: rgba(239,68,68,0.2); }
-        .btn-secondary {
-            background: var(--card); border: 1px solid var(--border); color: var(--text);
-        }
-        .btn-secondary:hover { background: var(--card-hover); }
-        .btn-warning {
-            background: rgba(245,158,11,0.1); color: var(--warning);
-            border: 1px solid rgba(245,158,11,0.3);
-        }
-        .btn-warning:hover { background: rgba(245,158,11,0.2); }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-        }
-        .empty-state i {
-            font-size: 4rem;
-            color: rgba(148,163,184,0.3);
-            margin-bottom: 16px;
-        }
-
-        /* Modal */
-        .modal {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(5px);
-            z-index: 200;
-            display: none;
-            align-items: center; justify-content: center;
-            padding: 20px;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: var(--bg-2); border: 1px solid var(--border);
-            border-radius: 20px;
-            width: 100%; max-width: 700px;
-            max-height: 90vh; overflow-y: auto;
-            padding: 28px;
-        }
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; padding-bottom: 14px;
-            border-bottom: 1px solid var(--border);
-        }
-        .modal-title { font-size: 1.2rem; font-weight: 800; }
-        .modal-close {
-            background: var(--card); border: 1px solid var(--border);
-            color: var(--text); width: 36px; height: 36px;
-            border-radius: 50%; cursor: pointer;
-        }
-        .detail-row {
-            display: flex; justify-content: space-between;
-            padding: 8px 0; border-bottom: 1px solid var(--border);
-            font-size: 0.92rem; gap: 12px;
-        }
-        .detail-row:last-child { border-bottom: none; }
-        .detail-row .label { color: var(--text-muted); }
-        .detail-row .value { font-weight: 600; text-align: left; word-break: break-word; }
-        .detail-row .value a { color: var(--primary); text-decoration: none; }
-        .detail-section-title {
-            font-size: 0.95rem;
-            font-weight: 800;
-            margin: 16px 0 8px;
-            color: var(--primary);
-            padding-bottom: 6px;
-            border-bottom: 1px solid var(--border);
-        }
-        .field { margin-bottom: 12px; }
-        .field label {
-            display: block; color: var(--text-muted);
-            font-size: 0.88rem; font-weight: 600; margin-bottom: 6px;
-        }
-        .field textarea {
-            width: 100%; padding: 12px 14px;
-            background: rgba(255,255,255,0.04);
-            border: 2px solid var(--border);
-            border-radius: 10px; color: var(--text);
-            font-size: 0.92rem; font-family: inherit;
-            resize: vertical; min-height: 80px;
-        }
-        .field textarea:focus { outline: none; border-color: var(--primary); }
-
-        @media (max-width: 1024px) {
-            .sidebar { transform: translateX(100%); width: 280px; }
-            .sidebar.open { transform: translateX(0); }
-            .main { margin-right: 0; }
-            .menu-toggle { display: flex; align-items: center; justify-content: center; }
-        }
-        @media (max-width: 768px) {
-            .company-row { flex-direction: column; align-items: flex-start; }
-            .company-actions { width: 100%; }
-            .company-actions .btn { flex: 1; justify-content: center; }
-        }
+:root {
+    --primary: #ef4444; --secondary: #dc2626;
+    --gradient: linear-gradient(135deg, #ef4444, #dc2626);
+    --bg: #0a0e27; --bg-2: #1a1535;
+    --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+    --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
+    --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%), var(--bg); }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
+.sidebar-logo { display: flex; align-items: center; justify-content: center; padding: 0 8px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.sidebar-logo img { height: 32px; max-width: 100%; }
+.admin-badge { background: var(--gradient); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; text-align: center; margin-bottom: 14px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: var(--gradient); color: #fff; }
+.nav-item i { width: 18px; }
+.main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
+.menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
+.topbar-title { font-size: 1.5rem; font-weight: 800; }
+.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.stat-mini { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 11px; }
+.stat-mini-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #fff; flex-shrink: 0; }
+.stat-mini-icon.red { background: var(--gradient); }
+.stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.stat-mini-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+.stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+.filters-bar { display: flex; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.filters-bar input, .filters-bar select { padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.9rem; }
+.filters-bar input { flex: 1; min-width: 200px; }
+.filters-bar input:focus, .filters-bar select:focus { outline: none; border-color: var(--primary); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.88rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
+.btn-primary { background: var(--gradient); color: #fff; }
+.btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(239,68,68,0.4); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+.btn-secondary:hover { background: var(--card-hover); }
+.btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+.btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+.btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+.btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
+.btn-sm { padding: 7px 12px; font-size: 0.8rem; }
+.companies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+.company-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: all .25s; position: relative; }
+.company-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(239,68,68,0.15); }
+.company-card.no-pricing { border-color: rgba(245,158,11,0.4); }
+.company-card.no-pricing::before { content: 'بدون سعر'; position: absolute; top: 12px; left: 12px; background: var(--warning); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 800; }
+.company-header { display: flex; align-items: center; gap: 12px; }
+.company-logo { width: 56px; height: 56px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.3rem; flex-shrink: 0; overflow: hidden; }
+.company-logo img { width: 100%; height: 100%; object-fit: cover; }
+.company-info { flex: 1; min-width: 0; }
+.company-name { font-weight: 800; font-size: 1.05rem; }
+.company-email { color: var(--text-muted); font-size: 0.84rem; margin-top: 2px; word-break: break-all; }
+.pricing-display { background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2); border-radius: 12px; padding: 14px; text-align: center; }
+.pricing-display.set { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.25); }
+.pricing-amount { font-size: 1.6rem; font-weight: 900; background: var(--gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.pricing-display.set .pricing-amount { background: linear-gradient(135deg, #10b981, #059669); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.pricing-currency { font-size: 0.86rem; color: var(--text-muted); margin-top: 4px; }
+.company-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.82rem; color: var(--text-muted); padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.company-meta span { display: flex; align-items: center; gap: 4px; }
+.company-meta i { color: var(--primary); }
+.company-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+.company-actions .btn { flex: 1; justify-content: center; padding: 9px; min-width: 90px; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .25s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal.active { display: flex; }
+.modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto; padding: 28px; position: relative; animation: slideUp .3s ease-out; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.modal-title i { color: var(--primary); }
+.modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
+.field { margin-bottom: 16px; }
+.field label { display: block; color: var(--text); font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
+.field label i { color: var(--primary); margin-left: 4px; }
+.field label .req { color: var(--error); }
+.field input, .field select, .field textarea { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.95rem; font-family: inherit; transition: all .2s; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.06); box-shadow: 0 0 0 4px rgba(239,68,68,0.1); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+.modal-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.modal-section-title { font-size: 0.94rem; font-weight: 800; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.modal-section-title i { color: var(--primary); }
+.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.info-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+.info-label { color: var(--text-muted); font-size: 0.76rem; display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+.info-label i { color: var(--primary); }
+.info-value { font-weight: 700; font-size: 0.92rem; word-break: break-word; }
+.empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+.empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
+.empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 14px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+.badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
+.badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+.badge-error { background: rgba(239,68,68,0.15); color: var(--error); }
+.badge-info { background: rgba(79,172,254,0.15); color: var(--info); }
+.preset-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-top: 8px; }
+.preset-btn { padding: 10px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 0.84rem; font-weight: 700; cursor: pointer; transition: all .2s; }
+.preset-btn:hover { border-color: var(--primary); background: rgba(239,68,68,0.05); }
+.preset-btn.selected { border-color: var(--primary); background: rgba(239,68,68,0.1); }
+.help-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.help-section h4 { font-size: 0.95rem; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--primary); }
+.help-section ul { list-style: none; padding: 0; }
+.help-section li { padding: 5px 0; color: var(--text-muted); font-size: 0.88rem; display: flex; align-items: flex-start; gap: 6px; }
+.help-section li i { color: var(--success); flex-shrink: 0; margin-top: 4px; }
+@media (max-width: 1024px) {
+    .sidebar { transform: translateX(100%); width: 280px; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-right: 0; }
+    .menu-toggle { display: flex; align-items: center; justify-content: center; }
+}
+@media (max-width: 600px) {
+    .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
+    .topbar-title { font-size: 1.2rem; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+}
     </style>
 </head>
 <body>
     <div class="bg-anim"></div>
-
     <div class="layout">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">
                 <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
             </div>
-            <div class="admin-badge"><i class="fas fa-shield-alt"></i><span>أدمن</span></div>
+            <div class="admin-badge"><i class="fas fa-shield-alt"></i> ADMIN PANEL</div>
             <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
             <a href="admin-campany.html" class="nav-item active"><i class="fas fa-building"></i> الشركات</a>
-            <a href="admin-trainees.html" class="nav-item"><i class="fas fa-user-graduate"></i> الطلاب</a>
+            <a href="admin-trainees.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
             <a href="admin-notification.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
             <a href="#" onclick="logoutAdmin(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
             </a>
         </aside>
-
         <main class="main">
             <div class="topbar">
                 <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="topbar-title">
-                    <i class="fas fa-building" style="color:var(--primary)"></i> إدارة الشركات
-                </h1>
+                <h1 class="topbar-title"><i class="fas fa-building" style="color:var(--primary)"></i> إدارة الشركات</h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="openHelpModal()">
+                        <i class="fas fa-question-circle"></i> مساعدة
+                    </button>
+                </div>
             </div>
 
             <div class="stats-row">
                 <div class="stat-mini">
-                    <div class="stat-mini-icon purple"><i class="fas fa-building"></i></div>
+                    <div class="stat-mini-icon red"><i class="fas fa-building"></i></div>
                     <div>
-                        <div class="stat-mini-num" id="statTotal">0</div>
+                        <div class="stat-mini-num" id="statTotalCompanies">0</div>
                         <div class="stat-mini-label">إجمالي الشركات</div>
-                    </div>
-                </div>
-                <div class="stat-mini">
-                    <div class="stat-mini-icon warning"><i class="fas fa-clock"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statPending">0</div>
-                        <div class="stat-mini-label">قيد المراجعة</div>
                     </div>
                 </div>
                 <div class="stat-mini">
                     <div class="stat-mini-icon success"><i class="fas fa-check-circle"></i></div>
                     <div>
-                        <div class="stat-mini-num" id="statApproved">0</div>
-                        <div class="stat-mini-label">معتمدة</div>
+                        <div class="stat-mini-num" id="statWithPricing">0</div>
+                        <div class="stat-mini-label">بسعر محدد</div>
                     </div>
                 </div>
                 <div class="stat-mini">
-                    <div class="stat-mini-icon error"><i class="fas fa-times-circle"></i></div>
+                    <div class="stat-mini-icon warning"><i class="fas fa-exclamation-triangle"></i></div>
                     <div>
-                        <div class="stat-mini-num" id="statRejected">0</div>
-                        <div class="stat-mini-label">مرفوضة</div>
+                        <div class="stat-mini-num" id="statWithoutPricing">0</div>
+                        <div class="stat-mini-label">بدون سعر</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon info"><i class="fas fa-money-bill-wave"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statAvgPrice">0</div>
+                        <div class="stat-mini-label">متوسط السعر</div>
                     </div>
                 </div>
             </div>
 
-            <div class="filters">
-                <input type="text" id="searchInput" placeholder="🔍 ابحث بالاسم، البريد، أو المجال...">
-                <select id="statusFilter">
-                    <option value="">كل الحالات</option>
-                    <option value="pending">قيد المراجعة</option>
-                    <option value="approved">معتمدة</option>
-                    <option value="rejected">مرفوضة</option>
-                    <option value="suspended">موقوفة</option>
+            <div class="filters-bar">
+                <input type="text" id="searchCompany" placeholder="🔍 ابحث باسم الشركة أو الإيميل...">
+                <select id="filterPricing">
+                    <option value="">كل الشركات</option>
+                    <option value="set">بسعر محدد</option>
+                    <option value="not_set">بدون سعر</option>
+                </select>
+                <select id="filterSort">
+                    <option value="newest">الأحدث أولاً</option>
+                    <option value="name">حسب الاسم</option>
+                    <option value="price_high">السعر (الأعلى)</option>
+                    <option value="price_low">السعر (الأقل)</option>
                 </select>
             </div>
 
-            <div class="companies-list" id="companiesList">
-                <div class="empty-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>جاري التحميل...</p>
-                </div>
+            <div class="companies-grid" id="companiesGrid">
+                <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
             </div>
         </main>
     </div>
-
-    <!-- Details Modal -->
-    <div class="modal" id="detailsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">تفاصيل الشركة</h3>
-                <button class="modal-close" onclick="closeDetailsModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div id="detailsContent"></div>
-        </div>
-    </div>
-
-    <!-- Reject Modal -->
-    <div class="modal" id="rejectModal">
-        <div class="modal-content" style="max-width:480px">
-            <div class="modal-header">
-                <h3 class="modal-title">رفض طلب الشركة</h3>
-                <button class="modal-close" onclick="closeRejectModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="field">
-                <label>سبب الرفض (سيظهر للشركة)</label>
-                <textarea id="rejectReason" rows="3" placeholder="اكتب سبب الرفض بشكل واضح..."></textarea>
-            </div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-secondary" onclick="closeRejectModal()" style="flex:1; justify-content:center; padding:12px;">إلغاء</button>
-                <button class="btn btn-danger" onclick="confirmReject()" style="flex:1; justify-content:center; padding:12px;">
-                    <i class="fas fa-times-circle"></i> تأكيد الرفض
-                </button>
-            </div>
-        </div>
-    </div>
+    <div id="modalsContainer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script>
-    (function() {
-        'use strict';
-        let allCompanies = [];
-        let rejectingId = null;
-        let rejectingName = '';
+// ============================================================
+// ProVance Admin: Companies Pricing Management
+// ============================================================
+(function() {
+    'use strict';
 
-        const STATUS_LABELS = {
-            'pending': '⏳ قيد المراجعة',
-            'approved': '✓ معتمدة',
-            'rejected': '✕ مرفوضة',
-            'suspended': '⏸ موقوفة'
+    if (!window.ProVance) { window.ProVance = {}; console.error('⚠️ supabase-config.js مش متحمل'); }
+    if (typeof window.ProVance.escapeHtml !== 'function') {
+        window.ProVance.escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    if (typeof window.ProVance.showToast !== 'function') {
+        window.ProVance.showToast = (msg, type) => {
+            const t = document.createElement('div');
+            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+            t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (c[type]||'#4facfe') + ';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
         };
+    }
+    if (typeof window.ProVance.confirmModal !== 'function') {
+        window.ProVance.confirmModal = async ({title, message}) => confirm((title||'') + '\n' + (message||''));
+    }
 
-        function getInitial(name) {
-            return (name || '?').trim().charAt(0).toUpperCase();
+    console.log('✅ Admin Companies initialized');
+
+    const esc = window.ProVance.escapeHtml;
+
+    let adminUserId = null;
+    let allCompanies = [];
+    let allPricing = {};  // company_user_id => pricing
+    let allInternships = {};  // company_user_id => array
+    let allTrainees = {};  // company_user_id => count
+
+    function getInitial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
+
+    function renderModal(html) {
+        document.getElementById('modalsContainer').innerHTML = html;
+        document.body.style.overflow = 'hidden';
+    }
+    window.closeModal = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+        if (document.querySelectorAll('.modal').length === 0) document.body.style.overflow = '';
+    };
+
+    window.logoutAdmin = async (e) => {
+        e.preventDefault();
+        const ok = await window.ProVance.confirmModal({title: 'تسجيل الخروج', message: 'هل تريد تسجيل الخروج؟'});
+        if (ok) {
+            if (window.ProVance.logout) await window.ProVance.logout('admin-login.html');
+            else window.location.href = 'admin-login.html';
         }
+    };
 
-        function renderList(items) {
-            const list = document.getElementById('companiesList');
-            if (items.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-building"></i>
-                        <h3>لا توجد شركات</h3>
+    function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
+
+    function renderCompanyCard(c) {
+        const logo = c.logo
+            ? `<img src="${c.logo}" alt="">`
+            : `<span>${getInitial(c.company_name)}</span>`;
+
+        const pricing = allPricing[c.user_id];
+        const internships = allInternships[c.user_id] || [];
+        const traineesCount = allTrainees[c.user_id] || 0;
+        const hasPricing = !!pricing;
+
+        return `
+            <div class="company-card ${!hasPricing ? 'no-pricing' : ''}">
+                <div class="company-header">
+                    <div class="company-logo">${logo}</div>
+                    <div class="company-info">
+                        <div class="company-name">${esc(c.company_name || '-')}</div>
+                        <div class="company-email">${esc(c.email || '-')}</div>
                     </div>
-                `;
-                return;
-            }
-
-            list.innerHTML = items.map(c => {
-                const status = c.status || 'pending';
-                const logo = c.logo
-                    ? `<img src="${c.logo}" alt="${c.company_name}">`
-                    : `<span>${getInitial(c.company_name)}</span>`;
-                const safeName = window.ProVance.escapeHtml(c.company_name).replace(/'/g, "&#39;");
-
-                return `
-                    <div class="company-row ${status === 'pending' ? 'pending' : ''}">
-                        <div class="company-logo">${logo}</div>
-                        <div class="company-body">
-                            <div class="company-name">${window.ProVance.escapeHtml(c.company_name || '-')}</div>
-                            <div class="company-meta">
-                                <span><i class="fas fa-envelope"></i> <span style="direction:ltr">${c.email || '-'}</span></span>
-                                <span><i class="fas fa-briefcase"></i> ${window.ProVance.escapeHtml(c.company_field || '-')}</span>
-                                <span><i class="fas fa-map-marker-alt"></i> ${window.ProVance.escapeHtml(c.company_location || '-')}</span>
-                                <span><i class="fas fa-calendar"></i> ${window.ProVance.timeAgo(c.created_at)}</span>
-                            </div>
-                            <span class="company-status status-${status}">${STATUS_LABELS[status] || status}</span>
-                        </div>
-                        <div class="company-actions">
-                            <button class="btn btn-secondary" onclick="showDetails('${c.user_id}')">
-                                <i class="fas fa-eye"></i> عرض
-                            </button>
-                            ${status === 'pending' ? `
-                                <button class="btn btn-success" onclick="approveCompany('${c.user_id}', '${safeName}')">
-                                    <i class="fas fa-check"></i> موافقة
-                                </button>
-                                <button class="btn btn-danger" onclick="openRejectModal('${c.user_id}', '${safeName}')">
-                                    <i class="fas fa-times"></i> رفض
-                                </button>
-                            ` : ''}
-                            ${status === 'approved' ? `
-                                <button class="btn btn-warning" onclick="suspendCompany('${c.user_id}', '${safeName}')">
-                                    <i class="fas fa-pause"></i> إيقاف
-                                </button>
-                            ` : ''}
-                            ${status === 'suspended' ? `
-                                <button class="btn btn-success" onclick="reactivateCompany('${c.user_id}', '${safeName}')">
-                                    <i class="fas fa-play"></i> تفعيل
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function applyFilters() {
-            const search = document.getElementById('searchInput').value.toLowerCase().trim();
-            const status = document.getElementById('statusFilter').value;
-
-            let filtered = allCompanies;
-            if (status) filtered = filtered.filter(c => c.status === status);
-            if (search) {
-                filtered = filtered.filter(c =>
-                    (c.company_name || '').toLowerCase().includes(search) ||
-                    (c.email || '').toLowerCase().includes(search) ||
-                    (c.company_field || '').toLowerCase().includes(search)
-                );
-            }
-            renderList(filtered);
-        }
-
-        function updateStats() {
-            const total = allCompanies.length;
-            const pending = allCompanies.filter(c => c.status === 'pending').length;
-            const approved = allCompanies.filter(c => c.status === 'approved').length;
-            const rejected = allCompanies.filter(c => c.status === 'rejected').length;
-
-            document.getElementById('statTotal').textContent = total;
-            document.getElementById('statPending').textContent = pending;
-            document.getElementById('statApproved').textContent = approved;
-            document.getElementById('statRejected').textContent = rejected;
-        }
-
-        async function loadCompanies() {
-            const sb = window.ProVance.sb;
-            const { data, error } = await sb.from('companies')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error(error);
-                window.ProVance.showToast('خطأ في تحميل الشركات', 'error');
-                return;
-            }
-            allCompanies = data || [];
-            updateStats();
-            applyFilters();
-        }
-
-        window.showDetails = (userId) => {
-            const c = allCompanies.find(c => c.user_id === userId);
-            if (!c) return;
-
-            const trainingFields = Array.isArray(c.training_fields) ? c.training_fields : [];
-            const branches = Array.isArray(c.branch_locations) ? c.branch_locations : [];
-
-            const content = document.getElementById('detailsContent');
-            content.innerHTML = `
-                <div style="text-align:center; margin-bottom: 20px;">
-                    <div class="company-logo" style="width: 80px; height: 80px; margin: 0 auto 10px; font-size: 2rem;">
-                        ${c.logo ? `<img src="${c.logo}" alt="${c.company_name}">` : getInitial(c.company_name)}
-                    </div>
-                    <h3 style="font-size: 1.3rem; font-weight: 800;">${window.ProVance.escapeHtml(c.company_name || '-')}</h3>
-                    <span class="company-status status-${c.status || 'pending'}" style="margin-top: 6px;">
-                        ${STATUS_LABELS[c.status || 'pending']}
-                    </span>
                 </div>
 
-                ${c.company_bio ? `
-                <div class="detail-section-title"><i class="fas fa-align-right"></i> النبذة</div>
-                <div style="color: var(--text-muted); line-height: 1.7; font-size: 0.92rem;">${window.ProVance.escapeHtml(c.company_bio)}</div>
-                ` : ''}
+                <div class="pricing-display ${hasPricing ? 'set' : ''}">
+                    ${hasPricing
+                        ? `<div class="pricing-amount">${(pricing.training_price || 0).toLocaleString()}</div>
+                           <div class="pricing-currency">${pricing.currency || 'EGP'} لكل متدرب</div>`
+                        : `<div style="color:var(--warning);font-weight:800;font-size:1rem"><i class="fas fa-exclamation-triangle"></i> لم يُحدد سعر</div>
+                           <div class="pricing-currency" style="margin-top:4px">اضغط "تحديد السعر" لإضافة</div>`
+                    }
+                </div>
 
-                <div class="detail-section-title"><i class="fas fa-info-circle"></i> المعلومات الأساسية</div>
-                <div class="detail-row"><span class="label">المجال</span><span class="value">${window.ProVance.escapeHtml(c.company_field || '-')}</span></div>
-                <div class="detail-row"><span class="label">المدينة</span><span class="value">${window.ProVance.escapeHtml(c.company_location || '-')}</span></div>
-                <div class="detail-row"><span class="label">عدد الموظفين</span><span class="value">${c.employees_count || '-'}</span></div>
-                ${branches.length > 0 ? `<div class="detail-row"><span class="label">الفروع</span><span class="value">${branches.length} فرع: ${branches.map(b => window.ProVance.escapeHtml(b)).join('، ')}</span></div>` : ''}
-                ${c.is_startup ? `<div class="detail-row"><span class="label">الشركة</span><span class="value">🚀 ناشئة (Startup)</span></div>` : ''}
+                <div class="company-meta">
+                    <span><i class="fas fa-bullhorn"></i> ${internships.length} فرصة</span>
+                    <span><i class="fas fa-user-graduate"></i> ${traineesCount} متدرب</span>
+                    <span><i class="fas fa-calendar"></i> ${formatDate(c.created_at)}</span>
+                </div>
 
-                <div class="detail-section-title"><i class="fas fa-address-book"></i> الاتصال</div>
-                <div class="detail-row"><span class="label">البريد</span><span class="value" style="direction:ltr">${c.email || '-'}</span></div>
-                <div class="detail-row"><span class="label">الهاتف</span><span class="value" style="direction:ltr">${c.primary_phone || '-'}</span></div>
-                ${c.secondary_phone ? `<div class="detail-row"><span class="label">هاتف ثانوي</span><span class="value" style="direction:ltr">${c.secondary_phone}</span></div>` : ''}
-                ${c.whatsapp ? `<div class="detail-row"><span class="label">واتساب</span><span class="value" style="direction:ltr">${c.whatsapp}</span></div>` : ''}
-                ${c.inquiry_email ? `<div class="detail-row"><span class="label">بريد الاستفسارات</span><span class="value" style="direction:ltr">${c.inquiry_email}</span></div>` : ''}
-                ${c.website ? `<div class="detail-row"><span class="label">الموقع</span><span class="value"><a href="${c.website}" target="_blank">${c.website}</a></span></div>` : ''}
-                ${c.linkedin ? `<div class="detail-row"><span class="label">LinkedIn</span><span class="value"><a href="${c.linkedin}" target="_blank">رابط</a></span></div>` : ''}
-                ${c.facebook ? `<div class="detail-row"><span class="label">Facebook</span><span class="value"><a href="${c.facebook}" target="_blank">رابط</a></span></div>` : ''}
+                <div class="company-actions">
+                    <button class="btn btn-info btn-sm" onclick="viewCompanyDetails('${c.user_id}')" style="flex:1;justify-content:center">
+                        <i class="fas fa-eye"></i> التفاصيل
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="openPricingModal('${c.user_id}')" style="flex:1;justify-content:center">
+                        <i class="fas fa-tag"></i> ${hasPricing ? 'تعديل السعر' : 'تحديد السعر'}
+                    </button>
+                </div>
+            </div>
+        `;
+    }
 
-                ${trainingFields.length > 0 ? `
-                <div class="detail-section-title"><i class="fas fa-graduation-cap"></i> التدريب</div>
-                <div class="detail-row"><span class="label">المجالات</span><span class="value">${trainingFields.map(f => window.ProVance.escapeHtml(f)).join('، ')}</span></div>
-                <div class="detail-row"><span class="label">السعر</span><span class="value">${c.training_price || 'مجاني'}</span></div>
-                <div class="detail-row"><span class="label">مدة الرد</span><span class="value">${c.max_response_days || '-'} أيام</span></div>
-                ` : ''}
+    function renderCompanies() {
+        const search = document.getElementById('searchCompany').value.toLowerCase().trim();
+        const pricingFilter = document.getElementById('filterPricing').value;
+        const sort = document.getElementById('filterSort').value;
 
-                <div class="detail-section-title"><i class="fas fa-history"></i> النشاط</div>
-                <div class="detail-row"><span class="label">تاريخ التقديم</span><span class="value">${window.ProVance.formatDateTime(c.created_at)}</span></div>
-                ${c.approved_at ? `<div class="detail-row"><span class="label">تاريخ الاعتماد</span><span class="value">${window.ProVance.formatDateTime(c.approved_at)}</span></div>` : ''}
-                ${c.rejection_reason ? `<div class="detail-row" style="background: rgba(239,68,68,0.05); padding:10px; border-radius:8px; flex-direction: column; gap: 4px;"><span class="label">سبب الرفض:</span><span class="value">${window.ProVance.escapeHtml(c.rejection_reason)}</span></div>` : ''}
-            `;
+        let filtered = allCompanies.slice();
 
-            document.getElementById('detailsModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        };
-
-        window.closeDetailsModal = () => {
-            document.getElementById('detailsModal').classList.remove('active');
-            document.body.style.overflow = '';
-        };
-
-        window.approveCompany = async (userId, name) => {
-            const ok = await window.ProVance.confirmModal({
-                title: 'الموافقة على الشركة',
-                message: `هل تريد قبول "${name}"؟`,
-                confirmText: 'نعم، قبول'
-            });
-            if (!ok) return;
-
-            try {
-                const sb = window.ProVance.sb;
-                await sb.from('companies').update({
-                    status: 'approved',
-                    approved_at: new Date().toISOString(),
-                    rejection_reason: null
-                }).eq('user_id', userId);
-
-                await window.ProVance.sendNotification({
-                    userId,
-                    userType: 'company',
-                    title: '🎉 تم اعتماد شركتك',
-                    message: 'مبروك! تم اعتماد شركتك على المنصة. يمكنك الآن إضافة فرص تدريب',
-                    type: 'success',
-                    actionUrl: 'company-dashboard.html'
-                });
-
-                window.ProVance.showToast('تم القبول ✓', 'success');
-                await loadCompanies();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        window.openRejectModal = (userId, name) => {
-            rejectingId = userId;
-            rejectingName = name;
-            document.getElementById('rejectReason').value = '';
-            document.getElementById('rejectModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        };
-
-        window.closeRejectModal = () => {
-            document.getElementById('rejectModal').classList.remove('active');
-            document.body.style.overflow = '';
-        };
-
-        window.confirmReject = async () => {
-            const reason = document.getElementById('rejectReason').value.trim();
-            if (!rejectingId) return;
-
-            try {
-                const sb = window.ProVance.sb;
-                await sb.from('companies').update({
-                    status: 'rejected',
-                    rejection_reason: reason || 'لم يُحدد سبب'
-                }).eq('user_id', rejectingId);
-
-                await window.ProVance.sendNotification({
-                    userId: rejectingId,
-                    userType: 'company',
-                    title: 'تم رفض طلب شركتك',
-                    message: `للأسف لم يتم اعتماد طلبك${reason ? '. السبب: ' + reason : ''}`,
-                    type: 'error'
-                });
-
-                window.ProVance.showToast('تم رفض الشركة', 'info');
-                closeRejectModal();
-                await loadCompanies();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        window.suspendCompany = async (userId, name) => {
-            const ok = await window.ProVance.confirmModal({
-                title: 'إيقاف الشركة',
-                message: `هل تريد إيقاف "${name}"؟ لن تستطيع نشر فرص جديدة`,
-                confirmText: 'نعم، إيقاف'
-            });
-            if (!ok) return;
-
-            try {
-                const sb = window.ProVance.sb;
-                await sb.from('companies').update({ status: 'suspended' }).eq('user_id', userId);
-                await window.ProVance.sendNotification({
-                    userId,
-                    userType: 'company',
-                    title: 'تم إيقاف حساب شركتك',
-                    message: 'تم إيقاف حساب شركتك مؤقتاً. للاستفسار تواصل مع الإدارة',
-                    type: 'warning'
-                });
-                window.ProVance.showToast('تم الإيقاف', 'warning');
-                await loadCompanies();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        window.reactivateCompany = async (userId, name) => {
-            const ok = await window.ProVance.confirmModal({
-                title: 'إعادة تفعيل',
-                message: `هل تريد إعادة تفعيل "${name}"؟`
-            });
-            if (!ok) return;
-
-            try {
-                const sb = window.ProVance.sb;
-                await sb.from('companies').update({ status: 'approved' }).eq('user_id', userId);
-                await window.ProVance.sendNotification({
-                    userId,
-                    userType: 'company',
-                    title: '✅ تم إعادة تفعيل حسابك',
-                    message: 'تم إعادة تفعيل حساب شركتك بنجاح',
-                    type: 'success'
-                });
-                window.ProVance.showToast('تم التفعيل', 'success');
-                await loadCompanies();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        document.getElementById('searchInput').addEventListener('input', applyFilters);
-        document.getElementById('statusFilter').addEventListener('change', applyFilters);
-
-        window.logoutAdmin = async (e) => {
-            e.preventDefault();
-            const ok = await window.ProVance.confirmModal({
-                title: 'تسجيل الخروج',
-                message: 'هل تريد تسجيل الخروج؟'
-            });
-            if (ok) await window.ProVance.logout('admin-login.html');
-        };
-
-        async function init() {
-            const ok = await window.ProVance.requireAdminAuth();
-            if (!ok) return;
-            await loadCompanies();
-
-            const sb = window.ProVance.sb;
-            sb.channel('admin-companies')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => {
-                    loadCompanies();
-                })
-                .subscribe();
+        if (search) {
+            filtered = filtered.filter(c =>
+                (c.company_name || '').toLowerCase().includes(search) ||
+                (c.email || '').toLowerCase().includes(search)
+            );
         }
-        init();
-    })();
+
+        if (pricingFilter === 'set') filtered = filtered.filter(c => !!allPricing[c.user_id]);
+        if (pricingFilter === 'not_set') filtered = filtered.filter(c => !allPricing[c.user_id]);
+
+        if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        else if (sort === 'name') filtered.sort((a, b) => (a.company_name || '').localeCompare(b.company_name || ''));
+        else if (sort === 'price_high') filtered.sort((a, b) => (allPricing[b.user_id]?.training_price || 0) - (allPricing[a.user_id]?.training_price || 0));
+        else if (sort === 'price_low') filtered.sort((a, b) => (allPricing[a.user_id]?.training_price || 999999) - (allPricing[b.user_id]?.training_price || 999999));
+
+        const grid = document.getElementById('companiesGrid');
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div class="empty-state"><i class="fas fa-building"></i><h3>لا توجد شركات</h3><p>الشركات اللي تسجل هتظهر هنا</p></div>';
+            return;
+        }
+
+        grid.innerHTML = filtered.map(renderCompanyCard).join('');
+    }
+
+    function updateStats() {
+        const total = allCompanies.length;
+        const withPricing = allCompanies.filter(c => allPricing[c.user_id]).length;
+        const withoutPricing = total - withPricing;
+        const prices = allCompanies.map(c => allPricing[c.user_id]?.training_price).filter(p => p > 0);
+        const avg = prices.length ? Math.round(prices.reduce((s, p) => s + p, 0) / prices.length) : 0;
+
+        document.getElementById('statTotalCompanies').textContent = total;
+        document.getElementById('statWithPricing').textContent = withPricing;
+        document.getElementById('statWithoutPricing').textContent = withoutPricing;
+        document.getElementById('statAvgPrice').textContent = avg.toLocaleString();
+    }
+
+    // PRICING MODAL
+    let selectedPreset = null;
+
+    window.openPricingModal = (companyId) => {
+        const company = allCompanies.find(c => c.user_id === companyId);
+        if (!company) return;
+
+        const pricing = allPricing[companyId];
+        const isEdit = !!pricing;
+
+        const html = `
+            <div class="modal active" id="pricingModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-tag"></i><span>${isEdit ? 'تعديل سعر التدريب' : 'تحديد سعر التدريب'}</span></div>
+                        <button class="modal-close" onclick="closeModal('pricingModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div style="padding:14px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:12px;margin-bottom:14px">
+                        <strong style="font-size:1.05rem">${esc(company.company_name)}</strong>
+                        <div style="color:var(--text-muted);font-size:0.86rem;margin-top:3px">${esc(company.email)}</div>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-coins"></i> اختر سعر سريع</label>
+                        <div class="preset-buttons">
+                            <button class="preset-btn" onclick="selectPreset(this, 1000)">1,000</button>
+                            <button class="preset-btn" onclick="selectPreset(this, 1500)">1,500</button>
+                            <button class="preset-btn" onclick="selectPreset(this, 2000)">2,000</button>
+                            <button class="preset-btn" onclick="selectPreset(this, 2500)">2,500</button>
+                            <button class="preset-btn" onclick="selectPreset(this, 3000)">3,000</button>
+                            <button class="preset-btn" onclick="selectPreset(this, 5000)">5,000</button>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label><i class="fas fa-money-bill-wave"></i> السعر <span class="req">*</span></label>
+                            <input type="number" id="trainingPrice" value="${pricing?.training_price || ''}" min="0" placeholder="مثال: 2000" required>
+                        </div>
+                        <div class="field">
+                            <label><i class="fas fa-coins"></i> العملة</label>
+                            <select id="trainingCurrency">
+                                <option value="EGP" ${pricing?.currency === 'EGP' ? 'selected' : ''}>EGP - جنيه مصري</option>
+                                <option value="USD" ${pricing?.currency === 'USD' ? 'selected' : ''}>USD - دولار</option>
+                                <option value="EUR" ${pricing?.currency === 'EUR' ? 'selected' : ''}>EUR - يورو</option>
+                                <option value="SAR" ${pricing?.currency === 'SAR' ? 'selected' : ''}>SAR - ريال سعودي</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-section">
+                        <div class="modal-section-title"><i class="fas fa-info-circle"></i> معلومات إضافية</div>
+                        <div class="grid-2">
+                            <div class="field">
+                                <label>أيام الحضور قبل القفل</label>
+                                <input type="number" id="lockAfterDays" value="${pricing?.lock_after_days || 3}" min="1" max="30">
+                            </div>
+                            <div class="field">
+                                <label>مهلة الدفع (أيام)</label>
+                                <input type="number" id="paymentDeadlineDays" value="${pricing?.payment_deadline_days || 7}" min="1" max="60">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label><i class="fas fa-comment"></i> ملاحظات (اختياري)</label>
+                        <textarea id="pricingNotes" rows="2" placeholder="أي ملاحظات حول السعر...">${esc(pricing?.notes || '')}</textarea>
+                    </div>
+
+                    <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:12px;border-radius:10px;margin-bottom:14px;font-size:0.84rem;color:var(--text-muted)">
+                        <i class="fas fa-info-circle" style="color:var(--warning)"></i>
+                        السعر ده هيتطبق على كل المتدربين الجدد في الشركة دي. السعر ده هيظهر للطالب لما يكون مطلوب يدفع.
+                    </div>
+
+                    <div style="display:flex;gap:10px">
+                        <button class="btn btn-secondary" onclick="closeModal('pricingModal')" style="flex:1;justify-content:center">إلغاء</button>
+                        ${isEdit ? `<button class="btn btn-danger" onclick="deletePricing('${companyId}')" style="justify-content:center"><i class="fas fa-trash"></i> حذف</button>` : ''}
+                        <button class="btn btn-primary" onclick="savePricing('${companyId}')" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+        selectedPreset = null;
+    };
+
+    window.selectPreset = (el, amount) => {
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('trainingPrice').value = amount;
+        selectedPreset = amount;
+    };
+
+    window.savePricing = async (companyId) => {
+        const price = parseInt(document.getElementById('trainingPrice').value);
+        const currency = document.getElementById('trainingCurrency').value;
+        const lockDays = parseInt(document.getElementById('lockAfterDays').value) || 3;
+        const deadlineDays = parseInt(document.getElementById('paymentDeadlineDays').value) || 7;
+        const notes = document.getElementById('pricingNotes').value.trim();
+
+        if (!price || price <= 0) {
+            window.ProVance.showToast('أدخل سعر صحيح', 'warning');
+            return;
+        }
+
+        try {
+            const sb = window.ProVance.sb;
+            const data = {
+                company_user_id: companyId,
+                training_price: price,
+                currency,
+                lock_after_days: lockDays,
+                payment_deadline_days: deadlineDays,
+                notes: notes || null,
+                set_by_admin_id: adminUserId,
+                updated_at: new Date().toISOString()
+            };
+
+            if (allPricing[companyId]) {
+                await sb.from('company_pricing').update(data).eq('company_user_id', companyId);
+            } else {
+                await sb.from('company_pricing').insert(data);
+            }
+
+            // إشعار للشركة
+            if (window.ProVance.sendNotification) {
+                await window.ProVance.sendNotification({
+                    userId: companyId,
+                    userType: 'company',
+                    title: '💰 تم تحديد سعر التدريب',
+                    message: `الإدارة حددت سعر التدريب لشركتك: ${price.toLocaleString()} ${currency}`,
+                    type: 'info'
+                });
+            }
+
+            window.ProVance.showToast('تم الحفظ ✓', 'success');
+            closeModal('pricingModal');
+            window.dispatchEvent(new CustomEvent('reload-companies'));
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+        }
+    };
+
+    window.deletePricing = async (companyId) => {
+        const ok = await window.ProVance.confirmModal({
+            title: 'حذف السعر',
+            message: 'هل تريد حذف سعر التدريب لهذه الشركة؟'
+        });
+        if (!ok) return;
+
+        try {
+            await window.ProVance.sb.from('company_pricing').delete().eq('company_user_id', companyId);
+            window.ProVance.showToast('تم الحذف', 'success');
+            closeModal('pricingModal');
+            window.dispatchEvent(new CustomEvent('reload-companies'));
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('حدث خطأ', 'error');
+        }
+    };
+
+    // VIEW DETAILS
+    window.viewCompanyDetails = (companyId) => {
+        const c = allCompanies.find(x => x.user_id === companyId);
+        if (!c) return;
+
+        const pricing = allPricing[companyId];
+        const internships = allInternships[companyId] || [];
+        const traineesCount = allTrainees[companyId] || 0;
+
+        const logo = c.logo
+            ? `<img src="${c.logo}" alt="">`
+            : `<span>${getInitial(c.company_name)}</span>`;
+
+        const html = `
+            <div class="modal active" id="detailsModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-building"></i><span>تفاصيل الشركة</span></div>
+                        <button class="modal-close" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:14px;margin-bottom:14px">
+                        <div class="company-logo" style="width:70px;height:70px">${logo}</div>
+                        <div style="flex:1">
+                            <h3 style="font-size:1.2rem;font-weight:800">${esc(c.company_name)}</h3>
+                            <div style="color:var(--text-muted);font-size:0.88rem;margin-top:3px">${esc(c.email)}</div>
+                            ${c.phone ? `<div style="color:var(--primary);font-size:0.86rem;margin-top:3px"><i class="fas fa-phone"></i> ${esc(c.phone)}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="modal-section">
+                        <div class="modal-section-title"><i class="fas fa-info-circle"></i> معلومات الشركة</div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-industry"></i> القطاع</div>
+                                <div class="info-value">${esc(c.industry || c.business_type || 'غير محدد')}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-users"></i> الموظفين</div>
+                                <div class="info-value">${esc(c.employees_count || '-')}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-globe"></i> الموقع</div>
+                                <div class="info-value">${c.website ? `<a href="${esc(c.website)}" target="_blank">${esc(c.website)}</a>` : '-'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-calendar"></i> تاريخ التسجيل</div>
+                                <div class="info-value">${formatDate(c.created_at)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${pricing ? `
+                        <div class="modal-section" style="background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.2)">
+                            <div class="modal-section-title"><i class="fas fa-tag" style="color:var(--success)"></i> سعر التدريب</div>
+                            <div style="font-size:1.8rem;font-weight:900;color:var(--success);text-align:center;margin:10px 0">
+                                ${pricing.training_price.toLocaleString()} ${pricing.currency || 'EGP'}
+                            </div>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-label"><i class="fas fa-lock"></i> القفل بعد</div>
+                                    <div class="info-value">${pricing.lock_after_days || 3} أيام</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label"><i class="fas fa-clock"></i> مهلة الدفع</div>
+                                    <div class="info-value">${pricing.payment_deadline_days || 7} يوم</div>
+                                </div>
+                            </div>
+                            ${pricing.notes ? `<div style="margin-top:10px;padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;font-size:0.86rem;color:var(--text-muted)"><i class="fas fa-comment"></i> ${esc(pricing.notes)}</div>` : ''}
+                        </div>
+                    ` : `
+                        <div class="modal-section" style="background:rgba(245,158,11,0.05);border-color:rgba(245,158,11,0.2);text-align:center">
+                            <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:var(--warning);margin-bottom:8px;display:block"></i>
+                            <strong style="color:var(--warning)">⚠️ لم يتم تحديد سعر تدريب</strong>
+                            <p style="color:var(--text-muted);font-size:0.86rem;margin-top:6px">المتدربين في الشركة دي مش هيقدروا يدفعوا لحد ما تحدد السعر</p>
+                        </div>
+                    `}
+
+                    <div class="modal-section">
+                        <div class="modal-section-title"><i class="fas fa-chart-bar"></i> إحصائيات</div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-bullhorn"></i> الفرص</div>
+                                <div class="info-value">${internships.length}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-check-circle"></i> فرص نشطة</div>
+                                <div class="info-value">${internships.filter(i => i.is_active).length}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label"><i class="fas fa-user-graduate"></i> متدربين</div>
+                                <div class="info-value">${traineesCount}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        <button class="btn btn-secondary" onclick="closeModal('detailsModal')" style="flex:1;justify-content:center">إغلاق</button>
+                        <button class="btn btn-primary" onclick="closeModal('detailsModal');openPricingModal('${companyId}')" style="flex:1;justify-content:center">
+                            <i class="fas fa-tag"></i> ${pricing ? 'تعديل السعر' : 'تحديد السعر'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    // HELP MODAL
+    window.openHelpModal = () => {
+        const html = `
+            <div class="modal active" id="helpModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-question-circle"></i><span>دليل إدارة الشركات</span></div>
+                        <button class="modal-close" onclick="closeModal('helpModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-tag"></i> تحديد سعر التدريب</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> اضغط "تحديد السعر" أو "تعديل السعر" على الشركة</li>
+                            <li><i class="fas fa-check"></i> استخدم الأسعار السريعة أو أدخل سعر مخصص</li>
+                            <li><i class="fas fa-check"></i> اختر العملة المناسبة</li>
+                            <li><i class="fas fa-check"></i> حدد عدد أيام الحضور قبل القفل (افتراضي: 3)</li>
+                            <li><i class="fas fa-check"></i> حدد مهلة الدفع بالأيام (افتراضي: 7)</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-info-circle"></i> كيف يعمل النظام؟</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> الإدمن يحدد سعر لكل شركة مرة واحدة</li>
+                            <li><i class="fas fa-check"></i> الطالب لما يحضر 3 أيام، حسابه يقفل تلقائياً</li>
+                            <li><i class="fas fa-check"></i> يدفع بالسعر اللي حددته الإدمن</li>
+                            <li><i class="fas fa-check"></i> الشركة تستلم إشعار بالأسعار</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-exclamation-triangle"></i> الشركات بدون سعر</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> ليها شارة "بدون سعر" حمراء</li>
+                            <li><i class="fas fa-check"></i> المتدربين فيها مش هيقدروا يدفعوا</li>
+                            <li><i class="fas fa-check"></i> لازم تحدد لها سعر قبل ما تستقبل متدربين</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-search"></i> البحث والفلترة</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> ابحث باسم الشركة أو الإيميل</li>
+                            <li><i class="fas fa-check"></i> فلتر بالشركات اللي بسعر / بدون سعر</li>
+                            <li><i class="fas fa-check"></i> رتب حسب السعر أو الاسم أو التاريخ</li>
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="closeModal('helpModal')" style="width:100%;justify-content:center;margin-top:14px">
+                        <i class="fas fa-check"></i> فهمت
+                    </button>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    // LOAD ALL
+    let isInitialized = false;
+    async function loadAll() {
+        const sb = window.ProVance.sb;
+        if (!sb) return;
+
+        try {
+            const session = await sb.auth.getSession();
+            const userId = session?.data?.session?.user?.id;
+            if (!userId) {
+                window.location.href = 'admin-login.html';
+                return;
+            }
+            adminUserId = userId;
+
+            // التحقق من أنه أدمن
+            const { data: adminCheck } = await sb.from('admins').select('user_id').eq('user_id', userId).maybeSingle();
+            if (!adminCheck) {
+                window.ProVance.showToast('غير مصرح بالوصول', 'error');
+                setTimeout(() => window.location.href = 'admin-login.html', 1500);
+                return;
+            }
+
+            const [companiesRes, pricingRes, internshipsRes, appsRes] = await Promise.all([
+                sb.from('companies').select('*').order('created_at', { ascending: false }),
+                sb.from('company_pricing').select('*'),
+                sb.from('internships').select('id, company_user_id, is_active'),
+                sb.from('applications').select('company_user_id, status').in('status', ['hired', 'in_training', 'completed'])
+            ]);
+
+            allCompanies = companiesRes.data || [];
+
+            allPricing = {};
+            (pricingRes.data || []).forEach(p => { allPricing[p.company_user_id] = p; });
+
+            allInternships = {};
+            (internshipsRes.data || []).forEach(i => {
+                if (!allInternships[i.company_user_id]) allInternships[i.company_user_id] = [];
+                allInternships[i.company_user_id].push(i);
+            });
+
+            allTrainees = {};
+            (appsRes.data || []).forEach(a => {
+                allTrainees[a.company_user_id] = (allTrainees[a.company_user_id] || 0) + 1;
+            });
+
+            renderCompanies();
+            updateStats();
+
+            if (!isInitialized) {
+                isInitialized = true;
+                sb.channel('admin-companies')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => loadAll())
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'company_pricing' }, () => loadAll())
+                    .subscribe();
+
+                window.addEventListener('reload-companies', loadAll);
+
+                document.getElementById('searchCompany').addEventListener('input', renderCompanies);
+                document.getElementById('filterPricing').addEventListener('change', renderCompanies);
+                document.getElementById('filterSort').addEventListener('change', renderCompanies);
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const modals = document.querySelectorAll('.modal.active');
+                        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Load error:', err);
+            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
+        }
+    }
+
+    loadAll();
+})();
     </script>
 </body>
 </html>
