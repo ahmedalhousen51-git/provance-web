@@ -1,61 +1,64 @@
 /* ============================================================
- * ProVance - Supabase Configuration (Professional)
- * ============================================================
- * ملف مشترك بين كل صفحات المشروع
- * استخدمه في أي HTML كده:
- *
- *   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
- *   <script src="supabase-config.js"></script>
- *
- * بيوفرلك:
- *   - Supabase client جاهز (sb)
- *   - دوال Auth (requireCompanyAuth, requireStudentAuth, requireAdminAuth)
- *   - دوال Toast للإشعارات (showToast)
- *   - دالة logout موحدة
- *   - دوال Helper متنوعة
+ * ProVance - Supabase Configuration v2 (Robust)
  * ============================================================ */
 
 (function () {
     'use strict';
 
-    // ============================================================
-    // Configuration
-    // ============================================================
     const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
 
-    // ============================================================
-    // Supabase Client (Singleton)
-    // ============================================================
     let _sbInstance = null;
+    let _initAttempts = 0;
+    const MAX_INIT_ATTEMPTS = 50; // 5 seconds total
 
+    // ============================================================
+    // Supabase Client (with retry)
+    // ============================================================
     function getSupabase() {
         if (_sbInstance) return _sbInstance;
 
+        // Check if Supabase library is loaded
         if (typeof supabase === 'undefined' || !supabase.createClient) {
-            console.error('❌ مكتبة Supabase مش محمّلة. ضيف ده قبل supabase-config.js:');
-            console.error('   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>');
+            _initAttempts++;
+            if (_initAttempts === 1) {
+                console.warn('⏳ في انتظار تحميل مكتبة Supabase...');
+            }
             return null;
         }
 
-        _sbInstance = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true,
-                storage: window.localStorage
-            }
-        });
-
-        return _sbInstance;
+        try {
+            _sbInstance = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true,
+                    storage: window.localStorage
+                }
+            });
+            console.log('✅ Supabase client ready');
+            return _sbInstance;
+        } catch (err) {
+            console.error('❌ خطأ في إنشاء Supabase client:', err);
+            return null;
+        }
     }
 
+    // Async wait helper - try for up to 10 seconds
+    async function waitForSupabaseClient(maxWaitMs) {
+        if (typeof maxWaitMs !== 'number') maxWaitMs = 10000;
+        const start = Date.now();
+        let sb = getSupabase();
+        while (!sb && (Date.now() - start) < maxWaitMs) {
+            await new Promise(r => setTimeout(r, 100));
+            sb = getSupabase();
+        }
+        return sb;
+    }
 
     // ============================================================
     // Auth Helpers
     // ============================================================
-
-    /** ياخد الجلسة الحالية */
     async function getSession() {
         const sb = getSupabase();
         if (!sb) return null;
@@ -68,401 +71,194 @@
         }
     }
 
-    /** ياخد اليوزر الحالي */
     async function getUser() {
         const session = await getSession();
-        return session?.user || null;
+        return session ? session.user : null;
     }
 
-    /** يتأكد إن اليوزر شركة معتمدة — غير كده يحوّله للـ login */
-    async function requireCompanyAuth() {
-        const sb = getSupabase();
-        if (!sb) {
-            redirectTo('company-login.html');
-            return null;
-        }
-
-        const session = await getSession();
-        if (!session) {
-            redirectTo('company-login.html');
-            return null;
-        }
-
-        const { data: company, error } = await sb
-            .from('companies')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-
-        if (error || !company) {
-            console.warn('Company profile not found');
-            await sb.auth.signOut();
-            redirectTo('company-login.html');
-            return null;
-        }
-
-        if (company.status === 'pending') {
-            redirectTo('Company-pending.html');
-            return null;
-        }
-
-        if (company.status === 'rejected' || company.status === 'suspended') {
-            await sb.auth.signOut();
-            localStorage.setItem('rejectReason', company.rejection_reason || '');
-            redirectTo('company-login.html');
-            return null;
-        }
-
-        return { session, company };
-    }
-
-    /** يتأكد إن اليوزر طالب */
-    async function requireStudentAuth() {
-        const sb = getSupabase();
-        if (!sb) {
-            redirectTo('student-login.html');
-            return null;
-        }
-
-        const session = await getSession();
-        if (!session) {
-            redirectTo('student-login.html');
-            return null;
-        }
-
-        const { data: student, error } = await sb
-            .from('student')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-
-        if (error || !student) {
-            console.warn('Student profile not found');
-            await sb.auth.signOut();
-            redirectTo('student-login.html');
-            return null;
-        }
-
-        return { session, student };
-    }
-
-    /** يتأكد إن اليوزر أدمن */
-    async function requireAdminAuth() {
-        const sb = getSupabase();
-        if (!sb) {
-            redirectTo('admin-login.html');
-            return null;
-        }
-
-        const session = await getSession();
-        if (!session) {
-            redirectTo('admin-login.html');
-            return null;
-        }
-
-        const { data: admin, error } = await sb
-            .from('admins')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .eq('is_active', true)
-            .maybeSingle();
-
-        if (error || !admin) {
-            await sb.auth.signOut();
-            redirectTo('admin-login.html');
-            return null;
-        }
-
-        return { session, admin };
-    }
-
-    /** تسجيل خروج موحد من أي صفحة */
-    async function logout(redirectUrl = 'index.html') {
-        const sb = getSupabase();
-        if (sb) {
-            try { await sb.auth.signOut(); } catch (e) {}
-        }
-        // نمسح المفاتيح المحلية بس (مش كل حاجة عشان ميحصلش مشاكل)
-        ['isLoggedIn', 'userType', 'userEmail', 'userName', 'userId',
-         'companyName', 'rememberMe', 'pendingCompanyName', 'pendingCompanyEmail'
-        ].forEach(k => localStorage.removeItem(k));
-
-        redirectTo(redirectUrl);
-    }
-
-
-    // ============================================================
-    // Navigation Helpers
-    // ============================================================
     function redirectTo(url) {
-        // نستنى شوية علشان الصفحة تبقى جاهزة
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                window.location.href = url;
-            });
-        } else {
-            window.location.href = url;
-        }
+        if (window.location.pathname.endsWith(url)) return;
+        window.location.href = url;
     }
 
+    async function requireCompanyAuth() {
+        const sb = await waitForSupabaseClient();
+        if (!sb) { redirectTo('company-login.html'); return null; }
+
+        const session = await getSession();
+        if (!session) { redirectTo('company-login.html'); return null; }
+
+        const { data: company } = await sb.from('companies').select('*').eq('user_id', session.user.id).maybeSingle();
+        if (!company) {
+            await sb.auth.signOut();
+            redirectTo('company-login.html');
+            return null;
+        }
+        return company;
+    }
+
+    async function requireStudentAuth() {
+        const sb = await waitForSupabaseClient();
+        if (!sb) { redirectTo('student-login.html'); return null; }
+
+        const session = await getSession();
+        if (!session) { redirectTo('student-login.html'); return null; }
+
+        const { data: student } = await sb.from('student').select('*').eq('user_id', session.user.id).maybeSingle();
+        if (!student) {
+            await sb.auth.signOut();
+            redirectTo('student-login.html');
+            return null;
+        }
+        return student;
+    }
+
+    async function requireAdminAuth() {
+        const sb = await waitForSupabaseClient();
+        if (!sb) { redirectTo('admin-login.html'); return null; }
+
+        const session = await getSession();
+        if (!session) { redirectTo('admin-login.html'); return null; }
+
+        const { data: admin } = await sb.from('admins').select('*').eq('user_id', session.user.id).maybeSingle();
+        if (!admin) {
+            await sb.auth.signOut();
+            redirectTo('admin-login.html');
+            return null;
+        }
+        return admin;
+    }
+
+    async function logout(redirectUrl) {
+        const sb = getSupabase();
+        if (sb) await sb.auth.signOut();
+        try { localStorage.clear(); } catch (e) {}
+        if (redirectUrl) window.location.href = redirectUrl;
+    }
 
     // ============================================================
-    // Toast / Notification System
+    // UI Helpers
     // ============================================================
-    const TOAST_COLORS = {
-        success: 'linear-gradient(135deg,#10b981,#059669)',
-        error:   'linear-gradient(135deg,#ef4444,#dc2626)',
-        warning: 'linear-gradient(135deg,#f59e0b,#d97706)',
-        info:    'linear-gradient(135deg,#3b82f6,#2563eb)'
-    };
-
-    const TOAST_ICONS = {
-        success: 'check-circle',
-        error:   'exclamation-triangle',
-        warning: 'exclamation-circle',
-        info:    'info-circle'
-    };
-
-    function _ensureToastStyles() {
-        if (document.getElementById('_pv_toast_styles')) return;
-        const s = document.createElement('style');
-        s.id = '_pv_toast_styles';
-        s.textContent = `
-            #_pv_toast_container {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 999999;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                max-width: 380px;
-                pointer-events: none;
-            }
-            .pv-toast {
-                pointer-events: auto;
-                color: #fff;
-                padding: 14px 18px;
-                border-radius: 12px;
-                box-shadow: 0 10px 40px rgba(0,0,0,.25);
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                font-weight: 600;
-                font-size: 14px;
-                line-height: 1.5;
-                font-family: 'Cairo','Tajawal','Segoe UI',sans-serif;
-                animation: _pv_slideIn .35s cubic-bezier(.2,.9,.3,1);
-                word-break: break-word;
-                direction: rtl;
-            }
-            .pv-toast i { flex-shrink: 0; font-size: 20px; }
-            .pv-toast.leaving { animation: _pv_slideOut .3s ease forwards; }
-            @keyframes _pv_slideIn {
-                from { transform: translateX(420px); opacity: 0; }
-                to   { transform: translateX(0);     opacity: 1; }
-            }
-            @keyframes _pv_slideOut {
-                from { transform: translateX(0);     opacity: 1; }
-                to   { transform: translateX(420px); opacity: 0; }
-            }
-            @media (max-width: 480px) {
-                #_pv_toast_container {
-                    top: 10px;
-                    right: 10px;
-                    left: 10px;
-                    max-width: none;
-                }
-            }
-        `;
-        document.head.appendChild(s);
+    function showToast(msg, type) {
+        const t = document.createElement('div');
+        const c = { error: '#ef4444', success: '#10b981', warning: '#f59e0b', info: '#4facfe' };
+        t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:'+(c[type]||'#4facfe')+';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:99999;box-shadow:0 10px 30px rgba(0,0,0,0.4);max-width:90vw;text-align:center;';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(function() { t.remove(); }, 4500);
     }
 
-    function _ensureToastContainer() {
-        let c = document.getElementById('_pv_toast_container');
-        if (!c) {
-            c = document.createElement('div');
-            c.id = '_pv_toast_container';
-            document.body.appendChild(c);
-        }
-        return c;
+    async function confirmModal(opts) {
+        opts = opts || {};
+        return confirm((opts.title || '') + '\n' + (opts.message || ''));
     }
 
-    function showToast(message, type = 'success', duration = 4000) {
-        _ensureToastStyles();
-        const container = _ensureToastContainer();
-
-        const toast = document.createElement('div');
-        toast.className = 'pv-toast';
-        toast.style.background = TOAST_COLORS[type] || TOAST_COLORS.info;
-        toast.innerHTML = `
-            <i class="fas fa-${TOAST_ICONS[type] || TOAST_ICONS.info}"></i>
-            <span>${escapeHtml(message)}</span>
-        `;
-
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add('leaving');
-            setTimeout(() => toast.remove(), 300);
-        }, duration);
+    function escapeHtml(s) {
+        if (s === null || s === undefined) return '';
+        return String(s).replace(/[&<>"']/g, function(c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
     }
 
-
-    // ============================================================
-    // Utility Helpers
-    // ============================================================
-
-    /** هروب HTML لمنع XSS */
-    function escapeHtml(text) {
-        if (text == null) return '';
-        const div = document.createElement('div');
-        div.textContent = String(text);
-        return div.innerHTML;
+    function formatDate(d) {
+        if (!d) return '-';
+        try { return new Date(d).toLocaleDateString('ar-EG'); }
+        catch (e) { return d; }
     }
 
-    /** تنسيق تاريخ عربي */
-    function formatDate(dateStr, options = {}) {
-        if (!dateStr) return 'غير محدد';
-        try {
-            const d = new Date(dateStr);
-            if (isNaN(d)) return 'تاريخ غير صالح';
-            return d.toLocaleDateString('ar-EG', {
-                year: 'numeric', month: 'long', day: 'numeric',
-                ...options
-            });
-        } catch (e) {
-            return 'تاريخ غير صالح';
-        }
+    function formatDateTime(d) {
+        if (!d) return '-';
+        try { return new Date(d).toLocaleString('ar-EG'); }
+        catch (e) { return d; }
     }
 
-    /** تنسيق تاريخ ووقت عربي */
-    function formatDateTime(dateStr) {
-        if (!dateStr) return 'غير محدد';
-        try {
-            const d = new Date(dateStr);
-            if (isNaN(d)) return 'تاريخ غير صالح';
-            return d.toLocaleString('ar-EG', {
-                year: 'numeric', month: 'long', day: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            });
-        } catch (e) {
-            return 'تاريخ غير صالح';
-        }
+    function timeAgo(d) {
+        if (!d) return '';
+        const diff = Date.now() - new Date(d).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'الآن';
+        if (mins < 60) return mins + ' دقيقة';
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return hrs + ' ساعة';
+        return Math.floor(hrs / 24) + ' يوم';
     }
 
-    /** منذ متى (مثلاً: منذ 3 دقائق) */
-    function timeAgo(dateStr) {
-        if (!dateStr) return '';
-        const d = new Date(dateStr);
-        if (isNaN(d)) return '';
-        const diff = Math.floor((Date.now() - d.getTime()) / 1000);
-
-        if (diff < 60)       return 'الآن';
-        if (diff < 3600)     return `منذ ${Math.floor(diff / 60)} دقيقة`;
-        if (diff < 86400)    return `منذ ${Math.floor(diff / 3600)} ساعة`;
-        if (diff < 604800)   return `منذ ${Math.floor(diff / 86400)} يوم`;
-        if (diff < 2592000)  return `منذ ${Math.floor(diff / 604800)} أسبوع`;
-        if (diff < 31536000) return `منذ ${Math.floor(diff / 2592000)} شهر`;
-        return `منذ ${Math.floor(diff / 31536000)} سنة`;
+    function isValidEmail(e) {
+        if (!e) return false;
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e).trim());
     }
 
-    /** التحقق من صحة الإيميل */
-    function isValidEmail(email) {
-        if (!email) return false;
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    function isValidEgyptianPhone(p) {
+        if (!p) return false;
+        const clean = String(p).replace(/[\s\-+]/g, '');
+        return /^(01[0125]\d{8}|201[0125]\d{8})$/.test(clean);
     }
 
-    /** التحقق من رقم تليفون مصري */
-    function isValidEgyptianPhone(phone) {
-        if (!phone) return false;
-        const clean = phone.replace(/[\s\-+]/g, '');
-        return /^(2?01[0125]\d{8})$/.test(clean);
-    }
-
-    /** debounce للأداء */
-    function debounce(fn, wait = 300) {
+    function debounce(fn, ms) {
         let t;
-        return function (...args) {
+        return function() {
+            const args = arguments, ctx = this;
             clearTimeout(t);
-            t = setTimeout(() => fn.apply(this, args), wait);
+            t = setTimeout(function() { fn.apply(ctx, args); }, ms || 300);
         };
     }
 
-    /** إرسال إشعار لمستخدم معين */
-    async function sendNotification({ userId, userType, title, message, type = 'info', relatedType, relatedId, actionUrl }) {
+    // ============================================================
+    // Notifications
+    // ============================================================
+    async function sendNotification(opts) {
         const sb = getSupabase();
         if (!sb) return false;
-
         try {
-            const { error } = await sb.from('notifications').insert({
-                user_id: userId,
-                user_type: userType,
-                title,
-                message,
-                type,
-                related_type: relatedType || null,
-                related_id: relatedId || null,
-                action_url: actionUrl || null
+            await sb.from('notifications').insert({
+                user_id: opts.userId,
+                user_type: opts.userType,
+                title: opts.title,
+                message: opts.message,
+                type: opts.type || 'info',
+                link: opts.link || opts.actionUrl || null,
+                related_type: opts.relatedType || null,
+                related_id: opts.relatedId || null,
+                is_read: false
             });
-            if (error) console.warn('Notification error:', error);
-            return !error;
+            return true;
         } catch (err) {
-            console.error('sendNotification error:', err);
+            console.warn('sendNotification:', err.message);
             return false;
         }
     }
 
-    /** إرسال إشعار لكل الأدمن النشطين */
-    async function notifyAdmins({ title, message, type = 'info', relatedType, relatedId, actionUrl }) {
+    async function notifyAdmins(opts) {
         const sb = getSupabase();
         if (!sb) return false;
-
         try {
-            // جلب كل الأدمن النشطين
-            const { data: admins, error: adminsErr } = await sb.from('admins')
-                .select('user_id')
-                .eq('is_active', true);
-
-            if (adminsErr) {
-                console.error('فشل جلب الأدمن:', adminsErr);
-                return false;
+            const { data: admins } = await sb.from('admins').select('user_id');
+            if (!admins) return false;
+            for (const admin of admins) {
+                await sendNotification({
+                    userId: admin.user_id,
+                    userType: 'admin',
+                    title: opts.title,
+                    message: opts.message,
+                    type: opts.type || 'info',
+                    link: opts.actionUrl,
+                    relatedType: opts.relatedType,
+                    relatedId: opts.relatedId
+                });
             }
-
-            if (!admins || admins.length === 0) {
-                console.warn('لا يوجد أدمن نشط');
-                return false;
-            }
-
-            // إنشاء إشعار لكل أدمن
-            const notifications = admins.map(admin => ({
-                user_id: admin.user_id,
-                user_type: 'admin',
-                title,
-                message,
-                type,
-                related_type: relatedType || null,
-                related_id: relatedId || null,
-                action_url: actionUrl || null
-            }));
-
-            const { error } = await sb.from('notifications').insert(notifications);
-            if (error) console.warn('فشل إرسال الإشعارات للأدمن:', error);
-            return !error;
+            return true;
         } catch (err) {
-            console.error('notifyAdmins error:', err);
+            console.warn('notifyAdmins:', err.message);
             return false;
         }
     }
 
-    /** عدد الإشعارات غير المقروءة */
     async function getUnreadNotificationsCount(userId) {
         const sb = getSupabase();
         if (!sb || !userId) return 0;
         try {
-            const { count } = await sb
-                .from('notifications')
-                .select('id', { count: 'exact', head: true })
+            const { count } = await sb.from('notifications')
+                .select('*', { count: 'exact', head: true })
                 .eq('user_id', userId)
                 .eq('is_read', false);
             return count || 0;
@@ -471,146 +267,55 @@
         }
     }
 
-
-    // ============================================================
-    // Modal Helpers (بديل أنظف من alert/confirm)
-    // ============================================================
-    function _ensureModalStyles() {
-        if (document.getElementById('_pv_modal_styles')) return;
-        const s = document.createElement('style');
-        s.id = '_pv_modal_styles';
-        s.textContent = `
-            .pv-modal-overlay {
-                position: fixed; inset: 0;
-                background: rgba(0,0,0,.65);
-                backdrop-filter: blur(6px);
-                display: flex; align-items: center; justify-content: center;
-                z-index: 999998;
-                padding: 20px;
-                animation: _pv_fade .2s ease;
-                font-family: 'Cairo','Tajawal',sans-serif;
-            }
-            @keyframes _pv_fade { from { opacity: 0 } to { opacity: 1 } }
-            .pv-modal-box {
-                background: #fff;
-                border-radius: 16px;
-                padding: 28px;
-                max-width: 440px;
-                width: 100%;
-                box-shadow: 0 25px 60px rgba(0,0,0,.3);
-                text-align: center;
-                direction: rtl;
-            }
-            .pv-modal-icon {
-                width: 70px; height: 70px;
-                border-radius: 50%;
-                display: flex; align-items: center; justify-content: center;
-                margin: 0 auto 16px;
-                font-size: 32px;
-                color: #fff;
-            }
-            .pv-modal-title {
-                font-size: 1.3rem; font-weight: 800;
-                margin-bottom: 10px; color: #1f2937;
-            }
-            .pv-modal-msg {
-                color: #4b5563; line-height: 1.6; margin-bottom: 22px;
-            }
-            .pv-modal-btns { display: flex; gap: 10px; justify-content: center; }
-            .pv-modal-btn {
-                padding: 12px 22px;
-                border: none; border-radius: 10px;
-                font-weight: 700; cursor: pointer;
-                font-size: 15px; min-width: 100px;
-                font-family: inherit;
-                transition: transform .15s;
-            }
-            .pv-modal-btn:hover { transform: translateY(-2px); }
-            .pv-btn-confirm { background: #3b82f6; color: #fff; }
-            .pv-btn-cancel  { background: #e5e7eb; color: #374151; }
-            .pv-btn-danger  { background: #ef4444; color: #fff; }
-        `;
-        document.head.appendChild(s);
-    }
-
-    /** بديل confirm */
-    function confirmModal({ title = 'تأكيد', message = '', confirmText = 'تأكيد', cancelText = 'إلغاء', type = 'info' } = {}) {
-        _ensureModalStyles();
-        return new Promise((resolve) => {
-            const colors = {
-                info:    ['#3b82f6', 'question-circle'],
-                warning: ['#f59e0b', 'exclamation-triangle'],
-                danger:  ['#ef4444', 'times-circle'],
-                success: ['#10b981', 'check-circle']
-            };
-            const [color, icon] = colors[type] || colors.info;
-
-            const overlay = document.createElement('div');
-            overlay.className = 'pv-modal-overlay';
-            overlay.innerHTML = `
-                <div class="pv-modal-box">
-                    <div class="pv-modal-icon" style="background:${color}">
-                        <i class="fas fa-${icon}"></i>
-                    </div>
-                    <div class="pv-modal-title">${escapeHtml(title)}</div>
-                    <div class="pv-modal-msg">${escapeHtml(message)}</div>
-                    <div class="pv-modal-btns">
-                        <button class="pv-modal-btn ${type === 'danger' ? 'pv-btn-danger' : 'pv-btn-confirm'}" data-act="ok">${escapeHtml(confirmText)}</button>
-                        <button class="pv-modal-btn pv-btn-cancel" data-act="cancel">${escapeHtml(cancelText)}</button>
-                    </div>
-                </div>`;
-
-            overlay.addEventListener('click', (e) => {
-                const act = e.target.dataset.act;
-                if (act) {
-                    overlay.remove();
-                    resolve(act === 'ok');
-                }
-            });
-
-            document.body.appendChild(overlay);
-        });
-    }
-
-
     // ============================================================
     // Export to Global Scope
     // ============================================================
     window.ProVance = {
         // Client
-        getSupabase,
-        get sb()   { return getSupabase(); },
+        getSupabase: getSupabase,
+        waitForSupabaseClient: waitForSupabaseClient,
+        get sb() { return getSupabase(); },
 
         // Auth
-        getSession,
-        getUser,
-        requireCompanyAuth,
-        requireStudentAuth,
-        requireAdminAuth,
-        logout,
+        getSession: getSession,
+        getUser: getUser,
+        requireCompanyAuth: requireCompanyAuth,
+        requireStudentAuth: requireStudentAuth,
+        requireAdminAuth: requireAdminAuth,
+        logout: logout,
 
         // UI
-        showToast,
-        confirmModal,
+        showToast: showToast,
+        confirmModal: confirmModal,
 
         // Helpers
-        escapeHtml,
-        formatDate,
-        formatDateTime,
-        timeAgo,
-        isValidEmail,
-        isValidEgyptianPhone,
-        debounce,
+        escapeHtml: escapeHtml,
+        formatDate: formatDate,
+        formatDateTime: formatDateTime,
+        timeAgo: timeAgo,
+        isValidEmail: isValidEmail,
+        isValidEgyptianPhone: isValidEgyptianPhone,
+        debounce: debounce,
 
         // Notifications
-        sendNotification,
-        notifyAdmins,
-        getUnreadNotificationsCount
+        sendNotification: sendNotification,
+        notifyAdmins: notifyAdmins,
+        getUnreadNotificationsCount: getUnreadNotificationsCount
     };
 
-    // Backward compatibility (للكود القديم)
+    // Backward compatibility
     window.showToast = showToast;
-    window.logout    = logout;
-    window.getSB     = getSupabase;
+    window.logout = logout;
+    window.getSB = getSupabase;
 
+    // Auto-init: try to create client immediately when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            getSupabase(); // attempt early init
+        });
+    } else {
+        getSupabase();
+    }
+
+    console.log('✅ supabase-config.js loaded (v2 robust)');
 })();
