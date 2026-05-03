@@ -434,7 +434,8 @@
     (function() {
         'use strict';
 
-        if (!window.ProVance) { console.error('⚠️ supabase-config.js مش متحمل'); window.ProVance = {}; }
+        // انتظار تحميل supabase-config.js (يدعم الـ retry)
+        if (!window.ProVance) { window.ProVance = {}; console.warn('⏳ supabase-config.js لسه بيحمّل...'); }
         if (typeof window.ProVance.isValidEmail !== 'function') {
             window.ProVance.isValidEmail = function(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((e||'').trim()); };
         }
@@ -446,6 +447,19 @@
                 t.textContent = msg; document.body.appendChild(t);
                 setTimeout(function(){ t.remove(); }, 4000);
             };
+        }
+
+        
+        // Helper: استنى لحد ما supabase-config يحمّل
+        async function waitForSupabase(maxWait = 5000) {
+            const start = Date.now();
+            while (Date.now() - start < maxWait) {
+                if (window.ProVance && window.ProVance.sb && typeof window.ProVance.sb.from === 'function') {
+                    return window.ProVance.sb;
+                }
+                await new Promise(r => setTimeout(r, 100));
+            }
+            return null;
         }
 
         console.log('✅ Login form initialized');
@@ -508,9 +522,9 @@
             btn.disabled = true;
 
             try {
-                const sb = window.ProVance.sb;
+                const sb = await waitForSupabase();
                 if (!sb) {
-                    showBanner('مشكلة في الاتصال بالخادم. تأكد إن supabase-config.js متحمل');
+                    showBanner('⏳ جاري تحميل النظام، يرجى الانتظار قليلاً ثم المحاولة مرة أخرى');
                     btn.classList.remove('loading');
                     btn.disabled = false;
                     return;
@@ -566,7 +580,7 @@
 
             } catch (err) {
                 console.error('Login error:', err);
-                showBanner('مشكلة في الاتصال بالخادم. تأكد من الإنترنت');
+                showBanner('⚠️ مشكلة في الاتصال، تأكد من الإنترنت وحاول مرة أخرى');
                 btn.classList.remove('loading');
                 btn.disabled = false;
             }
