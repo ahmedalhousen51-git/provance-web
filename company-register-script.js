@@ -3522,8 +3522,41 @@ const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
 
 function getSB() {
-    if (!window._sbCo) window._sbCo = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    return window._sbCo;
+    // لو موجود قبل كده، رجعه
+    if (window._sbCo) return window._sbCo;
+
+    // لو الـ supabase-config.js عنده client جاهز، استخدمه
+    if (window.ProVance && typeof window.ProVance.getSupabase === 'function') {
+        const sb = window.ProVance.getSupabase();
+        if (sb) {
+            window._sbCo = sb;
+            return sb;
+        }
+    }
+
+    // Fallback: اعمل client جديد لو المكتبة محمّلة
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+        try {
+            window._sbCo = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            return window._sbCo;
+        } catch (e) {
+            console.error('Failed to create Supabase client:', e);
+        }
+    }
+
+    return null;
+}
+
+// Async wait for Supabase to be ready (up to 10 seconds)
+async function waitForSB(maxWaitMs) {
+    if (typeof maxWaitMs !== 'number') maxWaitMs = 10000;
+    const start = Date.now();
+    let sb = getSB();
+    while (!sb && (Date.now() - start) < maxWaitMs) {
+        await new Promise(function(r) { setTimeout(r, 100); });
+        sb = getSB();
+    }
+    return sb;
 }
 
 async function handleFormSubmit(event) {
@@ -3557,9 +3590,9 @@ async function handleFormSubmit(event) {
     }
 
     try {
-        const sb = getSB();
+        const sb = await waitForSB();
         if (!sb) {
-            notificationSystem.show('خطأ', 'مكتبة Supabase لم تتحمل بعد، أعد المحاولة', 'error');
+            notificationSystem.show('خطأ', 'مشكلة في الاتصال، تأكد من الإنترنت وحاول مرة أخرى', 'error');
             resetBtn();
             return;
         }
