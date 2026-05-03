@@ -2,1625 +2,1154 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>تسجيل شركة - ProVance</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProVance - تسجيل الشركات</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <link rel="stylesheet" href="company-register-style.css">
     <style>
-        :root {
-            --primary: #f093fb; --secondary: #f5576c;
-            --gradient: linear-gradient(135deg, #f093fb, #f5576c);
-            --bg: #0a0e27; --bg-2: #1a1535;
-            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
-            --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
-            --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
-            --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
+        /* أنماط إضافية لحقل متطلبات التدريب */
+        .detail-controls .form-tips {
+            background: rgba(0, 217, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+            border-right: 3px solid var(--primary);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Cairo', sans-serif;
-            background: var(--bg); color: var(--text);
-            min-height: 100vh; padding: 20px 16px;
-            -webkit-font-smoothing: antialiased;
-        }
-        .bg-anim {
-            position: fixed; inset: 0; z-index: -1;
-            background:
-                radial-gradient(circle at 20% 20%, rgba(240,147,251,0.12), transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(245,87,108,0.10), transparent 50%),
-                var(--bg);
-        }
-        .bg-anim::before, .bg-anim::after {
-            content: ''; position: absolute;
-            border-radius: 50%; filter: blur(100px); opacity: 0.25;
-            animation: float 25s infinite ease-in-out;
-        }
-        .bg-anim::before {
-            width: 400px; height: 400px;
-            background: var(--primary);
-            top: -100px; right: -100px;
-        }
-        .bg-anim::after {
-            width: 350px; height: 350px;
-            background: var(--secondary);
-            bottom: -100px; left: -100px;
-            animation-delay: 12s;
-        }
-        @keyframes float {
-            0%,100% { transform: translate(0,0); }
-            50% { transform: translate(40px, 30px); }
-        }
-        .container { max-width: 880px; margin: 0 auto; }
-        .header-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 22px; gap: 14px;
-        }
-        .back-link {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 10px 16px;
-            background: var(--card); border: 1px solid var(--border);
-            color: var(--text-muted); text-decoration: none;
-            border-radius: 10px; font-size: 0.9rem; font-weight: 600;
-            transition: all .2s;
-        }
-        .back-link:hover { color: var(--text); background: var(--card-hover); }
-        .logo-link {
-            display: inline-flex; align-items: center; text-decoration: none;
-        }
-        .logo-link img { height: 38px; }
-        .card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 24px; padding: 36px 32px;
-            backdrop-filter: blur(24px);
-            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-        }
-        .progress-section { margin-bottom: 30px; }
-        .progress-text {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 12px; font-size: 0.88rem;
-            color: var(--text-muted); font-weight: 600;
-        }
-        .progress-text strong { color: var(--text); }
-        .progress-text .step-name { color: var(--primary); }
-        .progress-bar-wrap {
-            height: 6px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 3px; overflow: hidden;
-        }
-        .progress-bar-fill {
-            height: 100%;
-            background: var(--gradient);
-            border-radius: 3px;
-            transition: width .4s cubic-bezier(.4,0,.2,1);
-            box-shadow: 0 0 20px rgba(240,147,251,0.5);
-        }
-        .step-header {
-            display: flex; align-items: center; gap: 16px;
-            margin-bottom: 28px; padding-bottom: 18px;
-            border-bottom: 1px solid var(--border);
-        }
-        .step-icon-big {
-            width: 60px; height: 60px;
-            background: var(--gradient);
-            border-radius: 16px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.6rem; color: #fff; flex-shrink: 0;
-            box-shadow: 0 12px 30px rgba(240,147,251,0.35);
-        }
-        .step-info h2 { font-size: 1.35rem; font-weight: 800; margin-bottom: 4px; }
-        .step-info p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
-        .step-section { display: none; animation: stepIn .4s ease-out; }
-        .step-section.active { display: block; }
-        @keyframes stepIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .logo-upload-section {
-            text-align: center; margin-bottom: 22px; padding: 22px;
-            background: rgba(255,255,255,0.02);
-            border: 2px dashed var(--border-strong);
-            border-radius: 16px;
-            transition: all .25s;
-        }
-        .logo-upload-section:hover {
-            border-color: var(--primary);
-            background: rgba(240,147,251,0.04);
-        }
-        .logo-circle {
-            width: 110px; height: 110px;
-            border-radius: 50%; margin: 0 auto 14px;
-            background: var(--gradient);
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; font-size: 2.4rem;
-            position: relative; overflow: hidden; cursor: pointer;
-            box-shadow: 0 15px 40px rgba(240,147,251,0.4);
-            transition: all .25s;
-        }
-        .logo-circle:hover { transform: scale(1.05); }
-        .logo-circle img { width: 100%; height: 100%; object-fit: cover; }
-        .logo-circle-overlay {
-            position: absolute; inset: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; transition: opacity .25s;
-        }
-        .logo-circle:hover .logo-circle-overlay { opacity: 1; }
-        .logo-upload-actions {
-            display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
-        }
-        .btn-small {
-            padding: 7px 14px; font-size: 0.82rem;
-            border-radius: 8px; border: 1px solid var(--border);
-            background: var(--card); color: var(--text);
-            cursor: pointer; transition: all .2s;
-            display: inline-flex; align-items: center; gap: 5px;
-            font-family: inherit;
-        }
-        .btn-small:hover { background: var(--card-hover); }
-        .btn-small.danger { color: var(--error); }
-        .logo-hint {
-            color: var(--text-dim); font-size: 0.8rem; margin-top: 8px;
-        }
-        .form-row {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 14px; margin-bottom: 16px;
-        }
-        .form-row.three { grid-template-columns: repeat(3, 1fr); }
-        .form-row.full { grid-template-columns: 1fr; }
-        @media (max-width: 700px) {
-            .form-row, .form-row.three { grid-template-columns: 1fr; }
-        }
-        .field { margin-bottom: 16px; }
-        .field-label {
-            display: flex; align-items: center; gap: 6px;
-            color: var(--text); font-size: 0.9rem; font-weight: 600;
+
+        .detail-controls .form-tips h4 {
+            color: var(--primary);
             margin-bottom: 8px;
+            font-size: 0.9rem;
         }
-        .field-label i { color: var(--primary); font-size: 0.85rem; }
-        .field-label .required { color: var(--error); margin-right: 2px; }
-        .field-label .optional {
-            color: var(--text-dim); font-size: 0.78rem;
-            font-weight: 500; margin-right: auto;
+
+        .detail-controls .form-tips .tip-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
         }
-        .field-input, .field-select, .field-textarea {
-            width: 100%; padding: 13px 16px;
-            background: rgba(255,255,255,0.03);
-            border: 2px solid var(--border);
-            border-radius: 12px; color: var(--text);
-            font-size: 0.95rem; font-family: inherit;
-            transition: all .2s;
-        }
-        .field-textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
-        .field-input:focus, .field-select:focus, .field-textarea:focus {
-            outline: none; border-color: var(--primary);
-            background: rgba(255,255,255,0.06);
-            box-shadow: 0 0 0 4px rgba(240,147,251,0.1);
-        }
-        .field-input::placeholder, .field-textarea::placeholder { color: var(--text-dim); }
-        .field-input[type="email"], .field-input[type="tel"],
-        .field-input[type="password"], .field-input[type="url"] {
-            direction: ltr; text-align: right;
-        }
-        .field-select {
-            appearance: none; -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='%2394a3b8'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: left 14px center;
-            padding-left: 38px;
-        }
-        .field-counter {
-            display: flex; justify-content: space-between;
-            font-size: 0.78rem; color: var(--text-dim); margin-top: 6px;
-        }
-        .field-counter.warn { color: var(--warning); }
-        .field-counter.err { color: var(--error); }
-        .field-error {
-            display: block; color: var(--error);
-            font-size: 0.8rem; margin-top: 6px; min-height: 16px;
-        }
-        .input-wrap { position: relative; }
-        .toggle-pass {
-            position: absolute; left: 12px; top: 50%;
-            transform: translateY(-50%);
-            background: none; border: none;
-            color: var(--text-muted); cursor: pointer;
-            padding: 6px; font-size: 0.95rem;
-        }
-        .toggle-pass:hover { color: var(--text); }
-        .password-match {
-            font-size: 0.82rem; margin-top: 6px;
-            font-weight: 600; display: flex; align-items: center; gap: 5px;
-        }
-        .password-match.match { color: var(--success); }
-        .password-match.nomatch { color: var(--error); }
-        .radio-cards {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-        }
-        @media (max-width: 500px) { .radio-cards { grid-template-columns: 1fr; } }
-        .radio-cards input[type="radio"] {
-            position: absolute; opacity: 0; width: 0; height: 0;
-        }
-        .radio-card {
-            display: flex; align-items: center; gap: 10px;
-            padding: 14px 16px;
-            background: rgba(255,255,255,0.03);
-            border: 2px solid var(--border);
-            border-radius: 12px; cursor: pointer; transition: all .2s;
-        }
-        .radio-card:hover {
-            border-color: var(--border-strong);
-            background: rgba(255,255,255,0.05);
-        }
-        .radio-cards input[type="radio"]:checked + .radio-card {
-            border-color: var(--primary);
-            background: rgba(240,147,251,0.08);
-        }
-        .radio-card-icon {
-            width: 36px; height: 36px;
-            border-radius: 9px; background: var(--card);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.95rem; color: var(--primary); flex-shrink: 0;
-        }
-        .radio-cards input[type="radio"]:checked + .radio-card .radio-card-icon {
-            background: var(--gradient); color: #fff;
-        }
-        .radio-card-content { flex: 1; }
-        .radio-card-title { font-weight: 700; font-size: 0.92rem; margin-bottom: 2px; }
-        .radio-card-desc { color: var(--text-muted); font-size: 0.8rem; }
-        .checkbox-card {
-            display: flex; align-items: flex-start; gap: 10px;
-            padding: 14px 16px;
-            background: rgba(255,255,255,0.03);
-            border: 2px solid var(--border);
-            border-radius: 12px; cursor: pointer; transition: all .2s;
-        }
-        .checkbox-card:has(input:checked) {
-            border-color: var(--primary);
-            background: rgba(240,147,251,0.08);
-        }
-        .checkbox-card input { margin-top: 2px; cursor: pointer; }
-        .checkbox-card-content { flex: 1; }
-        .checkbox-card-content strong { display: block; margin-bottom: 2px; }
-        .checkbox-card-content small { color: var(--text-muted); font-size: 0.82rem; }
-        .hidden { display: none !important; }
-        .field-tags-input {
-            display: flex; gap: 8px; margin-bottom: 10px;
-        }
-        .field-tags-input input { flex: 1; }
-        .add-btn {
-            padding: 0 18px;
-            background: var(--gradient); color: #fff;
-            border: none; border-radius: 10px;
-            cursor: pointer; font-weight: 700; font-family: inherit;
-            display: flex; align-items: center; gap: 6px;
-            transition: all .2s;
-        }
-        .add-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(240,147,251,0.35);
-        }
-        .field-tags-list {
-            display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px;
-        }
-        .field-tag {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 12px;
-            background: rgba(240,147,251,0.12);
-            border: 1px solid rgba(240,147,251,0.3);
-            color: var(--primary);
-            border-radius: 16px;
-            font-size: 0.85rem; font-weight: 600;
-            animation: tagIn .3s;
-        }
-        @keyframes tagIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .field-tag-remove {
-            background: rgba(255,255,255,0.1); border: none;
-            color: var(--primary);
-            width: 18px; height: 18px;
-            border-radius: 50%; cursor: pointer;
-            font-size: 0.7rem;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .field-tag-remove:hover { background: var(--error); color: #fff; }
-        .empty-tags {
-            color: var(--text-dim); font-size: 0.85rem; font-style: italic;
-        }
-        .training-detail-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 14px; padding: 16px; margin-bottom: 12px;
-        }
-        .training-detail-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 12px; padding-bottom: 10px;
-            border-bottom: 1px solid var(--border);
-        }
-        .training-detail-name {
-            font-weight: 800; color: var(--primary); font-size: 0.95rem;
-        }
-        .branches-list {
-            display: flex; flex-direction: column; gap: 8px; margin-top: 10px;
-        }
-        .branch-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 14px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-        }
-        .summary-section { padding: 16px 0; }
-        .summary-block {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 14px; padding: 18px; margin-bottom: 14px;
-        }
-        .summary-block-title {
-            display: flex; align-items: center; gap: 8px;
-            font-weight: 800; margin-bottom: 12px; font-size: 1rem;
-            padding-bottom: 8px; border-bottom: 1px solid var(--border);
-        }
-        .summary-block-title i { color: var(--primary); }
-        .summary-row {
-            display: flex; justify-content: space-between;
-            padding: 6px 0; font-size: 0.88rem; gap: 14px;
-        }
-        .summary-row .label { color: var(--text-muted); }
-        .summary-row .value {
-            color: var(--text); font-weight: 600;
-            text-align: left; word-break: break-word;
-        }
-        .contract-section {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 14px; padding: 22px;
-            max-height: 380px; overflow-y: auto;
-            margin-bottom: 16px;
-            line-height: 1.8; font-size: 0.9rem;
-        }
-        .contract-section::-webkit-scrollbar { width: 6px; }
-        .contract-section::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.03); border-radius: 3px;
-        }
-        .contract-section::-webkit-scrollbar-thumb {
-            background: var(--primary); border-radius: 3px;
-        }
-        .contract-section h3 {
-            color: var(--primary); font-size: 1.05rem;
-            margin: 14px 0 8px; padding-bottom: 6px;
-            border-bottom: 1px solid var(--border);
-        }
-        .contract-section h3:first-child { margin-top: 0; }
-        .contract-section p { color: var(--text-muted); margin-bottom: 8px; }
-        .contract-section ul { padding-right: 22px; margin-bottom: 8px; }
-        .contract-section ul li { color: var(--text-muted); margin-bottom: 4px; }
-        .contract-section strong { color: var(--text); }
-        .navigation {
-            display: flex; gap: 12px;
-            margin-top: 24px; padding-top: 20px;
-            border-top: 1px solid var(--border);
-        }
-        .btn-nav {
-            flex: 1; padding: 14px 22px;
-            border: none; border-radius: 12px;
-            font-weight: 800; font-size: 1rem; font-family: inherit;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            transition: all .25s;
-        }
-        .btn-prev {
-            background: var(--card); color: var(--text);
-            border: 1px solid var(--border);
-            flex: 0 0 auto; padding: 14px 24px;
-        }
-        .btn-prev:hover { background: var(--card-hover); }
-        .btn-next, .btn-submit { background: var(--gradient); color: #fff; }
-        .btn-next:hover:not(:disabled),
-        .btn-submit:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 14px 35px rgba(240,147,251,0.4);
-        }
-        .btn-nav:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-nav .spinner { display: none; }
-        .btn-nav.loading .spinner { display: inline-block; }
-        .btn-nav.loading .txt, .btn-nav.loading .arrow { display: none; }
-        .login-link {
-            text-align: center; margin-top: 20px;
-            color: var(--text-muted); font-size: 0.92rem;
-        }
-        .login-link a { color: var(--primary); text-decoration: none; font-weight: 700; }
-        .login-link a:hover { text-decoration: underline; }
-        @keyframes shake {
-            0%,100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        .shake { animation: shake .35s; }
-        @media (max-width: 600px) {
-            .card { padding: 26px 20px; }
-            .step-info h2 { font-size: 1.15rem; }
-            .step-icon-big { width: 50px; height: 50px; font-size: 1.3rem; }
-            .navigation { flex-direction: column-reverse; }
-            .btn-prev { width: 100%; }
+
+        .detail-controls .form-tips .tip-item i {
+            color: var(--success);
+            margin-top: 2px;
+            font-size: 0.8rem;
         }
     </style>
 </head>
 <body>
-    <div class="bg-anim"></div>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+    </div>
 
-    <div class="container">
-        <div class="header-bar">
-            <a href="index.html" class="back-link">
-                <i class="fas fa-arrow-right"></i><span>الرئيسية</span>
-            </a>
-            <a href="index.html" class="logo-link">
-                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Navigation Header -->
+    <header class="nav-header">
+        <div class="nav-content">
+            <div class="nav-logo">
+                <i class="fas fa-rocket"></i>
+                <span>ProVance</span>
+            </div>
+            <a href="company-login.html" class="back-to-login">
+                <i class="fas fa-arrow-right"></i>
+                <span>العودة لتسجيل الدخول</span>
             </a>
         </div>
+    </header>
 
-        <div class="card">
-            <div class="progress-section">
-                <div class="progress-text">
-                    <span>الخطوة <strong id="currentStep">1</strong> من <strong>6</strong></span>
-                    <span class="step-name" id="currentStepName">المعلومات الأساسية</span>
+    <!-- Main Container -->
+    <main class="register-container">
+        <!-- Header Section -->
+        <header class="register-header">
+            <div class="logo-badge">
+                <div class="logo-inner">
+                    <i class="fas fa-building"></i>
                 </div>
-                <div class="progress-bar-wrap">
-                    <div class="progress-bar-fill" id="progressFill" style="width: 16.66%;"></div>
+                <div class="logo-rings">
+                    <div class="ring ring-1"></div>
+                    <div class="ring ring-2"></div>
+                    <div class="ring ring-3"></div>
                 </div>
             </div>
+            <h1 class="main-title">
+                <span class="title-gradient">تسجيل الشركات</span>
+                <span class="title-brand">في منصة ProVance</span>
+            </h1>
+            <p class="subtitle">انضم إلى منصة التدريب المتطورة واستقطب أفضل المواهب لشركتك</p>
 
-            <form id="companyRegisterForm" novalidate>
+            <!-- Stats Cards -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">+500</div>
+                        <div class="stat-label">شركة مسجلة</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">+2,000</div>
+                        <div class="stat-label">متدرب نشط</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">+800</div>
+                        <div class="stat-label">تدريب مكتمل</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">4.8/5</div>
+                        <div class="stat-label">تقييم الشركات</div>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-                <!-- STEP 1 -->
-                <div class="step-section active" data-step="1">
+        <!-- Progress Section -->
+        <section class="progress-container">
+            <div class="progress-header">
+                <h3>تقدم التسجيل</h3>
+                <div class="progress-text">
+                    الخطوة <span id="currentStep">1</span> من <span id="totalSteps">6</span>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-dots">
+                <div class="progress-dot active" data-step="1">
+                    <i class="fas fa-info-circle"></i>
+                    <span>المعلومات الأساسية</span>
+                </div>
+                <div class="progress-dot" data-step="2">
+                    <i class="fas fa-phone-alt"></i>
+                    <span>معلومات الاتصال</span>
+                </div>
+                <div class="progress-dot" data-step="3">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>المجالات التدريبية</span>
+                </div>
+                <div class="progress-dot" data-step="4">
+                    <i class="fas fa-tools"></i>
+                    <span>متطلبات التدريب</span>
+                </div>
+                <div class="progress-dot" data-step="5">
+                    <i class="fas fa-file-alt"></i>
+                    <span>ملخص التسجيل</span>
+                </div>
+                <div class="progress-dot" data-step="6">
+                    <i class="fas fa-file-contract"></i>
+                    <span>العقود والموافقة</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Form Container -->
+        <div class="form-container">
+            <form id="companyRegisterForm">
+                <!-- Step 1: Basic Information -->
+                <div class="form-step active" data-step="1">
                     <div class="step-header">
-                        <div class="step-icon-big"><i class="fas fa-info-circle"></i></div>
+                        <div class="step-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
                         <div class="step-info">
-                            <h2>المعلومات الأساسية</h2>
-                            <p>أدخل المعلومات الأساسية لشركتك للبدء في التسجيل</p>
+                            <h2 class="step-title">المعلومات الأساسية</h2>
+                            <p class="step-description">أدخل المعلومات الأساسية لشركتك للبدء في عملية التسجيل</p>
                         </div>
                     </div>
 
-                    <div class="logo-upload-section">
-                        <div class="logo-circle" id="logoCircle" onclick="document.getElementById('companyLogo').click()">
-                            <i class="fas fa-camera" id="logoIcon"></i>
-                            <div class="logo-circle-overlay"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <!-- Logo Upload Section -->
+                    <section class="upload-section">
+                        <div class="upload-header">
+                            <h3><i class="fas fa-camera"></i> شعار الشركة</h3>
+                            <p>قم برفع شعار شركتك لتعزيز هوية علامتك التجارية</p>
                         </div>
-                        <input type="file" id="companyLogo" accept="image/*" class="hidden">
-                        <div class="logo-upload-actions">
-                            <button type="button" class="btn-small" onclick="document.getElementById('companyLogo').click()">
-                                <i class="fas fa-upload"></i> رفع لوجو
-                            </button>
-                            <button type="button" class="btn-small danger hidden" id="logoRemoveBtn" onclick="removeLogo()">
-                                <i class="fas fa-trash"></i> حذف
-                            </button>
-                        </div>
-                        <div class="logo-hint">PNG / JPG (حد أقصى 2 ميجا)</div>
-                    </div>
-
-                    <div class="field">
-                        <label class="field-label" for="companyName">
-                            <i class="fas fa-building"></i> اسم الشركة <span class="required">*</span>
-                        </label>
-                        <input type="text" id="companyName" class="field-input" placeholder="الاسم الرسمي للشركة">
-                        <span class="field-error" id="companyNameErr"></span>
-                    </div>
-
-                    <div class="field">
-                        <label class="field-label" for="companyBio">
-                            <i class="fas fa-align-right"></i> نبذة عن الشركة <span class="required">*</span>
-                        </label>
-                        <textarea id="companyBio" class="field-textarea" rows="4"
-                            placeholder="اكتب نبذة مختصرة عن نشاط شركتك ورؤيتها (100-500 حرف)..."></textarea>
-                        <div class="field-counter">
-                            <span>عدد الأحرف: <span id="bioCounter">0</span> / 500</span>
-                            <span>الحد الأدنى: 100</span>
-                        </div>
-                        <span class="field-error" id="companyBioErr"></span>
-                    </div>
-
-                    <div class="field">
-                        <label class="field-label">
-                            <i class="fas fa-code-branch"></i> هل لشركتك فروع متعددة؟ <span class="required">*</span>
-                        </label>
-                        <div class="radio-cards">
-                            <label>
-                                <input type="radio" name="hasMultipleBranches" value="yes" id="branchesYes">
-                                <div class="radio-card">
-                                    <div class="radio-card-icon"><i class="fas fa-check"></i></div>
-                                    <div class="radio-card-content">
-                                        <div class="radio-card-title">نعم، لدينا فروع</div>
-                                        <div class="radio-card-desc">شركة بأكثر من فرع</div>
+                        <div class="logo-upload-container">
+                            <div class="logo-upload-area" onclick="document.getElementById('companyLogo').click()">
+                                <div class="logo-preview-wrapper">
+                                    <img id="logoPreview" class="logo-preview" alt="Company Logo Preview">
+                                    <div class="logo-placeholder">
+                                        <div class="upload-icon">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                        </div>
+                                        <h4>رفع شعار الشركة</h4>
+                                        <p>PNG, JPG, GIF - الحد الأقصى 2MB</p>
+                                    </div>
+                                    <div class="upload-overlay">
+                                        <i class="fas fa-camera"></i>
+                                        <span>تغيير الشعار</span>
                                     </div>
                                 </div>
-                            </label>
-                            <label>
-                                <input type="radio" name="hasMultipleBranches" value="no" id="branchesNo" checked>
-                                <div class="radio-card">
-                                    <div class="radio-card-icon"><i class="fas fa-times"></i></div>
-                                    <div class="radio-card-content">
-                                        <div class="radio-card-title">لا، فرع واحد</div>
-                                        <div class="radio-card-desc">مقر واحد فقط</div>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="field hidden" id="branchesGroup">
-                        <label class="field-label" for="branchesCount">
-                            <i class="fas fa-hashtag"></i> عدد الفروع
-                        </label>
-                        <input type="number" id="branchesCount" class="field-input" placeholder="مثال: 3" min="2">
-
-                        <label class="field-label" style="margin-top: 14px;">
-                            <i class="fas fa-map-marker-alt"></i> أضف عناوين الفروع
-                        </label>
-                        <div class="field-tags-input">
-                            <input type="text" id="newBranch" class="field-input" placeholder="مثال: الدقهلية / المنصورة / شارع كذا">
-                            <button type="button" class="add-btn" onclick="addBranch()">
-                                <i class="fas fa-plus"></i> إضافة
-                            </button>
-                        </div>
-                        <div class="branches-list" id="branchesList">
-                            <p class="empty-tags">لم تتم إضافة فروع بعد</p>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="field">
-                            <label class="field-label" for="companyLocation">
-                                <i class="fas fa-map-marker-alt"></i> المدينة الرئيسية <span class="required">*</span>
-                            </label>
-                            <input type="text" id="companyLocation" class="field-input" placeholder="المدينة والمنطقة">
-                            <span class="field-error" id="companyLocationErr"></span>
-                        </div>
-                        <div class="field">
-                            <label class="field-label" for="companyField">
-                                <i class="fas fa-briefcase"></i> مجال الشركة <span class="required">*</span>
-                            </label>
-                            <input type="text" id="companyField" class="field-input" placeholder="مثال: تكنولوجيا المعلومات">
-                            <div class="field-counter">
-                                <span>الأحرف: <span id="fieldCounter">0</span> / 50</span>
                             </div>
-                            <span class="field-error" id="companyFieldErr"></span>
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="field-label" for="employeesCount">
-                            <i class="fas fa-users"></i> عدد الموظفين <span class="required">*</span>
-                        </label>
-                        <select id="employeesCount" class="field-select">
-                            <option value="">اختر الفئة</option>
-                            <option value="1-10">1 - 10 موظفين</option>
-                            <option value="11-50">11 - 50 موظف</option>
-                            <option value="51-200">51 - 200 موظف</option>
-                            <option value="201-500">201 - 500 موظف</option>
-                            <option value="more">أكثر من 500 موظف</option>
-                        </select>
-                        <span class="field-error" id="employeesCountErr"></span>
-                    </div>
-
-                    <div class="field hidden" id="exactEmployeesGroup">
-                        <label class="field-label" for="exactEmployeeCount">
-                            <i class="fas fa-hashtag"></i> العدد الدقيق للموظفين
-                        </label>
-                        <input type="number" id="exactEmployeeCount" class="field-input" placeholder="أدخل العدد الدقيق" min="501">
-                    </div>
-
-                    <div class="form-row">
-                        <div class="field">
-                            <label class="field-label" for="email">
-                                <i class="fas fa-envelope"></i> البريد الإلكتروني <span class="required">*</span>
-                            </label>
-                            <input type="email" id="email" class="field-input" placeholder="company@example.com">
-                            <span class="field-error" id="emailErr"></span>
-                        </div>
-                        <div class="field">
-                            <label class="field-label" for="website">
-                                <i class="fas fa-globe"></i> الموقع <span class="optional">اختياري</span>
-                            </label>
-                            <input type="url" id="website" class="field-input" placeholder="https://www.example.com">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="field">
-                            <label class="field-label" for="password">
-                                <i class="fas fa-lock"></i> كلمة المرور <span class="required">*</span>
-                            </label>
-                            <div class="input-wrap">
-                                <input type="password" id="password" class="field-input" placeholder="8 أحرف على الأقل">
-                                <button type="button" class="toggle-pass" data-target="password">
-                                    <i class="fas fa-eye"></i>
+                            <input type="file" id="companyLogo" accept="image/*" class="hidden">
+                            <div class="upload-actions">
+                                <button type="button" class="btn-upload" onclick="document.getElementById('companyLogo').click()">
+                                    <i class="fas fa-upload"></i>
+                                    <span>اختر صورة</span>
+                                </button>
+                                <button type="button" class="btn-remove hidden" id="logoRemoveBtn" onclick="removeLogo(event)">
+                                    <i class="fas fa-trash"></i>
+                                    <span>إزالة</span>
                                 </button>
                             </div>
-                            <span class="field-error" id="passwordErr"></span>
                         </div>
-                        <div class="field">
-                            <label class="field-label" for="confirmPassword">
-                                <i class="fas fa-lock"></i> تأكيد كلمة المرور <span class="required">*</span>
+                    </section>
+
+                    <!-- Basic Information Form -->
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="companyName" class="form-label required">
+                                <i class="fas fa-building"></i>
+                                اسم الشركة
                             </label>
-                            <div class="input-wrap">
-                                <input type="password" id="confirmPassword" class="field-input" placeholder="نفس كلمة المرور">
-                                <button type="button" class="toggle-pass" data-target="confirmPassword">
-                                    <i class="fas fa-eye"></i>
+                            <div class="input-wrapper">
+                                <input type="text" id="companyName" class="form-input" placeholder="أدخل الاسم الرسمي للشركة" required>
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="companyBio" class="form-label required">
+                                <i class="fas fa-file-alt"></i>
+                                نبذة عن الشركة
+                            </label>
+                            <div class="textarea-wrapper">
+                                <textarea id="companyBio" class="form-textarea" placeholder="اكتب نبذة مختصرة عن نشاط الشركة ورؤيتها..." minlength="100" maxlength="500" required></textarea>
+                                <div class="textarea-border"></div>
+                            </div>
+                            <div class="char-counter">
+                                <span>عدد الأحرف: <span id="bioCounter">0</span></span>
+                                <span>الحد الأدنى: 100 حرف | الحد الأقصى: 500 حرف</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label required">
+                                <i class="fas fa-code-branch"></i>
+                                هل لديك أكثر من فرع؟
+                            </label>
+                            <div class="radio-group">
+                                <div class="radio-card">
+                                    <input type="radio" id="branchesYes" name="hasMultipleBranches" value="yes" onchange="toggleBranchesCount()">
+                                    <label for="branchesYes" class="radio-content">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>نعم، لدي أكثر من فرع</span>
+                                    </label>
+                                </div>
+                                <div class="radio-card">
+                                    <input type="radio" id="branchesNo" name="hasMultipleBranches" value="no" onchange="toggleBranchesCount()">
+                                    <label for="branchesNo" class="radio-content">
+                                        <i class="fas fa-times-circle"></i>
+                                        <span>لا، لدي فرع واحد فقط</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group hidden" id="branchesCountGroup">
+                            <label for="branchesCount" class="form-label required">
+                                <i class="fas fa-hashtag"></i>
+                                عدد الفروع الإجمالي
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="number" id="branchesCount" class="form-input" placeholder="أدخل عدد الفروع الإجمالي" min="2">
+                                <div class="input-border"></div>
+                            </div>
+                            <!-- إضافة التوضيح الجديد هنا -->
+                            <div class="branches-info-note">
+                                <i class="fas fa-info-circle"></i>
+                                <p>
+                                    <strong>ملاحظة هامة:</strong> هذا هو العدد الإجمالي لفروع الشركة. 
+                                    لا يجب أن يتطابق بالضرورة مع عدد أماكن التدريب المتاحة، حيث أن بعض الفروع قد تكون مكتفية ولا تحتاج إلى تدريب. 
+                                    يمكنك إضافة الفروع المتاحة للتدريب فقط في الحقل التالي.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- نظام إدخال الفروع الديناميكي -->
+                        <div class="form-group full-width hidden" id="branchesLocationsGroup">
+                            <label class="form-label required">
+                                <i class="fas fa-map-marker-alt"></i>
+                                أماكن الفروع المتاحة للتدريب
+                            </label>
+                            <div class="form-tips">
+                                <h4><i class="fas fa-lightbulb"></i> ملاحظة هامة:</h4>
+                                <div class="tip-item">
+                                    <i class="fas fa-check"></i>
+                                    <span>عدد الفروع المتاحة للتدريب يمكن أن يكون أقل من العدد الإجمالي للفروع. لا يجب أن يتطابق العددان.</span>
+                                </div>
+                                <div class="tip-item">
+                                    <i class="fas fa-check"></i>
+                                    <span>أضف فقط الفروع التي ترغب في استقبال متدربين فيها</span>
+                                </div>
+                            </div>
+                            
+                            <!-- نموذج إضافة فرع جديد -->
+                            <div class="branch-details" id="branchForm">
+                                <div class="form-group">
+                                    <label for="branchFullAddress" class="form-label required">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        العنوان الكامل للفرع
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <input type="text" id="branchFullAddress" class="form-input" placeholder="مثال: الدقهلية/ المنصورة/ شارع سامية الجمل">
+                                        <div class="input-border"></div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn-add" onclick="addBranchLocation()">
+                                    <i class="fas fa-plus"></i>
+                                    <span>إضافة فرع للتدريب</span>
                                 </button>
                             </div>
-                            <div class="password-match" id="passwordMatch"></div>
-                            <span class="field-error" id="confirmPasswordErr"></span>
+                            
+                            <div id="branchLocationsList" class="fields-list">
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                    </div>
+                                    <h4>لم تتم إضافة أي فرع بعد</h4>
+                                    <p>ابدأ بإضافة الفروع المتاحة للتدريب في شركتك</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="companyLocation" class="form-label required">
+                                <i class="fas fa-map-marker-alt"></i>
+                                موقع المقر الرئيسي
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" id="companyLocation" class="form-input" placeholder="المدينة والمنطقة" required>
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="companyField" class="form-label required">
+                                <i class="fas fa-briefcase"></i>
+                                المجال الرئيسي
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" id="companyField" class="form-input" placeholder="مثال: تكنولوجيا المعلومات، التسويق الرقمي..." maxlength="50" required>
+                                <div class="input-border"></div>
+                            </div>
+                            <div class="char-counter">
+                                <span>عدد الأحرف: <span id="fieldCounter">0</span>/50</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="employeesCount" class="form-label required">
+                                <i class="fas fa-users"></i>
+                                عدد الموظفين في الشركة
+                            </label>
+                            <div class="select-wrapper">
+                                <select id="employeesCount" class="form-select" onchange="toggleExactEmployeeCount()" required>
+                                    <option value="">اختر الفئة</option>
+                                    <option value="1-10">1-10 موظف</option>
+                                    <option value="11-50">11-50 موظف</option>
+                                    <option value="51-200">51-200 موظف</option>
+                                    <option value="201-500">201-500 موظف</option>
+                                    <option value="more">أكثر من 500 موظف</option>
+                                </select>
+                                <div class="select-arrow">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group hidden" id="exactEmployeeCountGroup">
+                            <label for="exactEmployeeCount" class="form-label">
+                                <i class="fas fa-hashtag"></i>
+                                العدد الدقيق للموظفين
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="number" id="exactEmployeeCount" class="form-input" placeholder="أدخل العدد الدقيق للموظفين" min="501">
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label required">
+                                <i class="fas fa-envelope"></i>
+                                البريد الإلكتروني
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="email" id="email" class="form-input" placeholder="company@example.com" required>
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label required">
+                                <i class="fas fa-lock"></i>
+                                كلمة المرور
+                            </label>
+                            <div class="password-wrapper">
+                                <input type="password" id="password" class="form-input" placeholder="كلمة المرور (8 أحرف على الأقل)" minlength="8" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <div class="input-border"></div>
+                            </div>
+                            <div class="password-strength">
+                                <div class="strength-bar"></div>
+                                <div class="strength-text">قوة كلمة المرور: ضعيفة</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword" class="form-label required">
+                                <i class="fas fa-lock"></i>
+                                تأكيد كلمة المرور
+                            </label>
+                            <div class="password-wrapper">
+                                <input type="password" id="confirmPassword" class="form-input" placeholder="أعد كتابة كلمة المرور" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <div class="input-border"></div>
+                            </div>
+                            <div id="passwordMatch" class="password-match"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="website" class="form-label">
+                                <i class="fas fa-globe"></i>
+                                موقع الويب (اختياري)
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="url" id="website" class="form-input" placeholder="https://www.example.com">
+                                <div class="input-border"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- STEP 2 -->
-                <div class="step-section" data-step="2">
+                <!-- Step 2: Contact Information -->
+                <div class="form-step" data-step="2">
                     <div class="step-header">
-                        <div class="step-icon-big"><i class="fas fa-address-book"></i></div>
+                        <div class="step-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
                         <div class="step-info">
-                            <h2>معلومات الاتصال</h2>
-                            <p>أدخل وسائل التواصل المختلفة الخاصة بشركتك</p>
+                            <h2 class="step-title">معلومات الاتصال</h2>
+                            <p class="step-description">أدخل معلومات الاتصال الخاصة بشركتك للتواصل مع المتدربين</p>
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="field">
-                            <label class="field-label" for="primaryPhone">
-                                <i class="fas fa-phone"></i> الهاتف الأساسي <span class="required">*</span>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="primaryPhone" class="form-label required">
+                                <i class="fas fa-phone"></i>
+                                الهاتف الأساسي
                             </label>
-                            <input type="tel" id="primaryPhone" class="field-input" placeholder="01012345678">
-                            <span class="field-error" id="primaryPhoneErr"></span>
+                            <div class="input-wrapper">
+                                <input type="tel" id="primaryPhone" class="form-input" placeholder="مثال: 0551234567" required>
+                                <div class="input-border"></div>
+                            </div>
                         </div>
-                        <div class="field">
-                            <label class="field-label" for="secondaryPhone">
-                                <i class="fas fa-mobile-alt"></i> هاتف ثانوي <span class="optional">اختياري</span>
-                            </label>
-                            <input type="tel" id="secondaryPhone" class="field-input" placeholder="هاتف احتياطي">
-                        </div>
-                    </div>
 
-                    <div class="form-row">
-                        <div class="field">
-                            <label class="field-label" for="whatsappNumber">
-                                <i class="fab fa-whatsapp" style="color:#25d366"></i> رقم الواتساب <span class="optional">اختياري</span>
+                        <div class="form-group">
+                            <label for="secondaryPhone" class="form-label">
+                                <i class="fas fa-phone-alt"></i>
+                                هاتف بديل (اختياري)
                             </label>
-                            <input type="tel" id="whatsappNumber" class="field-input" placeholder="رقم الواتساب للتواصل السريع">
+                            <div class="input-wrapper">
+                                <input type="tel" id="secondaryPhone" class="form-input" placeholder="هاتف احتياطي للتواصل">
+                                <div class="input-border"></div>
+                            </div>
                         </div>
-                        <div class="field">
-                            <label class="field-label" for="inquiryEmail">
-                                <i class="fas fa-question-circle"></i> بريد الاستفسارات <span class="required">*</span>
-                            </label>
-                            <input type="email" id="inquiryEmail" class="field-input" placeholder="inquiry@company.com">
-                            <span class="field-error" id="inquiryEmailErr"></span>
-                        </div>
-                    </div>
 
-                    <div class="form-row">
-                        <div class="field">
-                            <label class="field-label" for="linkedinUrl">
-                                <i class="fab fa-linkedin" style="color:#0077b5"></i> LinkedIn <span class="optional">اختياري</span>
+                        <div class="form-group whatsapp-input">
+                            <label for="whatsappNumber" class="form-label">
+                                <i class="fab fa-whatsapp"></i>
+                                واتساب (اختياري)
                             </label>
-                            <input type="url" id="linkedinUrl" class="field-input" placeholder="https://linkedin.com/company/...">
+                            <div class="input-wrapper">
+                                <input type="tel" id="whatsappNumber" class="form-input" placeholder="رقم الواتساب للتواصل السريع">
+                                <div class="input-border"></div>
+                            </div>
                         </div>
-                        <div class="field">
-                            <label class="field-label" for="facebookUrl">
-                                <i class="fab fa-facebook" style="color:#1877f2"></i> Facebook <span class="optional">اختياري</span>
+
+                        <div class="form-group">
+                            <label for="inquiryEmail" class="form-label required">
+                                <i class="fas fa-envelope-open"></i>
+                                بريد الاستفسارات
                             </label>
-                            <input type="url" id="facebookUrl" class="field-input" placeholder="https://facebook.com/...">
+                            <div class="input-wrapper">
+                                <input type="email" id="inquiryEmail" class="form-input" placeholder="inquiry@company.com" required>
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="linkedinUrl" class="form-label">
+                                <i class="fab fa-linkedin"></i>
+                                لينكدإن (اختياري)
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="url" id="linkedinUrl" class="form-input" placeholder="https://linkedin.com/company/...">
+                                <div class="input-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="facebookUrl" class="form-label">
+                                <i class="fab fa-facebook"></i>
+                                فيسبوك (اختياري)
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="url" id="facebookUrl" class="form-input" placeholder="https://facebook.com/company...">
+                                <div class="input-border"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- STEP 3 -->
-                <div class="step-section" data-step="3">
+                <!-- Step 3: Training Fields -->
+                <div class="form-step" data-step="3">
                     <div class="step-header">
-                        <div class="step-icon-big"><i class="fas fa-graduation-cap"></i></div>
+                        <div class="step-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
                         <div class="step-info">
-                            <h2>المجالات التدريبية</h2>
-                            <p>حدد المجالات التدريبية التي تقدمها شركتك للمتدربين</p>
+                            <h2 class="step-title">المجالات التدريبية</h2>
+                            <p class="step-description">حدد المجالات التدريبية التي تقدمها شركتك للمتدربين</p>
                         </div>
                     </div>
 
-                    <div class="field">
-                        <label class="field-label">
-                            <i class="fas fa-money-bill-wave"></i> هل التدريب مدفوع للمتدرب أم مجاني؟ <span class="required">*</span>
-                        </label>
-                        <div class="radio-cards">
-                            <label>
-                                <input type="radio" name="trainingType" value="free" id="trainingFree" checked>
-                                <div class="radio-card">
-                                    <div class="radio-card-icon"><i class="fas fa-gift"></i></div>
-                                    <div class="radio-card-content">
-                                        <div class="radio-card-title">مجاني</div>
-                                        <div class="radio-card-desc">بدون رسوم</div>
-                                    </div>
-                                </div>
-                            </label>
-                            <label>
-                                <input type="radio" name="trainingType" value="paid" id="trainingPaid">
-                                <div class="radio-card">
-                                    <div class="radio-card-icon"><i class="fas fa-tag"></i></div>
-                                    <div class="radio-card-content">
-                                        <div class="radio-card-title">مدفوع</div>
-                                        <div class="radio-card-desc">برسوم على المتدرب</div>
-                                    </div>
-                                </div>
-                            </label>
+                    <!-- Trainee Type Selection -->
+                    <section class="fields-container">
+                        <div class="fields-header">
+                            <i class="fas fa-users"></i>
+                            <h3>نوع المتدربين المطلوبين</h3>
                         </div>
-                    </div>
+                        <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md);">
+                            اختر نوع المتدربين الذي ترغب في استقبالهم في شركتك
+                        </p>
 
-                    <div class="field hidden" id="trainingPriceGroup">
-                        <label class="field-label" for="trainingPrice">
-                            <i class="fas fa-dollar-sign"></i> سعر التدريب
-                        </label>
-                        <input type="text" id="trainingPrice" class="field-input" placeholder="مثال: 1500 جنيه شهرياً">
-                    </div>
+                        <div class="trainee-options">
+                            <!-- النظام الأول: متدرب لأول مرة -->
+                            <div class="trainee-card" onclick="selectTraineeType('first-time', this)">
+                                <div class="card-header">
+                                    <div class="card-icon">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <div class="card-info">
+                                        <h4>النظام الأول</h4>
+                                        <p>متدرب لأول مرة</p>
+                                    </div>
+                                </div>
+                                <p class="card-description">
+                                    طالب أو خريج ليس لديه أي خبرة تدريب سابقة. هذا هو تدريبه الأول في بيئة عمل حقيقية.
+                                </p>
+                                <div class="card-footer">
+                                    <div class="card-price">الشركة تحصل على 25%</div>
+                                    <button type="button" class="card-info-btn" onclick="showTraineeInfo('first-time', event)">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>تفاصيل</span>
+                                    </button>
+                                </div>
+                            </div>
 
-                    <div class="field">
-                        <label class="field-label">
-                            <i class="fas fa-list"></i> أضف المجالات التدريبية <span class="required">*</span>
-                        </label>
-                        <div class="field-tags-input">
-                            <input type="text" id="newTrainingField" class="field-input" placeholder="مثال: تطوير الويب، التسويق الرقمي...">
-                            <button type="button" class="add-btn" onclick="addTrainingField()">
-                                <i class="fas fa-plus"></i> إضافة
+                            <!-- النظام الثاني: متدرب ذو خبرة محدودة -->
+                            <div class="trainee-card" onclick="selectTraineeType('once-trained', this)">
+                                <div class="card-header">
+                                    <div class="card-icon">
+                                        <i class="fas fa-user-graduate"></i>
+                                    </div>
+                                    <div class="card-info">
+                                        <h4>النظام الثاني</h4>
+                                        <p>متدرب ذو خبرة</p>
+                                    </div>
+                                </div>
+                                <p class="card-description">
+                                    متدرب سبق له التدريب في شركة واحدة فقط. لديه أساس معرفي بسيط في المجال ويفهم بيئة العمل.
+                                </p>
+                                <div class="card-footer">
+                                    <div class="card-price">مجاني + مقابل مادي</div>
+                                    <button type="button" class="card-info-btn" onclick="showTraineeInfo('once-trained', event)">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>تفاصيل</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- النظام الثالث: متدرب متمرس -->
+                            <div class="trainee-card" onclick="selectTraineeType('twice-trained', this)">
+                                <div class="card-header">
+                                    <div class="card-icon">
+                                        <i class="fas fa-briefcase"></i>
+                                    </div>
+                                    <div class="card-info">
+                                        <h4>النظام الثالث</h4>
+                                        <p>متدرب متمرس (Training)</p>
+                                    </div>
+                                </div>
+                                <p class="card-description">
+                                    متدرب ذو خبرة تدريب في شركتين أو أكثر. يمتلك خبرة عملية جيدة وجاهز للإنتاجية. مدة التدريب اختيارية حتى 3 أسابيع كحد أقصى.
+                                </p>
+                                <div class="card-footer">
+                                    <div class="card-price">تدفع 25% + مقابل مادي</div>
+                                    <button type="button" class="card-info-btn" onclick="showTraineeInfo('twice-trained', event)">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>تفاصيل</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Explanation - UPDATED WITH SCROLLABLE AND HIDDEN BY DEFAULT -->
+                        <div class="financial-explanation" id="financialExplanation">
+                            <div class="explanation-header">
+                                <i class="fas fa-info-circle"></i>
+                                <h4>تفاصيل النظام المالي</h4>
+                            </div>
+                            <div class="explanation-content">
+                                <div class="default-text">
+                                    <i class="fas fa-info-circle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                    <p>اختر أحد أنظمة المتدربين لرؤية التفاصيل المالية</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Training Fields Management -->
+                    <section class="fields-container">
+                        <div class="fields-header">
+                            <i class="fas fa-plus-circle"></i>
+                            <h3>إضافة المجالات التدريبية</h3>
+                        </div>
+                        <div class="fields-input-group">
+                            <div class="input-wrapper" style="flex: 1;">
+                                <input type="text" id="newTrainingField" class="form-input" placeholder="اكتب اسم المجال التدريبي (مثال: تطوير الويب، التسويق الرقمي...)">
+                                <div class="input-border"></div>
+                            </div>
+                            <button type="button" class="btn-add" onclick="addTrainingField()">
+                                <i class="fas fa-plus"></i>
+                                <span>إضافة</span>
                             </button>
                         </div>
-                        <div class="field-tags-list" id="trainingFieldsList">
-                            <p class="empty-tags">لم تتم إضافة مجالات بعد</p>
+                        <div id="trainingFieldsList" class="fields-list">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                                <h4>لم تتم إضافة أي مجالات بعد</h4>
+                                <p>ابدأ بإضافة المجالات التدريبية التي تقدمها شركتك</p>
+                            </div>
                         </div>
-                        <span class="field-error" id="trainingFieldsErr"></span>
+                    </section>
+
+                    <!-- Training Details -->
+                    <section class="training-details-section hidden" id="trainingDetailsSection">
+                        <div class="training-details-header">
+                            <i class="fas fa-cogs"></i>
+                            <h3>تفاصيل التدريب لكل مجال</h3>
+                        </div>
+                        <div id="trainingDetailsList" class="training-details-list">
+                            <!-- سيتم إضافة تفاصيل التدريب ديناميكياً هنا -->
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Step 4: Training Requirements -->
+                <div class="form-step" data-step="4">
+                    <div class="step-header">
+                        <div class="step-icon">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <div class="step-info">
+                            <h2 class="step-title">متطلبات التدريب</h2>
+                            <p class="step-description">حدد المعدات والتفاصيل الرعاية للتدريب في شركتك</p>
+                        </div>
                     </div>
 
-                    <div class="hidden" id="trainingDetailsSection">
-                        <label class="field-label" style="margin-top: 16px;">
-                            <i class="fas fa-cog"></i> تفاصيل كل مجال (عدد المتدربين والمدة)
-                        </label>
-                        <div id="trainingDetailsList"></div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="maxResponseDays" class="form-label required">
+                                <i class="fas fa-clock"></i>
+                                الحد الأقصى للرد على الطلبات
+                            </label>
+                            <div class="select-wrapper">
+                                <select id="maxResponseDays" class="form-select" required>
+                                    <option value="">اختر المدة</option>
+                                    <option value="3">3 أيام</option>
+                                    <option value="5">5 أيام</option>
+                                    <option value="7">أسبوع</option>
+                                    <option value="10">10 أيام</option>
+                                    <option value="14">أسبوعين</option>
+                                </select>
+                                <div class="select-arrow">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 🆕 الحقل الجديد: الحد الأقصى للرد على المتدرب بعد المقابلة الشخصية -->
+                        <div class="form-group">
+                            <label for="maxResponseAfterInterview" class="form-label required">
+                                <i class="fas fa-user-clock"></i>
+                                الحد الأقصى للرد على المتدرب بعد المقابلة الشخصية
+                            </label>
+                            <div class="select-wrapper">
+                                <select id="maxResponseAfterInterview" class="form-select" required>
+                                    <option value="">اختر المدة</option>
+                                    <option value="1">يوم واحد</option>
+                                    <option value="2">يومان</option>
+                                    <option value="3">3 أيام</option>
+                                    <option value="5">5 أيام</option>
+                                    <option value="7">أسبوع</option>
+                                    <option value="10">10 أيام</option>
+                                    <option value="14">أسبوعين</option>
+                                </select>
+                                <div class="select-arrow">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                            <div class="form-tips" style="margin-top: 8px;">
+                                <div class="tip-item">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>حدد المدة التي ستستغرقها الشركة للرد على المتدرب بعد إجراء المقابلة الشخصية.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label required">
+                                <i class="fas fa-laptop"></i>
+                                هل توفرون الأجهزة والمعدات؟
+                            </label>
+                            <div class="radio-group">
+                                <div class="radio-card">
+                                    <input type="radio" id="equipmentYes" name="equipment" value="yes" onchange="toggleEquipmentDetails()">
+                                    <label for="equipmentYes" class="radio-content">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>نعم، نوفر جميع المعدات</span>
+                                    </label>
+                                </div>
+                                <div class="radio-card">
+                                    <input type="radio" id="equipmentNo" name="equipment" value="no" onchange="toggleEquipmentDetails()">
+                                    <label for="equipmentNo" class="radio-content">
+                                        <i class="fas fa-times-circle"></i>
+                                        <span>لا، يحتاج المتدرب لإحضار معداته</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width hidden" id="studentRequirementsGroup">
+                            <label for="requiredItems" class="form-label">
+                                <i class="fas fa-laptop-code"></i>
+                                متطلبات التدريب
+                            </label>
+                            <div class="textarea-wrapper">
+                                <textarea id="requiredItems" class="form-textarea" placeholder="ما هي المعدات والأدوات التي يجب على المتدرب إحضارها؟ (مثال: لابتوب شخصي، برامج محددة...)"></textarea>
+                                <div class="textarea-border"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <div class="checkbox-card">
+                                <div class="checkbox-wrapper">
+                                    <input type="checkbox" id="startupCheck">
+                                    <label for="startupCheck" class="checkbox-content">
+                                        <div class="checkbox-icon">
+                                            <i class="fas fa-rocket"></i>
+                                        </div>
+                                        <div class="checkbox-info">
+                                            <h4>شركتي ناشئة (Startup)</h4>
+                                            <p>أنا أسجل شركة ناشئة وتحت التطوير</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- STEP 4 -->
-                <div class="step-section" data-step="4">
+                <!-- Step 5: Summary -->
+                <div class="form-step" data-step="5">
                     <div class="step-header">
-                        <div class="step-icon-big"><i class="fas fa-clipboard-check"></i></div>
+                        <div class="step-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
                         <div class="step-info">
-                            <h2>متطلبات التدريب</h2>
-                            <p>حدد سياسات الرد ومتطلبات المتدرب</p>
+                            <h2 class="step-title">ملخص التسجيل</h2>
+                            <p class="step-description">راجع معلومات شركتك قبل إتمام التسجيل</p>
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="field">
-                            <label class="field-label" for="maxResponseDays">
-                                <i class="fas fa-clock"></i> الحد الأقصى للرد على الطلبات <span class="required">*</span>
-                            </label>
-                            <select id="maxResponseDays" class="field-select">
-                                <option value="">اختر المدة</option>
-                                <option value="3">3 أيام</option>
-                                <option value="5">5 أيام</option>
-                                <option value="7">أسبوع</option>
-                                <option value="10">10 أيام</option>
-                                <option value="14">أسبوعين</option>
-                            </select>
-                            <span class="field-error" id="maxResponseDaysErr"></span>
+                    <!-- Summary Section -->
+                    <section class="summary-section">
+                        <div class="summary-header">
+                            <div class="summary-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="summary-info">
+                                <h3>ملخص التسجيل</h3>
+                                <p>راجع معلومات شركتك قبل إتمام التسجيل</p>
+                            </div>
                         </div>
-                        <div class="field">
-                            <label class="field-label" for="maxResponseAfterInterview">
-                                <i class="fas fa-user-clock"></i> الرد بعد المقابلة <span class="required">*</span>
-                            </label>
-                            <select id="maxResponseAfterInterview" class="field-select">
-                                <option value="">اختر المدة</option>
-                                <option value="1">يوم واحد</option>
-                                <option value="2">يومان</option>
-                                <option value="3">3 أيام</option>
-                                <option value="5">5 أيام</option>
-                                <option value="7">أسبوع</option>
-                                <option value="10">10 أيام</option>
-                                <option value="14">أسبوعين</option>
-                            </select>
-                            <span class="field-error" id="maxResponseAfterInterviewErr"></span>
+                        <div id="summaryContent" class="summary-content">
+                            <div class="summary-loading">
+                                <div class="loading-spinner"></div>
+                                <p>جاري تجهيز الملخص...</p>
+                            </div>
+                        </div>
+                        <div class="final-note">
+                            <i class="fas fa-info-circle"></i>
+                            <p>بعد إتمام التسجيل، ستحصل على إشعار بالبريد الإلكتروني لتأكيد الحساب وتفعيله</p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Step 6: Contracts -->
+                <div class="form-step" data-step="6">
+                    <div class="step-header">
+                        <div class="step-icon">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <div class="step-info">
+                            <h2 class="step-title">الشروط والأحكام</h2>
+                            <p class="step-description">يرجى قراءة والموافقة على شروط وأحكام استخدام منصة Provance</p>
                         </div>
                     </div>
 
-                    <div class="field">
-                        <label class="field-label">
-                            <i class="fas fa-tools"></i> هل المتدرب يحتاج إلى معدات أو أدوات خاصة؟ <span class="required">*</span>
-                        </label>
-                        <div class="radio-cards">
-                            <label>
-                                <input type="radio" name="equipment" value="no" id="equipmentNo" checked>
-                                <div class="radio-card">
-                                    <div class="radio-card-icon"><i class="fas fa-times"></i></div>
-                                    <div class="radio-card-content">
-                                        <div class="radio-card-title">لا، الشركة توفر كل شيء</div>
-                                        <div class="radio-card-desc">المتدرب يحضر بدون أي شيء</div>
+                    <!-- Contract Terms Section -->
+                    <section class="contract-section">
+                        <div class="contract-header">
+                            <h2>شروط وأحكام تسجيل الشركات في منصة ProVance</h2>
+                            <p>هذه الشروط والأحكام تمثل اتفاقية قانونية ملزمة بين منصة ProVance وبين الشركة المسجلة. يرجى قراءتها بعناية قبل الموافقة.</p>
+                        </div>
+
+                        <div class="contract-content">
+
+                            <!-- الشرط الأول -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-check-circle"></i></div>
+                                    <h3 class="obligation-title">الشرط الأول: القبول والالتزام بالشروط</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>باستخدام منصة Provance، يُقر كل من المتدرب والشركة بأنه قد قرأ هذه الشروط والأحكام وفهمها بالكامل، ويوافق على الالتزام بها التزامًا قانونيًا كاملًا دون أي استثناء.</li>
+                                        <li>تحتفظ Provance بالحق في تعديل أو تحديث هذه الشروط في أي وقت، على أن يتم إشعار المستخدمين مسبقًا عبر البريد الإلكتروني أو إشعار داخل المنصة قبل سريان أي تعديل.</li>
+                                        <li>يُعد استمرار استخدام المنصة بعد التعديل موافقة صريحة وملزمة على الشروط المعدلة.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الثاني -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-user-check"></i></div>
+                                    <h3 class="obligation-title">الشرط الثاني: متطلبات التسجيل واستخدام المنصة</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يجب على المتدرب والشركة تقديم بيانات صحيحة ودقيقة وكاملة عند التسجيل، مع الالتزام بتحديثها عند أي تغيير.</li>
+                                        <li>يُمنع إنشاء حسابات وهمية أو تقديم معلومات مضللة أو انتحال أي صفة.</li>
+                                        <li>يحق لـ Provance التحقق من صحة البيانات، ورفض أو تعليق أو إنهاء أي حساب مخالف، مع فرض تعويض مالي مباشر للطرف المتضرر ولـ Provance عند ثبوت المخالفة.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- قسم شروط الشركات أولاً -->
+                            <div class="section-divider">
+                                <i class="fas fa-building"></i>
+                                أولًا: الشروط والأحكام الخاصة بالشركات
+                            </div>
+
+                            <!-- الشرط الثالث -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-clipboard-check"></i></div>
+                                    <h3 class="obligation-title">الشرط الثالث: معايير التدريب والتقييم</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>تلتزم الشركات بتقديم تدريب مهني حقيقي يتوافق مع تخصص المتدرب وأهداف المنصة.</li>
+                                        <li>يُحظر استغلال المتدربين في مهام خارج نطاق التدريب أو تحقيق أي مكاسب مالية مباشرة منهم.</li>
+                                        <li>يجب تقديم تقييمات عادلة وموضوعية تعكس الأداء الحقيقي للمتدرب.</li>
+                                    </ul>
+                                    <div class="obligation-note">
+                                        <p><strong>أي مخالفة تؤدي إلى:</strong></p>
+                                        <ul class="obligation-list">
+                                            <li>حظر الشركة وإدراجها ضمن الشركات المخالفة</li>
+                                            <li>فرض تعويض مالي للمتدرب وProvance</li>
+                                        </ul>
                                     </div>
                                 </div>
-                            </label>
-                            <label>
-                                <input type="radio" name="equipment" value="yes" id="equipmentYes">
-                                <div class="radio-card">
-                                    <div class="radio-card-icon"><i class="fas fa-check"></i></div>
-                                    <div class="radio-card-content">
-                                        <div class="radio-card-title">نعم، نحتاج بعض الأدوات</div>
-                                        <div class="radio-card-desc">المتدرب يحضر معدات معينة</div>
+                            </div>
+
+                            <!-- الشرط الرابع -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-hand-holding-usd"></i></div>
+                                    <h3 class="obligation-title">الشرط الرابع: الرسوم والدفع</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يُمنع على الشركات تحصيل أي مبالغ مالية من المتدربين بشكل مباشر.</li>
+                                        <li>تتم جميع المدفوعات حصريًا من خلال نظام الدفع الداخلي للمنصة.</li>
+                                        <li>أي مخالفة لهذا الشرط تؤدي إلى الحظر الفوري وفرض تعويض مالي كامل.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الخامس -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-building-slash"></i></div>
+                                    <h3 class="obligation-title">الشرط الخامس: إنهاء حساب الشركة</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يحق لـ Provance تعليق أو إنهاء حساب أي شركة تخالف هذه الشروط دون إشعار مسبق.</li>
+                                        <li>لا يحق للشركة المطالبة باسترجاع أي بيانات أو تعويضات بعد الحظر.</li>
+                                        <li>في حال المخالفات الجسيمة أو المتكررة، يتم فرض تعويض مالي مضاعف.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- قسم شروط المتدربين ثانياً -->
+                            <div class="section-divider">
+                                <i class="fas fa-user-graduate"></i>
+                                ثانيًا: الشروط والأحكام الخاصة بالمتدربين
+                            </div>
+
+                            <!-- الشرط السادس -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-tasks"></i></div>
+                                    <h3 class="obligation-title">الشرط السادس: الالتزام بالتدريب</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يلتزم المتدرب بتنفيذ جميع المهام والمتطلبات التدريبية المحددة له وفقًا للمجال الذي تم قبوله فيه.</li>
+                                        <li>يُحظر أي سلوك غير مهني أو مخالف لأهداف التدريب داخل المنصة.</li>
+                                        <li>أي مخالفة تؤدي إلى الحظر الفوري للمتدرب، مع فرض تعويض مالي مباشر للطرف المتضرر وProvance.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط السابع -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-money-bill-wave"></i></div>
+                                    <h3 class="obligation-title">الشرط السابع: الرسوم والدفع</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يدفع المتدرب أي رسوم أو مستحقات مالية من خلال نظام الدفع الداخلي لمنصة Provance فقط.</li>
+                                        <li>يُمنع دفع أي مبالغ مالية مباشرة لأي شركة خارج المنصة.</li>
+                                        <li>أي محاولة للدفع خارج النظام المعتمد تُعد مخالفة جسيمة تؤدي إلى الحظر وفرض تعويض مالي كامل.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الثامن -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-user-slash"></i></div>
+                                    <h3 class="obligation-title">الشرط الثامن: إنهاء حساب المتدرب</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>يحق لـ Provance تعليق أو إنهاء حساب المتدرب في حال مخالفة الشروط.</li>
+                                        <li>لا يحق للمتدرب المطالبة باسترجاع أي بيانات أو محتوى بعد الحظر.</li>
+                                        <li>وفي حال كانت المخالفة جسيمة أو متكررة، يتم فرض تعويض مالي مضاعف.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- البنود العامة -->
+                            <div class="section-divider">
+                                <i class="fas fa-balance-scale"></i>
+                                البنود العامة (المحايدة)
+                            </div>
+
+                            <!-- الشرط التاسع -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-shield-alt"></i></div>
+                                    <h3 class="obligation-title">الشرط التاسع: سرية البيانات وحماية الخصوصية</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>تلتزم Provance بحماية بيانات المتدربين والشركات وفقًا لسياسات الخصوصية المعتمدة.</li>
+                                        <li>يُحظر على أي طرف استخدام أو مشاركة البيانات خارج نطاق المنصة دون موافقة خطية مسبقة.</li>
+                                        <li>بعد انتهاء التدريب، تصبح Provance الجهة الوحيدة المخوّلة بمشاركة تقييمات المتدربين بما يضمن فرصًا عادلة.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط العاشر -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-credit-card"></i></div>
+                                    <h3 class="obligation-title">الشرط العاشر: الرسوم والخدمات الإضافية</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>قد تتضمن بعض الخدمات داخل المنصة رسومًا إضافية.</li>
+                                        <li>يتم توضيح أي رسوم قبل تنفيذ الخدمة.</li>
+                                        <li>أي محاولة للتحايل على النظام المالي تؤدي إلى الحظر وفرض تعويض مالي مباشر.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الحادي عشر -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-gavel"></i></div>
+                                    <h3 class="obligation-title">الشرط الحادي عشر: حقوق Provance وإخلاء المسؤولية</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>تهدف Provance إلى تسهيل التدريب وربط المتدربين بالشركات.</li>
+                                        <li>لا تتحمل المنصة مسؤولية النتائج النهائية للتدريب أو التوظيف.</li>
+                                        <li>تحتفظ Provance بحق تطوير أو تعديل خدماتها في أي وقت.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الثاني عشر -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-globe"></i></div>
+                                    <h3 class="obligation-title">الشرط الثاني عشر: القانون والاختصاص القضائي الدولي</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <ul class="obligation-list">
+                                        <li>تخضع هذه الشروط والأحكام لقوانين الدولة التي يقيم فيها الطرف المستخدم.</li>
+                                        <li>يتم الفصل في أي نزاع أمام الجهة القضائية المختصة في تلك الدولة.</li>
+                                        <li>يُعد هذا العقد ملزمًا وقابلًا للتنفيذ في جميع الدول التي تُستخدم فيها المنصة.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- الشرط الثالث عشر -->
+                            <div class="contract-obligation">
+                                <div class="obligation-header">
+                                    <div class="obligation-icon"><i class="fas fa-file-signature"></i></div>
+                                    <h3 class="obligation-title">الشرط الثالث عشر: الموافقة النهائية</h3>
+                                </div>
+                                <div class="obligation-content">
+                                    <p>باستخدام منصة Provance، يقر كل من المتدرب والشركة بالموافقة الكاملة والنهائية على جميع الشروط والأحكام المذكورة أعلاه والالتزام بها التزامًا قانونيًا كاملًا.</p>
+                                    <div class="obligation-note">
+                                        <p><strong>ملاحظة هامة:</strong> هذه الشروط والأحكام تمثل اتفاقية قانونية ملزمة. يرجى قراءتها بعناية قبل الموافقة.</p>
                                     </div>
                                 </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="field hidden" id="requiredItemsGroup">
-                        <label class="field-label" for="requiredItems">
-                            <i class="fas fa-list"></i> المعدات المطلوبة من المتدرب
-                        </label>
-                        <textarea id="requiredItems" class="field-textarea" rows="3"
-                            placeholder="مثال: لابتوب شخصي، برنامج Photoshop مفعل، سماعات..."></textarea>
-                    </div>
-
-                    <div class="field">
-                        <label class="checkbox-card">
-                            <input type="checkbox" id="startupCheck">
-                            <div class="checkbox-card-content">
-                                <strong><i class="fas fa-rocket" style="color:var(--primary)"></i> هل شركتك ناشئة (Startup)؟</strong>
-                                <small>الشركات الناشئة تظهر بعلامة خاصة وتحصل على ميزات تسويقية</small>
                             </div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- STEP 5 -->
-                <div class="step-section" data-step="5">
-                    <div class="step-header">
-                        <div class="step-icon-big"><i class="fas fa-check-circle"></i></div>
-                        <div class="step-info">
-                            <h2>ملخص التسجيل</h2>
-                            <p>راجع كل البيانات قبل التأكيد النهائي</p>
                         </div>
-                    </div>
-                    <div class="summary-section" id="summaryContent"></div>
-                </div>
 
-                <!-- STEP 6 -->
-                <div class="step-section" data-step="6">
-                    <div class="step-header">
-                        <div class="step-icon-big"><i class="fas fa-file-contract"></i></div>
-                        <div class="step-info">
-                            <h2>الشروط والأحكام</h2>
-                            <p>اقرأ الشروط بعناية ووافق عليها لإتمام التسجيل</p>
-                        </div>
-                    </div>
-
-                    <div class="contract-section">
-                        <h3>المادة الأولى: التزامات الشركة</h3>
-                        <ul>
-                            <li>توفير بيئة تدريب آمنة ومناسبة للمتدربين</li>
-                            <li>الالتزام بمواعيد التدريب المعلنة على المنصة</li>
-                            <li>عدم استغلال المتدربين في أعمال غير مرتبطة بالتدريب</li>
-                            <li>توفير مشرف مؤهل لمتابعة المتدربين</li>
-                            <li>إصدار شهادة تدريب رسمية للمتدربين عند انتهاء البرنامج</li>
-                        </ul>
-                        <h3>المادة الثانية: سرية البيانات</h3>
-                        <p>تتعهد الشركة بالحفاظ على سرية بيانات المتدربين الشخصية وعدم استخدامها خارج إطار عملية التدريب أو مشاركتها مع أطراف خارجية بدون موافقتهم.</p>
-                        <h3>المادة الثالثة: حقوق المتدرب</h3>
-                        <ul>
-                            <li>الحصول على فرصة تدريب فعلية ومفيدة</li>
-                            <li>حماية حقوق الملكية الفكرية للأعمال التي ينتجها</li>
-                            <li>الحق في تقديم شكوى للإدارة في حال أي تجاوزات</li>
-                            <li>الحصول على شهادة تثبت فترة التدريب</li>
-                        </ul>
-                        <h3>المادة الرابعة: المسؤولية القانونية</h3>
-                        <p>تتحمل الشركة المسؤولية الكاملة عن أي إصابة أو ضرر يقع للمتدرب أثناء تواجده في مقر الشركة أو أثناء أداء مهام التدريب.</p>
-                        <h3>المادة الخامسة: المراجعة والاعتماد</h3>
-                        <p>تقوم إدارة منصة <strong>ProVance</strong> بمراجعة طلب التسجيل خلال 2-5 أيام عمل، ويحق للإدارة طلب أي مستندات إضافية للتحقق من صحة بيانات الشركة.</p>
-                        <h3>المادة السادسة: الإيقاف</h3>
-                        <p>يحق لإدارة المنصة إيقاف حساب الشركة في حال مخالفة الشروط أو ورود شكاوى متكررة من المتدربين بدون أي تعويض.</p>
-                        <h3>المادة السابعة: التعديل</h3>
-                        <p>تحتفظ منصة ProVance بحقها في تعديل هذه الشروط وسيتم إخطار الشركات المسجلة بأي تعديل قبل تطبيقه بـ 30 يوم.</p>
-                    </div>
-
-                    <div class="field">
-                        <label class="checkbox-card">
-                            <input type="checkbox" id="contractAgreement">
-                            <div class="checkbox-card-content">
-                                <strong>أوافق على الشروط والأحكام</strong>
-                                <small>أقر بأنني قرأت جميع البنود ووافقت عليها وأن جميع البيانات المُدخلة صحيحة وأتحمل المسؤولية القانونية الكاملة</small>
+                        <!-- Agreement Section -->
+                        <div class="contract-agreement">
+                            <div class="agreement-checkbox">
+                                <div class="checkbox-card">
+                                    <div class="checkbox-wrapper">
+                                        <input type="checkbox" id="contractAgreement" required>
+                                        <label for="contractAgreement" class="checkbox-content">
+                                            <div class="checkbox-icon">
+                                                <i class="fas fa-file-contract"></i>
+                                            </div>
+                                            <div class="checkbox-info">
+                                                <h4>أوافق على شروط وأحكام الاستخدام</h4>
+                                                <p>أقر بأنني قد قرأت وفهمت جميع الشروط والأحكام وأوافق على الالتزام بها بشكل كامل</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
-                        </label>
-                    </div>
+                            <div class="final-note">
+                                <i class="fas fa-info-circle"></i>
+                                <p>بعد الموافقة على الشروط والأحكام، سيتم إتمام عملية التسجيل وإنشاء حساب شركتك في منصة Provance</p>
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
-                <div class="navigation">
-                    <button type="button" class="btn-nav btn-prev hidden" id="btnPrev" onclick="previousStep()">
-                        <i class="fas fa-arrow-right"></i><span>السابق</span>
+                <!-- Form Navigation -->
+                <div class="form-navigation">
+                    <button type="button" id="btnPrev" class="btn-nav btn-prev" onclick="previousStep()">
+                        <i class="fas fa-arrow-right"></i>
+                        <span>السابق</span>
                     </button>
-                    <button type="button" class="btn-nav btn-next" id="btnNext" onclick="nextStep()">
-                        <span class="txt">التالي</span>
-                        <i class="fas fa-arrow-left arrow"></i>
+                    <button type="button" id="btnNext" class="btn-nav btn-next" onclick="nextStep()">
+                        <span>التالي</span>
+                        <i class="fas fa-arrow-left"></i>
                     </button>
-                    <button type="submit" class="btn-nav btn-submit hidden" id="btnSubmit">
-                        <span class="txt">تأكيد التسجيل</span>
-                        <i class="fas fa-check arrow"></i>
-                        <i class="fas fa-spinner fa-spin spinner"></i>
+                    <button type="submit" id="btnSubmit" class="btn-nav btn-submit hidden">
+                        <i class="fas fa-check"></i>
+                        <span>إتمام التسجيل</span>
                     </button>
                 </div>
             </form>
-
-            <p class="login-link">
-                لديك حساب بالفعل؟ <a href="company-login.html">تسجيل الدخول</a>
-            </p>
         </div>
-    </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        <div class="footer-content">
+            <p>© 2023 ProVance. جميع الحقوق محفوظة</p>
+            <div class="footer-links">
+                <a href="#">الشروط والأحكام</a>
+                <a href="#">سياسة الخصوصية</a>
+                <a href="#">الدعم والمساعدة</a>
+            </div>
+        </div>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
+    <script src="company-register-script.js"></script>
     <script>
-    (function() {
-        'use strict';
-
-        // ============================================================
-        // 🛡️ SAFETY FALLBACKS - في حالة supabase-config.js مش متحمل
-        // ============================================================
-        if (!window.ProVance) {
-            console.error('⚠️ window.ProVance غير معرّف! supabase-config.js مش متحمل صح');
-            window.ProVance = {};
-        }
-        if (typeof window.ProVance.isValidEmail !== 'function') {
-            window.ProVance.isValidEmail = function(email) {
-                if (!email) return false;
-                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-            };
-        }
-        if (typeof window.ProVance.isValidEgyptianPhone !== 'function') {
-            window.ProVance.isValidEgyptianPhone = function(phone) {
-                if (!phone) return false;
-                const clean = phone.replace(/[\s\-+]/g, '');
-                return /^(2?01[0125]\d{8})$/.test(clean);
-            };
-        }
-        if (typeof window.ProVance.escapeHtml !== 'function') {
-            window.ProVance.escapeHtml = function(s) {
-                return String(s || '').replace(/[&<>"']/g, function(c) {
-                    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
-                });
-            };
-        }
-        if (typeof window.ProVance.showToast !== 'function') {
-            window.ProVance.showToast = function(msg, type) {
-                console.log('[Toast ' + (type||'info') + ']', msg);
-                var toast = document.createElement('div');
-                var colors = { error: '#ef4444', success: '#10b981', warning: '#f59e0b', info: '#4facfe' };
-                toast.style.cssText =
-                    'position:fixed;top:20px;left:50%;transform:translateX(-50%);' +
-                    'background:' + (colors[type] || '#4facfe') + ';color:#fff;' +
-                    'padding:14px 24px;border-radius:12px;' +
-                    'font-family:Cairo,sans-serif;font-weight:700;' +
-                    'box-shadow:0 10px 30px rgba(0,0,0,0.3);z-index:9999;';
-                toast.textContent = msg;
-                document.body.appendChild(toast);
-                setTimeout(function(){ toast.remove(); }, 4000);
-            };
-        }
-
-        console.log('✅ Form initialized successfully');
-        const TOTAL_STEPS = 6;
-        const STEP_NAMES = ['', 'المعلومات الأساسية', 'معلومات الاتصال', 'المجالات التدريبية', 'متطلبات التدريب', 'ملخص التسجيل', 'الشروط والأحكام'];
-        let currentStep = 1;
-        let logoBase64 = null;
-        let branches = [];
-        let trainingFields = [];
-        let trainingDetails = {};
-
-        function escapeHtml(s) {
-            return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-        }
-        // قائمة الأخطاء في الخطوة الحالية
-        let stepErrors = [];
-
-        function showErr(id, msg) {
-            stepErrors.push({ id, msg });
-            const errEl = document.getElementById(id + 'Err');
-            const inp = document.getElementById(id);
-            if (errEl) errEl.textContent = msg;
-            if (inp) {
-                inp.style.borderColor = 'var(--error)';
-                inp.classList.add('shake');
-                setTimeout(() => inp.classList.remove('shake'), 400);
-            }
-        }
-        function clearErr(id) {
-            const errEl = document.getElementById(id + 'Err');
-            const inp = document.getElementById(id);
-            if (errEl) errEl.textContent = '';
-            if (inp) inp.style.borderColor = '';
-        }
-
-        // Banner لعرض ملخص الأخطاء أعلى الفورم
-        function showErrorBanner() {
-            let banner = document.getElementById('errorBanner');
-            if (!banner) {
-                banner = document.createElement('div');
-                banner.id = 'errorBanner';
-                banner.style.cssText = `
-                    background: rgba(239,68,68,0.1);
-                    border: 1.5px solid rgba(239,68,68,0.4);
-                    border-radius: 12px;
-                    padding: 14px 18px;
-                    margin-bottom: 18px;
-                    color: #fca5a5;
-                    font-size: 0.92rem;
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 10px;
-                    animation: stepIn .3s ease-out;
-                `;
-                const card = document.querySelector('.card');
-                const progressSec = card.querySelector('.progress-section');
-                progressSec.after(banner);
-            }
-
-            const errCount = stepErrors.length;
-            const firstErr = stepErrors[0];
-            banner.innerHTML = `
-                <i class="fas fa-exclamation-triangle" style="font-size:1.2rem; color:var(--error); flex-shrink:0; margin-top:2px;"></i>
-                <div style="flex:1">
-                    <strong style="color:var(--error); display:block; margin-bottom:4px;">
-                        ${errCount === 1 ? 'فيه حقل محتاج تظبطه' : `فيه ${errCount} حقول محتاجين تظبطهم`}
-                    </strong>
-                    <div style="font-size:0.88rem;">
-                        ${firstErr ? '👈 ' + firstErr.msg : ''}
-                        ${errCount > 1 ? `<br><small style="color:var(--text-muted)">و ${errCount - 1} مشاكل تانية في الخانات اللي بالأحمر</small>` : ''}
-                    </div>
-                </div>
-                <button onclick="document.getElementById('errorBanner').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;padding:0;flex-shrink:0;">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            try { if (banner && banner.scrollIntoView) banner.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) { console.warn('scroll failed', e); }
-        }
-
-        function clearErrorBanner() {
-            const banner = document.getElementById('errorBanner');
-            if (banner) banner.remove();
-        }
-
-        // Banner مخصص لأخطاء السيرفر (signup failed, network error, إلخ)
-        function showServerErrorBanner(message) {
-            let banner = document.getElementById('errorBanner');
-            if (!banner) {
-                banner = document.createElement('div');
-                banner.id = 'errorBanner';
-                banner.style.cssText = `
-                    background: rgba(239,68,68,0.1);
-                    border: 1.5px solid rgba(239,68,68,0.4);
-                    border-radius: 12px;
-                    padding: 14px 18px;
-                    margin-bottom: 18px;
-                    color: #fca5a5;
-                    font-size: 0.92rem;
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 10px;
-                    animation: stepIn .3s ease-out;
-                `;
-                const card = document.querySelector('.card');
-                const progressSec = card.querySelector('.progress-section');
-                progressSec.after(banner);
-            }
-            banner.innerHTML = `
-                <i class="fas fa-times-circle" style="font-size:1.3rem; color:var(--error); flex-shrink:0; margin-top:2px;"></i>
-                <div style="flex:1">
-                    <strong style="color:var(--error); display:block; margin-bottom:4px;">حصل خطأ في التسجيل</strong>
-                    <div style="font-size:0.9rem; line-height:1.5;">${message}</div>
-                </div>
-                <button onclick="document.getElementById('errorBanner').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;padding:0;flex-shrink:0;">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            try { if (banner && banner.scrollIntoView) banner.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) { console.warn('scroll failed', e); }
-        }
-
-        function focusFirstError() {
-            if (stepErrors.length === 0) return;
-            const firstId = stepErrors[0].id;
-            const inp = document.getElementById(firstId);
-            if (inp) {
-                setTimeout(() => {
-                    try { if (inp && inp.scrollIntoView) inp.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e){}
-                    try { inp.focus({ preventScroll: true }); } catch(e) {}
-                }, 350);
-            }
-        }
-        function updateProgress() {
-            const pct = (currentStep / TOTAL_STEPS) * 100;
-            document.getElementById('progressFill').style.width = pct + '%';
-            document.getElementById('currentStep').textContent = currentStep;
-            document.getElementById('currentStepName').textContent = STEP_NAMES[currentStep] || '';
-            document.getElementById('btnPrev').classList.toggle('hidden', currentStep === 1);
-            document.getElementById('btnNext').classList.toggle('hidden', currentStep === TOTAL_STEPS);
-            document.getElementById('btnSubmit').classList.toggle('hidden', currentStep !== TOTAL_STEPS);
-        }
-        function showStep(n) {
-            document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
-            document.querySelector(`[data-step="${n}"]`).classList.add('active');
-            currentStep = n;
-            updateProgress();
-            try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) { try { window.scrollTo(0, 0); } catch(e2){} }
-            if (n === 5) generateSummary();
-        }
-        function validateStep(n) {
-            stepErrors = []; // إعادة تعيين الأخطاء
-            clearErrorBanner();
-            let ok = true;
-            if (n === 1) {
-                ['companyName','companyBio','companyLocation','companyField','employeesCount','email','password','confirmPassword'].forEach(clearErr);
-                const name = document.getElementById('companyName').value.trim();
-                const bio = document.getElementById('companyBio').value.trim();
-                const loc = document.getElementById('companyLocation').value.trim();
-                const field = document.getElementById('companyField').value.trim();
-                const employees = document.getElementById('employeesCount').value;
-                const email = document.getElementById('email').value.trim().toLowerCase();
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                if (!name || name.length < 2) { showErr('companyName', 'اسم الشركة مطلوب'); ok = false; }
-                if (!bio) { showErr('companyBio', 'النبذة عن الشركة مطلوبة'); ok = false; }
-                else if (bio.length < 100) { showErr('companyBio', `النبذة لازم 100 حرف على الأقل (دلوقتي ${bio.length} حرف)`); ok = false; }
-                else if (bio.length > 500) { showErr('companyBio', 'النبذة 500 حرف كحد أقصى'); ok = false; }
-                if (!loc) { showErr('companyLocation', 'المدينة الرئيسية مطلوبة'); ok = false; }
-                if (!field) { showErr('companyField', 'مجال الشركة مطلوب'); ok = false; }
-                if (!employees) { showErr('employeesCount', 'اختر فئة عدد الموظفين'); ok = false; }
-                if (!email) { showErr('email', 'البريد الإلكتروني مطلوب'); ok = false; }
-                else if (!window.ProVance.isValidEmail(email)) { showErr('email', 'صيغة البريد غير صحيحة (مثال: name@example.com)'); ok = false; }
-                if (!password) { showErr('password', 'كلمة المرور مطلوبة'); ok = false; }
-                else if (password.length < 8) { showErr('password', 'كلمة المرور لازم 8 أحرف على الأقل'); ok = false; }
-                if (!confirmPassword) { showErr('confirmPassword', 'تأكيد كلمة المرور مطلوب'); ok = false; }
-                else if (password !== confirmPassword) { showErr('confirmPassword', 'كلمتا المرور غير متطابقتين'); ok = false; }
-            }
-            else if (n === 2) {
-                ['primaryPhone','inquiryEmail'].forEach(clearErr);
-                const phone = document.getElementById('primaryPhone').value.trim();
-                const inquiryEmail = document.getElementById('inquiryEmail').value.trim().toLowerCase();
-                if (!phone) { showErr('primaryPhone', 'رقم الهاتف الأساسي مطلوب'); ok = false; }
-                else if (!window.ProVance.isValidEgyptianPhone(phone)) { showErr('primaryPhone', 'رقم هاتف مصري صحيح (يبدأ بـ 010 / 011 / 012 / 015)'); ok = false; }
-                if (!inquiryEmail) { showErr('inquiryEmail', 'بريد الاستفسارات مطلوب'); ok = false; }
-                else if (!window.ProVance.isValidEmail(inquiryEmail)) { showErr('inquiryEmail', 'صيغة البريد غير صحيحة'); ok = false; }
-            }
-            else if (n === 3) {
-                clearErr('trainingFields');
-                if (trainingFields.length === 0) { showErr('trainingFields', 'لازم تضيف مجال تدريب واحد على الأقل (اكتبه واضغط إضافة)'); ok = false; }
-            }
-            else if (n === 4) {
-                ['maxResponseDays','maxResponseAfterInterview'].forEach(clearErr);
-                if (!document.getElementById('maxResponseDays').value) { showErr('maxResponseDays', 'حدد مدة الرد على الطلبات'); ok = false; }
-                if (!document.getElementById('maxResponseAfterInterview').value) { showErr('maxResponseAfterInterview', 'حدد مدة الرد بعد المقابلة'); ok = false; }
-            }
-            else if (n === 6) {
-                if (!document.getElementById('contractAgreement').checked) {
-                    window.ProVance.showToast('⚠️ لازم توافق على الشروط والأحكام أولاً', 'warning');
-                    const cb = document.getElementById('contractAgreement');
-                    if (cb) {
-                        const card = cb.closest('.checkbox-card');
-                        if (card) {
-                            card.style.borderColor = 'var(--error)';
-                            card.classList.add('shake');
-                            try { if (card && card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e){}
-                            setTimeout(() => card.classList.remove('shake'), 400);
-                        }
-                    }
-                    ok = false;
+        // دالة جديدة لتحديث متطلبات التدريب
+        function updateTrainingRequirements(field, value) {
+            if (state.trainingDetails[field]) {
+                state.trainingDetails[field].trainingRequirements = AdvancedValidator.sanitize(value);
+                
+                if (value) {
+                    notificationSystem.show(
+                        'تم التحديث',
+                        `تم تحديث متطلبات التدريب لـ "${field}"`,
+                        'success'
+                    );
                 }
-            }
-
-            // لو فيه أخطاء، اعرض banner + toast + focus
-            if (!ok && stepErrors.length > 0) {
-                showErrorBanner();
-                window.ProVance.showToast(`❌ ${stepErrors[0].msg}`, 'error');
-                focusFirstError();
-            }
-
-            return ok;
-        }
-
-        window.nextStep = function() {
-            try {
-                if (!validateStep(currentStep)) return;
-                clearErrorBanner();
-                if (currentStep < TOTAL_STEPS) showStep(currentStep + 1);
-            } catch (err) {
-                console.error('nextStep error:', err);
-                if (window.ProVance && window.ProVance.showToast) {
-                    window.ProVance.showToast('حدث خطأ، حاول تاني', 'error');
-                } else {
-                    alert('حدث خطأ، حاول تاني');
-                }
-            }
-        };
-        window.previousStep = function() {
-            try {
-                clearErrorBanner();
-                if (currentStep > 1) showStep(currentStep - 1);
-            } catch (err) { console.error('previousStep error:', err); }
-        };
-
-        document.getElementById('companyLogo').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (file.size > 2 * 1024 * 1024) {
-                window.ProVance.showToast('الحجم أكبر من 2 ميجا', 'error');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                logoBase64 = ev.target.result;
-                document.getElementById('logoCircle').innerHTML = `
-                    <img src="${logoBase64}" alt="Logo">
-                    <div class="logo-circle-overlay"><i class="fas fa-cloud-upload-alt"></i></div>
-                `;
-                document.getElementById('logoCircle').onclick = () => document.getElementById('companyLogo').click();
-                document.getElementById('logoRemoveBtn').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        });
-        window.removeLogo = () => {
-            logoBase64 = null;
-            document.getElementById('companyLogo').value = '';
-            document.getElementById('logoCircle').innerHTML = `
-                <i class="fas fa-camera"></i>
-                <div class="logo-circle-overlay"><i class="fas fa-cloud-upload-alt"></i></div>
-            `;
-            document.getElementById('logoCircle').onclick = () => document.getElementById('companyLogo').click();
-            document.getElementById('logoRemoveBtn').classList.add('hidden');
-        };
-
-        document.getElementById('companyBio').addEventListener('input', (e) => {
-            const len = e.target.value.length;
-            const counter = document.getElementById('bioCounter');
-            counter.textContent = len;
-            const wrap = counter.closest('.field-counter');
-            wrap.classList.remove('warn', 'err');
-            if (len < 100) wrap.classList.add('warn');
-            else if (len > 500) wrap.classList.add('err');
-        });
-        document.getElementById('companyField').addEventListener('input', (e) => {
-            document.getElementById('fieldCounter').textContent = e.target.value.length;
-        });
-
-        document.querySelectorAll('input[name="hasMultipleBranches"]').forEach(r => {
-            r.addEventListener('change', () => {
-                document.getElementById('branchesGroup').classList.toggle('hidden', r.value !== 'yes' || !r.checked);
-            });
-        });
-        window.addBranch = () => {
-            const inp = document.getElementById('newBranch');
-            const val = inp.value.trim();
-            if (!val) return;
-            branches.push(val);
-            inp.value = '';
-            renderBranches();
-        };
-        function renderBranches() {
-            const list = document.getElementById('branchesList');
-            if (branches.length === 0) {
-                list.innerHTML = '<p class="empty-tags">لم تتم إضافة فروع بعد</p>';
-                return;
-            }
-            list.innerHTML = branches.map((b, i) => `
-                <div class="branch-item">
-                    <span><i class="fas fa-map-marker-alt" style="color:var(--primary)"></i> ${escapeHtml(b)}</span>
-                    <button type="button" class="btn-small danger" onclick="removeBranch(${i})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `).join('');
-        }
-        window.removeBranch = (i) => { branches.splice(i, 1); renderBranches(); };
-        document.getElementById('newBranch').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); addBranch(); }
-        });
-
-        document.getElementById('employeesCount').addEventListener('change', (e) => {
-            document.getElementById('exactEmployeesGroup').classList.toggle('hidden', e.target.value !== 'more');
-        });
-        document.querySelectorAll('input[name="trainingType"]').forEach(r => {
-            r.addEventListener('change', () => {
-                document.getElementById('trainingPriceGroup').classList.toggle('hidden', r.value !== 'paid' || !r.checked);
-            });
-        });
-
-        window.addTrainingField = () => {
-            const inp = document.getElementById('newTrainingField');
-            const val = inp.value.trim();
-            if (!val) return;
-            if (trainingFields.includes(val)) {
-                window.ProVance.showToast('هذا المجال مضاف بالفعل', 'warning');
-                return;
-            }
-            trainingFields.push(val);
-            trainingDetails[val] = trainingDetails[val] || { trainees: '', duration: '' };
-            inp.value = '';
-            renderTrainingFields();
-            renderTrainingDetails();
-        };
-        function renderTrainingFields() {
-            const list = document.getElementById('trainingFieldsList');
-            if (trainingFields.length === 0) {
-                list.innerHTML = '<p class="empty-tags">لم تتم إضافة مجالات بعد</p>';
-                return;
-            }
-            list.innerHTML = trainingFields.map((f, i) => `
-                <span class="field-tag">
-                    ${escapeHtml(f)}
-                    <button type="button" class="field-tag-remove" onclick="removeTrainingField(${i})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </span>
-            `).join('');
-        }
-        window.removeTrainingField = (i) => {
-            const removed = trainingFields[i];
-            trainingFields.splice(i, 1);
-            delete trainingDetails[removed];
-            renderTrainingFields();
-            renderTrainingDetails();
-        };
-        function renderTrainingDetails() {
-            const sec = document.getElementById('trainingDetailsSection');
-            const list = document.getElementById('trainingDetailsList');
-            if (trainingFields.length === 0) { sec.classList.add('hidden'); return; }
-            sec.classList.remove('hidden');
-            list.innerHTML = trainingFields.map((f) => `
-                <div class="training-detail-card">
-                    <div class="training-detail-header">
-                        <span class="training-detail-name"><i class="fas fa-tag"></i> ${escapeHtml(f)}</span>
-                    </div>
-                    <div class="form-row">
-                        <div class="field" style="margin-bottom:0">
-                            <label class="field-label">عدد المتدربين المتاح</label>
-                            <input type="number" class="field-input" min="1" placeholder="مثال: 5"
-                                value="${trainingDetails[f]?.trainees || ''}"
-                                onchange="setTrainingDetail('${escapeHtml(f).replace(/'/g, "\\'")}', 'trainees', this.value)">
-                        </div>
-                        <div class="field" style="margin-bottom:0">
-                            <label class="field-label">مدة التدريب</label>
-                            <input type="text" class="field-input" placeholder="مثال: 3 شهور"
-                                value="${trainingDetails[f]?.duration || ''}"
-                                onchange="setTrainingDetail('${escapeHtml(f).replace(/'/g, "\\'")}', 'duration', this.value)">
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-        window.setTrainingDetail = (field, key, value) => {
-            if (!trainingDetails[field]) trainingDetails[field] = {};
-            trainingDetails[field][key] = value;
-        };
-        document.getElementById('newTrainingField').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); addTrainingField(); }
-        });
-        document.querySelectorAll('input[name="equipment"]').forEach(r => {
-            r.addEventListener('change', () => {
-                document.getElementById('requiredItemsGroup').classList.toggle('hidden', r.value !== 'yes' || !r.checked);
-            });
-        });
-        document.querySelectorAll('.toggle-pass').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const target = document.getElementById(btn.dataset.target);
-                const isPass = target.type === 'password';
-                target.type = isPass ? 'text' : 'password';
-                btn.innerHTML = `<i class="fas fa-${isPass ? 'eye-slash' : 'eye'}"></i>`;
-            });
-        });
-        function checkPasswordMatch() {
-            const p = document.getElementById('password').value;
-            const c = document.getElementById('confirmPassword').value;
-            const m = document.getElementById('passwordMatch');
-            if (!c) { m.innerHTML = ''; m.className = 'password-match'; return; }
-            if (p === c) {
-                m.innerHTML = '<i class="fas fa-check"></i> كلمتا المرور متطابقتان';
-                m.className = 'password-match match';
-            } else {
-                m.innerHTML = '<i class="fas fa-times"></i> كلمتا المرور غير متطابقتين';
-                m.className = 'password-match nomatch';
+                saveStateToStorage();
             }
         }
-        document.getElementById('password').addEventListener('input', checkPasswordMatch);
-        document.getElementById('confirmPassword').addEventListener('input', checkPasswordMatch);
 
-        function generateSummary() {
-            const v = (id) => document.getElementById(id)?.value || '-';
-            const sumContent = document.getElementById('summaryContent');
-            const employees = v('employeesCount');
-            const employeesText = {
-                '1-10': '1 - 10', '11-50': '11 - 50', '51-200': '51 - 200',
-                '201-500': '201 - 500', 'more': v('exactEmployeeCount') || 'أكثر من 500'
-            }[employees] || employees;
-            const branchesYes = document.getElementById('branchesYes')?.checked;
-            const trainingType = document.querySelector('input[name="trainingType"]:checked')?.value;
-            const equipment = document.querySelector('input[name="equipment"]:checked')?.value;
-
-            sumContent.innerHTML = `
-                <div class="summary-block">
-                    <div class="summary-block-title"><i class="fas fa-info-circle"></i> المعلومات الأساسية</div>
-                    ${logoBase64 ? `<div style="text-align:center;margin-bottom:12px"><img src="${logoBase64}" style="width:80px;height:80px;border-radius:50%;object-fit:cover"></div>` : ''}
-                    <div class="summary-row"><span class="label">اسم الشركة</span><span class="value">${escapeHtml(v('companyName'))}</span></div>
-                    <div class="summary-row"><span class="label">المجال</span><span class="value">${escapeHtml(v('companyField'))}</span></div>
-                    <div class="summary-row"><span class="label">المدينة</span><span class="value">${escapeHtml(v('companyLocation'))}</span></div>
-                    <div class="summary-row"><span class="label">عدد الموظفين</span><span class="value">${employeesText}</span></div>
-                    <div class="summary-row"><span class="label">الفروع</span><span class="value">${branchesYes ? branches.length + ' فروع' : 'فرع واحد'}</span></div>
-                    ${branchesYes && branches.length ? `<div class="summary-row"><span class="label">عناوين الفروع</span><span class="value">${branches.map(escapeHtml).join('، ')}</span></div>` : ''}
-                </div>
-                <div class="summary-block">
-                    <div class="summary-block-title"><i class="fas fa-address-book"></i> الاتصال</div>
-                    <div class="summary-row"><span class="label">البريد</span><span class="value" style="direction:ltr">${escapeHtml(v('email'))}</span></div>
-                    <div class="summary-row"><span class="label">الهاتف الأساسي</span><span class="value" style="direction:ltr">${escapeHtml(v('primaryPhone'))}</span></div>
-                    ${v('secondaryPhone')!=='-' && v('secondaryPhone')?`<div class="summary-row"><span class="label">هاتف ثانوي</span><span class="value" style="direction:ltr">${escapeHtml(v('secondaryPhone'))}</span></div>`:''}
-                    ${v('whatsappNumber')!=='-' && v('whatsappNumber')?`<div class="summary-row"><span class="label">واتساب</span><span class="value" style="direction:ltr">${escapeHtml(v('whatsappNumber'))}</span></div>`:''}
-                    <div class="summary-row"><span class="label">بريد الاستفسارات</span><span class="value" style="direction:ltr">${escapeHtml(v('inquiryEmail'))}</span></div>
-                    ${v('website')!=='-' && v('website')?`<div class="summary-row"><span class="label">الموقع</span><span class="value" style="direction:ltr">${escapeHtml(v('website'))}</span></div>`:''}
-                    ${v('linkedinUrl')!=='-' && v('linkedinUrl')?`<div class="summary-row"><span class="label">LinkedIn</span><span class="value" style="direction:ltr">${escapeHtml(v('linkedinUrl'))}</span></div>`:''}
-                </div>
-                <div class="summary-block">
-                    <div class="summary-block-title"><i class="fas fa-graduation-cap"></i> التدريب</div>
-                    <div class="summary-row"><span class="label">نوع التدريب</span><span class="value">${trainingType === 'paid' ? 'مدفوع - ' + (v('trainingPrice')||'-') : 'مجاني'}</span></div>
-                    <div class="summary-row"><span class="label">المجالات</span><span class="value">${trainingFields.map(escapeHtml).join('، ') || '-'}</span></div>
-                    <div class="summary-row"><span class="label">مدة الرد على الطلبات</span><span class="value">${v('maxResponseDays')} أيام</span></div>
-                    <div class="summary-row"><span class="label">الرد بعد المقابلة</span><span class="value">${v('maxResponseAfterInterview')} أيام</span></div>
-                    <div class="summary-row"><span class="label">معدات المتدرب</span><span class="value">${equipment === 'yes' ? 'يحتاج معدات' : 'الشركة توفر كل شيء'}</span></div>
-                    ${document.getElementById('startupCheck').checked ? '<div class="summary-row"><span class="label">شركة ناشئة</span><span class="value">✓ نعم</span></div>' : ''}
-                </div>
-            `;
-        }
-
-        document.getElementById('companyRegisterForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!validateStep(6)) return;
-            const btn = document.getElementById('btnSubmit');
-            btn.classList.add('loading');
-            btn.disabled = true;
-            const v = (id) => document.getElementById(id)?.value?.trim() || null;
-            const employees = v('employeesCount');
-            let employeesValue = employees;
-            if (employees === 'more') employeesValue = v('exactEmployeeCount') || 'more';
-            const trainingType = document.querySelector('input[name="trainingType"]:checked')?.value;
-            const equipment = document.querySelector('input[name="equipment"]:checked')?.value;
-            const branchesYes = document.getElementById('branchesYes')?.checked;
-
-            const data = {
-                company_name: v('companyName'),
-                company_bio: v('companyBio'),
-                company_field: v('companyField'),
-                company_location: v('companyLocation'),
-                employees_count: employeesValue,
-                logo: logoBase64,
-                website: v('website'),
-                email: v('email')?.toLowerCase(),
-                primary_phone: v('primaryPhone'),
-                secondary_phone: v('secondaryPhone'),
-                whatsapp: v('whatsappNumber'),
-                inquiry_email: v('inquiryEmail')?.toLowerCase(),
-                linkedin: v('linkedinUrl'),
-                facebook: v('facebookUrl'),
-                training_fields: trainingFields,
-                training_details: trainingDetails,
-                training_price: trainingType === 'paid' ? v('trainingPrice') : null,
-                training_currency: 'EGP',
-                training_notes: equipment === 'yes' ? v('requiredItems') : null,
-                branch_locations: branchesYes ? branches : [],
-                is_startup: document.getElementById('startupCheck').checked,
-                max_response_days: parseInt(v('maxResponseDays')) || 7,
-                status: 'pending',
-                agreed_at: new Date().toISOString()
-            };
-            const password = document.getElementById('password').value;
-
-            try {
-                // استنى لحد ما الـ supabase config يحمّل (لو لسه مش محمّل)
-                let sb = window.ProVance && window.ProVance.sb;
-                if (!sb || typeof sb.from !== 'function') {
-                    const start = Date.now();
-                    while (Date.now() - start < 5000) {
-                        await new Promise(r => setTimeout(r, 100));
-                        sb = window.ProVance && window.ProVance.sb;
-                        if (sb && typeof sb.from === 'function') break;
-                    }
-                }
-                if (!sb || typeof sb.from !== 'function') {
-                    const msg = '⏳ جاري تحميل النظام، يرجى الانتظار قليلاً ثم المحاولة مرة أخرى';
-                    window.ProVance.showToast(msg, 'warning');
-                    showServerErrorBanner(msg);
-                    btn.classList.remove('loading');
-                    btn.disabled = false;
-                    return;
-                }
-                const { data: authData, error: authErr } = await sb.auth.signUp({
-                    email: data.email,
-                    password: password
-                });
-                if (authErr) {
-                    console.error('Auth error:', authErr);
-                    let msg = 'حدث خطأ في إنشاء الحساب، حاول تاني';
-                    const errMsg = (authErr.message || '').toLowerCase();
-                    if (errMsg.includes('already registered') || errMsg.includes('already been registered')) {
-                        msg = '⚠️ البريد ده مسجل قبل كده. لو دي شركتك جرب تسجيل الدخول، أو استخدم بريد تاني';
-                    } else if (errMsg.includes('invalid email')) {
-                        msg = '⚠️ البريد الإلكتروني غير صحيح';
-                    } else if (errMsg.includes('password') && errMsg.includes('weak')) {
-                        msg = '⚠️ كلمة المرور ضعيفة جداً، استخدم 8 أحرف على الأقل مع أرقام';
-                    } else if (errMsg.includes('rate limit') || errMsg.includes('too many')) {
-                        msg = '⚠️ محاولات كتيرة، استنى دقيقتين وحاول تاني';
-                    } else if (errMsg.includes('network') || errMsg.includes('fetch')) {
-                        msg = '⚠️ مشكلة في الاتصال بالنت، تأكد من الاتصال وحاول تاني';
-                    } else if (authErr.message) {
-                        msg = '⚠️ خطأ: ' + authErr.message;
-                    }
-                    window.ProVance.showToast(msg, 'error');
-                    // عرض banner برضو
-                    showServerErrorBanner(msg);
-                    btn.classList.remove('loading');
-                    btn.disabled = false;
-                    return;
-                }
-                const { error: profileErr } = await sb.from('companies').insert({
-                    user_id: authData.user.id,
-                    ...data
-                });
-                if (profileErr) {
-                    console.error('Profile error:', profileErr);
-                    let msg = 'حدث خطأ في حفظ بيانات الشركة';
-                    const pErr = (profileErr.message || '').toLowerCase();
-                    if (pErr.includes('duplicate') || pErr.includes('unique')) {
-                        msg = '⚠️ البيانات دي مسجلة قبل كده';
-                    } else if (pErr.includes('violates row-level security') || pErr.includes('rls')) {
-                        msg = '⚠️ مش مصرح لك بإتمام التسجيل، تواصل مع الإدارة';
-                    } else if (profileErr.message) {
-                        msg = '⚠️ خطأ في الحفظ: ' + profileErr.message;
-                    }
-                    window.ProVance.showToast(msg, 'error');
-                    showServerErrorBanner(msg);
-                    btn.classList.remove('loading');
-                    btn.disabled = false;
-                    return;
-                }
-                localStorage.setItem('pendingCompanyName', data.company_name);
-                localStorage.setItem('pendingCompanyEmail', data.email);
-                localStorage.setItem('userType', 'company');
-
-                // 🔔 إرسال إشعار للأدمن بطلب تسجيل شركة جديدة
-                try {
-                    await window.ProVance.notifyAdmins({
-                        title: '🏢 طلب تسجيل شركة جديدة',
-                        message: `الشركة "${data.company_name}" قدمت طلب تسجيل وفي انتظار المراجعة`,
-                        type: 'info',
-                        relatedType: 'company_registration',
-                        relatedId: authData.user.id,
-                        actionUrl: 'admin-campany.html'
-                    });
-                } catch (notifErr) {
-                    console.warn('فشل إرسال الإشعار للأدمن:', notifErr);
-                }
-
-                window.ProVance.showToast('🎉 تم إنشاء حسابك بنجاح! طلبك قيد المراجعة', 'success');
-                setTimeout(() => window.location.href = 'Company-pending.html', 2000);
-            } catch (err) {
-                console.error('Network/general error:', err);
-                const msg = '⚠️ مشكلة في الاتصال، تأكد من الإنترنت وحاول مرة أخرى';
-                window.ProVance.showToast(msg, 'error');
-                showServerErrorBanner(msg);
-                btn.classList.remove('loading');
-                btn.disabled = false;
-            }
-        });
-
-        updateProgress();
-    })();
+        // تصدير الدالة للنطاق العام
+        window.updateTrainingRequirements = updateTrainingRequirements;
     </script>
 </body>
 </html>
