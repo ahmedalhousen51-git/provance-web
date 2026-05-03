@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تشخيص ProVance</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Cairo', 'Tahoma', sans-serif;
+            background: #0f0c29;
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.8rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+        .test-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .test-row:last-child { border-bottom: none; }
+        .test-name { font-weight: 700; flex: 1; min-width: 200px; }
+        .test-result {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            min-width: 100px;
+            text-align: center;
+        }
+        .pass { background: #10b981; color: #fff; }
+        .fail { background: #ef4444; color: #fff; }
+        .pending { background: #f59e0b; color: #fff; }
+        .info { background: #3b82f6; color: #fff; }
+        .details {
+            background: #1a1535;
+            padding: 14px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #b8b5c9;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+        button {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: #fff;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: inherit;
+            width: 100%;
+            margin-top: 14px;
+        }
+        .summary {
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+        .summary.success { background: rgba(16,185,129,0.2); border: 2px solid #10b981; }
+        .summary.fail { background: rgba(239,68,68,0.2); border: 2px solid #ef4444; }
+        .browser-info {
+            background: rgba(79,172,254,0.1);
+            border: 1px solid rgba(79,172,254,0.3);
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 تشخيص ProVance</h1>
+
+        <div class="browser-info">
+            <strong>📱 معلومات الجهاز:</strong>
+            <div id="browserInfo"></div>
+        </div>
+
+        <button onclick="runAllTests()" id="runBtn">🚀 ابدأ التشخيص</button>
+
+        <div id="results"></div>
+
+        <div id="summary"></div>
+
+        <div class="card" style="margin-top: 20px; background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.3);">
+            <h3 style="color: #f59e0b; margin-bottom: 8px;">📋 ابعت الصورة دي للأدمن</h3>
+            <p style="color: #b8b5c9; font-size: 0.9rem;">
+                بعد ما الاختبار يخلص، اعمل screenshot للصفحة كلها وابعتها عشان نعرف المشكلة بالظبط.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // معلومات الجهاز
+        document.getElementById('browserInfo').innerHTML =
+            'Browser: ' + navigator.userAgent + '<br>' +
+            'Online: ' + (navigator.onLine ? '✅ متصل' : '❌ مفصول') + '<br>' +
+            'Language: ' + navigator.language;
+
+        const tests = [];
+        const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+
+        function addTest(name, status, details) {
+            const cls = status === 'pass' ? 'pass' : status === 'fail' ? 'fail' : 'info';
+            const txt = status === 'pass' ? '✓ نجح' : status === 'fail' ? '✗ فشل' : 'ℹ️';
+            tests.push({ name, status, details, cls, txt });
+            renderResults();
+        }
+
+        function renderResults() {
+            let html = '<div class="card"><h2 style="margin-bottom:14px;color:#4facfe">📊 نتائج الاختبار</h2>';
+            tests.forEach(t => {
+                html += `<div class="test-row">
+                    <span class="test-name">${t.name}</span>
+                    <span class="test-result ${t.cls}">${t.txt}</span>
+                </div>`;
+                if (t.details) {
+                    html += `<div class="details">${t.details}</div>`;
+                }
+            });
+            html += '</div>';
+            document.getElementById('results').innerHTML = html;
+        }
+
+        async function runAllTests() {
+            tests.length = 0;
+            document.getElementById('runBtn').disabled = true;
+            document.getElementById('runBtn').textContent = '⏳ جاري الاختبار...';
+            document.getElementById('summary').innerHTML = '';
+
+            // 1. اتصال الإنترنت
+            addTest('1️⃣ اتصال الإنترنت', navigator.onLine ? 'pass' : 'fail',
+                navigator.onLine ? 'الإنترنت متصل' : 'مش متصل بالإنترنت!');
+
+            // 2. اختبار Google (للتأكد من الإنترنت)
+            try {
+                const r = await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors' });
+                addTest('2️⃣ اتصال بـ Google', 'pass', 'الإنترنت بيشتغل');
+            } catch (e) {
+                addTest('2️⃣ اتصال بـ Google', 'fail', 'فشل الوصول لـ Google: ' + e.message);
+            }
+
+            // 3. اختبار CDN جسdelivr
+            try {
+                const start = Date.now();
+                const r = await fetch('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/package.json');
+                const duration = Date.now() - start;
+                if (r.ok) {
+                    addTest('3️⃣ CDN jsDelivr', 'pass', `الـ CDN شغال (${duration}ms)`);
+                } else {
+                    addTest('3️⃣ CDN jsDelivr', 'fail', 'الـ CDN رد بـ status: ' + r.status);
+                }
+            } catch (e) {
+                addTest('3️⃣ CDN jsDelivr', 'fail', 'CDN مفصول: ' + e.message);
+            }
+
+            // 4. اختبار CDN unpkg (احتياطي)
+            try {
+                const r = await fetch('https://unpkg.com/@supabase/supabase-js@2/package.json');
+                if (r.ok) {
+                    addTest('4️⃣ CDN unpkg (احتياطي)', 'pass', 'يشتغل');
+                } else {
+                    addTest('4️⃣ CDN unpkg (احتياطي)', 'fail', 'Status: ' + r.status);
+                }
+            } catch (e) {
+                addTest('4️⃣ CDN unpkg (احتياطي)', 'fail', e.message);
+            }
+
+            // 5. اختبار Supabase Health
+            try {
+                const r = await fetch(SUPABASE_URL + '/auth/v1/health', {
+                    headers: { 'apikey': SUPABASE_KEY }
+                });
+                if (r.ok) {
+                    const data = await r.json();
+                    addTest('5️⃣ Supabase Auth API', 'pass', 'يعمل: ' + (data.name || 'OK'));
+                } else {
+                    addTest('5️⃣ Supabase Auth API', 'fail', 'Status: ' + r.status);
+                }
+            } catch (e) {
+                addTest('5️⃣ Supabase Auth API', 'fail', e.message);
+            }
+
+            // 6. اختبار جدول companies
+            try {
+                const r = await fetch(SUPABASE_URL + '/rest/v1/companies?select=user_id&limit=1', {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY
+                    }
+                });
+                if (r.ok) {
+                    addTest('6️⃣ جدول companies', 'pass', 'متاح ويرد');
+                } else {
+                    const txt = await r.text();
+                    addTest('6️⃣ جدول companies', 'fail', `Status ${r.status}: ${txt.substring(0,100)}`);
+                }
+            } catch (e) {
+                addTest('6️⃣ جدول companies', 'fail', e.message);
+            }
+
+            // 7. تحميل Supabase library ديناميكياً
+            await new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+                let handled = false;
+                script.onload = () => {
+                    if (handled) return;
+                    handled = true;
+                    if (typeof supabase !== 'undefined' && supabase.createClient) {
+                        addTest('7️⃣ تحميل Supabase Library', 'pass', 'تم التحميل والـ window.supabase موجود');
+                    } else {
+                        addTest('7️⃣ تحميل Supabase Library', 'fail', 'لوّد لكن window.supabase مش موجود');
+                    }
+                    resolve();
+                };
+                script.onerror = (e) => {
+                    if (handled) return;
+                    handled = true;
+                    addTest('7️⃣ تحميل Supabase Library', 'fail', 'فشل التحميل: ' + (e.message || 'unknown'));
+                    resolve();
+                };
+                document.head.appendChild(script);
+
+                // Timeout بعد 10 ثواني
+                setTimeout(() => {
+                    if (handled) return;
+                    handled = true;
+                    addTest('7️⃣ تحميل Supabase Library', 'fail', 'Timeout - أخد أكتر من 10 ثواني');
+                    resolve();
+                }, 10000);
+            });
+
+            // 8. إنشاء Supabase client
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                try {
+                    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    if (sb && sb.auth && sb.from) {
+                        addTest('8️⃣ إنشاء Supabase Client', 'pass', 'الـ client اتعمل');
+
+                        // 9. اختبار signin بـ test user
+                        try {
+                            const { data, error } = await sb.auth.signInWithPassword({
+                                email: 'invalid_test_' + Date.now() + '@invalid.test',
+                                password: 'wrong'
+                            });
+                            if (error && error.message.toLowerCase().includes('invalid')) {
+                                addTest('9️⃣ اختبار signInWithPassword', 'pass',
+                                    'الدالة بتشتغل (الخطأ متوقع لأن المستخدم مش موجود)');
+                            } else if (error) {
+                                addTest('9️⃣ اختبار signInWithPassword', 'fail',
+                                    'خطأ غير متوقع: ' + error.message);
+                            } else {
+                                addTest('9️⃣ اختبار signInWithPassword', 'pass', 'استجابة سليمة');
+                            }
+                        } catch (e) {
+                            addTest('9️⃣ اختبار signInWithPassword', 'fail', e.message);
+                        }
+                    } else {
+                        addTest('8️⃣ إنشاء Supabase Client', 'fail', 'الـ client مكتمل');
+                    }
+                } catch (e) {
+                    addTest('8️⃣ إنشاء Supabase Client', 'fail', e.message);
+                }
+            } else {
+                addTest('8️⃣ إنشاء Supabase Client', 'fail', 'window.supabase غير موجود');
+            }
+
+            // 10. اختبار localStorage
+            try {
+                localStorage.setItem('test_provance', '1');
+                if (localStorage.getItem('test_provance') === '1') {
+                    localStorage.removeItem('test_provance');
+                    addTest('🔟 localStorage', 'pass', 'يشتغل');
+                } else {
+                    addTest('🔟 localStorage', 'fail', 'مش بيخزن');
+                }
+            } catch (e) {
+                addTest('🔟 localStorage', 'fail', 'محظور: ' + e.message);
+            }
+
+            // الملخص النهائي
+            const passed = tests.filter(t => t.status === 'pass').length;
+            const failed = tests.filter(t => t.status === 'fail').length;
+            const total = tests.length;
+
+            const isAllPass = failed === 0;
+            const summaryHtml = `
+                <div class="summary ${isAllPass ? 'success' : 'fail'}">
+                    ${isAllPass
+                        ? '🎉 كل الاختبارات نجحت! النظام يعمل بشكل سليم'
+                        : `⚠️ فشل ${failed} من ${total} اختبارات`
+                    }
+                    <div style="font-size:0.9rem;margin-top:8px;font-weight:400">
+                        نجح: ${passed} | فشل: ${failed} | المجموع: ${total}
+                    </div>
+                </div>
+            `;
+            document.getElementById('summary').innerHTML = summaryHtml;
+
+            document.getElementById('runBtn').disabled = false;
+            document.getElementById('runBtn').textContent = '🔄 إعادة الاختبار';
+
+            // اعرض ملخص نصي قابل للنسخ
+            let textSummary = '=== ProVance Diagnostic ===\n';
+            textSummary += 'Browser: ' + navigator.userAgent + '\n';
+            textSummary += 'Online: ' + navigator.onLine + '\n\n';
+            tests.forEach(t => {
+                textSummary += `[${t.status === 'pass' ? '✓' : '✗'}] ${t.name}\n`;
+                if (t.details) textSummary += `    ${t.details}\n`;
+            });
+
+            document.getElementById('summary').innerHTML += `
+                <div class="card" style="margin-top:14px">
+                    <h3 style="margin-bottom:10px">📋 نص للنسخ والإرسال:</h3>
+                    <textarea readonly style="width:100%;height:200px;background:#1a1535;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;font-family:monospace;font-size:0.8rem">${textSummary}</textarea>
+                    <button onclick="this.previousElementSibling.select();document.execCommand('copy');this.textContent='✓ تم النسخ'" style="margin-top:10px">📋 انسخ النص</button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
