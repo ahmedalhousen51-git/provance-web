@@ -4,469 +4,972 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>المدفوعات - ProVance</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #4facfe; --secondary: #00f2fe;
-            --gradient: linear-gradient(135deg, #4facfe, #00f2fe);
-            --bg: #0a0e27; --bg-2: #1a1535;
-            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
-            --border: rgba(255,255,255,0.08);
-            --text: #fff; --text-muted: #94a3b8;
-            --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        .bg-anim {
-            position: fixed; inset: 0; z-index: -1;
-            background:
-                radial-gradient(circle at 20% 20%, rgba(79,172,254,0.08), transparent 45%),
-                radial-gradient(circle at 80% 80%, rgba(0,242,254,0.06), transparent 45%),
-                var(--bg);
-        }
-        .layout { display: flex; min-height: 100vh; }
-        .sidebar {
-            width: 260px; background: rgba(20,18,40,0.7);
-            backdrop-filter: blur(20px); border-left: 1px solid var(--border);
-            padding: 24px 16px; position: fixed; inset: 0 0 0 auto;
-            z-index: 100; transition: transform .3s;
-            display: flex; flex-direction: column;
-        }
-        .sidebar-logo {
-            display: flex; align-items: center; gap: 10px;
-            padding: 0 8px 20px; border-bottom: 1px solid var(--border);
-            margin-bottom: 16px; justify-content: center;
-        }
-        .sidebar-logo img { height: 32px; max-width: 100%; }
-        .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px 14px; color: var(--text-muted);
-            text-decoration: none; border-radius: 10px;
-            font-size: 0.92rem; font-weight: 600;
-            margin-bottom: 4px; transition: all .2s;
-        }
-        .nav-item:hover { background: var(--card); color: var(--text); }
-        .nav-item.active { background: var(--gradient); color: #fff; }
-        .nav-item i { width: 18px; }
-        .main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
-        .topbar {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 22px; gap: 14px; flex-wrap: wrap;
-        }
-        .menu-toggle {
-            display: none; background: var(--card); border: 1px solid var(--border);
-            color: var(--text); width: 42px; height: 42px;
-            border-radius: 10px; cursor: pointer;
-        }
-        .topbar-title { font-size: 1.5rem; font-weight: 800; }
+:root {
+    --primary: #4facfe; --secondary: #00f2fe;
+    --gradient: linear-gradient(135deg, #4facfe, #00f2fe);
+    --bg: #0a0e27; --bg-2: #1a1535;
+    --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+    --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
+    --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(79,172,254,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(0,242,254,0.06), transparent 45%), var(--bg); }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
+.sidebar-logo { display: flex; align-items: center; justify-content: center; padding: 0 8px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.sidebar-logo img { height: 32px; max-width: 100%; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: var(--gradient); color: #fff; }
+.nav-item i { width: 18px; }
+.main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
+.menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
+.topbar-title { font-size: 1.5rem; font-weight: 800; }
+.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-        /* Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 14px;
-            margin-bottom: 22px;
-        }
-        .stat-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-        .stat-card::after {
-            content: '';
-            position: absolute;
-            top: -50px; left: -50px;
-            width: 100px; height: 100px;
-            background: var(--gradient);
-            opacity: 0.05;
-            border-radius: 50%;
-        }
-        .stat-icon {
-            width: 50px; height: 50px;
-            border-radius: 14px;
-            background: var(--gradient);
-            display: flex; align-items: center; justify-content: center;
-            color: #fff;
-            font-size: 1.3rem;
-            margin-bottom: 10px;
-        }
-        .stat-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .stat-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .stat-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .stat-num { font-size: 1.6rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-        .stat-label { color: var(--text-muted); font-size: 0.85rem; }
+/* Lock Banner */
+.lock-banner { background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(239,68,68,0.05)); border: 2px solid rgba(245,158,11,0.4); border-radius: 18px; padding: 24px; margin-bottom: 18px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; position: relative; overflow: hidden; }
+.lock-banner.fully-locked { background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(220,38,38,0.06)); border-color: rgba(239,68,68,0.5); }
+.lock-banner.partial { background: linear-gradient(135deg, rgba(79,172,254,0.1), rgba(0,242,254,0.05)); border-color: rgba(79,172,254,0.4); }
+.lock-banner.paid { background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.05)); border-color: rgba(16,185,129,0.4); }
+.lock-icon { width: 70px; height: 70px; border-radius: 18px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.8rem; flex-shrink: 0; }
+.lock-icon.locked { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.lock-icon.fully-locked { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.lock-icon.partial { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.lock-icon.paid { background: linear-gradient(135deg, #10b981, #059669); }
+.lock-body { flex: 1; min-width: 250px; }
+.lock-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; }
+.lock-desc { color: var(--text-muted); font-size: 0.94rem; line-height: 1.6; }
+.lock-amount { font-size: 1.6rem; font-weight: 900; background: var(--gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* Tabs */
-        .tabs {
-            display: flex; gap: 6px; margin-bottom: 18px;
-            border-bottom: 1px solid var(--border);
-            overflow-x: auto;
-        }
-        .tab {
-            padding: 12px 20px;
-            background: none; border: none;
-            color: var(--text-muted);
-            font-family: inherit; font-size: 0.92rem; font-weight: 700;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            white-space: nowrap;
-            transition: all .2s;
-        }
-        .tab:hover { color: var(--text); }
-        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+/* Stats */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.stat-mini { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 11px; }
+.stat-mini-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #fff; flex-shrink: 0; }
+.stat-mini-icon.cyan { background: var(--gradient); }
+.stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.stat-mini-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-mini-num { font-size: 1.3rem; font-weight: 800; line-height: 1; }
+.stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
 
-        /* Payment Cards */
-        .payments-list {
-            display: flex; flex-direction: column; gap: 12px;
-        }
-        .payment-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 18px;
-            display: flex;
-            gap: 14px;
-            align-items: flex-start;
-            transition: all .2s;
-        }
-        .payment-card:hover {
-            border-color: var(--primary);
-            background: var(--card-hover);
-        }
-        .payment-icon {
-            width: 50px; height: 50px;
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.3rem;
-            color: #fff;
-            flex-shrink: 0;
-        }
-        .payment-icon.paid { background: linear-gradient(135deg, #10b981, #059669); }
-        .payment-icon.pending { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .payment-icon.failed { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .payment-icon.refunded { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+/* Tabs */
+.tabs-container { display: flex; gap: 8px; margin-bottom: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 6px; overflow-x: auto; }
+.tab-btn { padding: 11px 18px; background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.92rem; font-weight: 700; border-radius: 10px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; transition: all .2s; }
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.tab-btn.active { background: var(--gradient); color: #fff; box-shadow: 0 6px 16px rgba(79,172,254,0.3); }
+.tab-content { display: none; animation: fadeIn .3s; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        .payment-body { flex: 1; min-width: 0; }
-        .payment-header {
-            display: flex; justify-content: space-between;
-            align-items: flex-start; gap: 10px; margin-bottom: 6px;
-            flex-wrap: wrap;
-        }
-        .payment-desc { font-size: 1rem; font-weight: 800; }
-        .payment-time {
-            color: var(--text-muted); font-size: 0.78rem;
-        }
-        .payment-meta {
-            display: flex; flex-wrap: wrap; gap: 12px;
-            color: var(--text-muted); font-size: 0.85rem; margin-top: 6px;
-        }
-        .payment-meta span { display: flex; align-items: center; gap: 5px; }
-        .payment-meta i { color: var(--primary); }
-        .payment-amount {
-            font-size: 1.3rem;
-            font-weight: 900;
-            color: var(--text);
-            margin-top: 8px;
-        }
-        .payment-amount .currency {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-        .payment-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 10px;
-            border-radius: 16px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            margin-top: 4px;
-        }
-        .status-paid { background: rgba(16,185,129,0.15); color: var(--success); }
-        .status-pending { background: rgba(245,158,11,0.15); color: var(--warning); }
-        .status-failed { background: rgba(239,68,68,0.15); color: var(--error); }
-        .status-refunded { background: rgba(79,172,254,0.15); color: var(--info); }
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.88rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
+.btn-primary { background: var(--gradient); color: #fff; }
+.btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(79,172,254,0.4); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+.btn-secondary:hover { background: var(--card-hover); }
+.btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+.btn-success:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(16,185,129,0.4); }
+.btn-warning { background: linear-gradient(135deg, #f59e0b, #f97316); color: #fff; }
+.btn-warning:hover { transform: translateY(-2px); }
+.btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
+.btn-sm { padding: 7px 12px; font-size: 0.8rem; }
+.btn-lg { padding: 14px 24px; font-size: 1rem; }
 
-        .payment-actions {
-            display: flex; gap: 8px; flex-shrink: 0;
-        }
-        .btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 14px; border: none; border-radius: 9px;
-            font-weight: 700; font-family: inherit; font-size: 0.85rem;
-            cursor: pointer; transition: all .2s; text-decoration: none;
-        }
-        .btn-secondary {
-            background: var(--card); border: 1px solid var(--border); color: var(--text);
-        }
-        .btn-secondary:hover { background: var(--card-hover); }
+/* Pricing Card */
+.pricing-card { background: var(--card); border: 2px solid var(--border); border-radius: 20px; padding: 24px; margin-bottom: 18px; position: relative; overflow: hidden; transition: all .25s; }
+.pricing-card.recommended { border-color: var(--primary); background: linear-gradient(135deg, rgba(79,172,254,0.06), rgba(0,242,254,0.03)); }
+.pricing-card.recommended::before { content: 'مُوصى به'; position: absolute; top: 12px; left: 12px; background: var(--gradient); color: #fff; padding: 4px 14px; border-radius: 14px; font-size: 0.78rem; font-weight: 800; }
+.pricing-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.pricing-icon { width: 60px; height: 60px; border-radius: 16px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.5rem; flex-shrink: 0; }
+.pricing-card.full .pricing-icon { background: linear-gradient(135deg, #10b981, #059669); }
+.pricing-card.partial .pricing-icon { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.pricing-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 3px; }
+.pricing-desc { color: var(--text-muted); font-size: 0.88rem; }
+.pricing-amount-section { background: rgba(255,255,255,0.03); border-radius: 14px; padding: 18px; margin: 14px 0; text-align: center; }
+.pricing-amount { font-size: 2.4rem; font-weight: 900; background: var(--gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+.pricing-card.full .pricing-amount { background: linear-gradient(135deg, #10b981, #059669); -webkit-background-clip: text; background-clip: text; }
+.pricing-card.partial .pricing-amount { background: linear-gradient(135deg, #f59e0b, #f97316); -webkit-background-clip: text; background-clip: text; }
+.pricing-currency { font-size: 1rem; color: var(--text-muted); margin-top: 4px; font-weight: 600; }
+.pricing-features { list-style: none; padding: 0; margin: 14px 0; }
+.pricing-features li { padding: 6px 0; color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: flex-start; gap: 8px; }
+.pricing-features li i { color: var(--success); flex-shrink: 0; margin-top: 4px; }
+.pricing-features li.disabled i { color: var(--text-dim); }
 
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-        }
-        .empty-state i {
-            font-size: 4rem;
-            color: rgba(148,163,184,0.3);
-            margin-bottom: 16px;
-        }
-        .empty-state h3 {
-            font-size: 1.2rem;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
+/* Payment Method Cards */
+.payment-methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 14px 0; }
+.payment-method-card { background: rgba(255,255,255,0.02); border: 2px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; transition: all .2s; text-align: center; }
+.payment-method-card:hover { border-color: var(--primary); background: rgba(79,172,254,0.05); }
+.payment-method-card.selected { border-color: var(--primary); background: rgba(79,172,254,0.1); }
+.payment-method-card i { font-size: 1.8rem; color: var(--primary); margin-bottom: 6px; display: block; }
+.payment-method-card-title { font-size: 0.88rem; font-weight: 700; }
+.payment-method-card-desc { font-size: 0.76rem; color: var(--text-muted); margin-top: 3px; }
 
-        /* Info banner */
-        .info-banner {
-            background: linear-gradient(135deg, rgba(79,172,254,0.08), rgba(0,242,254,0.04));
-            border: 1px solid rgba(79,172,254,0.2);
-            border-radius: 14px;
-            padding: 18px;
-            margin-bottom: 22px;
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        .info-banner-icon {
-            width: 44px; height: 44px;
-            background: rgba(79,172,254,0.15);
-            color: var(--primary);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-        .info-banner-content strong { display: block; margin-bottom: 4px; }
-        .info-banner-content p { color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; }
+/* Section */
+.section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 18px; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+.section-title { font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.section-title i { color: var(--primary); }
 
-        @media (max-width: 1024px) {
-            .sidebar { transform: translateX(100%); width: 280px; }
-            .sidebar.open { transform: translateX(0); }
-            .main { margin-right: 0; }
-            .menu-toggle { display: flex; align-items: center; justify-content: center; }
-        }
+/* Payment History */
+.payment-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+.payment-card-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1rem; flex-shrink: 0; }
+.payment-card-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+.payment-card-icon.pending { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.payment-card-icon.failed { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.payment-card-body { flex: 1; min-width: 0; }
+.payment-card-title { font-weight: 800; font-size: 0.95rem; }
+.payment-card-meta { color: var(--text-muted); font-size: 0.82rem; margin-top: 3px; }
+.payment-card-amount { font-weight: 800; font-size: 1.05rem; color: var(--success); white-space: nowrap; }
+
+/* Status Badges */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 14px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+.badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
+.badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+.badge-error { background: rgba(239,68,68,0.15); color: var(--error); }
+.badge-info { background: rgba(79,172,254,0.15); color: var(--info); }
+
+/* Empty State */
+.empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+.empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
+.empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.05rem; }
+
+/* Modals */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .25s; }
+.modal.active { display: flex; }
+.modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto; padding: 28px; position: relative; animation: slideUp .3s ease-out; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.modal-title i { color: var(--primary); }
+.modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
+.field { margin-bottom: 16px; }
+.field label { display: block; color: var(--text); font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
+.field label i { color: var(--primary); margin-left: 4px; }
+.field input, .field select { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.95rem; font-family: inherit; transition: all .2s; }
+.field input:focus, .field select:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.06); box-shadow: 0 0 0 4px rgba(79,172,254,0.1); }
+
+/* Receipt */
+.receipt { background: rgba(16,185,129,0.05); border: 2px solid rgba(16,185,129,0.3); border-radius: 16px; padding: 20px; text-align: center; margin: 14px 0; }
+.receipt-icon { font-size: 4rem; color: var(--success); margin-bottom: 14px; }
+.receipt-amount { font-size: 2rem; font-weight: 900; color: var(--success); margin-bottom: 8px; }
+.receipt-detail { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.1); font-size: 0.86rem; text-align: right; }
+.receipt-detail:last-child { border-bottom: none; }
+.receipt-detail .label { color: var(--text-muted); }
+.receipt-detail .value { font-weight: 700; }
+
+/* Help */
+.help-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.help-section h4 { font-size: 0.95rem; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--primary); }
+.help-section ul { list-style: none; padding: 0; }
+.help-section li { padding: 5px 0; color: var(--text-muted); font-size: 0.88rem; display: flex; align-items: flex-start; gap: 6px; }
+.help-section li i { color: var(--success); flex-shrink: 0; margin-top: 4px; }
+
+@media (max-width: 1024px) {
+    .sidebar { transform: translateX(100%); width: 280px; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-right: 0; }
+    .menu-toggle { display: flex; align-items: center; justify-content: center; }
+}
+@media (max-width: 600px) {
+    .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
+    .topbar-title { font-size: 1.2rem; }
+    .lock-amount { font-size: 1.3rem; }
+    .pricing-amount { font-size: 1.8rem; }
+}
     </style>
 </head>
 <body>
     <div class="bg-anim"></div>
-
     <div class="layout">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">
                 <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
             </div>
-            <a href="student-internship.html" class="nav-item"><i class="fas fa-bullhorn"></i> فرص التدريب</a>
+            <a href="student-internship.html" class="nav-item"><i class="fas fa-search"></i> فرص التدريب</a>
             <a href="student-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلباتي</a>
-            <a href="student-profile.html" class="nav-item"><i class="fas fa-user-graduate"></i> ملفي</a>
-            <a href="student-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+            <a href="student-profile.html" class="nav-item"><i class="fas fa-user"></i> ملفي</a>
             <a href="Student_-payments.html" class="nav-item active"><i class="fas fa-credit-card"></i> المدفوعات</a>
+            <a href="student-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
             <a href="#" onclick="logoutStudent(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
             </a>
         </aside>
-
         <main class="main">
             <div class="topbar">
                 <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="topbar-title">
-                    <i class="fas fa-credit-card" style="color:var(--primary)"></i> المدفوعات
-                </h1>
-            </div>
-
-            <div class="info-banner">
-                <div class="info-banner-icon"><i class="fas fa-info-circle"></i></div>
-                <div class="info-banner-content">
-                    <strong>سجل مدفوعاتك</strong>
-                    <p>هنا تظهر كل المدفوعات الخاصة بالتدريبات المدفوعة. للاستفسارات تواصل مع الشركة مباشرةً أو الإدارة عبر support@provance.com</p>
+                <h1 class="topbar-title"><i class="fas fa-credit-card" style="color:var(--primary)"></i> المدفوعات</h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="openHelpModal()">
+                        <i class="fas fa-question-circle"></i> مساعدة
+                    </button>
                 </div>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon success"><i class="fas fa-check-circle"></i></div>
-                    <div class="stat-num" id="statPaidAmount">0</div>
-                    <div class="stat-label">إجمالي المدفوع (ج.م)</div>
+            <!-- Lock Banner -->
+            <div id="lockBannerContainer"></div>
+
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-mini">
+                    <div class="stat-mini-icon cyan"><i class="fas fa-money-bill-wave"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statTotalPaid">0</div>
+                        <div class="stat-mini-label">إجمالي المدفوع</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon warning"><i class="fas fa-clock"></i></div>
-                    <div class="stat-num" id="statPendingAmount">0</div>
-                    <div class="stat-label">قيد الانتظار (ج.م)</div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon warning"><i class="fas fa-clock"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statPending">0</div>
+                        <div class="stat-mini-label">مدفوعات معلقة</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-receipt"></i></div>
-                    <div class="stat-num" id="statTotalCount">0</div>
-                    <div class="stat-label">إجمالي المعاملات</div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon success"><i class="fas fa-check-circle"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statCompleted">0</div>
+                        <div class="stat-mini-label">مدفوعات مكتملة</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon error"><i class="fas fa-undo"></i></div>
-                    <div class="stat-num" id="statRefunded">0</div>
-                    <div class="stat-label">مبالغ مستردة (ج.م)</div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon error"><i class="fas fa-exclamation-circle"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statRemaining">0</div>
+                        <div class="stat-mini-label">المتبقي</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="tabs">
-                <button class="tab active" data-filter="" onclick="switchTab(event, '')">الكل</button>
-                <button class="tab" data-filter="paid" onclick="switchTab(event, 'paid')">مدفوع</button>
-                <button class="tab" data-filter="pending" onclick="switchTab(event, 'pending')">قيد الانتظار</button>
-                <button class="tab" data-filter="failed" onclick="switchTab(event, 'failed')">فشل</button>
-                <button class="tab" data-filter="refunded" onclick="switchTab(event, 'refunded')">مسترد</button>
+            <!-- Tabs -->
+            <div class="tabs-container">
+                <button class="tab-btn active" data-tab="current" onclick="switchTab(event, 'current')">
+                    <i class="fas fa-credit-card"></i> الدفعة الحالية
+                </button>
+                <button class="tab-btn" data-tab="history" onclick="switchTab(event, 'history')">
+                    <i class="fas fa-history"></i> سجل المدفوعات
+                </button>
+                <button class="tab-btn" data-tab="info" onclick="switchTab(event, 'info')">
+                    <i class="fas fa-info-circle"></i> معلومات الدفع
+                </button>
             </div>
 
-            <div class="payments-list" id="paymentsList">
-                <div class="empty-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>جاري التحميل...</p>
+            <!-- Tab: Current -->
+            <div id="tab-current" class="tab-content active">
+                <div id="paymentOptionsContainer">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
+                </div>
+            </div>
+
+            <!-- Tab: History -->
+            <div id="tab-history" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <h3 class="section-title"><i class="fas fa-history"></i> سجل المدفوعات</h3>
+                    </div>
+                    <div id="paymentHistoryList">
+                        <div class="empty-state"><i class="fas fa-spinner fa-spin"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Info -->
+            <div id="tab-info" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <h3 class="section-title"><i class="fas fa-info-circle"></i> كيف يعمل نظام الدفع؟</h3>
+                    </div>
+                    <div class="help-section">
+                        <h4><i class="fas fa-lock"></i> متى يتم القفل؟</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> بعد حضور 3 أيام تدريب، يتم قفل الحساب تلقائياً</li>
+                            <li><i class="fas fa-check"></i> القفل يمنعك من حضور التدريبات لحد ما تدفع</li>
+                            <li><i class="fas fa-check"></i> الإدارة بتحدد السعر لكل شركة</li>
+                        </ul>
+                    </div>
+                    <div class="help-section">
+                        <h4><i class="fas fa-coins"></i> خيارات الدفع</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> <strong>دفع كامل:</strong> الحصول على خصم 5%</li>
+                            <li><i class="fas fa-check"></i> <strong>دفع جزئي (50%):</strong> دفع نص المبلغ والباقي في خلال 30 يوم</li>
+                        </ul>
+                    </div>
+                    <div class="help-section">
+                        <h4><i class="fas fa-credit-card"></i> طرق الدفع المتاحة</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> فوري / محفظة إلكترونية</li>
+                            <li><i class="fas fa-check"></i> فيزا / ماستركارد</li>
+                            <li><i class="fas fa-check"></i> تحويل بنكي</li>
+                            <li><i class="fas fa-check"></i> Vodafone Cash / Instapay</li>
+                        </ul>
+                    </div>
+                    <div class="help-section">
+                        <h4><i class="fas fa-shield-alt"></i> الأمان</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> كل المعاملات مشفرة وآمنة</li>
+                            <li><i class="fas fa-check"></i> هتستلم إيصال إلكتروني لكل عملية</li>
+                            <li><i class="fas fa-check"></i> الإيصالات محفوظة في "سجل المدفوعات"</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
+    <div id="modalsContainer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script>
-    (function() {
-        'use strict';
-        let studentUserId = null;
-        let allPayments = [];
-        let currentFilter = '';
+// ============================================================
+// ProVance: Student Payments - Full Featured
+// ============================================================
+(function() {
+    'use strict';
 
-        const STATUS_INFO = {
-            'paid': { icon: 'check', cls: 'paid', text: '✓ مدفوع' },
-            'pending': { icon: 'clock', cls: 'pending', text: '⏳ قيد الانتظار' },
-            'failed': { icon: 'times', cls: 'failed', text: '✕ فشل' },
-            'refunded': { icon: 'undo', cls: 'refunded', text: '↺ مسترد' }
+    if (!window.ProVance) { window.ProVance = {}; console.error('⚠️ supabase-config.js مش متحمل'); }
+    if (typeof window.ProVance.escapeHtml !== 'function') {
+        window.ProVance.escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    if (typeof window.ProVance.showToast !== 'function') {
+        window.ProVance.showToast = (msg, type) => {
+            const t = document.createElement('div');
+            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+            t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (c[type]||'#4facfe') + ';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
         };
+    }
+    if (typeof window.ProVance.confirmModal !== 'function') {
+        window.ProVance.confirmModal = async ({title, message}) => confirm((title||'') + '\n' + (message||''));
+    }
 
-        const METHOD_LABELS = {
-            'vodafone_cash': 'فودافون كاش',
-            'instapay': 'إنستاباي',
-            'bank_transfer': 'تحويل بنكي',
-            'visa': 'فيزا',
-            'cash': 'نقدي',
-            'fawry': 'فوري'
-        };
+    console.log('✅ Payments app initialized');
 
-        function renderList(items) {
-            const list = document.getElementById('paymentsList');
-            if (items.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-receipt"></i>
-                        <h3>لا توجد مدفوعات</h3>
-                        <p>المدفوعات الخاصة بالتدريبات ستظهر هنا</p>
+    const esc = window.ProVance.escapeHtml;
+
+    let studentUserId = null;
+    let studentData = null;
+    let activeLock = null;
+    let allPayments = [];
+    let allLocks = [];
+
+    function renderModal(html) {
+        document.getElementById('modalsContainer').innerHTML = html;
+        document.body.style.overflow = 'hidden';
+    }
+    window.closeModal = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+        if (document.querySelectorAll('.modal').length === 0) document.body.style.overflow = '';
+    };
+
+    window.logoutStudent = async (e) => {
+        e.preventDefault();
+        const ok = await window.ProVance.confirmModal({title: 'تسجيل الخروج', message: 'هل تريد تسجيل الخروج؟'});
+        if (ok) {
+            if (window.ProVance.logout) await window.ProVance.logout('student-login.html');
+            else window.location.href = 'student-login.html';
+        }
+    };
+
+    function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
+    function formatDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('ar-EG'); }
+
+    window.switchTab = (e, tabName) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.add('active');
+    };
+
+    function renderLockBanner() {
+        const container = document.getElementById('lockBannerContainer');
+
+        if (!activeLock) {
+            container.innerHTML = `
+                <div class="lock-banner paid">
+                    <div class="lock-icon paid"><i class="fas fa-check-circle"></i></div>
+                    <div class="lock-body">
+                        <div class="lock-title">✓ كل شيء على ما يرام</div>
+                        <div class="lock-desc">مفيش مدفوعات معلقة حالياً. استمر في تدريبك بأمان! 🎉</div>
                     </div>
-                `;
-                return;
-            }
+                </div>
+            `;
+            return;
+        }
 
-            list.innerHTML = items.map(p => {
-                const info = STATUS_INFO[p.status] || STATUS_INFO['pending'];
-                return `
-                    <div class="payment-card">
-                        <div class="payment-icon ${info.cls}"><i class="fas fa-${info.icon}"></i></div>
-                        <div class="payment-body">
-                            <div class="payment-header">
-                                <div class="payment-desc">${window.ProVance.escapeHtml(p.description || 'دفعة تدريب')}</div>
-                                <div class="payment-time">${p.paid_at ? window.ProVance.formatDate(p.paid_at) : window.ProVance.formatDate(p.created_at)}</div>
-                            </div>
-                            <span class="payment-status status-${info.cls}">${info.text}</span>
-                            <div class="payment-meta">
-                                ${p.payment_method ? `<span><i class="fas fa-wallet"></i> ${METHOD_LABELS[p.payment_method] || p.payment_method}</span>` : ''}
-                            </div>
-                            <div class="payment-amount">
-                                ${Number(p.amount || 0).toLocaleString('ar-EG')}
-                                <span class="currency">${p.currency || 'EGP'}</span>
-                            </div>
+        const remaining = activeLock.remaining_amount || 0;
+        const total = activeLock.total_amount || 0;
+        const paid = total - remaining;
+        const status = activeLock.lock_status;
+        const deadline = activeLock.payment_deadline;
+        const isOverdue = deadline && new Date(deadline) < new Date();
+
+        if (status === 'fully_paid' || status === 'released') {
+            container.innerHTML = `
+                <div class="lock-banner paid">
+                    <div class="lock-icon paid"><i class="fas fa-check-circle"></i></div>
+                    <div class="lock-body">
+                        <div class="lock-title">✓ تم الدفع بالكامل</div>
+                        <div class="lock-desc">شكراً لك! حسابك مفتوح ويمكنك استكمال التدريب بحرية</div>
+                    </div>
+                </div>
+            `;
+        } else if (status === 'partial_paid') {
+            container.innerHTML = `
+                <div class="lock-banner partial">
+                    <div class="lock-icon partial"><i class="fas fa-coins"></i></div>
+                    <div class="lock-body">
+                        <div class="lock-title">⚠️ دفعت جزئياً - باقي ${remaining.toLocaleString()} ${activeLock.currency || 'EGP'}</div>
+                        <div class="lock-desc">
+                            دفعت ${paid.toLocaleString()} من إجمالي ${total.toLocaleString()} ${activeLock.currency || 'EGP'}.
+                            ${deadline ? `الموعد النهائي: <strong>${formatDate(deadline)}</strong>${isOverdue ? ' <span style="color:var(--error)">⚠️ متأخر</span>' : ''}` : ''}
                         </div>
-                        ${p.receipt_url ? `
-                            <div class="payment-actions">
-                                <a href="${p.receipt_url}" target="_blank" class="btn btn-secondary">
-                                    <i class="fas fa-download"></i> الإيصال
-                                </a>
-                            </div>
-                        ` : ''}
                     </div>
-                `;
-            }).join('');
+                    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+                        <div class="lock-amount">${remaining.toLocaleString()}</div>
+                        <span style="color:var(--text-muted);font-size:0.84rem">${activeLock.currency || 'EGP'} متبقي</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            // locked
+            container.innerHTML = `
+                <div class="lock-banner ${isOverdue ? 'fully-locked' : ''}">
+                    <div class="lock-icon ${isOverdue ? 'fully-locked' : 'locked'}"><i class="fas fa-lock"></i></div>
+                    <div class="lock-body">
+                        <div class="lock-title">${isOverdue ? '🔒 الحساب مقفل (متأخر)' : '⚠️ مطلوب دفع رسوم التدريب'}</div>
+                        <div class="lock-desc">
+                            بعد حضور ${activeLock.days_attended || 3} أيام تدريب، يجب دفع رسوم التدريب.
+                            ${deadline ? `الموعد النهائي: <strong>${formatDate(deadline)}</strong>` : ''}
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+                        <div class="lock-amount">${total.toLocaleString()}</div>
+                        <span style="color:var(--text-muted);font-size:0.84rem">${activeLock.currency || 'EGP'}</span>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function renderPaymentOptions() {
+        const container = document.getElementById('paymentOptionsContainer');
+
+        if (!activeLock || activeLock.lock_status === 'fully_paid' || activeLock.lock_status === 'released') {
+            container.innerHTML = `
+                <div class="section" style="text-align:center;padding:50px 20px">
+                    <i class="fas fa-check-circle" style="font-size:5rem;color:var(--success);margin-bottom:14px;display:block"></i>
+                    <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:8px">مفيش مدفوعات معلقة</h2>
+                    <p style="color:var(--text-muted)">حسابك مفتوح ومش محتاج تدفع حاجة دلوقتي</p>
+                </div>
+            `;
+            return;
         }
 
-        function applyFilter() {
-            const filtered = currentFilter ? allPayments.filter(p => p.status === currentFilter) : allPayments;
-            renderList(filtered);
+        const total = activeLock.total_amount || 0;
+        const remaining = activeLock.remaining_amount || 0;
+        const currency = activeLock.currency || 'EGP';
+        const status = activeLock.lock_status;
+
+        // الدفع الكامل بخصم 5%
+        const fullAmount = remaining;
+        const discountedFullAmount = Math.round(fullAmount * 0.95);
+
+        // الدفع الجزئي 50%
+        const partialAmount = Math.ceil(remaining / 2);
+
+        let html = `
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title"><i class="fas fa-credit-card"></i> اختر طريقة الدفع</h2>
+                </div>
+
+                <div class="pricing-card recommended full">
+                    <div class="pricing-card-header">
+                        <div class="pricing-icon"><i class="fas fa-trophy"></i></div>
+                        <div>
+                            <div class="pricing-title">دفع كامل (مع خصم 5%)</div>
+                            <div class="pricing-desc">ادفع المبلغ كامل واحصل على خصم فوري</div>
+                        </div>
+                    </div>
+
+                    <div class="pricing-amount-section">
+                        <div style="text-decoration:line-through;color:var(--text-muted);font-size:1rem;margin-bottom:4px">
+                            ${fullAmount.toLocaleString()} ${currency}
+                        </div>
+                        <div class="pricing-amount">${discountedFullAmount.toLocaleString()}</div>
+                        <div class="pricing-currency">${currency} <span style="background:rgba(16,185,129,0.15);color:var(--success);padding:2px 8px;border-radius:10px;font-size:0.78rem;margin-right:6px">وفر ${(fullAmount - discountedFullAmount).toLocaleString()}</span></div>
+                    </div>
+
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check-circle"></i> فتح كامل للحساب فوراً</li>
+                        <li><i class="fas fa-check-circle"></i> خصم 5% على المبلغ</li>
+                        <li><i class="fas fa-check-circle"></i> إيصال رسمي بالدفع الكامل</li>
+                        <li><i class="fas fa-check-circle"></i> مفيش أقساط متبقية</li>
+                    </ul>
+
+                    <button class="btn btn-success btn-lg" onclick="openPaymentModal('full', ${discountedFullAmount})" style="width:100%;justify-content:center">
+                        <i class="fas fa-check-circle"></i> ادفع ${discountedFullAmount.toLocaleString()} ${currency}
+                    </button>
+                </div>
+        `;
+
+        if (status === 'locked') {
+            // عرض دفع جزئي فقط لو لسه مدفعش
+            html += `
+                <div class="pricing-card partial">
+                    <div class="pricing-card-header">
+                        <div class="pricing-icon"><i class="fas fa-coins"></i></div>
+                        <div>
+                            <div class="pricing-title">دفع جزئي (50%)</div>
+                            <div class="pricing-desc">ادفع نص المبلغ دلوقتي والباقي خلال 30 يوم</div>
+                        </div>
+                    </div>
+
+                    <div class="pricing-amount-section">
+                        <div class="pricing-amount">${partialAmount.toLocaleString()}</div>
+                        <div class="pricing-currency">${currency} (50% الآن)</div>
+                    </div>
+
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check-circle"></i> فتح الحساب فوراً</li>
+                        <li><i class="fas fa-check-circle"></i> 30 يوم لدفع الباقي</li>
+                        <li><i class="fas fa-clock"></i> الباقي: ${(remaining - partialAmount).toLocaleString()} ${currency}</li>
+                        <li class="disabled"><i class="fas fa-times"></i> مفيش خصم</li>
+                    </ul>
+
+                    <button class="btn btn-warning btn-lg" onclick="openPaymentModal('partial', ${partialAmount})" style="width:100%;justify-content:center">
+                        <i class="fas fa-coins"></i> ادفع ${partialAmount.toLocaleString()} ${currency}
+                    </button>
+                </div>
+            `;
         }
 
-        function updateStats() {
-            const paid = allPayments.filter(p => p.status === 'paid').reduce((s, p) => s + Number(p.amount || 0), 0);
-            const pending = allPayments.filter(p => p.status === 'pending').reduce((s, p) => s + Number(p.amount || 0), 0);
-            const refunded = allPayments.filter(p => p.status === 'refunded').reduce((s, p) => s + Number(p.amount || 0), 0);
+        html += '</div>';
 
-            document.getElementById('statPaidAmount').textContent = paid.toLocaleString('ar-EG');
-            document.getElementById('statPendingAmount').textContent = pending.toLocaleString('ar-EG');
-            document.getElementById('statTotalCount').textContent = allPayments.length;
-            document.getElementById('statRefunded').textContent = refunded.toLocaleString('ar-EG');
+        container.innerHTML = html;
+    }
+
+    function renderPaymentHistory() {
+        const list = document.getElementById('paymentHistoryList');
+
+        if (allPayments.length === 0) {
+            list.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><h3>لا يوجد سجل مدفوعات بعد</h3><p>كل المدفوعات هتظهر هنا</p></div>';
+            return;
         }
 
-        async function loadPayments() {
+        list.innerHTML = allPayments.map(p => {
+            const isCompleted = p.status === 'completed' || p.status === 'success';
+            const isPending = p.status === 'pending' || p.status === 'processing';
+            const isFailed = p.status === 'failed' || p.status === 'cancelled';
+
+            const iconCls = isCompleted ? 'success' : isPending ? 'pending' : 'failed';
+            const iconName = isCompleted ? 'check' : isPending ? 'clock' : 'times';
+            const statusBadge = isCompleted
+                ? '<span class="badge badge-success">✓ مكتمل</span>'
+                : isPending
+                ? '<span class="badge badge-warning">⏳ معلق</span>'
+                : '<span class="badge badge-error">✕ فشل</span>';
+
+            const methodLabels = {
+                'fawry': 'فوري',
+                'visa': 'فيزا/ماستركارد',
+                'wallet': 'محفظة إلكترونية',
+                'instapay': 'Instapay',
+                'vodafone_cash': 'Vodafone Cash',
+                'bank_transfer': 'تحويل بنكي'
+            };
+
+            return `
+                <div class="payment-card">
+                    <div class="payment-card-icon ${iconCls}"><i class="fas fa-${iconName}"></i></div>
+                    <div class="payment-card-body">
+                        <div class="payment-card-title">${p.payment_type === 'full' ? 'دفع كامل' : p.payment_type === 'partial' ? 'دفع جزئي' : 'دفعة'}</div>
+                        <div class="payment-card-meta">
+                            ${methodLabels[p.payment_method] || p.payment_method || 'غير محدد'}
+                            • ${formatDateTime(p.created_at)}
+                            ${p.transaction_id ? `<br>رقم العملية: ${esc(p.transaction_id)}` : ''}
+                        </div>
+                        <div style="margin-top:6px">${statusBadge}</div>
+                    </div>
+                    <div class="payment-card-amount">${(p.amount || 0).toLocaleString()} ${p.currency || 'EGP'}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateStats() {
+        const completed = allPayments.filter(p => p.status === 'completed' || p.status === 'success');
+        const pending = allPayments.filter(p => p.status === 'pending' || p.status === 'processing');
+        const totalPaid = completed.reduce((s, p) => s + Number(p.amount || 0), 0);
+        const remaining = activeLock?.remaining_amount || 0;
+
+        document.getElementById('statTotalPaid').textContent = totalPaid.toLocaleString();
+        document.getElementById('statPending').textContent = pending.length;
+        document.getElementById('statCompleted').textContent = completed.length;
+        document.getElementById('statRemaining').textContent = remaining.toLocaleString();
+    }
+
+    // PAYMENT MODAL
+    let selectedMethod = null;
+
+    window.openPaymentModal = (type, amount) => {
+        selectedMethod = null;
+        const html = `
+            <div class="modal active" id="paymentModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-credit-card"></i><span>${type === 'full' ? 'دفع كامل' : 'دفع جزئي'}</span></div>
+                        <button class="modal-close" onclick="closeModal('paymentModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.2);border-radius:14px;padding:18px;margin-bottom:18px;text-align:center">
+                        <div style="color:var(--text-muted);font-size:0.86rem;margin-bottom:4px">المبلغ المطلوب دفعه</div>
+                        <div style="font-size:2rem;font-weight:900;background:var(--gradient);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">
+                            ${amount.toLocaleString()} ${activeLock?.currency || 'EGP'}
+                        </div>
+                    </div>
+
+                    <h4 style="font-size:1rem;font-weight:800;margin-bottom:12px"><i class="fas fa-money-check-alt" style="color:var(--primary)"></i> اختر طريقة الدفع</h4>
+
+                    <div class="payment-methods" id="paymentMethods">
+                        <div class="payment-method-card" onclick="selectMethod('fawry', this)">
+                            <i class="fas fa-store"></i>
+                            <div class="payment-method-card-title">فوري</div>
+                            <div class="payment-method-card-desc">ماكينة فوري</div>
+                        </div>
+                        <div class="payment-method-card" onclick="selectMethod('visa', this)">
+                            <i class="fas fa-credit-card"></i>
+                            <div class="payment-method-card-title">فيزا / ماستر</div>
+                            <div class="payment-method-card-desc">بطاقة ائتمان</div>
+                        </div>
+                        <div class="payment-method-card" onclick="selectMethod('vodafone_cash', this)">
+                            <i class="fas fa-mobile-alt"></i>
+                            <div class="payment-method-card-title">Vodafone Cash</div>
+                            <div class="payment-method-card-desc">محفظة فودافون</div>
+                        </div>
+                        <div class="payment-method-card" onclick="selectMethod('instapay', this)">
+                            <i class="fas fa-bolt"></i>
+                            <div class="payment-method-card-title">Instapay</div>
+                            <div class="payment-method-card-desc">تحويل فوري</div>
+                        </div>
+                        <div class="payment-method-card" onclick="selectMethod('wallet', this)">
+                            <i class="fas fa-wallet"></i>
+                            <div class="payment-method-card-title">محفظة</div>
+                            <div class="payment-method-card-desc">إلكترونية</div>
+                        </div>
+                        <div class="payment-method-card" onclick="selectMethod('bank_transfer', this)">
+                            <i class="fas fa-university"></i>
+                            <div class="payment-method-card-title">بنك</div>
+                            <div class="payment-method-card-desc">تحويل بنكي</div>
+                        </div>
+                    </div>
+
+                    <div id="methodDetails" style="display:none;margin-top:14px"></div>
+
+                    <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:12px;border-radius:10px;margin-top:14px;font-size:0.84rem;color:var(--text-muted)">
+                        <i class="fas fa-info-circle" style="color:var(--warning)"></i>
+                        ده نظام دفع تجريبي - في الإنتاج، الدفع هيتم من خلال بوابة دفع حقيقية (Paymob/Stripe).
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        <button class="btn btn-secondary" onclick="closeModal('paymentModal')" style="flex:1;justify-content:center">إلغاء</button>
+                        <button class="btn btn-primary" id="btnConfirmPay" onclick="confirmPayment('${type}', ${amount})" style="flex:1;justify-content:center" disabled>
+                            <i class="fas fa-check"></i> تأكيد الدفع
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    window.selectMethod = (method, el) => {
+        selectedMethod = method;
+        document.querySelectorAll('.payment-method-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('btnConfirmPay').disabled = false;
+
+        // Show method-specific details
+        const details = document.getElementById('methodDetails');
+        const labels = {
+            'fawry': '<div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;font-size:0.86rem"><i class="fas fa-info-circle" style="color:var(--info)"></i> هتستلم كود فوري لتدفع به في أقرب ماكينة فوري</div>',
+            'visa': '<div class="field"><label>رقم البطاقة</label><input type="text" placeholder="**** **** **** ****" maxlength="19" style="direction:ltr;text-align:right"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="field"><label>تاريخ الانتهاء</label><input type="text" placeholder="MM/YY" maxlength="5"></div><div class="field"><label>CVV</label><input type="password" placeholder="***" maxlength="3"></div></div>',
+            'vodafone_cash': '<div class="field"><label>رقم Vodafone Cash</label><input type="tel" placeholder="01xxxxxxxxx" maxlength="11" style="direction:ltr;text-align:right"></div>',
+            'instapay': '<div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;font-size:0.86rem"><i class="fas fa-info-circle" style="color:var(--info)"></i> سيتم تحويلك لتطبيق Instapay لإكمال الدفع</div>',
+            'wallet': '<div class="field"><label>رقم المحفظة</label><input type="tel" placeholder="01xxxxxxxxx" maxlength="11" style="direction:ltr;text-align:right"></div>',
+            'bank_transfer': '<div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;font-size:0.86rem;line-height:1.7"><strong>بيانات التحويل البنكي:</strong><br><br>البنك: ProVance Bank<br>اسم الحساب: ProVance Education<br>رقم الحساب: 1234-5678-9012-3456<br>SWIFT: PVBKEGCX<br><br>اعمل التحويل وارفق الإيصال أدناه</div>'
+        };
+        details.innerHTML = labels[method] || '';
+        details.style.display = 'block';
+    };
+
+    window.confirmPayment = async (type, amount) => {
+        if (!selectedMethod) {
+            window.ProVance.showToast('اختر طريقة دفع', 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('btnConfirmPay');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
+
+        try {
             const sb = window.ProVance.sb;
-            const { data, error } = await sb.from('payments')
-                .select('*')
-                .eq('student_user_id', studentUserId)
-                .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error(error);
-                document.getElementById('paymentsList').innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-receipt"></i>
-                        <h3>لا توجد مدفوعات</h3>
-                        <p>المدفوعات الخاصة بالتدريبات ستظهر هنا</p>
+            // إنشاء سجل دفع
+            const transactionId = 'TXN-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            const { error: payErr } = await sb.from('payments').insert({
+                student_user_id: studentUserId,
+                payment_lock_id: activeLock.id,
+                application_id: activeLock.application_id,
+                amount: amount,
+                currency: activeLock.currency || 'EGP',
+                payment_type: type,
+                payment_method: selectedMethod,
+                transaction_id: transactionId,
+                status: 'completed'  // في الإنتاج: pending → callback من بوابة الدفع
+            });
+
+            if (payErr) throw payErr;
+
+            // تحديث الـ lock
+            const newRemaining = type === 'full' ? 0 : Math.max(0, activeLock.remaining_amount - amount);
+            const newStatus = newRemaining === 0 ? 'fully_paid' : 'partial_paid';
+            const updateData = {
+                remaining_amount: newRemaining,
+                lock_status: newStatus,
+                updated_at: new Date().toISOString()
+            };
+            if (newStatus === 'fully_paid') updateData.released_at = new Date().toISOString();
+
+            await sb.from('payment_locks').update(updateData).eq('id', activeLock.id);
+
+            // إشعار للطالب
+            if (window.ProVance.sendNotification) {
+                await window.ProVance.sendNotification({
+                    userId: studentUserId,
+                    userType: 'student',
+                    title: '✅ تم الدفع بنجاح',
+                    message: `تم دفع ${amount.toLocaleString()} ${activeLock.currency || 'EGP'} بنجاح. ${newStatus === 'fully_paid' ? 'حسابك مفتوح بالكامل!' : 'الباقي: ' + newRemaining.toLocaleString()}`,
+                    type: 'success'
+                });
+            }
+
+            closeModal('paymentModal');
+            showReceipt(transactionId, amount, type, selectedMethod);
+            window.dispatchEvent(new CustomEvent('reload-payments'));
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('فشل الدفع: ' + err.message, 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check"></i> تأكيد الدفع';
+        }
+    };
+
+    function showReceipt(txnId, amount, type, method) {
+        const methodLabels = {
+            'fawry': 'فوري', 'visa': 'فيزا/ماستركارد',
+            'vodafone_cash': 'Vodafone Cash', 'instapay': 'Instapay',
+            'wallet': 'محفظة إلكترونية', 'bank_transfer': 'تحويل بنكي'
+        };
+
+        const html = `
+            <div class="modal active" id="receiptModal">
+                <div class="modal-content" style="max-width:500px">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-receipt"></i><span>إيصال الدفع</span></div>
+                        <button class="modal-close" onclick="closeModal('receiptModal')"><i class="fas fa-times"></i></button>
                     </div>
-                `;
+
+                    <div class="receipt">
+                        <div class="receipt-icon"><i class="fas fa-check-circle"></i></div>
+                        <div style="font-size:1rem;font-weight:700;margin-bottom:6px">تم الدفع بنجاح! 🎉</div>
+                        <div class="receipt-amount">${amount.toLocaleString()} ${activeLock?.currency || 'EGP'}</div>
+
+                        <div style="border-top:1px dashed rgba(255,255,255,0.1);margin-top:14px;padding-top:14px">
+                            <div class="receipt-detail"><span class="label">رقم العملية:</span><span class="value" style="font-family:monospace">${txnId}</span></div>
+                            <div class="receipt-detail"><span class="label">نوع الدفع:</span><span class="value">${type === 'full' ? 'دفع كامل' : 'دفع جزئي'}</span></div>
+                            <div class="receipt-detail"><span class="label">طريقة الدفع:</span><span class="value">${methodLabels[method] || method}</span></div>
+                            <div class="receipt-detail"><span class="label">التاريخ:</span><span class="value">${formatDateTime(new Date())}</span></div>
+                            <div class="receipt-detail"><span class="label">الحالة:</span><span class="value" style="color:var(--success)">✓ مكتمل</span></div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        <button class="btn btn-secondary" onclick="printReceipt('${txnId}', ${amount}, '${type}', '${method}')" style="flex:1;justify-content:center">
+                            <i class="fas fa-print"></i> طباعة
+                        </button>
+                        <button class="btn btn-primary" onclick="closeModal('receiptModal')" style="flex:1;justify-content:center">
+                            <i class="fas fa-check"></i> تم
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    }
+
+    window.printReceipt = (txnId, amount, type, method) => {
+        const methodLabels = { 'fawry': 'فوري', 'visa': 'فيزا/ماستركارد', 'vodafone_cash': 'Vodafone Cash', 'instapay': 'Instapay', 'wallet': 'محفظة', 'bank_transfer': 'تحويل بنكي' };
+        const printWin = window.open('', '_blank', 'width=600,height=700');
+        printWin.document.write(`
+            <html dir="rtl"><head><title>إيصال - ProVance</title>
+            <style>
+                body { font-family: Arial; padding: 40px; }
+                .header { text-align: center; border-bottom: 2px solid #4facfe; padding-bottom: 14px; margin-bottom: 20px; }
+                .amount { font-size: 2.4rem; color: #10b981; text-align: center; font-weight: 900; margin: 20px 0; }
+                .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #ccc; }
+                .row strong { color: #333; }
+            </style>
+            </head><body>
+            <div class="header">
+                <h1>ProVance</h1>
+                <p>إيصال الدفع الإلكتروني</p>
+            </div>
+            <div class="amount">${amount.toLocaleString()} ${activeLock?.currency || 'EGP'}</div>
+            <div class="row"><span>رقم العملية:</span><strong>${txnId}</strong></div>
+            <div class="row"><span>الطالب:</span><strong>${esc(studentData?.full_name || '-')}</strong></div>
+            <div class="row"><span>نوع الدفع:</span><strong>${type === 'full' ? 'دفع كامل' : 'دفع جزئي'}</strong></div>
+            <div class="row"><span>طريقة الدفع:</span><strong>${methodLabels[method] || method}</strong></div>
+            <div class="row"><span>التاريخ:</span><strong>${new Date().toLocaleString('ar-EG')}</strong></div>
+            <div class="row"><span>الحالة:</span><strong style="color:#10b981">✓ مكتمل</strong></div>
+            <p style="text-align:center;color:#666;margin-top:30px;font-size:0.86rem">شكراً لاستخدامك منصة ProVance</p>
+            </body></html>
+        `);
+        printWin.document.close();
+        setTimeout(() => printWin.print(), 500);
+    };
+
+    // HELP MODAL
+    window.openHelpModal = () => {
+        const html = `
+            <div class="modal active" id="helpModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title"><i class="fas fa-question-circle"></i><span>دليل المدفوعات</span></div>
+                        <button class="modal-close" onclick="closeModal('helpModal')"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-lock"></i> متى يتم القفل؟</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> بعد حضور 3 أيام تدريب، يتم قفل الحساب تلقائياً</li>
+                            <li><i class="fas fa-check"></i> القفل يمنعك من حضور التدريبات لحد ما تدفع</li>
+                            <li><i class="fas fa-check"></i> الإدارة بتحدد السعر لكل شركة</li>
+                            <li><i class="fas fa-check"></i> الموعد النهائي للدفع: 7 أيام من القفل</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-coins"></i> خيارات الدفع</h4>
+                        <ul>
+                            <li><i class="fas fa-trophy"></i> <strong>دفع كامل:</strong> خصم 5% فوري ومفيش متابعة</li>
+                            <li><i class="fas fa-clock"></i> <strong>دفع جزئي 50%:</strong> الباقي لازم يتدفع خلال 30 يوم</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-credit-card"></i> طرق الدفع</h4>
+                        <ul>
+                            <li><i class="fas fa-store"></i> <strong>فوري:</strong> ماكينات فوري في كل مكان</li>
+                            <li><i class="fas fa-credit-card"></i> <strong>فيزا/ماستر:</strong> بطاقات ائتمانية</li>
+                            <li><i class="fas fa-mobile-alt"></i> <strong>Vodafone Cash / Instapay:</strong> محافظ إلكترونية</li>
+                            <li><i class="fas fa-university"></i> <strong>تحويل بنكي:</strong> للمبالغ الكبيرة</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h4><i class="fas fa-shield-alt"></i> الأمان</h4>
+                        <ul>
+                            <li><i class="fas fa-check"></i> كل المعاملات مشفرة بالكامل</li>
+                            <li><i class="fas fa-check"></i> هتستلم إيصال إلكتروني لكل عملية</li>
+                            <li><i class="fas fa-check"></i> الإيصالات محفوظة في "سجل المدفوعات"</li>
+                            <li><i class="fas fa-check"></i> يمكنك طباعة الإيصال في أي وقت</li>
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="closeModal('helpModal')" style="width:100%;justify-content:center;margin-top:14px">
+                        <i class="fas fa-check"></i> فهمت
+                    </button>
+                </div>
+            </div>
+        `;
+        renderModal(html);
+    };
+
+    // LOAD ALL
+    let isInitialized = false;
+    async function loadAll() {
+        const sb = window.ProVance.sb;
+        if (!sb) return;
+
+        try {
+            const session = await sb.auth.getSession();
+            const userId = session?.data?.session?.user?.id;
+            if (!userId) {
+                window.location.href = 'student-login.html';
                 return;
             }
-            allPayments = data || [];
+            studentUserId = userId;
+
+            const [studentRes, lockRes, paymentsRes, allLocksRes] = await Promise.all([
+                sb.from('student').select('full_name, email').eq('user_id', userId).maybeSingle(),
+                sb.from('payment_locks').select('*').eq('student_user_id', userId).in('lock_status', ['locked', 'partial_paid']).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+                sb.from('payments').select('*').eq('student_user_id', userId).order('created_at', { ascending: false }),
+                sb.from('payment_locks').select('*').eq('student_user_id', userId).order('created_at', { ascending: false })
+            ]);
+
+            studentData = studentRes.data;
+            activeLock = lockRes.data;
+            allPayments = paymentsRes.data || [];
+            allLocks = allLocksRes.data || [];
+
+            renderLockBanner();
+            renderPaymentOptions();
+            renderPaymentHistory();
             updateStats();
-            applyFilter();
+
+            if (!isInitialized) {
+                isInitialized = true;
+                sb.channel('payments-' + userId)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_locks', filter: `student_user_id=eq.${userId}` }, () => loadAll())
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'payments', filter: `student_user_id=eq.${userId}` }, () => loadAll())
+                    .subscribe();
+
+                window.addEventListener('reload-payments', loadAll);
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const modals = document.querySelectorAll('.modal.active');
+                        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Load error:', err);
+            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
         }
+    }
 
-        window.switchTab = (e, filter) => {
-            currentFilter = filter;
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-            applyFilter();
-        };
-
-        window.logoutStudent = async (e) => {
-            e.preventDefault();
-            const ok = await window.ProVance.confirmModal({
-                title: 'تسجيل الخروج',
-                message: 'هل تريد تسجيل الخروج؟'
-            });
-            if (ok) await window.ProVance.logout('student-login.html');
-        };
-
-        async function init() {
-            const ok = await window.ProVance.requireStudentAuth();
-            if (!ok) return;
-            const session = await window.ProVance.getSession();
-            studentUserId = session.user.id;
-            await loadPayments();
-        }
-        init();
-    })();
+    loadAll();
+})();
     </script>
 </body>
 </html>
