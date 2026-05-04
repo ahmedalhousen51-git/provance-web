@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اختبار تسجيل دخول - ProVance</title>
+    <title>اختبار تسجيل - ProVance</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tahoma', sans-serif; }
         body {
@@ -32,7 +32,7 @@
             margin-bottom: 8px;
             font-weight: 700;
         }
-        input {
+        input, select {
             width: 100%;
             padding: 12px;
             background: rgba(255,255,255,0.1);
@@ -68,47 +68,43 @@
             white-space: pre-wrap;
             word-break: break-all;
             min-height: 200px;
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
         }
         .log .info { color: #4facfe; }
         .log .success { color: #10b981; }
-        .log .error { color: #ef4444; }
+        .log .error { color: #ef4444; font-weight: bold; }
         .log .warn { color: #f59e0b; }
-        .step {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 14px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 8px;
-            margin-bottom: 6px;
-            font-size: 0.9rem;
-        }
-        .step .status {
-            font-weight: 800;
-        }
-        .step .status.pass { color: #10b981; }
-        .step .status.fail { color: #ef4444; }
-        .step .status.pending { color: #f59e0b; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🧪 اختبار تسجيل دخول مباشر</h1>
+        <h1>🧪 اختبار تسجيل مباشر (Register)</h1>
 
         <div class="form-group">
-            <label>📧 الإيميل:</label>
-            <input type="email" id="email" placeholder="example@email.com" />
+            <label>📧 إيميل جديد (لازم يكون مش مسجل قبل كده):</label>
+            <input type="email" id="email" placeholder="newemail@example.com" />
         </div>
 
         <div class="form-group">
-            <label>🔒 كلمة المرور:</label>
-            <input type="password" id="password" placeholder="على الأقل 6 حروف" />
+            <label>🔒 كلمة المرور (على الأقل 6 حروف):</label>
+            <input type="password" id="password" placeholder="مثال: Test1234!" />
         </div>
 
-        <button onclick="testLogin()" id="loginBtn">🚀 جرب تسجيل الدخول</button>
+        <div class="form-group">
+            <label>🎯 نوع الحساب:</label>
+            <select id="accountType">
+                <option value="company">شركة</option>
+                <option value="student">طالب</option>
+            </select>
+        </div>
 
-        <div id="steps" style="margin-top: 20px;"></div>
+        <div class="form-group">
+            <label>🏢 اسم (الشركة أو الطالب):</label>
+            <input type="text" id="name" placeholder="اسم الشركة أو الطالب" />
+        </div>
+
+        <button onclick="testRegister()" id="registerBtn">🚀 جرب التسجيل</button>
 
         <div class="log" id="log">⏳ في انتظار البدء...</div>
     </div>
@@ -126,136 +122,144 @@
             el.scrollTop = el.scrollHeight;
         }
 
-        function addStep(name, status) {
-            const stepsEl = document.getElementById('steps');
-            const cls = status === 'pass' ? 'pass' : status === 'fail' ? 'fail' : 'pending';
-            const txt = status === 'pass' ? '✓' : status === 'fail' ? '✗' : '...';
-            stepsEl.innerHTML += `<div class="step"><span>${name}</span><span class="status ${cls}">${txt}</span></div>`;
-        }
-
-        async function testLogin() {
+        async function testRegister() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const btn = document.getElementById('loginBtn');
+            const accountType = document.getElementById('accountType').value;
+            const name = document.getElementById('name').value.trim();
+            const btn = document.getElementById('registerBtn');
 
-            if (!email || !password) {
-                alert('املأ الإيميل وكلمة المرور');
+            if (!email || !password || !name) {
+                alert('املأ كل الحقول');
                 return;
             }
 
             btn.disabled = true;
             btn.textContent = '⏳ جاري الاختبار...';
-            document.getElementById('steps').innerHTML = '';
             document.getElementById('log').innerHTML = '⏳ جاري التشغيل...';
 
             try {
                 // 1. شيك إن المكتبة موجودة
                 log('1️⃣ شيك على مكتبة Supabase...', 'info');
                 if (typeof supabase === 'undefined' || !supabase.createClient) {
-                    addStep('1. مكتبة Supabase موجودة', 'fail');
                     log('❌ مكتبة Supabase مش موجودة!', 'error');
-                    log('   ده معناه إن الـ CDN script tag فشل', 'error');
                     btn.disabled = false;
                     btn.textContent = '🔄 جرب تاني';
                     return;
                 }
-                addStep('1. مكتبة Supabase موجودة', 'pass');
-                log('✓ المكتبة موجودة وجاهزة', 'success');
+                log('✓ المكتبة موجودة', 'success');
 
                 // 2. عمل client
                 log('2️⃣ إنشاء Supabase client...', 'info');
                 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 if (!sb || !sb.auth) {
-                    addStep('2. إنشاء client', 'fail');
                     log('❌ فشل إنشاء client', 'error');
                     btn.disabled = false;
                     btn.textContent = '🔄 جرب تاني';
                     return;
                 }
-                addStep('2. إنشاء client', 'pass');
                 log('✓ Client اتعمل', 'success');
 
-                // 3. تسجيل دخول
-                log('3️⃣ محاولة تسجيل دخول...', 'info');
+                // 3. signup
+                log('3️⃣ محاولة Signup...', 'info');
                 log('   البريد: ' + email, 'info');
-                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+                const signupResult = await sb.auth.signUp({ email, password });
 
-                if (error) {
-                    addStep('3. تسجيل الدخول', 'fail');
-                    log('❌ فشل تسجيل الدخول:', 'error');
-                    log('   الرسالة: ' + error.message, 'error');
-                    log('   الـ status: ' + (error.status || 'N/A'), 'warn');
+                if (signupResult.error) {
+                    log('❌ فشل الـ Signup:', 'error');
+                    log('   الرسالة: ' + signupResult.error.message, 'error');
+                    log('   Status: ' + (signupResult.error.status || 'N/A'), 'warn');
+                    btn.disabled = false;
+                    btn.textContent = '🔄 جرب تاني';
+                    return;
+                }
 
-                    if (error.message.includes('Invalid')) {
-                        log('💡 الإيميل أو كلمة المرور غلط', 'warn');
-                    } else if (error.message.includes('Email not confirmed')) {
-                        log('💡 محتاج تأكد البريد الإلكتروني الأول', 'warn');
+                if (!signupResult.data || !signupResult.data.user) {
+                    log('❌ مفيش user في الرد', 'error');
+                    log('   الرد: ' + JSON.stringify(signupResult.data).substring(0, 200), 'warn');
+                    btn.disabled = false;
+                    btn.textContent = '🔄 جرب تاني';
+                    return;
+                }
+
+                const userId = signupResult.data.user.id;
+                log('✅ Signup نجح!', 'success');
+                log('   User ID: ' + userId, 'success');
+                log('   Email confirmed: ' + (signupResult.data.user.email_confirmed_at ? 'نعم' : 'لأ'), 'info');
+
+                // 4. حفظ البيانات في الجدول المناسب
+                log('4️⃣ حفظ البيانات في جدول ' + accountType + '...', 'info');
+
+                let insertResult;
+                if (accountType === 'company') {
+                    insertResult = await sb.from('companies').insert({
+                        user_id: userId,
+                        company_name: name,
+                        email: email,
+                        company_field: 'IT',
+                        primary_phone: '01000000000',
+                        status: 'pending',
+                        agreed_at: new Date().toISOString()
+                    });
+                } else {
+                    insertResult = await sb.from('student').insert({
+                        user_id: userId,
+                        full_name: name,
+                        email: email,
+                        phone: '01000000000'
+                    });
+                }
+
+                if (insertResult.error) {
+                    log('❌ فشل حفظ البيانات!', 'error');
+                    log('   الرسالة: ' + insertResult.error.message, 'error');
+                    log('   Code: ' + (insertResult.error.code || 'N/A'), 'warn');
+                    log('   Hint: ' + (insertResult.error.hint || 'N/A'), 'warn');
+                    log('   Details: ' + (insertResult.error.details || 'N/A'), 'warn');
+
+                    if (insertResult.error.message.includes('row-level security')) {
+                        log('💡 المشكلة: الـ RLS policies مش بتسمح بالحفظ', 'warn');
+                        log('   الحل: شغّل ملف 13_FIX_register_rls.sql', 'warn');
+                    } else if (insertResult.error.message.includes('column')) {
+                        log('💡 المشكلة: عمود مش موجود في الجدول', 'warn');
+                    } else if (insertResult.error.message.includes('duplicate')) {
+                        log('💡 المشكلة: البيانات مكررة', 'warn');
                     }
                     btn.disabled = false;
                     btn.textContent = '🔄 جرب تاني';
                     return;
                 }
 
-                addStep('3. تسجيل الدخول', 'pass');
-                log('🎉 تسجيل الدخول نجح!', 'success');
-                log('   User ID: ' + data.user.id, 'success');
-                log('   Email confirmed: ' + (data.user.email_confirmed_at ? 'نعم' : 'لأ'), 'info');
+                log('🎉 الحفظ نجح!', 'success');
 
-                // 4. شيك على الجداول
-                log('4️⃣ شيك على نوع الحساب...', 'info');
-
-                const { data: studentData } = await sb.from('student').select('user_id, full_name').eq('user_id', data.user.id).maybeSingle();
-                if (studentData) {
-                    addStep('4. الحساب من نوع: طالب', 'pass');
-                    log('✓ ده حساب طالب: ' + (studentData.full_name || ''), 'success');
+                // 5. اختبار signin
+                log('5️⃣ اختبار تسجيل الدخول...', 'info');
+                const loginResult = await sb.auth.signInWithPassword({ email, password });
+                if (loginResult.error) {
+                    log('❌ فشل تسجيل الدخول: ' + loginResult.error.message, 'error');
                 } else {
-                    const { data: companyData } = await sb.from('companies').select('user_id, company_name, status').eq('user_id', data.user.id).maybeSingle();
-                    if (companyData) {
-                        addStep('4. الحساب من نوع: شركة', 'pass');
-                        log('✓ ده حساب شركة: ' + (companyData.company_name || ''), 'success');
-                        log('   الحالة: ' + (companyData.status || 'unknown'), 'info');
-                    } else {
-                        const { data: adminData } = await sb.from('admins').select('user_id, full_name').eq('user_id', data.user.id).maybeSingle();
-                        if (adminData) {
-                            addStep('4. الحساب من نوع: أدمن', 'pass');
-                            log('✓ ده حساب أدمن: ' + (adminData.full_name || ''), 'success');
-                        } else {
-                            addStep('4. الحساب موجود بس بدون بيانات في أي جدول', 'fail');
-                            log('⚠️ الحساب موجود بس مش مرتبط بـ student/company/admin', 'warn');
-                        }
-                    }
+                    log('✅ تسجيل الدخول نجح!', 'success');
+                    log('\n🎉 كل حاجة اشتغلت! دلوقتي تقدر تسجل بنفس الإيميل ده', 'success');
                 }
 
-                // logout
                 await sb.auth.signOut();
-                log('\n🎉 الاختبار خلص بنجاح!', 'success');
-                log('💡 لو ده اشتغل لكن الـ login الأصلي مش بيشتغل،', 'info');
-                log('   يبقى المشكلة في الكود بتاع student-login.html', 'info');
 
             } catch (err) {
                 log('❌ خطأ غير متوقع:', 'error');
                 log('   ' + err.message, 'error');
-                log('   ' + (err.stack || '').substring(0, 200), 'error');
+                if (err.stack) log('   ' + err.stack.substring(0, 300), 'warn');
             }
 
             btn.disabled = false;
             btn.textContent = '🔄 جرب مرة تانية';
         }
 
-        // اختبار تلقائي للمكتبة لما الصفحة تتحمل
         window.addEventListener('load', function() {
             log('📱 الصفحة تحمّلت', 'info');
             if (typeof supabase !== 'undefined' && supabase.createClient) {
                 log('✓ مكتبة Supabase جاهزة', 'success');
             } else {
                 log('⚠️ مكتبة Supabase لسه بتلوّد...', 'warn');
-                setTimeout(function() {
-                    if (typeof supabase !== 'undefined' && supabase.createClient) {
-                        log('✓ المكتبة لوّدت', 'success');
-                    } else {
-                        log('❌ المكتبة فشلت تلوّد!', 'error');
-                    }
-                }, 3000);
             }
         });
     </script>
