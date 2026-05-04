@@ -1703,26 +1703,14 @@ console.log('✅ Form initialized successfully');
             const password = document.getElementById('password').value;
 
             try {
-                // انتظار تحميل supabase-config + Library (إلى 10 ثواني)
-                let sb = window.ProVance && window.ProVance.sb;
-                if (!sb || typeof sb.from !== 'function') {
-                    // استعمل الـ helper من supabase-config لو موجود
-                    if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
-                        sb = await window.ProVance.waitForSupabaseClient(10000);
-                    } else {
-                        // fallback: polling
-                        const start = Date.now();
-                        while (Date.now() - start < 10000) {
-                            await new Promise(r => setTimeout(r, 200));
-                            sb = window.ProVance && window.ProVance.sb;
-                            if (sb && typeof sb.from === 'function') break;
-                        }
-                    }
-                }
+                // استخدم الـ helper اللي فيه fallback للـ direct client (20 ثانية انتظار)
+                const sb = await waitForSupabase();
 
                 if (!sb || typeof sb.from !== 'function') {
                     const msg = '⏳ جاري تحميل النظام، يرجى الانتظار قليلاً ثم المحاولة مرة أخرى';
-                    window.ProVance.showToast(msg, 'warning');
+                    if (window.ProVance && window.ProVance.showToast) {
+                        window.ProVance.showToast(msg, 'warning');
+                    }
                     showServerErrorBanner(msg);
                     btn.classList.remove('loading');
                     btn.disabled = false;
