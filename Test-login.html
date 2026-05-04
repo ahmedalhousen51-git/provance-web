@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار تسجيل دخول - ProVance</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tahoma', sans-serif; }
+        body {
+            background: #0f0c29;
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .container { max-width: 700px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4facfe;
+            font-size: 1.5rem;
+        }
+        .form-group {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #1a1535;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 14px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log .info { color: #4facfe; }
+        .log .success { color: #10b981; }
+        .log .error { color: #ef4444; }
+        .log .warn { color: #f59e0b; }
+        .step {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+        .step .status {
+            font-weight: 800;
+        }
+        .step .status.pass { color: #10b981; }
+        .step .status.fail { color: #ef4444; }
+        .step .status.pending { color: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار تسجيل دخول مباشر</h1>
+
+        <div class="form-group">
+            <label>📧 الإيميل:</label>
+            <input type="email" id="email" placeholder="example@email.com" />
+        </div>
+
+        <div class="form-group">
+            <label>🔒 كلمة المرور:</label>
+            <input type="password" id="password" placeholder="على الأقل 6 حروف" />
+        </div>
+
+        <button onclick="testLogin()" id="loginBtn">🚀 جرب تسجيل الدخول</button>
+
+        <div id="steps" style="margin-top: 20px;"></div>
+
+        <div class="log" id="log">⏳ في انتظار البدء...</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+
+        function log(msg, type) {
+            const el = document.getElementById('log');
+            const time = new Date().toLocaleTimeString('ar-EG');
+            const cls = type || 'info';
+            el.innerHTML += `\n<span class="${cls}">[${time}] ${msg}</span>`;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function addStep(name, status) {
+            const stepsEl = document.getElementById('steps');
+            const cls = status === 'pass' ? 'pass' : status === 'fail' ? 'fail' : 'pending';
+            const txt = status === 'pass' ? '✓' : status === 'fail' ? '✗' : '...';
+            stepsEl.innerHTML += `<div class="step"><span>${name}</span><span class="status ${cls}">${txt}</span></div>`;
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+
+            if (!email || !password) {
+                alert('املأ الإيميل وكلمة المرور');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '⏳ جاري الاختبار...';
+            document.getElementById('steps').innerHTML = '';
+            document.getElementById('log').innerHTML = '⏳ جاري التشغيل...';
+
+            try {
+                // 1. شيك إن المكتبة موجودة
+                log('1️⃣ شيك على مكتبة Supabase...', 'info');
+                if (typeof supabase === 'undefined' || !supabase.createClient) {
+                    addStep('1. مكتبة Supabase موجودة', 'fail');
+                    log('❌ مكتبة Supabase مش موجودة!', 'error');
+                    log('   ده معناه إن الـ CDN script tag فشل', 'error');
+                    btn.disabled = false;
+                    btn.textContent = '🔄 جرب تاني';
+                    return;
+                }
+                addStep('1. مكتبة Supabase موجودة', 'pass');
+                log('✓ المكتبة موجودة وجاهزة', 'success');
+
+                // 2. عمل client
+                log('2️⃣ إنشاء Supabase client...', 'info');
+                const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                if (!sb || !sb.auth) {
+                    addStep('2. إنشاء client', 'fail');
+                    log('❌ فشل إنشاء client', 'error');
+                    btn.disabled = false;
+                    btn.textContent = '🔄 جرب تاني';
+                    return;
+                }
+                addStep('2. إنشاء client', 'pass');
+                log('✓ Client اتعمل', 'success');
+
+                // 3. تسجيل دخول
+                log('3️⃣ محاولة تسجيل دخول...', 'info');
+                log('   البريد: ' + email, 'info');
+                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+                if (error) {
+                    addStep('3. تسجيل الدخول', 'fail');
+                    log('❌ فشل تسجيل الدخول:', 'error');
+                    log('   الرسالة: ' + error.message, 'error');
+                    log('   الـ status: ' + (error.status || 'N/A'), 'warn');
+
+                    if (error.message.includes('Invalid')) {
+                        log('💡 الإيميل أو كلمة المرور غلط', 'warn');
+                    } else if (error.message.includes('Email not confirmed')) {
+                        log('💡 محتاج تأكد البريد الإلكتروني الأول', 'warn');
+                    }
+                    btn.disabled = false;
+                    btn.textContent = '🔄 جرب تاني';
+                    return;
+                }
+
+                addStep('3. تسجيل الدخول', 'pass');
+                log('🎉 تسجيل الدخول نجح!', 'success');
+                log('   User ID: ' + data.user.id, 'success');
+                log('   Email confirmed: ' + (data.user.email_confirmed_at ? 'نعم' : 'لأ'), 'info');
+
+                // 4. شيك على الجداول
+                log('4️⃣ شيك على نوع الحساب...', 'info');
+
+                const { data: studentData } = await sb.from('student').select('user_id, full_name').eq('user_id', data.user.id).maybeSingle();
+                if (studentData) {
+                    addStep('4. الحساب من نوع: طالب', 'pass');
+                    log('✓ ده حساب طالب: ' + (studentData.full_name || ''), 'success');
+                } else {
+                    const { data: companyData } = await sb.from('companies').select('user_id, company_name, status').eq('user_id', data.user.id).maybeSingle();
+                    if (companyData) {
+                        addStep('4. الحساب من نوع: شركة', 'pass');
+                        log('✓ ده حساب شركة: ' + (companyData.company_name || ''), 'success');
+                        log('   الحالة: ' + (companyData.status || 'unknown'), 'info');
+                    } else {
+                        const { data: adminData } = await sb.from('admins').select('user_id, full_name').eq('user_id', data.user.id).maybeSingle();
+                        if (adminData) {
+                            addStep('4. الحساب من نوع: أدمن', 'pass');
+                            log('✓ ده حساب أدمن: ' + (adminData.full_name || ''), 'success');
+                        } else {
+                            addStep('4. الحساب موجود بس بدون بيانات في أي جدول', 'fail');
+                            log('⚠️ الحساب موجود بس مش مرتبط بـ student/company/admin', 'warn');
+                        }
+                    }
+                }
+
+                // logout
+                await sb.auth.signOut();
+                log('\n🎉 الاختبار خلص بنجاح!', 'success');
+                log('💡 لو ده اشتغل لكن الـ login الأصلي مش بيشتغل،', 'info');
+                log('   يبقى المشكلة في الكود بتاع student-login.html', 'info');
+
+            } catch (err) {
+                log('❌ خطأ غير متوقع:', 'error');
+                log('   ' + err.message, 'error');
+                log('   ' + (err.stack || '').substring(0, 200), 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = '🔄 جرب مرة تانية';
+        }
+
+        // اختبار تلقائي للمكتبة لما الصفحة تتحمل
+        window.addEventListener('load', function() {
+            log('📱 الصفحة تحمّلت', 'info');
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                log('✓ مكتبة Supabase جاهزة', 'success');
+            } else {
+                log('⚠️ مكتبة Supabase لسه بتلوّد...', 'warn');
+                setTimeout(function() {
+                    if (typeof supabase !== 'undefined' && supabase.createClient) {
+                        log('✓ المكتبة لوّدت', 'success');
+                    } else {
+                        log('❌ المكتبة فشلت تلوّد!', 'error');
+                    }
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
