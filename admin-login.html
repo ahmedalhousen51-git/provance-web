@@ -450,25 +450,38 @@
         }
 
         
-        // Helper: استنى لحد ما supabase client يكون جاهز (يستعمل الـ helper من supabase-config.js)
-        async function waitForSupabase(maxWait = 10000) {
-            // أولاً جرب الـ helper المحسّن من supabase-config
+                // Helper: استنى لحد ما supabase client يكون جاهز (20 ثانية انتظار)
+        async function waitForSupabase(maxWait = 20000) {
+            // أولاً جرب الـ helper المحسّن من supabase-config (يحاول يحمّل المكتبة لو ناقصة)
             if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
                 const sb = await window.ProVance.waitForSupabaseClient(maxWait);
                 if (sb && typeof sb.from === 'function') return sb;
             }
-            // Fallback - polling عادي
+            // Fallback: polling
             const start = Date.now();
             while (Date.now() - start < maxWait) {
                 if (window.ProVance && window.ProVance.sb && typeof window.ProVance.sb.from === 'function') {
                     return window.ProVance.sb;
                 }
-                await new Promise(r => setTimeout(r, 100));
+                // Fallback: لو ProVance مش موجود أصلاً، حاول تعمل client مباشر
+                if (typeof supabase !== 'undefined' && supabase.createClient) {
+                    try {
+                        if (!window._directSb) {
+                            window._directSb = supabase.createClient(
+                                'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
+                            );
+                        }
+                        return window._directSb;
+                    } catch (e) {
+                        console.error('Failed to create direct client:', e);
+                    }
+                }
+                await new Promise(r => setTimeout(r, 200));
             }
             return null;
         }
-
-        console.log('✅ Login form initialized');
+console.log('✅ Login form initialized');
 
         window.togglePass = function() {
             const inp = document.getElementById('password');
