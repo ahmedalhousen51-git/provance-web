@@ -1690,7 +1690,32 @@
             const password = document.getElementById('password').value;
 
             try {
-                const sb = window.ProVance.sb;
+                // انتظار تحميل supabase-config + Library (إلى 10 ثواني)
+                let sb = window.ProVance && window.ProVance.sb;
+                if (!sb || typeof sb.from !== 'function') {
+                    // استعمل الـ helper من supabase-config لو موجود
+                    if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
+                        sb = await window.ProVance.waitForSupabaseClient(10000);
+                    } else {
+                        // fallback: polling
+                        const start = Date.now();
+                        while (Date.now() - start < 10000) {
+                            await new Promise(r => setTimeout(r, 200));
+                            sb = window.ProVance && window.ProVance.sb;
+                            if (sb && typeof sb.from === 'function') break;
+                        }
+                    }
+                }
+
+                if (!sb || typeof sb.from !== 'function') {
+                    const msg = '⏳ جاري تحميل النظام، يرجى الانتظار قليلاً ثم المحاولة مرة أخرى';
+                    window.ProVance.showToast(msg, 'warning');
+                    showServerErrorBanner(msg);
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    return;
+                }
+
                 const { data: authData, error: authErr } = await sb.auth.signUp({
                     email: data.email,
                     password: password
@@ -1779,8 +1804,14 @@
                 window.ProVance.showToast('🎉 تم إنشاء حسابك بنجاح!', 'success');
                 setTimeout(() => window.location.href = 'student-internship.html', 1800);
             } catch (err) {
-                console.error('Network/general error:', err);
-                const msg = '⚠️ مشكلة في الاتصال، تأكد من الإنترنت وحاول مرة أخرى';
+                console.error('Register error:', err);
+                let msg = '⚠️ حدث خطأ غير متوقع: ' + (err.message || 'خطأ مجهول');
+                const errStr = (err.message || '').toLowerCase();
+                if (errStr.includes('network') || errStr.includes('fetch') || errStr.includes('failed to fetch')) {
+                    msg = '⚠️ مشكلة في الاتصال، تأكد من الإنترنت وحاول مرة أخرى';
+                } else if (errStr.includes('timeout')) {
+                    msg = '⚠️ انتهت مهلة الاتصال، حاول مرة أخرى';
+                }
                 window.ProVance.showToast(msg, 'error');
                 showServerErrorBanner(msg);
                 btn.classList.remove('loading');
