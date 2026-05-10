@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>إدارة الأدمنز - ProVance Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+:root { --primary: #ef4444; --secondary: #dc2626; --gradient: linear-gradient(135deg, #ef4444, #dc2626); --bg: #0a0e27; --bg-2: #1a1535; --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6); --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe; --gold: #fbbf24; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%), var(--bg); }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
+.sidebar-logo { display: flex; align-items: center; justify-content: center; padding: 0 8px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.sidebar-logo .text-logo { font-size: 1.5rem; font-weight: 900; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.admin-badge { background: var(--gradient); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; text-align: center; margin-bottom: 14px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: var(--gradient); color: #fff; }
+.nav-item i { width: 18px; }
+.nav-badge { margin-right: auto; background: rgba(255,255,255,0.2); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 800; }
+.main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
+.menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
+.topbar-title { font-size: 1.5rem; font-weight: 800; }
+.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.stat-mini { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 11px; }
+.stat-mini-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #fff; flex-shrink: 0; }
+.stat-mini-icon.red { background: var(--gradient); }
+.stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.stat-mini-icon.gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+.stat-mini-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+.stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+.filters-bar { display: flex; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+.filters-bar input, .filters-bar select { padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.9rem; }
+.filters-bar input { flex: 1; min-width: 200px; }
+.filters-bar input:focus, .filters-bar select:focus { outline: none; border-color: var(--primary); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.88rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
+.btn-primary { background: var(--gradient); color: #fff; }
+.btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(239,68,68,0.4); }
+.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+.btn-secondary:hover { background: var(--card-hover); }
+.btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+.btn-success:hover { background: rgba(16,185,129,0.25); }
+.btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+.btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+.btn-danger:hover { background: rgba(239,68,68,0.2); }
+.btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
+.btn-sm { padding: 7px 12px; font-size: 0.8rem; }
+.admins-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; }
+.admin-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: all .25s; position: relative; }
+.admin-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+.admin-card.super { border-color: var(--gold); background: rgba(251,191,36,0.04); }
+.admin-card.super::after { content: '⭐ Super Admin'; position: absolute; top: 12px; left: 12px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 800; }
+.admin-card.inactive { opacity: 0.6; }
+.admin-card.you { border-color: var(--success); background: rgba(16,185,129,0.04); }
+.admin-header { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.admin-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.3rem; flex-shrink: 0; }
+.admin-info { flex: 1; min-width: 0; }
+.admin-name { font-weight: 800; font-size: 1.05rem; }
+.admin-email { color: var(--text-muted); font-size: 0.84rem; margin-top: 2px; word-break: break-all; }
+.admin-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.82rem; color: var(--text-muted); padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.admin-meta span { display: flex; align-items: center; gap: 4px; }
+.admin-meta i { color: var(--primary); }
+.permissions-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.perm-chip { padding: 3px 8px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--primary); border-radius: 8px; font-size: 0.74rem; font-weight: 600; }
+.perm-chip.granted { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.2); color: var(--success); }
+.admin-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+.admin-actions .btn { flex: 1; justify-content: center; padding: 9px; min-width: 90px; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .25s; }
+.modal.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto; padding: 28px; position: relative; animation: slideUp .3s ease-out; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.modal-title i { color: var(--primary); }
+.modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
+.field { margin-bottom: 16px; }
+.field label { display: block; color: var(--text); font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
+.field label i { color: var(--primary); margin-left: 4px; }
+.field label .req { color: var(--error); }
+.field input, .field select, .field textarea { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.95rem; font-family: inherit; transition: all .2s; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.06); }
+.permissions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.perm-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.02); border: 2px solid var(--border); border-radius: 10px; cursor: pointer; transition: all .2s; }
+.perm-item:hover { background: var(--card-hover); }
+.perm-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+.perm-item label { font-size: 0.86rem; font-weight: 600; cursor: pointer; flex: 1; margin: 0; }
+.perm-item.checked { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.3); }
+.perm-item.checked label { color: var(--primary); }
+.role-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.role-btn { padding: 14px; background: rgba(255,255,255,0.02); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer; transition: all .2s; text-align: center; }
+.role-btn.super:hover, .role-btn.super.selected { border-color: var(--gold); background: rgba(251,191,36,0.1); color: var(--gold); }
+.role-btn.normal:hover, .role-btn.normal.selected { border-color: var(--info); background: rgba(79,172,254,0.1); color: var(--info); }
+.empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+.empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
+.empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
+.alert-box { padding: 14px; border-radius: 10px; margin-bottom: 16px; font-size: 0.88rem; display: flex; align-items: flex-start; gap: 10px; }
+.alert-box i { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+.alert-info { background: rgba(79,172,254,0.08); border: 1px solid rgba(79,172,254,0.2); color: var(--info); }
+.alert-warning { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: var(--warning); }
+.alert-error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: var(--error); }
+.loading-overlay { position: fixed; inset: 0; background: rgba(10,14,39,0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .3s; }
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+.access-denied { text-align: center; padding: 80px 20px; }
+.access-denied i { font-size: 5rem; color: var(--error); margin-bottom: 20px; }
+.access-denied h2 { font-size: 1.6rem; margin-bottom: 10px; }
+.access-denied p { color: var(--text-muted); margin-bottom: 24px; }
+.password-input-wrapper { position: relative; }
+.password-toggle { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 6px; }
+@media (max-width: 1024px) {
+    .sidebar { transform: translateX(100%); width: 280px; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-right: 0; }
+    .menu-toggle { display: flex; align-items: center; justify-content: center; }
+}
+@media (max-width: 600px) {
+    .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
+    .topbar-title { font-size: 1.2rem; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .permissions-grid { grid-template-columns: 1fr; }
+}
+    </style>
+</head>
+<body>
+    <div class="bg-anim"></div>
+    <div class="layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo"><div class="text-logo">ProVance</div></div>
+            <div class="admin-badge"><i class="fas fa-shield-alt"></i> ADMIN PANEL</div>
+            <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
+            <a href="admin-campany.html" class="nav-item"><i class="fas fa-building"></i> الشركات <span class="nav-badge" id="pendingBadge" style="display:none">0</span></a>
+            <a href="admin-trainees.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
+            <a href="admin-users.html" class="nav-item active"><i class="fas fa-user-shield"></i> الأدمنز</a>
+            <a href="admin-notification.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+            <a href="#" onclick="logoutAdmin(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
+                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+            </a>
+        </aside>
+
+        <main class="main">
+            <div class="topbar">
+                <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="topbar-title"><i class="fas fa-user-shield" style="color:var(--primary)"></i> إدارة الأدمنز</h1>
+                <div class="topbar-actions" id="topbarActions">
+                    <button class="btn btn-primary btn-sm" onclick="openAddAdmin()">
+                        <i class="fas fa-plus"></i> إضافة أدمن جديد
+                    </button>
+                </div>
+            </div>
+
+            <div id="contentArea">
+                <div class="alert-box alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>صلاحيات Super Admin مطلوبة</strong><br>
+                        فقط Super Admin يقدر يضيف أو يحذف أدمنز. الأدمنز العاديين يقدروا يشوفوا القائمة بس.
+                    </div>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon red"><i class="fas fa-users-cog"></i></div>
+                        <div>
+                            <div class="stat-mini-num" id="statTotal">0</div>
+                            <div class="stat-mini-label">إجمالي الأدمنز</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon gold"><i class="fas fa-crown"></i></div>
+                        <div>
+                            <div class="stat-mini-num" id="statSuper">0</div>
+                            <div class="stat-mini-label">Super Admins</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon info"><i class="fas fa-user"></i></div>
+                        <div>
+                            <div class="stat-mini-num" id="statNormal">0</div>
+                            <div class="stat-mini-label">Admins عاديين</div>
+                        </div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-icon success"><i class="fas fa-check-circle"></i></div>
+                        <div>
+                            <div class="stat-mini-num" id="statActive">0</div>
+                            <div class="stat-mini-label">نشطين</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filters-bar">
+                    <input type="text" id="searchInput" placeholder="🔍 ابحث بالاسم أو البريد...">
+                    <select id="filterRole">
+                        <option value="">كل الأدوار</option>
+                        <option value="super_admin">Super Admin</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <select id="filterStatus">
+                        <option value="">كل الحالات</option>
+                        <option value="active">نشط</option>
+                        <option value="inactive">معطّل</option>
+                    </select>
+                </div>
+
+                <div class="admins-grid" id="adminsGrid">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>جاري التحميل...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="modalsContainer"></div>
+    <div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
+});
+
+let allAdmins = [];
+let currentAdmin = null;
+let selectedRole = null;
+
+const PERMISSIONS_LIST = [
+    { key: 'manage_companies', label: 'إدارة الشركات', icon: 'fa-building' },
+    { key: 'manage_students', label: 'إدارة المتدربين', icon: 'fa-users' },
+    { key: 'manage_admins', label: 'إدارة الأدمنز', icon: 'fa-user-shield' },
+    { key: 'manage_notifications', label: 'إدارة الإشعارات', icon: 'fa-bell' },
+    { key: 'manage_internships', label: 'إدارة التدريبات', icon: 'fa-briefcase' },
+    { key: 'view_analytics', label: 'عرض الإحصائيات', icon: 'fa-chart-line' },
+    { key: 'approve_companies', label: 'اعتماد الشركات', icon: 'fa-check-circle' },
+    { key: 'penalize_companies', label: 'عقوبات الشركات', icon: 'fa-gavel' },
+    { key: 'penalize_students', label: 'عقوبات المتدربين', icon: 'fa-exclamation-triangle' },
+    { key: 'delete_data', label: 'حذف البيانات', icon: 'fa-trash' }
+];
+
+// ============ Helpers ============
+function escapeHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function getInitial(name) { return (name || '?').charAt(0).toUpperCase(); }
+function formatDate(d) { if (!d) return '-'; try { return new Date(d).toLocaleDateString('ar-EG'); } catch (e) { return '-'; } }
+
+function showToast(msg, type = 'info') {
+    const t = document.createElement('div');
+    const colors = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+    t.className = 'toast';
+    t.style.background = colors[type] || colors.info;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+}
+
+function renderModal(html) {
+    document.getElementById('modalsContainer').innerHTML = html;
+    document.body.style.overflow = 'hidden';
+}
+window.closeModal = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+    if (document.querySelectorAll('.modal').length === 0) document.body.style.overflow = '';
+};
+
+window.logoutAdmin = async (e) => {
+    e.preventDefault();
+    if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) return;
+    await sb.auth.signOut();
+    localStorage.clear();
+    window.location.href = 'index.html';
+};
+
+// ============ Auth ============
+async function checkAdmin() {
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) { window.location.href = 'admin-login.html'; return null; }
+        const { data: admin } = await sb.from('admins').select('*').eq('user_id', session.user.id).maybeSingle();
+        if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        return admin;
+    } catch (e) {
+        window.location.href = 'admin-login.html';
+        return null;
+    }
+}
+
+function isSuperAdmin(admin) {
+    return admin && admin.role === 'super_admin';
+}
+
+// ============ Load Admins ============
+async function loadAdmins() {
+    try {
+        const { data, error } = await sb.from('admins').select('*').order('created_at', { ascending: false });
+        if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
+        allAdmins = data || [];
+        updateStats();
+        render();
+    } catch (e) { showToast('خطأ في الاتصال', 'error'); }
+}
+
+function updateStats() {
+    const total = allAdmins.length;
+    const supers = allAdmins.filter(a => a.role === 'super_admin').length;
+    const normal = allAdmins.filter(a => a.role !== 'super_admin').length;
+    const active = allAdmins.filter(a => a.is_active !== false).length;
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statSuper').textContent = supers;
+    document.getElementById('statNormal').textContent = normal;
+    document.getElementById('statActive').textContent = active;
+}
+
+function render() {
+    const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+    const roleFilter = document.getElementById('filterRole').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+
+    let list = [...allAdmins];
+
+    if (search) {
+        list = list.filter(a =>
+            (a.full_name || '').toLowerCase().includes(search) ||
+            (a.email || '').toLowerCase().includes(search)
+        );
+    }
+    if (roleFilter) list = list.filter(a => a.role === roleFilter);
+    if (statusFilter === 'active') list = list.filter(a => a.is_active !== false);
+    else if (statusFilter === 'inactive') list = list.filter(a => a.is_active === false);
+
+    const grid = document.getElementById('adminsGrid');
+    if (list.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-user-shield"></i>
+                <h3>لا يوجد أدمنز</h3>
+                <p>${search ? 'لم يتم العثور على نتائج' : 'اضغط "إضافة أدمن جديد" للبدء'}</p>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = list.map(a => createCard(a)).join('');
+}
+
+function createCard(a) {
+    const isSuper = a.role === 'super_admin';
+    const isYou = a.user_id === currentAdmin.user_id;
+    const isInactive = a.is_active === false;
+    const permissions = a.permissions || {};
+    
+    const perms = PERMISSIONS_LIST
+        .filter(p => permissions[p.key])
+        .slice(0, 4)
+        .map(p => `<span class="perm-chip granted"><i class="fas ${p.icon}"></i> ${p.label}</span>`)
+        .join('');
+    
+    const grantedCount = PERMISSIONS_LIST.filter(p => permissions[p.key]).length;
+    const moreText = grantedCount > 4 ? `<span class="perm-chip">+${grantedCount - 4} أكثر</span>` : '';
+
+    const canEdit = isSuperAdmin(currentAdmin) && !isYou;
+    const canDelete = isSuperAdmin(currentAdmin) && !isYou;
+
+    return `
+        <div class="admin-card ${isSuper ? 'super' : ''} ${isInactive ? 'inactive' : ''} ${isYou ? 'you' : ''}">
+            ${isYou ? '<div style="position:absolute;top:12px;left:12px;background:var(--success);color:#fff;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:800">أنت</div>' : ''}
+            <div class="admin-header">
+                <div class="admin-avatar">${getInitial(a.full_name)}</div>
+                <div class="admin-info">
+                    <div class="admin-name">${escapeHtml(a.full_name || '-')}</div>
+                    <div class="admin-email">${escapeHtml(a.email || '-')}</div>
+                </div>
+            </div>
+
+            <div class="admin-meta">
+                <span><i class="fas fa-${isSuper ? 'crown' : 'user'}"></i> ${isSuper ? 'Super Admin' : 'Admin'}</span>
+                <span><i class="fas fa-circle" style="color:${isInactive ? 'var(--error)' : 'var(--success)'};font-size:0.6rem"></i> ${isInactive ? 'معطّل' : 'نشط'}</span>
+                <span><i class="fas fa-calendar"></i> ${formatDate(a.created_at)}</span>
+            </div>
+
+            <div>
+                <div style="font-size:0.84rem;color:var(--text-muted);margin-bottom:6px">
+                    <i class="fas fa-key"></i> الصلاحيات (${grantedCount}/${PERMISSIONS_LIST.length}):
+                </div>
+                <div class="permissions-list">
+                    ${grantedCount === 0 ? '<span class="perm-chip" style="background:rgba(148,163,184,0.1);border-color:rgba(148,163,184,0.2);color:var(--text-muted)">لا توجد صلاحيات</span>' : perms + moreText}
+                </div>
+            </div>
+
+            <div class="admin-actions">
+                <button class="btn btn-info btn-sm" onclick="viewAdmin('${a.user_id}')">
+                    <i class="fas fa-eye"></i> التفاصيل
+                </button>
+                ${canEdit ? `
+                    <button class="btn btn-warning btn-sm" onclick="editAdmin('${a.user_id}')">
+                        <i class="fas fa-edit"></i> تعديل
+                    </button>
+                ` : ''}
+                ${canDelete ? `
+                    <button class="btn btn-danger btn-sm" onclick="deleteAdmin('${a.user_id}')">
+                        <i class="fas fa-trash"></i> حذف
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+// ============ View Details ============
+window.viewAdmin = (userId) => {
+    const a = allAdmins.find(x => x.user_id === userId);
+    if (!a) return;
+
+    const permissions = a.permissions || {};
+    const permsHTML = PERMISSIONS_LIST.map(p => {
+        const granted = permissions[p.key];
+        return `
+            <div class="perm-item ${granted ? 'checked' : ''}" style="cursor:default">
+                <i class="fas ${granted ? 'fa-check-circle' : 'fa-times-circle'}" style="color:${granted ? 'var(--success)' : 'var(--text-dim)'}"></i>
+                <label style="cursor:default">${p.label}</label>
+            </div>
+        `;
+    }).join('');
+
+    const html = `
+        <div class="modal active" id="viewModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title"><i class="fas fa-user-shield"></i><span>تفاصيل الأدمن</span></div>
+                    <button class="modal-close" onclick="closeModal('viewModal')"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:14px;margin-bottom:14px">
+                    <div class="admin-avatar" style="width:70px;height:70px;font-size:1.6rem">${getInitial(a.full_name)}</div>
+                    <div style="flex:1">
+                        <h3 style="font-size:1.2rem;font-weight:800">${escapeHtml(a.full_name)}</h3>
+                        <div style="color:var(--text-muted);font-size:0.88rem;margin-top:3px">${escapeHtml(a.email)}</div>
+                        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+                            <span style="padding:3px 10px;background:${a.role === 'super_admin' ? 'linear-gradient(135deg,#fbbf24,#f59e0b)' : 'rgba(79,172,254,0.15)'};color:${a.role === 'super_admin' ? '#fff' : 'var(--info)'};border-radius:12px;font-size:0.74rem;font-weight:800">
+                                ${a.role === 'super_admin' ? '⭐ Super Admin' : '👤 Admin'}
+                            </span>
+                            <span style="padding:3px 10px;background:${a.is_active !== false ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'};color:${a.is_active !== false ? 'var(--success)' : 'var(--error)'};border-radius:12px;font-size:0.74rem;font-weight:800">
+                                ${a.is_active !== false ? '✓ نشط' : '✗ معطّل'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">
+                    <div style="font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+                        <i class="fas fa-info-circle" style="color:var(--primary)"></i>
+                        البيانات
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.86rem">
+                        <div><span style="color:var(--text-muted)">تاريخ الإضافة:</span> ${formatDate(a.created_at)}</div>
+                        <div><span style="color:var(--text-muted)">آخر دخول:</span> ${a.last_login ? formatDate(a.last_login) : 'لم يسجل بعد'}</div>
+                    </div>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">
+                    <div style="font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+                        <i class="fas fa-key" style="color:var(--primary)"></i>
+                        الصلاحيات
+                    </div>
+                    <div class="permissions-grid">${permsHTML}</div>
+                </div>
+
+                <button class="btn btn-secondary" onclick="closeModal('viewModal')" style="width:100%;justify-content:center">إغلاق</button>
+            </div>
+        </div>
+    `;
+    renderModal(html);
+};
+
+// ============ Add Admin ============
+window.openAddAdmin = () => {
+    if (!isSuperAdmin(currentAdmin)) {
+        showToast('Super Admin فقط يقدر يضيف أدمنز', 'error');
+        return;
+    }
+    selectedRole = 'admin';
+
+    const permsHTML = PERMISSIONS_LIST.map(p => `
+        <div class="perm-item" onclick="togglePerm(this, '${p.key}')">
+            <input type="checkbox" id="perm_${p.key}" data-perm="${p.key}">
+            <label for="perm_${p.key}"><i class="fas ${p.icon}"></i> ${p.label}</label>
+        </div>
+    `).join('');
+
+    const html = `
+        <div class="modal active" id="addModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title"><i class="fas fa-user-plus"></i><span>إضافة أدمن جديد</span></div>
+                    <button class="modal-close" onclick="closeModal('addModal')"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div class="alert-box alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>تعليمات:</strong><br>
+                        - الإيميل + الباسورد دول هيستخدمهم الأدمن للدخول<br>
+                        - بمجرد الإضافة، يقدر يدخل من <code>admin-login.html</code>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-user"></i> الاسم الكامل <span class="req">*</span></label>
+                    <input type="text" id="admin_name" placeholder="مثال: أحمد محمد">
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-envelope"></i> البريد الإلكتروني <span class="req">*</span></label>
+                    <input type="email" id="admin_email" placeholder="admin@example.com">
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-lock"></i> كلمة المرور <span class="req">*</span></label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="admin_password" placeholder="على الأقل 6 أحرف">
+                        <button type="button" class="password-toggle" onclick="togglePassword('admin_password', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-user-tag"></i> نوع الأدمن <span class="req">*</span></label>
+                    <div class="role-buttons">
+                        <button class="role-btn normal selected" onclick="selectRole(this, 'admin')">
+                            <i class="fas fa-user"></i><br>
+                            Admin عادي
+                            <div style="font-size:0.74rem;margin-top:3px;color:var(--text-muted)">صلاحيات محددة</div>
+                        </button>
+                        <button class="role-btn super" onclick="selectRole(this, 'super_admin')">
+                            <i class="fas fa-crown"></i><br>
+                            Super Admin
+                            <div style="font-size:0.74rem;margin-top:3px;color:var(--text-muted)">كل الصلاحيات</div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field" id="permissionsField">
+                    <label><i class="fas fa-key"></i> الصلاحيات</label>
+                    <div style="display:flex;gap:6px;margin-bottom:8px">
+                        <button class="btn btn-secondary btn-sm" onclick="selectAllPerms()" style="flex:1;justify-content:center">
+                            <i class="fas fa-check-double"></i> اختر الكل
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="clearAllPerms()" style="flex:1;justify-content:center">
+                            <i class="fas fa-times"></i> إلغاء الكل
+                        </button>
+                    </div>
+                    <div class="permissions-grid">${permsHTML}</div>
+                </div>
+
+                <div style="display:flex;gap:10px;margin-top:14px">
+                    <button class="btn btn-secondary" onclick="closeModal('addModal')" style="flex:1;justify-content:center">إلغاء</button>
+                    <button class="btn btn-primary" onclick="confirmAddAdmin()" style="flex:1;justify-content:center">
+                        <i class="fas fa-save"></i> إضافة الأدمن
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    renderModal(html);
+};
+
+window.togglePassword = (id, btn) => {
+    const input = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+};
+
+window.selectRole = (el, role) => {
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedRole = role;
+    
+    // لو Super Admin، اختار كل الصلاحيات تلقائياً
+    if (role === 'super_admin') {
+        selectAllPerms();
+        document.getElementById('permissionsField').style.opacity = '0.6';
+    } else {
+        document.getElementById('permissionsField').style.opacity = '1';
+    }
+};
+
+window.togglePerm = (el, key) => {
+    const checkbox = el.querySelector('input[type="checkbox"]');
+    checkbox.checked = !checkbox.checked;
+    el.classList.toggle('checked', checkbox.checked);
+};
+
+window.selectAllPerms = () => {
+    document.querySelectorAll('.perm-item input[type="checkbox"]').forEach(cb => {
+        cb.checked = true;
+        cb.closest('.perm-item').classList.add('checked');
+    });
+};
+
+window.clearAllPerms = () => {
+    document.querySelectorAll('.perm-item input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.perm-item').classList.remove('checked');
+    });
+};
+
+window.confirmAddAdmin = async () => {
+    const name = document.getElementById('admin_name').value.trim();
+    const email = document.getElementById('admin_email').value.trim();
+    const password = document.getElementById('admin_password').value;
+
+    if (!name || !email || !password) {
+        showToast('املأ كل الحقول', 'error');
+        return;
+    }
+    if (password.length < 6) {
+        showToast('كلمة المرور لازم 6 أحرف على الأقل', 'error');
+        return;
+    }
+    if (!email.includes('@')) {
+        showToast('بريد إلكتروني غير صحيح', 'error');
+        return;
+    }
+
+    // اجمع الصلاحيات
+    const permissions = {};
+    PERMISSIONS_LIST.forEach(p => {
+        const cb = document.getElementById('perm_' + p.key);
+        if (cb && cb.checked) permissions[p.key] = true;
+    });
+
+    // لو Super Admin، كل الصلاحيات
+    if (selectedRole === 'super_admin') {
+        PERMISSIONS_LIST.forEach(p => { permissions[p.key] = true; });
+    }
+
+    try {
+        // 1. اعمل user جديد في auth
+        const { data: signupData, error: signupError } = await sb.auth.signUp({
+            email,
+            password,
+            options: { data: { role: 'admin', full_name: name } }
+        });
+
+        if (signupError) {
+            if (signupError.message.includes('already registered')) {
+                showToast('هذا البريد مستخدم بالفعل', 'error');
+            } else {
+                showToast('خطأ: ' + signupError.message, 'error');
+            }
+            return;
+        }
+
+        if (!signupData.user) {
+            showToast('فشلت إضافة المستخدم', 'error');
+            return;
+        }
+
+        // 2. ضيفه في جدول admins
+        const { error: insertError } = await sb.from('admins').insert({
+            user_id: signupData.user.id,
+            full_name: name,
+            email: email,
+            role: selectedRole,
+            permissions: permissions,
+            is_active: true
+        });
+
+        if (insertError) {
+            showToast('خطأ في حفظ الأدمن: ' + insertError.message, 'error');
+            return;
+        }
+
+        showToast('✅ تم إضافة الأدمن بنجاح', 'success');
+        closeModal('addModal');
+        await loadAdmins();
+    } catch (err) {
+        console.error(err);
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
+// ============ Edit Admin ============
+window.editAdmin = (userId) => {
+    if (!isSuperAdmin(currentAdmin)) {
+        showToast('Super Admin فقط', 'error');
+        return;
+    }
+
+    const a = allAdmins.find(x => x.user_id === userId);
+    if (!a) return;
+
+    selectedRole = a.role;
+    const permissions = a.permissions || {};
+
+    const permsHTML = PERMISSIONS_LIST.map(p => `
+        <div class="perm-item ${permissions[p.key] ? 'checked' : ''}" onclick="togglePerm(this, '${p.key}')">
+            <input type="checkbox" id="perm_${p.key}" data-perm="${p.key}" ${permissions[p.key] ? 'checked' : ''}>
+            <label for="perm_${p.key}"><i class="fas ${p.icon}"></i> ${p.label}</label>
+        </div>
+    `).join('');
+
+    const html = `
+        <div class="modal active" id="editModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title"><i class="fas fa-edit"></i><span>تعديل الأدمن</span></div>
+                    <button class="modal-close" onclick="closeModal('editModal')"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div class="alert-box alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <strong>${escapeHtml(a.full_name)}</strong> (${escapeHtml(a.email)})<br>
+                        تقدر تعدّل الاسم والصلاحيات. لتغيير الباسورد لازم الأدمن نفسه يعمل reset.
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-user"></i> الاسم الكامل</label>
+                    <input type="text" id="edit_name" value="${escapeHtml(a.full_name)}">
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-toggle-on"></i> الحالة</label>
+                    <select id="edit_status">
+                        <option value="active" ${a.is_active !== false ? 'selected' : ''}>نشط</option>
+                        <option value="inactive" ${a.is_active === false ? 'selected' : ''}>معطّل</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-user-tag"></i> نوع الأدمن</label>
+                    <div class="role-buttons">
+                        <button class="role-btn normal ${a.role !== 'super_admin' ? 'selected' : ''}" onclick="selectRole(this, 'admin')">
+                            <i class="fas fa-user"></i><br>Admin عادي
+                        </button>
+                        <button class="role-btn super ${a.role === 'super_admin' ? 'selected' : ''}" onclick="selectRole(this, 'super_admin')">
+                            <i class="fas fa-crown"></i><br>Super Admin
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field" id="permissionsField">
+                    <label><i class="fas fa-key"></i> الصلاحيات</label>
+                    <div style="display:flex;gap:6px;margin-bottom:8px">
+                        <button class="btn btn-secondary btn-sm" onclick="selectAllPerms()" style="flex:1;justify-content:center">
+                            <i class="fas fa-check-double"></i> الكل
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="clearAllPerms()" style="flex:1;justify-content:center">
+                            <i class="fas fa-times"></i> إلغاء
+                        </button>
+                    </div>
+                    <div class="permissions-grid">${permsHTML}</div>
+                </div>
+
+                <div style="display:flex;gap:10px;margin-top:14px">
+                    <button class="btn btn-secondary" onclick="closeModal('editModal')" style="flex:1;justify-content:center">إلغاء</button>
+                    <button class="btn btn-primary" onclick="confirmEditAdmin('${userId}')" style="flex:1;justify-content:center">
+                        <i class="fas fa-save"></i> حفظ
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    renderModal(html);
+};
+
+window.confirmEditAdmin = async (userId) => {
+    const name = document.getElementById('edit_name').value.trim();
+    const status = document.getElementById('edit_status').value;
+    if (!name) { showToast('أدخل الاسم', 'error'); return; }
+
+    const permissions = {};
+    PERMISSIONS_LIST.forEach(p => {
+        const cb = document.getElementById('perm_' + p.key);
+        if (cb && cb.checked) permissions[p.key] = true;
+    });
+    if (selectedRole === 'super_admin') {
+        PERMISSIONS_LIST.forEach(p => { permissions[p.key] = true; });
+    }
+
+    try {
+        const { error } = await sb.from('admins').update({
+            full_name: name,
+            role: selectedRole,
+            permissions: permissions,
+            is_active: status === 'active'
+        }).eq('user_id', userId);
+
+        if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
+        showToast('✅ تم التحديث', 'success');
+        closeModal('editModal');
+        await loadAdmins();
+    } catch (e) { showToast('خطأ: ' + e.message, 'error'); }
+};
+
+// ============ Delete Admin ============
+window.deleteAdmin = async (userId) => {
+    if (!isSuperAdmin(currentAdmin)) {
+        showToast('Super Admin فقط', 'error');
+        return;
+    }
+    if (userId === currentAdmin.user_id) {
+        showToast('مش هتقدر تحذف نفسك', 'error');
+        return;
+    }
+
+    const a = allAdmins.find(x => x.user_id === userId);
+    if (!a) return;
+
+    if (!confirm(`هل أنت متأكد من حذف الأدمن "${a.full_name}"؟\nده مش هيقدر يدخل تاني.`)) return;
+
+    try {
+        const { error } = await sb.from('admins').delete().eq('user_id', userId);
+        if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
+        showToast('تم الحذف', 'success');
+        await loadAdmins();
+    } catch (e) { showToast('خطأ: ' + e.message, 'error'); }
+};
+
+// ============ Init ============
+async function init() {
+    currentAdmin = await checkAdmin();
+    if (!currentAdmin) return;
+
+    // لو مش Super Admin، خفي زرار الإضافة
+    if (!isSuperAdmin(currentAdmin)) {
+        document.getElementById('topbarActions').style.display = 'none';
+    }
+
+    await loadAdmins();
+    document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+    let st;
+    document.getElementById('searchInput').addEventListener('input', () => {
+        clearTimeout(st);
+        st = setTimeout(render, 300);
+    });
+    document.getElementById('filterRole').addEventListener('change', render);
+    document.getElementById('filterStatus').addEventListener('change', render);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modals = document.querySelectorAll('.modal.active');
+            if (modals.length > 0) closeModal(modals[modals.length - 1].id);
+        }
+    });
+});
+    </script>
+</body>
+</html>
