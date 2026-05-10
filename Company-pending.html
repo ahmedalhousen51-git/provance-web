@@ -2,382 +2,245 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>جاري مراجعة طلبك - ProVance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>طلبك قيد المراجعة - ProVance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #00D9FF;
-            --secondary: #7B2FF7;
-            --gradient: linear-gradient(135deg, #00D9FF 0%, #7B2FF7 100%);
-            --dark-bg: #0a0814;
-            --dark-secondary: #15111f;
-            --text-primary: #ffffff;
-            --text-secondary: #b8b5c9;
-            --success: #51cf66;
-            --warning: #ffd700;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--dark-bg);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow-x: hidden;
-            overflow-y: auto;
-            padding: 20px 0;
-        }
-
-        /* خلفية متحركة */
-        .bg-animation {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-
-        .shape {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.12;
-            animation: float 20s infinite ease-in-out;
-        }
-
-        .shape-1 { width: 400px; height: 400px; background: var(--primary); top: -100px; right: -100px; }
-        .shape-2 { width: 350px; height: 350px; background: var(--secondary); bottom: -100px; left: -100px; animation-delay: 8s; }
-        .shape-3 { width: 300px; height: 300px; background: #FF6B9D; top: 50%; left: 50%; animation-delay: 14s; }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            33% { transform: translate(60px, 60px); }
-            66% { transform: translate(-40px, 80px); }
-        }
-
-        /* الكارت الرئيسي */
-        .pending-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 50px 40px;
-            max-width: 560px;
-            width: 90%;
-            text-align: center;
-            backdrop-filter: blur(20px);
-            animation: slideUp 0.6s ease-out;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* أيقونة الساعة */
-        .icon-wrapper {
-            width: 110px;
-            height: 110px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.1));
-            border: 2px solid rgba(255, 215, 0, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 30px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.3); }
-            50% { box-shadow: 0 0 0 15px rgba(255, 215, 0, 0); }
-        }
-
-        .icon-wrapper i {
-            font-size: 50px;
-            color: var(--warning);
-        }
-
-        /* العنوان */
-        .pending-title {
-            font-size: 1.9rem;
-            font-weight: 800;
-            margin-bottom: 12px;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .pending-subtitle {
-            color: var(--text-secondary);
-            font-size: 1rem;
-            line-height: 1.7;
-            margin-bottom: 35px;
-        }
-
-        /* معلومات الشركة */
-        .company-info {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 20px 25px;
-            margin-bottom: 30px;
-            text-align: right;
-        }
-
-        .company-info .label {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-bottom: 4px;
-        }
-
-        .company-info .value {
-            color: var(--text-primary);
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .company-info .email {
-            color: var(--primary);
-            font-size: 0.95rem;
-            direction: ltr;
-            text-align: left;
-        }
-
-        /* خطوات المراجعة */
-        .steps {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin-bottom: 35px;
-            text-align: right;
-        }
-
-        .step {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 14px 18px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .step-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 16px;
-        }
-
-        .step-icon.done { background: rgba(81, 207, 102, 0.15); color: var(--success); }
-        .step-icon.pending { background: rgba(255, 215, 0, 0.15); color: var(--warning); }
-        .step-icon.waiting { background: rgba(184, 181, 201, 0.1); color: var(--text-secondary); }
-
-        .step-text {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .step-text strong { color: var(--text-primary); }
-
-        /* زرار العودة */
-        .btn-back {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 14px 30px;
-            background: var(--gradient);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            margin-bottom: 15px;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-back:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3);
-        }
-
-        .btn-check {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 13px 30px;
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-check:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-primary);
-        }
-
-        /* Footer */
-        .footer-note {
-            margin-top: 25px;
-            color: var(--text-secondary);
-            font-size: 0.82rem;
-            line-height: 1.6;
-        }
-
-        .footer-note a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        @media (max-width: 480px) {
-            .pending-card { padding: 35px 20px; }
-            .pending-title { font-size: 1.5rem; }
-            .icon-wrapper { width: 90px; height: 90px; }
-            .icon-wrapper i { font-size: 40px; }
-        }
+:root { --primary: #ef4444; --secondary: #dc2626; --gradient: linear-gradient(135deg, #ef4444, #dc2626); --bg: #0a0e27; --bg-2: #1a1535; --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6); --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; -webkit-font-smoothing: antialiased; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%), var(--bg); }
+.top-logo { position: absolute; top: 24px; right: 24px; left: 24px; display: flex; justify-content: center; z-index: 10; }
+.text-logo { font-size: 1.6rem; font-weight: 900; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-decoration: none; }
+.pending-card { width: 100%; max-width: 600px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 24px; padding: 36px 30px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.4); margin-top: 60px; }
+.status-icon { width: 90px; height: 90px; margin: 0 auto 20px; background: linear-gradient(135deg, #f59e0b, #f97316); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.4rem; color: #fff; box-shadow: 0 10px 30px rgba(245,158,11,0.4); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+.badge-status { display: inline-flex; align-items: center; gap: 6px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: var(--warning); padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.86rem; margin-bottom: 14px; }
+h1 { font-size: 1.7rem; font-weight: 800; margin-bottom: 10px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.description { color: var(--text-muted); margin-bottom: 24px; line-height: 1.8; font-size: 0.96rem; }
+.description strong { color: var(--primary); }
+.info-box { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 20px; text-align: right; }
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
+.info-row:last-child { border-bottom: none; }
+.info-label { color: var(--text-muted); font-size: 0.86rem; display: flex; align-items: center; gap: 6px; }
+.info-label i { color: var(--primary); }
+.info-value { font-weight: 700; font-size: 0.9rem; word-break: break-word; }
+.timeline { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 22px; text-align: right; }
+.timeline-title { font-weight: 800; font-size: 1rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.timeline-title i { color: var(--primary); }
+.timeline-item { display: flex; gap: 12px; padding: 10px 0; border-right: 2px solid var(--border); padding-right: 14px; margin-right: 8px; position: relative; }
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-dot { position: absolute; right: -8px; top: 14px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #fff; }
+.timeline-dot.done { background: var(--success); border-color: var(--success); }
+.timeline-dot.active { background: var(--warning); border-color: var(--warning); animation: spin 2s linear infinite; }
+.timeline-dot.pending { background: var(--bg-2); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.timeline-content { flex: 1; }
+.timeline-content strong { display: block; font-weight: 700; font-size: 0.94rem; margin-bottom: 3px; }
+.timeline-content span { color: var(--text-muted); font-size: 0.84rem; }
+.actions { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 18px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.9rem; cursor: pointer; transition: all .2s; text-decoration: none; flex: 1; min-width: 130px; }
+.btn-primary { background: var(--gradient); color: #fff; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(239,68,68,0.4); }
+.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+.btn-secondary:hover { background: var(--card-hover); }
+.help-text { color: var(--text-muted); font-size: 0.86rem; padding: 14px; background: rgba(79,172,254,0.05); border: 1px solid rgba(79,172,254,0.15); border-radius: 12px; line-height: 1.7; }
+.help-text i { color: var(--info); margin-left: 4px; }
+.help-text a { color: var(--info); text-decoration: none; font-weight: 700; }
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+@media (max-width: 600px) { .pending-card { padding: 24px 20px; } h1 { font-size: 1.4rem; } .actions { flex-direction: column; } }
     </style>
 </head>
 <body>
-    <div class="bg-animation">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
+    <div class="bg-anim"></div>
+    <div class="top-logo">
+        <a href="index.html" class="text-logo">ProVance</a>
     </div>
 
     <div class="pending-card">
-        <!-- أيقونة الانتظار -->
-        <div class="icon-wrapper">
+        <div class="status-icon">
             <i class="fas fa-clock"></i>
         </div>
 
-        <!-- العنوان -->
-        <h1 class="pending-title">طلبك قيد المراجعة</h1>
-        <p class="pending-subtitle">
-            تم استلام طلب تسجيل شركتك بنجاح.<br>
-            سيقوم فريق ProVance بمراجعة بياناتك والرد عليك في أقرب وقت ممكن.
+        <span class="badge-status">
+            <i class="fas fa-hourglass-half"></i>
+            قيد المراجعة
+        </span>
+
+        <h1>طلبك قيد المراجعة</h1>
+        <p class="description">
+            شكراً لتسجيل شركتك في <strong>ProVance</strong>!<br>
+            فريق الإدارة يقوم حالياً بمراجعة بيانات شركتك للتأكد من صحتها.
         </p>
 
-        <!-- معلومات الشركة -->
-        <div class="company-info" id="companyInfo">
-            <div class="label">اسم الشركة</div>
-            <div class="value" id="companyName">—</div>
-            <br>
-            <div class="label">البريد الإلكتروني</div>
-            <div class="value email" id="companyEmail">—</div>
-        </div>
-
-        <!-- خطوات المراجعة -->
-        <div class="steps">
-            <div class="step">
-                <div class="step-icon done"><i class="fas fa-check"></i></div>
-                <div class="step-text"><strong>تم استلام الطلب</strong> — تم حفظ بيانات شركتك بنجاح</div>
+        <div class="info-box">
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-building"></i> اسم الشركة</span>
+                <span class="info-value" id="companyNameValue">جاري التحميل...</span>
             </div>
-            <div class="step">
-                <div class="step-icon pending"><i class="fas fa-clock"></i></div>
-                <div class="step-text"><strong>جاري المراجعة</strong> — فريقنا يراجع طلبك الآن</div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-envelope"></i> البريد الإلكتروني</span>
+                <span class="info-value" id="emailValue" style="direction:ltr">-</span>
             </div>
-            <div class="step">
-                <div class="step-icon waiting"><i class="fas fa-envelope"></i></div>
-                <div class="step-text"><strong>الرد عليك</strong> — ستصلك رسالة بنتيجة المراجعة</div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-calendar"></i> تاريخ التقديم</span>
+                <span class="info-value" id="submittedAt">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-clock"></i> مدة المراجعة المتوقعة</span>
+                <span class="info-value">2 - 5 أيام عمل</span>
             </div>
         </div>
 
-        <!-- أزرار -->
-        <a href="index.html" class="btn-back">
-            <i class="fas fa-home"></i>
-            العودة للصفحة الرئيسية
-        </a>
-        <button class="btn-check" onclick="checkStatus()">
-            <i class="fas fa-sync-alt"></i>
-            التحقق من حالة الطلب
-        </button>
+        <div class="timeline">
+            <div class="timeline-title"><i class="fas fa-route"></i> مراحل الطلب</div>
 
-        <div class="footer-note">
-            عند اعتماد طلبك يمكنك تسجيل الدخول من <a href="company-login.html">هنا</a>.<br>
-            للتواصل: <a href="mailto:support@provance.com">support@provance.com</a>
+            <div class="timeline-item">
+                <div class="timeline-dot done"><i class="fas fa-check"></i></div>
+                <div class="timeline-content">
+                    <strong>تم استلام طلبك</strong>
+                    <span>جميع البيانات وصلتنا بنجاح</span>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot active"><i class="fas fa-spinner"></i></div>
+                <div class="timeline-content">
+                    <strong>قيد المراجعة</strong>
+                    <span>الفريق الإداري يراجع بياناتك حالياً</span>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot pending"></div>
+                <div class="timeline-content">
+                    <strong>إخطار النتيجة</strong>
+                    <span>سنرسل لك بريد إلكتروني بالنتيجة</span>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot pending"></div>
+                <div class="timeline-content">
+                    <strong>تفعيل الحساب والبدء</strong>
+                    <span>ابدأ في إدارة شركتك ومتدربيك</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="checkStatus()">
+                <i class="fas fa-sync"></i>
+                تحقق من الحالة
+            </button>
+            <button class="btn btn-secondary" onclick="logoutUser()">
+                <i class="fas fa-sign-out-alt"></i>
+                تسجيل الخروج
+            </button>
+        </div>
+
+        <div class="help-text">
+            <i class="fas fa-info-circle"></i>
+            <strong>هل لديك استفسار؟</strong><br>
+            تواصل معنا عبر البريد: <a href="mailto:support@provance.com">support@provance.com</a>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <script>
-        const _sb = supabase.createClient(
-            'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
-        );
+    (function() {
+        'use strict';
 
-        // عرض بيانات الشركة
-        document.addEventListener('DOMContentLoaded', function() {
-            const name  = localStorage.getItem('pendingCompanyName') || '—';
-            const email = localStorage.getItem('pendingCompanyEmail') || '—';
-            const nameEl  = document.getElementById('companyName');
-            const emailEl = document.getElementById('companyEmail');
-            if (nameEl)  nameEl.textContent  = name;
-            if (emailEl) emailEl.textContent = email;
-        });
+        function showToast(msg, type) {
+            const t = document.createElement('div');
+            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+            t.className = 'toast';
+            t.style.background = c[type] || c.info;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
+        }
 
-        // التحقق من حالة الطلب من Supabase
-        async function checkStatus() {
-            const btn = document.querySelector('.btn-check');
-            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...'; }
-
+        async function loadCompanyInfo() {
             try {
-                const { data: { session } } = await _sb.auth.getSession();
+                const sb = window.ProVance && window.ProVance.sb;
+                const session = window.ProVance && window.ProVance.getSession ? await window.ProVance.getSession() : null;
 
-                if (!session) {
-                    // محاول تسجيل الدخول بالبيانات المحفوظة
-                    alert('يرجى الانتظار حتى يتم مراجعة طلبك من الإدارة ثم تسجيل الدخول.');
-                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> التحقق من حالة الطلب'; }
-                    return;
+                if (sb && session) {
+                    const { data: company } = await sb.from('companies')
+                        .select('company_name, email, status, rejection_reason, created_at')
+                        .eq('user_id', session.user.id)
+                        .maybeSingle();
+
+                    if (company) {
+                        document.getElementById('companyNameValue').textContent = company.company_name || '-';
+                        document.getElementById('emailValue').textContent = company.email || '-';
+                        const formatDate = window.ProVance.formatDate || (d => new Date(d).toLocaleDateString('ar-EG'));
+                        document.getElementById('submittedAt').textContent = formatDate(company.created_at);
+
+                        // تحويل تلقائي لو الحالة تغيرت
+                        if (company.status === 'approved') {
+                            showToast('تم اعتماد شركتك! 🎉', 'success');
+                            setTimeout(() => window.location.href = 'company-dashboard.html', 1500);
+                            return;
+                        }
+
+                        if (company.status === 'rejected') {
+                            const reason = company.rejection_reason || 'لم يُحدد سبب';
+                            await sb.auth.signOut();
+                            localStorage.clear();
+                            alert('للأسف تم رفض طلبك\n\nالسبب: ' + reason);
+                            window.location.href = 'company-login.html';
+                            return;
+                        }
+                        return;
+                    }
                 }
 
-                const { data: company } = await _sb
-                    .from('companies')
-                    .select('status, company_name')
-                    .eq('user_id', session.user.id)
-                    .single();
+                // Fallback
+                const cachedName = localStorage.getItem('pendingCompanyName') || localStorage.getItem('companyName');
+                const cachedEmail = localStorage.getItem('pendingCompanyEmail') || localStorage.getItem('userEmail');
+                document.getElementById('companyNameValue').textContent = cachedName || 'غير محدد';
+                document.getElementById('emailValue').textContent = cachedEmail || '-';
+                const formatDate = (window.ProVance && window.ProVance.formatDate) || (d => new Date(d).toLocaleDateString('ar-EG'));
+                document.getElementById('submittedAt').textContent = formatDate(new Date());
+            } catch (e) { console.error(e); }
+        }
 
-                if (!company) {
-                    alert('لم يتم العثور على طلبك. يرجى التسجيل مجدداً.');
-                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> التحقق من حالة الطلب'; }
-                    return;
-                }
+        window.checkStatus = async () => {
+            showToast('جاري التحقق من الحالة...', 'info');
+            await loadCompanyInfo();
+            setTimeout(() => {
+                showToast('لا يزال طلبك قيد المراجعة', 'warning');
+            }, 1200);
+        };
 
-                if (company.status === 'approved') {
-                    alert(`✅ تم اعتماد طلب شركة "${company.company_name}"! يمكنك الآن تسجيل الدخول.`);
-                    window.location.href = 'company-login.html';
-                } else if (company.status === 'rejected') {
-                    alert('❌ تم رفض طلبك من قِبل الإدارة. للاستفسار تواصل معنا على support@provance.com');
-                    await _sb.auth.signOut();
+        window.logoutUser = async () => {
+            if (!confirm('هل تريد تسجيل الخروج؟')) return;
+            try {
+                if (window.ProVance && window.ProVance.logout) {
+                    await window.ProVance.logout('company-login.html');
+                } else if (window.ProVance && window.ProVance.sb) {
+                    await window.ProVance.sb.auth.signOut();
+                    localStorage.clear();
                     window.location.href = 'company-login.html';
                 } else {
-                    alert('⏳ طلبك لا يزال قيد المراجعة. شكراً لصبرك!');
+                    localStorage.clear();
+                    window.location.href = 'company-login.html';
                 }
             } catch (e) {
-                alert('حدث خطأ في الاتصال. تحقق من الإنترنت وحاول مرة أخرى.');
+                localStorage.clear();
+                window.location.href = 'company-login.html';
             }
+        };
 
-            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> التحقق من حالة الطلب'; }
-        }
+        loadCompanyInfo();
+        setInterval(loadCompanyInfo, 30000);
+    })();
     </script>
 </body>
 </html>
