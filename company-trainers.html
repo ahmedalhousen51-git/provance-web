@@ -2355,7 +2355,7 @@
         if (!sb) return;
 
         try {
-            const [appsRes, intsRes, evalsRes, tasksRes, recsRes, sentRes] = await Promise.all([
+            const results = await Promise.allSettled([
                 sb.from('applications').select('*').eq('company_user_id', companyUserId).order('created_at', { ascending: false }),
                 sb.from('internships').select('*').eq('company_user_id', companyUserId).order('created_at', { ascending: false }),
                 sb.from('performance_evaluations').select('*').eq('company_user_id', companyUserId),
@@ -2364,12 +2364,13 @@
                 sb.from('reports_sent').select('*').eq('company_user_id', companyUserId).order('created_at', { ascending: false })
             ]);
 
-            allApplications = appsRes.data || [];
-            allInternships = intsRes.data || [];
-            allEvaluations = evalsRes.data || [];
-            allTasks = tasksRes.data || [];
-            allRecommendations = recsRes.data || [];
-            allReportsSent = sentRes.data || [];
+            const getData = (r) => (r.status === 'fulfilled' && r.value && r.value.data) ? r.value.data : [];
+            allApplications = getData(results[0]);
+            allInternships = getData(results[1]);
+            allEvaluations = getData(results[2]);
+            allTasks = getData(results[3]);
+            allRecommendations = getData(results[4]);
+            allReportsSent = getData(results[5]);
 
             updateStats();
             renderTrainees();
@@ -2389,28 +2390,53 @@
     document.getElementById('searchReports').addEventListener('input', renderReportsHistory);
     document.getElementById('filterReportType').addEventListener('change', renderReportsHistory);
 
-    // INIT
+    // INIT - بسيط: ناخد الـ session مباشرة من sb
     async function init() {
-        const ok = window.ProVance.requireCompanyAuth ? await window.ProVance.requireCompanyAuth() : true;
-        if (!ok) return;
+        try {
+            // انتظر تحميل supabase library لو لسه مش جاهز
+            let sb = window.ProVance && window.ProVance.sb;
+            if (!sb && window.ProVance && typeof window.ProVance.requireCompanyAuth === 'function') {
+                // استخدم helper لو موجود
+                try { await window.ProVance.requireCompanyAuth(); } catch(e) {}
+                sb = window.ProVance.sb;
+            }
+            
+            // لو لسه مفيش sb، انتظر شوية وحاول تاني
+            if (!sb && typeof supabase !== 'undefined') {
+                sb = supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                    { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } }
+                );
+                if (window.ProVance) window.ProVance.sb = sb;
+            }
+            
+            if (!sb) {
+                console.error('❌ Supabase client not ready');
+                window.location.href = 'company-login.html';
+                return;
+            }
 
-        const session = window.ProVance.getSession ? await window.ProVance.getSession() : null;
-        if (session && session.user) {
-            companyUserId = session.user.id;
-        } else if (window.ProVance.sb) {
-            const { data } = await window.ProVance.sb.auth.getSession();
-            if (data?.session?.user) companyUserId = data.session.user.id;
+            const { data: sessionData } = await sb.auth.getSession();
+            const userId = sessionData && sessionData.session && sessionData.session.user ? sessionData.session.user.id : null;
+            
+            if (!userId) {
+                window.location.href = 'company-login.html';
+                return;
+            }
+            
+            companyUserId = userId;
+
+            await loadAll();
+        } catch (err) {
+            console.error('Init error:', err);
+            if (window.ProVance && window.ProVance.showToast) {
+                window.ProVance.showToast('حدث خطأ، حاول تحديث الصفحة', 'error');
+            }
         }
-
-        if (!companyUserId) {
-            window.location.href = 'company-login.html';
-            return;
-        }
-
-        await loadAll();
 
         const sb = window.ProVance.sb;
-        if (sb) {
+        if (sb && companyUserId) {
             sb.channel('trainers-app-' + companyUserId)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `company_user_id=eq.${companyUserId}` }, () => loadAll())
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'performance_evaluations', filter: `company_user_id=eq.${companyUserId}` }, () => loadAll())
