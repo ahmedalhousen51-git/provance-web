@@ -712,23 +712,27 @@
         }
 
         async function loadProfile() {
-            const ok = await window.ProVance.requireCompanyAuth();
-            if (!ok) return;
+            try {
+                const auth = await window.ProVance.requireCompanyAuth();
+                if (!auth) return;
 
-            const sb = window.ProVance.sb;
-            const session = await window.ProVance.getSession();
+                const sb = window.ProVance.sb;
+                // النتيجة الجديدة بترجع { session, company } - استخدم اللي موجود
+                const session = auth.session || await window.ProVance.getSession();
+                const data = auth.company;
 
-            const { data, error } = await sb.from('companies')
-                .select('*')
-                .eq('user_id', session.user.id)
-                .maybeSingle();
+                if (!data) {
+                    window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
+                    return;
+                }
 
-            if (error || !data) {
-                window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
-                return;
+                loadCompanyData(data);
+            } catch (err) {
+                console.error('loadProfile error:', err);
+                if (window.ProVance && window.ProVance.showToast) {
+                    window.ProVance.showToast('حدث خطأ في تحميل البيانات', 'error');
+                }
             }
-
-            loadCompanyData(data);
         }
 
         window.openEditModal = () => {
@@ -812,7 +816,13 @@
             if (ok) await window.ProVance.logout('company-login.html');
         };
 
-        loadProfile();
+        loadProfile().catch(e => { console.error(e); if (window.ProVance && window.ProVance.showToast) window.ProVance.showToast("حدث خطأ", "error"); });
+        // Safety timeout
+        setTimeout(() => {
+            const loading = document.querySelector('.skeleton');
+            if (loading) console.warn('⚠️ Loading timeout');
+        }, 10000);
+
     })();
     </script>
 </body>
