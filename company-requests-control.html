@@ -1712,8 +1712,29 @@
             return;
         }
         const State = window._reqState;
-        const sb = window.ProVance.sb;
-        if (!sb) return;
+        // انتظر sb لو لسه مش جاهز
+        let sb = window.ProVance && window.ProVance.sb;
+        if (!sb) {
+            // محاولة 1: انتظر شوية
+            for (let i = 0; i < 30; i++) {
+                await new Promise(r => setTimeout(r, 200));
+                sb = window.ProVance && window.ProVance.sb;
+                if (sb) break;
+            }
+            // محاولة 2: اعمل client مباشرة
+            if (!sb && typeof supabase !== 'undefined' && supabase.createClient) {
+                sb = supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                    { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } }
+                );
+                if (window.ProVance) window.ProVance.sb = sb;
+            }
+            if (!sb) {
+                console.error('❌ Supabase not available');
+                return;
+            }
+        }
 
         try {
             const session = await sb.auth.getSession();
@@ -1724,11 +1745,14 @@
             }
             State.companyUserId = userId;
 
-            const [companyRes, appsRes, internshipsRes] = await Promise.all([
+            const results = await Promise.allSettled([
                 sb.from('companies').select('*').eq('user_id', userId).maybeSingle(),
                 sb.from('applications').select('*').eq('company_user_id', userId).order('created_at', { ascending: false }),
                 sb.from('internships').select('*').eq('company_user_id', userId).order('created_at', { ascending: false })
             ]);
+            const companyRes = results[0] && results[0].status === "fulfilled" ? results[0].value : { data: [], error: results[0] && results[0].reason };
+            const appsRes = results[1] && results[1].status === "fulfilled" ? results[1].value : { data: [], error: results[1] && results[1].reason };
+            const internshipsRes = results[2] && results[2].status === "fulfilled" ? results[2].value : { data: [], error: results[2] && results[2].reason };
 
             State.companyData = companyRes.data;
             State.allApplications = appsRes.data || [];
