@@ -156,7 +156,18 @@
             redirectTo('company-login.html');
             return null;
         }
-        return company;
+        // لو الشركة pending أو rejected، رجّعها للصفحة المناسبة
+        if (company.status === 'pending') {
+            redirectTo('Company-pending.html');
+            return null;
+        }
+        if (company.status === 'rejected') {
+            await sb.auth.signOut();
+            localStorage.clear();
+            redirectTo('company-login.html');
+            return null;
+        }
+        return { session: session, company: company };
     }
 
     async function requireStudentAuth() {
@@ -170,7 +181,7 @@
             redirectTo('student-login.html');
             return null;
         }
-        return student;
+        return { session: session, student: student };
     }
 
     async function requireAdminAuth() {
@@ -184,7 +195,7 @@
             redirectTo('admin-login.html');
             return null;
         }
-        return admin;
+        return { session: session, admin: admin };
     }
 
     async function logout(redirectUrl) {
