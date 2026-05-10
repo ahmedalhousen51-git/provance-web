@@ -880,23 +880,43 @@
         // Init
         // ========================================================
         async function init() {
-            const auth = await window.ProVance.requireCompanyAuth();
-            if (!auth) return;
+            try {
+                const auth = await window.ProVance.requireCompanyAuth();
+                if (!auth) return;
 
-            state.sb      = window.ProVance.sb;
-            state.session = auth.session;
-            state.company = auth.company;
+                state.sb      = window.ProVance.sb;
+                state.session = auth.session;
+                state.company = auth.company;
 
-            renderCompanyHeader();
-            await Promise.all([
-                loadApplications(),
-                loadUpcomingInterviews(),
-                loadNotificationsCount()
-            ]);
+                try { renderCompanyHeader(); } catch(e) { console.error('renderCompanyHeader:', e); }
 
-            hideLoading();
-            startRealtimeSubscription();
+                // Promise.allSettled عشان لو أي واحدة فشلت، الباقي يكمل
+                await Promise.allSettled([
+                    loadApplications().catch(e => console.error('loadApplications:', e)),
+                    loadUpcomingInterviews().catch(e => console.error('loadUpcomingInterviews:', e)),
+                    loadNotificationsCount().catch(e => console.error('loadNotificationsCount:', e))
+                ]);
+
+                hideLoading();
+
+                try { startRealtimeSubscription(); } catch(e) { console.error('startRealtimeSubscription:', e); }
+            } catch (err) {
+                console.error('Init error:', err);
+                hideLoading();
+                if (window.ProVance && window.ProVance.showToast) {
+                    window.ProVance.showToast('حدث خطأ، حاول تحديث الصفحة', 'error');
+                }
+            }
         }
+
+        // Safety: لو الصفحة لسه بتحمّل بعد 10 ثواني، أخفي الـ loading
+        setTimeout(() => {
+            const el = document.getElementById('loading');
+            if (el && !el.classList.contains('hidden')) {
+                console.warn('⚠️ Loading timeout - forcing hide');
+                el.classList.add('hidden');
+            }
+        }, 10000);
 
         function hideLoading() {
             const el = document.getElementById('loading');
