@@ -1592,17 +1592,43 @@
     };
 
     async function loadAll() {
-        const sb = window.ProVance.sb;
-        if (!sb) return;
+        // انتظر sb لو لسه مش جاهز
+        let sb = window.ProVance && window.ProVance.sb;
+        if (!sb) {
+            // محاولة 1: انتظر شوية
+            for (let i = 0; i < 30; i++) {
+                await new Promise(r => setTimeout(r, 200));
+                sb = window.ProVance && window.ProVance.sb;
+                if (sb) break;
+            }
+            // محاولة 2: اعمل client مباشرة
+            if (!sb && typeof supabase !== 'undefined' && supabase.createClient) {
+                sb = supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                    { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } }
+                );
+                if (window.ProVance) window.ProVance.sb = sb;
+            }
+            if (!sb) {
+                console.error('❌ Supabase not available');
+                return;
+            }
+        }
 
         try {
-            const [companyRes, traineesRes, qrRes, attRes, holRes] = await Promise.all([
+            const results = await Promise.allSettled([
                 sb.from('companies').select('company_name').eq('user_id', companyUserId).maybeSingle(),
                 sb.from('applications').select('*').eq('company_user_id', companyUserId).in('status', ['hired', 'in_training']),
                 sb.from('qr_codes').select('*').eq('company_user_id', companyUserId).eq('qr_type', 'daily_attendance').eq('status', 'active').gt('valid_until', new Date().toISOString()).order('created_at', { ascending: false }).limit(1).maybeSingle(),
                 sb.from('attendance_logs').select('*').eq('company_user_id', companyUserId).order('scanned_at', { ascending: false }).limit(500),
                 sb.from('company_weekly_holidays').select('*').eq('company_user_id', companyUserId).maybeSingle()
             ]);
+            const companyRes = results[0] && results[0].status === "fulfilled" ? results[0].value : { data: [], error: results[0] && results[0].reason };
+            const traineesRes = results[1] && results[1].status === "fulfilled" ? results[1].value : { data: [], error: results[1] && results[1].reason };
+            const qrRes = results[2] && results[2].status === "fulfilled" ? results[2].value : { data: [], error: results[2] && results[2].reason };
+            const attRes = results[3] && results[3].status === "fulfilled" ? results[3].value : { data: [], error: results[3] && results[3].reason };
+            const holRes = results[4] && results[4].status === "fulfilled" ? results[4].value : { data: [], error: results[4] && results[4].reason };
 
             companyName = companyRes.data?.company_name || 'الشركة';
             activeTrainees = traineesRes.data || [];
