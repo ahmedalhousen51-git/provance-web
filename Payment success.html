@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تم الدفع بنجاح - ProVance</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root { --primary:#4facfe; --secondary:#00f2fe; --gradient: linear-gradient(135deg, #4facfe, #00f2fe); --success:#10b981; --bg:#0a0e27; --card:rgba(255,255,255,0.04); --border:rgba(255,255,255,0.1); --text:#fff; --text-muted:#94a3b8; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+.bg-anim { position:fixed; inset:0; z-index:-1; background:radial-gradient(circle at 20% 20%,rgba(16,185,129,0.15),transparent 45%),radial-gradient(circle at 80% 80%,rgba(79,172,254,0.12),transparent 45%),var(--bg); }
+.card { width:100%; max-width:480px; background:var(--card); border:1px solid var(--border); border-radius:24px; padding:48px 36px; backdrop-filter:blur(20px); box-shadow:0 30px 80px rgba(0,0,0,0.5); text-align:center; }
+.icon { width:110px; height:110px; margin:0 auto 24px; background: linear-gradient(135deg, #10b981, #059669); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:3rem; color:#fff; box-shadow:0 20px 50px rgba(16,185,129,0.4); animation: bounce 0.6s ease-out; }
+@keyframes bounce { 0% { transform: scale(0); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }
+h1 { font-size:2rem; font-weight:900; margin-bottom:14px; color: var(--success); }
+.subtitle { color:var(--text-muted); line-height:1.7; margin-bottom:24px; font-size:1rem; }
+.info-box { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:12px; padding:16px; margin-bottom:24px; text-align:right; }
+.info-row { display:flex; justify-content:space-between; padding:6px 0; font-size:0.9rem; }
+.info-row strong { color: var(--success); }
+.btn { display:inline-flex; align-items:center; gap:8px; padding:14px 28px; background:var(--gradient); color:#fff; border:none; border-radius:12px; font-weight:700; font-family:inherit; font-size:1rem; cursor:pointer; text-decoration:none; transition:all .2s; margin: 5px; }
+.btn:hover { transform:translateY(-2px); box-shadow:0 12px 30px rgba(79,172,254,0.4); }
+.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+</style>
+</head>
+<body>
+<div class="bg-anim"></div>
+<div class="card">
+    <div class="icon"><i class="fas fa-check"></i></div>
+    <h1>تم الدفع بنجاح! 🎉</h1>
+    <p class="subtitle">تمت معالجة الدفع بنجاح وأنت دلوقتي مسجّل في برنامج التدريب</p>
+    
+    <div class="info-box" id="paymentInfo" style="display:none">
+        <div class="info-row"><span>المبلغ:</span><strong id="paidAmount">-</strong></div>
+        <div class="info-row"><span>رقم العملية:</span><strong id="transactionId">-</strong></div>
+        <div class="info-row"><span>التاريخ:</span><strong id="paymentDate">-</strong></div>
+    </div>
+    
+    <a href="student-applications.html" class="btn"><i class="fas fa-file-alt"></i> طلباتي</a>
+    <a href="student-dashboard.html" class="btn btn-secondary"><i class="fas fa-home"></i> الرئيسية</a>
+</div>
+
+<script>
+// اقرأ الـ query params (Paymob بيرجع المستخدم مع info)
+const params = new URLSearchParams(window.location.search);
+const amount = params.get('amount_cents') ? (parseInt(params.get('amount_cents')) / 100).toFixed(2) : null;
+const txId = params.get('id') || params.get('transaction_id');
+const success = params.get('success');
+
+if (amount || txId) {
+    document.getElementById('paymentInfo').style.display = 'block';
+    if (amount) document.getElementById('paidAmount').textContent = amount + ' ' + (params.get('currency') || 'EGP');
+    if (txId) document.getElementById('transactionId').textContent = txId;
+    document.getElementById('paymentDate').textContent = new Date().toLocaleString('ar-EG');
+}
+</script>
+</body>
+</html>
