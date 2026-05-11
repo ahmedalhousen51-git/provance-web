@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
+
 <title>الموافقات - ProVance Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -252,7 +255,7 @@ async function loadApprovals() {
         // اجلب الـ approvals + الشركات
         const results = await Promise.allSettled([
             sb.from('pending_approvals').select('*').order('created_at', { ascending: false }),
-            sb.from('companies').select('user_id, company_name, email, logo, status')
+            sb.from('companies').select('user_id, company_name, email, status')
         ]);
 
         if (results[0].status === 'rejected' || (results[0].value && results[0].value.error)) {
@@ -446,8 +449,7 @@ window.approveItem = async (id) => {
         }).eq('id', id);
 
         // 2. حدث بيانات الشركة (أضف القسم/الفرع للـ companies)
-        const { data: companyData } = await sb.from('companies')
-            .select('*').eq('user_id', appr.company_user_id).maybeSingle();
+        const { data: companyData } = await sb.from('companies').select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency').eq('user_id', appr.company_user_id).maybeSingle();
 
         if (companyData) {
             const data = safeParse(appr.data, {});
