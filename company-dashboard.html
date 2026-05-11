@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
+
     <title>لوحة التحكم - ProVance</title>
 
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -887,6 +890,27 @@
 
         // ========================================================
         // Init
+
+        // ============= INSTANT CACHE (يقلل latency) =============
+        const _cachePrefix = window.location.pathname.replace(/[^a-zA-Z0-9]/g, '_') + '_';
+        function getCachedData(key) {
+            try {
+                const cached = sessionStorage.getItem(_cachePrefix + key);
+                if (!cached) return null;
+                const parsed = JSON.parse(cached);
+                if (Date.now() - parsed.timestamp > 3 * 60 * 1000) {
+                    sessionStorage.removeItem(_cachePrefix + key);
+                    return null;
+                }
+                return parsed.data;
+            } catch (e) { return null; }
+        }
+        function setCachedData(key, data) {
+            try {
+                sessionStorage.setItem(_cachePrefix + key, JSON.stringify({ data: data, timestamp: Date.now() }));
+            } catch (e) {}
+        }
+
         // ========================================================
         async function init() {
             try {
@@ -955,6 +979,12 @@
         // Load Applications from Supabase
         // ========================================================
         async function loadApplications() {
+            // عرض من cache فوراً
+            const cached = getCachedData('applications');
+            if (cached && Array.isArray(cached)) {
+                renderApplications(cached);
+            }
+            
             try {
                 const { data, error } = await state.sb
                     .from('applications')
