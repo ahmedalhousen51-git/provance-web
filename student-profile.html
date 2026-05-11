@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
+
     <title>ملفي الشخصي - ProVance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,11 +40,49 @@
             display: flex; flex-direction: column; overflow-y: auto;
         }
         .sidebar-logo {
-            display: flex; align-items: center; justify-content: center;
-            padding: 0 8px 16px; margin-bottom: 14px;
+            padding: 8px 4px 18px;
+            margin-bottom: 16px;
             border-bottom: 1px solid var(--border);
         }
-        .sidebar-logo img { height: 32px; max-width: 100%; }
+        .logo-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px;
+        }
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            filter: drop-shadow(0 4px 12px rgba(79,172,254,0.3));
+        }
+        .logo-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .logo-brand {
+            font-size: 1.15rem;
+            font-weight: 900;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.3px;
+            line-height: 1;
+        }
+        .logo-tagline {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
 
         .sidebar-profile {
             text-align: center;
@@ -587,7 +628,24 @@
     <div class="layout">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">
-                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
+                <div class="logo-wrapper">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#4facfe"/>
+                                    <stop offset="100%" stop-color="#00f2fe"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M16 2 L28 8 V20 Q28 26 16 30 Q4 26 4 20 V8 Z" fill="url(#logoGrad)" stroke="#fff" stroke-width="0.5" opacity="0.95"/>
+                            <text x="16" y="20" text-anchor="middle" font-family="Cairo, sans-serif" font-size="14" font-weight="900" fill="#fff">P</text>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <div class="logo-brand">ProVance</div>
+                        <div class="logo-tagline">منصة التدريب</div>
+                    </div>
+                </div>
             </div>
 
             <div class="sidebar-profile">
@@ -598,11 +656,13 @@
                 <div class="sidebar-email" id="sidebarEmail">-</div>
             </div>
 
+            <a href="student-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
             <a href="student-internship.html" class="nav-item"><i class="fas fa-search"></i> فرص التدريب</a>
             <a href="student-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلباتي</a>
             <a href="student-profile.html" class="nav-item active"><i class="fas fa-user"></i> ملفي</a>
-            <a href="Student_-payments.html" class="nav-item"><i class="fas fa-credit-card"></i> المدفوعات</a>
-            <a href="student-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+            <a href="student-payments.html" class="nav-item"><i class="fas fa-credit-card"></i> المدفوعات</a>
+            <a href="student-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
+        <a href="student-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
             <a href="#" onclick="logoutStudent(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
             </a>
@@ -1294,7 +1354,7 @@
                     قبل ${formatDate(paymentLock.payment_deadline)}.
                 </div>
             </div>
-            <a href="Student_-payments.html" class="btn btn-warning">
+            <a href="student-payments.html" class="btn btn-warning">
                 <i class="fas fa-credit-card"></i> ادفع الآن
             </a>
         `;
@@ -2126,7 +2186,7 @@
             State.studentEmail = userEmail;
 
             const [studentRes, appsRes, evalsRes, attRes, lockRes, violationsRes] = await Promise.all([
-                sb.from('student').select('*').eq('user_id', userId).maybeSingle(),
+                sb.from('student').select('user_id, full_name, email, phone, birth_date, gender, national_id, university, faculty, major, gpa, graduation_year, city, address, country, linkedin, github, portfolio, cv_url, skills, languages, status, training_status, created_at, updated_at').eq('user_id', userId).maybeSingle(),
                 sb.from('applications').select('*').eq('student_user_id', userId).order('created_at', { ascending: false }),
                 sb.from('performance_evaluations').select('*').eq('student_user_id', userId).eq('status', 'sent'),
                 sb.from('attendance_logs').select('*').eq('student_user_id', userId).order('scanned_at', { ascending: false }).limit(50),
