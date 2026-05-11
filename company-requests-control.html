@@ -3,210 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>إدارة الطلبات - ProVance</title>
+    <title>إدارة الطلبات والأقسام - ProVance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #ef4444; --secondary: #dc2626;
-            --gradient: linear-gradient(135deg, #ef4444, #dc2626);
-            --bg: #0a0e27; --bg-2: #1a1535;
-            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
-            --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
-            --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
-            --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
-        .bg-anim {
-            position: fixed; inset: 0; z-index: -1;
-            background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%),
-                        radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%),
-                        var(--bg);
-        }
-        .layout { display: flex; min-height: 100vh; }
-        .sidebar {
-            width: 260px; background: rgba(20,18,40,0.7);
-            backdrop-filter: blur(20px); border-left: 1px solid var(--border);
-            padding: 24px 16px; position: fixed; inset: 0 0 0 auto;
-            z-index: 100; transition: transform .3s;
-            display: flex; flex-direction: column;
-        }
-        .sidebar-logo {
-            display: flex; align-items: center; justify-content: center;
-            padding: 0 8px 20px; margin-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-        }
-        .sidebar-logo img { height: 32px; max-width: 100%; }
-        .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px 14px; color: var(--text-muted);
-            text-decoration: none; border-radius: 10px;
-            font-size: 0.92rem; font-weight: 600; margin-bottom: 4px;
-            transition: all .2s;
-        }
-        .nav-item:hover { background: var(--card); color: var(--text); }
-        .nav-item.active { background: var(--gradient); color: #fff; }
-        .nav-item i { width: 18px; }
-        .main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
-        .menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
-        .topbar-title { font-size: 1.5rem; font-weight: 800; }
-        .topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .tabs-container { display: flex; gap: 8px; margin-bottom: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 6px; overflow-x: auto; }
-        .tab-btn { padding: 11px 18px; background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.92rem; font-weight: 700; border-radius: 10px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; transition: all .2s; }
-        .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-        .tab-btn.active { background: var(--gradient); color: #fff; box-shadow: 0 6px 16px rgba(239,68,68,0.3); }
-        .tab-badge { background: rgba(255,255,255,0.15); padding: 1px 8px; border-radius: 10px; font-size: 0.72rem; }
-        .tab-content { display: none; animation: fadeIn .3s; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
-        .stat-mini { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 11px; transition: all .2s; }
-        .stat-mini:hover { border-color: var(--primary); transform: translateY(-2px); }
-        .stat-mini-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; flex-shrink: 0; }
-        .stat-mini-icon.purple { background: var(--gradient); }
-        .stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .stat-mini-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-        .stat-mini-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
-        .stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
-        .filters-bar { display: flex; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 18px; flex-wrap: wrap; }
-        .filters-bar input, .filters-bar select { padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.9rem; }
-        .filters-bar input { flex: 1; min-width: 200px; }
-        .filters-bar input:focus, .filters-bar select:focus { outline: none; border-color: var(--primary); }
-        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.88rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
-        .btn-primary { background: var(--gradient); color: #fff; }
-        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(239,68,68,0.4); }
-        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
-        .btn-secondary:hover { background: var(--card-hover); }
-        .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
-        .btn-success:hover { background: rgba(16,185,129,0.25); }
-        .btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
-        .btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
-        .btn-danger:hover { background: rgba(239,68,68,0.2); }
-        .btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
-        .btn-sm { padding: 7px 12px; font-size: 0.8rem; }
-        .applications-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
-        .app-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: all .25s; position: relative; }
-        .app-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(239,68,68,0.15); }
-        .app-card.new { border-color: rgba(79,172,254,0.4); box-shadow: 0 0 0 2px rgba(79,172,254,0.15); }
-        .app-card.new::before { content: 'جديد'; position: absolute; top: 12px; left: 12px; background: var(--info); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 800; }
-        .app-card-header { display: flex; align-items: center; gap: 12px; }
-        .student-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.3rem; flex-shrink: 0; overflow: hidden; }
-        .student-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .student-info { flex: 1; min-width: 0; }
-        .student-name { font-weight: 800; font-size: 1.05rem; }
-        .student-uni { color: var(--text-muted); font-size: 0.84rem; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
-        .student-uni i { color: var(--primary); font-size: 0.78rem; }
-        .app-position { background: rgba(239,68,68,0.08); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 700; }
-        .app-position i { color: var(--primary); }
-        .app-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.82rem; color: var(--text-muted); }
-        .app-meta span { display: flex; align-items: center; gap: 4px; }
-        .app-meta i { color: var(--primary); }
-        .app-message { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; color: var(--text-muted); line-height: 1.5; position: relative; padding-right: 32px; }
-        .app-message::before { content: '\f10d'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; right: 10px; top: 10px; color: var(--primary); opacity: 0.5; }
-        .app-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
-        .app-actions .btn { flex: 1; justify-content: center; padding: 9px; min-width: 90px; }
-        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 14px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
-        .badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
-        .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
-        .badge-error { background: rgba(239,68,68,0.15); color: var(--error); }
-        .badge-info { background: rgba(79,172,254,0.15); color: var(--info); }
-        .internships-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
-        .internship-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; transition: all .25s; }
-        .internship-card:hover { border-color: var(--primary); transform: translateY(-2px); }
-        .internship-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .internship-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 4px; }
-        .internship-field { color: var(--text-muted); font-size: 0.86rem; }
-        .internship-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .meta-item-mini { font-size: 0.84rem; }
-        .meta-item-mini .label { color: var(--text-muted); font-size: 0.74rem; }
-        .meta-item-mini .value { font-weight: 700; color: var(--text); }
-        .internship-actions { display: flex; gap: 6px; }
-        .capacity-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-top: 6px; }
-        .capacity-fill { height: 100%; background: var(--gradient); transition: width .4s; }
-        .capacity-fill.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .capacity-fill.full { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .branches-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
-        .branch-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px; transition: all .2s; }
-        .branch-card:hover { border-color: var(--primary); }
-        .branch-icon { width: 46px; height: 46px; border-radius: 12px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; flex-shrink: 0; }
-        .branch-body { flex: 1; min-width: 0; }
-        .branch-name { font-weight: 800; font-size: 1rem; }
-        .branch-address { color: var(--text-muted); font-size: 0.84rem; margin-top: 3px; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .25s; }
-        .modal.active { display: flex; }
-        .modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 700px; max-height: 92vh; overflow-y: auto; padding: 28px; position: relative; animation: slideUp .3s ease-out; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .modal-content::-webkit-scrollbar { width: 6px; }
-        .modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
-        .modal-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-        .modal-title i { color: var(--primary); }
-        .modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
-        .modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
-        .field { margin-bottom: 16px; }
-        .field label { display: block; color: var(--text); font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
-        .field label i { color: var(--primary); margin-left: 4px; }
-        .field label .req { color: var(--error); }
-        .field input, .field select, .field textarea { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.95rem; font-family: inherit; transition: all .2s; }
-        .field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
-        .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.06); box-shadow: 0 0 0 4px rgba(239,68,68,0.1); }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
-        .student-detail-header { display: flex; align-items: center; gap: 14px; padding: 16px; background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2); border-radius: 14px; margin-bottom: 18px; }
-        .student-detail-avatar { width: 70px; height: 70px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.6rem; flex-shrink: 0; overflow: hidden; }
-        .student-detail-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 14px; }
-        .info-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
-        .info-label { color: var(--text-muted); font-size: 0.76rem; display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
-        .info-label i { color: var(--primary); }
-        .info-value { font-weight: 700; font-size: 0.92rem; word-break: break-word; }
-        .info-value.empty { color: var(--text-dim); font-weight: 500; font-style: italic; }
-        .info-value a { color: var(--primary); text-decoration: none; }
-        .skills-list { display: flex; flex-wrap: wrap; gap: 6px; }
-        .skill-tag { background: rgba(79,172,254,0.1); border: 1px solid rgba(79,172,254,0.25); color: var(--info); padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
-        .modal-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-        .modal-section-title { font-size: 0.94rem; font-weight: 800; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: var(--text); }
-        .modal-section-title i { color: var(--primary); }
-        .settings-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 18px; }
-        .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; cursor: pointer; transition: all .25s; }
-        .settings-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(239,68,68,0.1); }
-        .settings-card-icon { width: 50px; height: 50px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.3rem; margin-bottom: 12px; }
-        .settings-card-title { font-size: 1rem; font-weight: 800; margin-bottom: 4px; }
-        .settings-card-desc { color: var(--text-muted); font-size: 0.84rem; }
-        .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
-        .empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
-        .empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
-        .section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
-        .section-title { font-size: 1rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-        .section-title i { color: var(--primary); }
-        .help-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-        .help-section h4 { font-size: 0.95rem; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--primary); }
-        .help-section ul { list-style: none; padding: 0; }
-        .help-section li { padding: 5px 0; color: var(--text-muted); font-size: 0.88rem; display: flex; align-items: flex-start; gap: 6px; }
-        .help-section li i { color: var(--success); flex-shrink: 0; margin-top: 4px; }
-        .tag-input-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; min-height: 60px; align-content: flex-start; }
-        .tag-item { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: var(--primary); padding: 5px 12px; border-radius: 14px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
-        .tag-item .remove { cursor: pointer; color: var(--error); font-size: 0.75rem; }
-        .tag-input { flex: 1; min-width: 100px; border: none !important; background: transparent !important; padding: 4px !important; color: var(--text); font-family: inherit; outline: none !important; }
-        @media (max-width: 1024px) {
-            .sidebar { transform: translateX(100%); width: 280px; }
-            .sidebar.open { transform: translateX(0); }
-            .main { margin-right: 0; }
-            .menu-toggle { display: flex; align-items: center; justify-content: center; }
-        }
-        @media (max-width: 600px) {
-            .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
-            .topbar-title { font-size: 1.2rem; }
-            .stats-row { grid-template-columns: 1fr 1fr; }
-        }
+:root { --primary: #ef4444; --secondary: #dc2626; --gradient: linear-gradient(135deg, #ef4444, #dc2626); --bg: #0a0e27; --bg-2: #1a1535; --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6); --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe; --orange: #ff9800; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%), var(--bg); }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
+.sidebar-logo { display: flex; align-items: center; justify-content: center; padding: 0 8px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.sidebar-logo img { height: 32px; max-width: 100%; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: var(--gradient); color: #fff; }
+.nav-item i { width: 18px; }
+.main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
+.menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
+.topbar-title { font-size: 1.5rem; font-weight: 800; }
+.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.stat-mini { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 11px; transition: all .2s; }
+.stat-mini:hover { transform: translateY(-3px); border-color: var(--primary); }
+.stat-mini-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #fff; flex-shrink: 0; }
+.stat-mini-icon.primary { background: var(--gradient); }
+.stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.stat-mini-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-mini-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+.stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+.section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 18px; }
+.section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.section-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; }
+.section-title { font-size: 1.15rem; font-weight: 800; margin: 0; }
+.section-subtitle { color: var(--text-muted); font-size: 0.86rem; margin-top: 3px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; color: var(--text); font-size: 0.9rem; font-weight: 600; margin-bottom: 7px; }
+.field label i { color: var(--primary); margin-left: 4px; }
+.field label .req { color: var(--error); }
+.field input, .field select, .field textarea { width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.92rem; font-family: inherit; transition: all .2s; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.06); }
+.field textarea { resize: vertical; min-height: 80px; }
+.field-note { font-size: 0.78rem; color: var(--text-dim); margin-top: 4px; font-style: italic; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 11px 18px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.9rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
+.btn-primary { background: var(--gradient); color: #fff; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(239,68,68,0.4); }
+.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+.btn-secondary:hover { background: var(--card-hover); }
+.btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+.btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+.btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
+.btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+.btn-sm { padding: 7px 12px; font-size: 0.82rem; }
+.tabs-container { display: flex; gap: 8px; margin-bottom: 18px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 6px; overflow-x: auto; }
+.tab-btn { padding: 10px 16px; background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.9rem; font-weight: 700; border-radius: 10px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; transition: all .2s; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { background: var(--gradient); color: #fff; }
+.tab-badge { background: rgba(255,255,255,0.15); padding: 1px 8px; border-radius: 10px; font-size: 0.72rem; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.dept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+.dept-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; transition: all .2s; position: relative; }
+.dept-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+.dept-card.disabled { opacity: 0.6; }
+.dept-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.dept-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; flex-shrink: 0; }
+.dept-name { font-weight: 800; font-size: 1rem; }
+.dept-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; margin-top: 4px; }
+.dept-status.active { background: rgba(16,185,129,0.15); color: var(--success); }
+.dept-status.closed { background: rgba(239,68,68,0.15); color: var(--error); }
+.dept-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 10px; }
+.dept-meta-item { font-size: 0.8rem; color: var(--text-muted); }
+.dept-meta-item strong { color: var(--text); display: block; font-size: 0.9rem; margin-top: 2px; }
+.dept-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.dept-actions .btn { flex: 1; justify-content: center; padding: 8px; min-width: 80px; font-size: 0.78rem; }
+.toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: rgba(255,255,255,0.1); transition: .4s; border-radius: 34px; }
+.toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; right: 4px; bottom: 4px; background: #fff; transition: .4s; border-radius: 50%; }
+input:checked + .toggle-slider { background: var(--gradient); }
+input:checked + .toggle-slider:before { transform: translateX(-24px); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; }
+.toggle-label { font-weight: 600; font-size: 0.92rem; flex: 1; }
+.system-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.system-card { background: rgba(255,255,255,0.02); border: 2px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer; transition: all .2s; }
+.system-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+.system-card.selected { border-color: var(--primary); background: rgba(239,68,68,0.05); }
+.system-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.system-card-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; }
+.system-card-name { font-weight: 800; font-size: 0.95rem; }
+.system-card-desc { color: var(--text-muted); font-size: 0.8rem; margin-top: 2px; }
+.system-card-info { color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; margin: 8px 0; }
+.system-card-price { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); padding: 8px; border-radius: 8px; color: var(--primary); font-weight: 700; font-size: 0.84rem; text-align: center; }
+.salary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fields-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; min-height: 50px; }
+.field-tag { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 6px; }
+.field-tag .remove { cursor: pointer; font-weight: 800; font-size: 1rem; color: var(--error); }
+.add-row { display: flex; gap: 8px; margin-top: 8px; }
+.add-row input { flex: 1; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal.active { display: flex; }
+.modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 700px; max-height: 92vh; overflow-y: auto; padding: 28px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.modal-title i { color: var(--primary); }
+.modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+.empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
+.empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
+.loading-overlay { position: fixed; inset: 0; background: rgba(10,14,39,0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .3s; }
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+.action-bar { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+@media (max-width: 1024px) {
+    .sidebar { transform: translateX(100%); width: 280px; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-right: 0; }
+    .menu-toggle { display: flex; align-items: center; justify-content: center; }
+}
+@media (max-width: 600px) {
+    .salary-row { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .dept-grid { grid-template-columns: 1fr; }
+}
     </style>
 </head>
 <body>
@@ -227,1601 +153,719 @@
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
             </a>
         </aside>
+
         <main class="main">
             <div class="topbar">
                 <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="topbar-title">
-                    <i class="fas fa-envelope-open-text" style="color:var(--primary)"></i> إدارة الطلبات
-                </h1>
+                <h1 class="topbar-title"><i class="fas fa-cogs" style="color:var(--primary)"></i> إدارة الطلبات والأقسام</h1>
                 <div class="topbar-actions">
-                    <button class="btn btn-secondary btn-sm" onclick="openHelpModal()">
-                        <i class="fas fa-question-circle"></i> مساعدة
+                    <button class="btn btn-primary btn-sm" onclick="openAddDeptModal()">
+                        <i class="fas fa-plus"></i> إضافة قسم/مجال جديد
                     </button>
-                    <button class="btn btn-primary" onclick="openInternshipModal()">
-                        <i class="fas fa-plus"></i> فرصة جديدة
+                    <button class="btn btn-secondary btn-sm" onclick="loadAll()">
+                        <i class="fas fa-sync-alt"></i> تحديث
                     </button>
                 </div>
             </div>
+
+            <!-- Stats -->
             <div class="stats-row">
                 <div class="stat-mini">
-                    <div class="stat-mini-icon purple"><i class="fas fa-inbox"></i></div>
+                    <div class="stat-mini-icon primary"><i class="fas fa-th-list"></i></div>
                     <div>
-                        <div class="stat-mini-num" id="statTotal">0</div>
+                        <div class="stat-mini-num" id="statTotalDepts">0</div>
+                        <div class="stat-mini-label">إجمالي الأقسام</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon success"><i class="fas fa-door-open"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statActiveDepts">0</div>
+                        <div class="stat-mini-label">أقسام مفتوحة</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon error"><i class="fas fa-door-closed"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statClosedDepts">0</div>
+                        <div class="stat-mini-label">أقسام مغلقة</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon info"><i class="fas fa-file-alt"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statTotalApps">0</div>
                         <div class="stat-mini-label">إجمالي الطلبات</div>
                     </div>
                 </div>
                 <div class="stat-mini">
                     <div class="stat-mini-icon warning"><i class="fas fa-clock"></i></div>
                     <div>
-                        <div class="stat-mini-num" id="statPending">0</div>
-                        <div class="stat-mini-label">في الانتظار</div>
-                    </div>
-                </div>
-                <div class="stat-mini">
-                    <div class="stat-mini-icon info"><i class="fas fa-eye"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statReviewing">0</div>
-                        <div class="stat-mini-label">قيد المراجعة</div>
-                    </div>
-                </div>
-                <div class="stat-mini">
-                    <div class="stat-mini-icon success"><i class="fas fa-check"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statAccepted">0</div>
-                        <div class="stat-mini-label">مقبولين</div>
-                    </div>
-                </div>
-                <div class="stat-mini">
-                    <div class="stat-mini-icon error"><i class="fas fa-times"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statRejected">0</div>
-                        <div class="stat-mini-label">مرفوضين</div>
+                        <div class="stat-mini-num" id="statPendingApps">0</div>
+                        <div class="stat-mini-label">طلبات قيد المراجعة</div>
                     </div>
                 </div>
             </div>
+
+            <!-- Tabs -->
             <div class="tabs-container">
-                <button class="tab-btn active" data-tab="pending" onclick="switchTab(event, 'pending')">
-                    <i class="fas fa-clock"></i> في الانتظار
-                    <span class="tab-badge" id="pendingCount">0</span>
+                <button class="tab-btn active" data-tab="all" onclick="switchTab(event, 'all')">
+                    <i class="fas fa-list"></i> كل الأقسام <span class="tab-badge" id="allCount">0</span>
                 </button>
-                <button class="tab-btn" data-tab="reviewing" onclick="switchTab(event, 'reviewing')">
-                    <i class="fas fa-eye"></i> قيد المراجعة
-                    <span class="tab-badge" id="reviewingCount">0</span>
+                <button class="tab-btn" data-tab="active" onclick="switchTab(event, 'active')">
+                    <i class="fas fa-check"></i> المفعّلة <span class="tab-badge" id="activeCount">0</span>
                 </button>
-                <button class="tab-btn" data-tab="accepted" onclick="switchTab(event, 'accepted')">
-                    <i class="fas fa-check-circle"></i> مقبولين
-                    <span class="tab-badge" id="acceptedCount">0</span>
-                </button>
-                <button class="tab-btn" data-tab="rejected" onclick="switchTab(event, 'rejected')">
-                    <i class="fas fa-times-circle"></i> مرفوضين
-                    <span class="tab-badge" id="rejectedCount">0</span>
-                </button>
-                <button class="tab-btn" data-tab="internships" onclick="switchTab(event, 'internships')">
-                    <i class="fas fa-bullhorn"></i> فرص التدريب
-                </button>
-                <button class="tab-btn" data-tab="settings" onclick="switchTab(event, 'settings')">
-                    <i class="fas fa-cog"></i> الإعدادات
+                <button class="tab-btn" data-tab="closed" onclick="switchTab(event, 'closed')">
+                    <i class="fas fa-pause"></i> المغلقة <span class="tab-badge" id="closedCount">0</span>
                 </button>
             </div>
-            <div class="filters-bar" id="appsFilters">
-                <input type="text" id="searchApps" placeholder="🔍 ابحث باسم الطالب أو الجامعة...">
-                <select id="filterInternship">
-                    <option value="">كل الفرص</option>
-                </select>
-                <select id="filterSort">
-                    <option value="newest">الأحدث أولاً</option>
-                    <option value="oldest">الأقدم أولاً</option>
-                    <option value="name">حسب الاسم</option>
-                </select>
-            </div>
-            <div id="tab-pending" class="tab-content active">
-                <div class="applications-grid" id="pendingGrid">
-                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
+
+            <!-- Departments Grid -->
+            <div id="tab-all" class="tab-content active">
+                <div class="dept-grid" id="deptGrid">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>جاري التحميل...</p>
+                    </div>
                 </div>
             </div>
-            <div id="tab-reviewing" class="tab-content">
-                <div class="applications-grid" id="reviewingGrid"></div>
+            <div id="tab-active" class="tab-content">
+                <div class="dept-grid" id="activeGrid"></div>
             </div>
-            <div id="tab-accepted" class="tab-content">
-                <div class="applications-grid" id="acceptedGrid"></div>
-            </div>
-            <div id="tab-rejected" class="tab-content">
-                <div class="applications-grid" id="rejectedGrid"></div>
-            </div>
-            <div id="tab-internships" class="tab-content">
-                <div class="internships-grid" id="internshipsGrid">
-                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i></div>
-                </div>
-            </div>
-            <div id="tab-settings" class="tab-content">
-                <div class="settings-cards">
-                    <div class="settings-card" onclick="openCapacitySettings()">
-                        <div class="settings-card-icon"><i class="fas fa-users"></i></div>
-                        <div class="settings-card-title">إعدادات السعة</div>
-                        <div class="settings-card-desc">حدد عدد المتدربين الكلي للشركة</div>
-                    </div>
-                    <div class="settings-card" onclick="openTimeSettings()">
-                        <div class="settings-card-icon"><i class="fas fa-clock"></i></div>
-                        <div class="settings-card-title">إعدادات الوقت</div>
-                        <div class="settings-card-desc">ساعات العمل وبداية/نهاية اليوم</div>
-                    </div>
-                    <div class="settings-card" onclick="openFinancialSettings()">
-                        <div class="settings-card-icon"><i class="fas fa-money-bill-wave"></i></div>
-                        <div class="settings-card-title">النظام المالي</div>
-                        <div class="settings-card-desc">المزايا المالية للمتدربين</div>
-                    </div>
-                    <div class="settings-card" onclick="openBranchesSettings()">
-                        <div class="settings-card-icon"><i class="fas fa-map-marker-alt"></i></div>
-                        <div class="settings-card-title">الفروع</div>
-                        <div class="settings-card-desc">إدارة فروع الشركة</div>
-                    </div>
-                    <div class="settings-card" onclick="openDepartmentsSettings()">
-                        <div class="settings-card-icon"><i class="fas fa-sitemap"></i></div>
-                        <div class="settings-card-title">الأقسام</div>
-                        <div class="settings-card-desc">إدارة أقسام التدريب</div>
-                    </div>
-                    <div class="settings-card" onclick="openAutoActions()">
-                        <div class="settings-card-icon"><i class="fas fa-robot"></i></div>
-                        <div class="settings-card-title">الإجراءات التلقائية</div>
-                        <div class="settings-card-desc">قواعد القبول/الرفض التلقائي</div>
-                    </div>
-                </div>
-                <div class="section">
-                    <div class="section-header">
-                        <h3 class="section-title"><i class="fas fa-info-circle"></i> ملخص الإعدادات الحالية</h3>
-                    </div>
-                    <div id="settingsSummary"></div>
-                </div>
+            <div id="tab-closed" class="tab-content">
+                <div class="dept-grid" id="closedGrid"></div>
             </div>
         </main>
     </div>
+
     <div id="modalsContainer"></div>
-
+    <div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
     <script>
-// ============================================================
-// ProVance: Requests Control - Full Featured
-// ============================================================
-(function() {
-    'use strict';
+const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
+});
 
-    if (!window.ProVance) {
-        console.error('⚠️ supabase-config.js مش متحمل');
-        window.ProVance = {};
+let companyUserId = null;
+let companyData = null;
+let allInternships = [];
+let allApplications = [];
+
+// ========== Helpers ==========
+function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function safeParse(value, fallback) {
+    if (value === null || value === undefined) return fallback;
+    if (typeof value === 'object') return value;
+    if (typeof value !== 'string') return fallback;
+    try { return JSON.parse(value); } catch { return fallback; }
+}
+function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
+
+function showToast(msg, type = 'info') {
+    const t = document.createElement('div');
+    const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+    t.className = 'toast';
+    t.style.background = c[type] || c.info;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+}
+
+function renderModal(html) {
+    document.getElementById('modalsContainer').innerHTML = html;
+    document.body.style.overflow = 'hidden';
+}
+window.closeModal = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+    if (document.querySelectorAll('.modal').length === 0) document.body.style.overflow = '';
+};
+
+window.logoutCompany = async (e) => {
+    if (e) e.preventDefault();
+    if (!confirm('هل تريد تسجيل الخروج؟')) return;
+    try {
+        await sb.auth.signOut();
+    } catch {}
+    localStorage.clear();
+    window.location.href = 'company-login.html';
+};
+
+window.switchTab = (e, tab) => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+};
+
+// ========== Get Duration Text ==========
+function getDurationText(d) {
+    return {
+        '2-weeks': 'أسبوعين', '3-weeks': '3 أسابيع', '1-month': 'شهر واحد',
+        '1.5-months': 'شهر ونصف', '2-months': 'شهرين', '2.5-months': 'شهرين ونصف'
+    }[d] || d || '-';
+}
+function getSystemText(s) {
+    return {
+        'first-time': 'متدرب لأول مرة (النظام الأول)',
+        'once-trained': 'متدرب ذو خبرة (النظام الثاني)',
+        'twice-trained': 'متدرب متمرس - Training (النظام الثالث)'
+    }[s] || s || '-';
+}
+function getSystemIcon(s) {
+    return { 'first-time': 'fa-star', 'once-trained': 'fa-user-graduate', 'twice-trained': 'fa-briefcase' }[s] || 'fa-cog';
+}
+
+// ========== Load Data ==========
+async function loadAll() {
+    try {
+        // Make sure sb is ready
+        const { data: sessData } = await sb.auth.getSession();
+        if (!sessData || !sessData.session) {
+            window.location.href = 'company-login.html';
+            return;
+        }
+        companyUserId = sessData.session.user.id;
+
+        // Company + Internships + Applications - Promise.allSettled to handle failures gracefully
+        const results = await Promise.allSettled([
+            sb.from('companies').select('*').eq('user_id', companyUserId).maybeSingle(),
+            sb.from('internships').select('*').eq('company_user_id', companyUserId).order('created_at', { ascending: false }),
+            sb.from('applications').select('*').eq('company_user_id', companyUserId)
+        ]);
+
+        const companyRes = results[0].status === 'fulfilled' ? results[0].value : { data: null };
+        const internshipsRes = results[1].status === 'fulfilled' ? results[1].value : { data: [] };
+        const applicationsRes = results[2].status === 'fulfilled' ? results[2].value : { data: [] };
+
+        companyData = companyRes.data;
+        allInternships = internshipsRes.data || [];
+        allApplications = applicationsRes.data || [];
+
+        if (!companyData) {
+            showToast('خطأ في تحميل بيانات الشركة', 'error');
+            return;
+        }
+
+        // لو الشركة pending
+        if (companyData.status === 'pending') {
+            window.location.href = 'Company-pending.html';
+            return;
+        }
+
+        renderDepartments();
+        updateStats();
+
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    } catch (err) {
+        console.error('Load error:', err);
+        showToast('خطأ في تحميل البيانات', 'error');
+        document.getElementById('loadingOverlay').classList.add('hidden');
     }
-    if (typeof window.ProVance.escapeHtml !== 'function') {
-        window.ProVance.escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-    if (typeof window.ProVance.showToast !== 'function') {
-        window.ProVance.showToast = (msg, type) => {
-            const t = document.createElement('div');
-            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
-            t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (c[type]||'#4facfe') + ';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
-            t.textContent = msg;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 4000);
+}
+
+// ========== Build Departments from training_fields + training_details + internships ==========
+function getDepartments() {
+    if (!companyData) return [];
+
+    const trainingFields = safeParse(companyData.training_fields, []);
+    const trainingDetails = safeParse(companyData.training_details, {});
+
+    return trainingFields.map(field => {
+        const details = trainingDetails[field] || {};
+        // Find existing internship لو موجود
+        const existingInt = allInternships.find(i => i.field === field || i.title === field);
+
+        return {
+            field: field,
+            name: field,
+            details: details,
+            internship: existingInt,
+            // عدد الطلبات لده القسم
+            apps: allApplications.filter(a => a.internship_id === existingInt?.id || a.field === field),
+            // مفعّل = active، لو فيه internship و status active
+            active: !existingInt || existingInt.status === 'active'
         };
-    }
-    if (typeof window.ProVance.confirmModal !== 'function') {
-        window.ProVance.confirmModal = async ({title, message}) => confirm((title||'') + '\n' + (message||''));
-    }
+    });
+}
 
-    console.log('✅ Requests Control initialized');
+function updateStats() {
+    const depts = getDepartments();
+    const active = depts.filter(d => d.active).length;
+    const closed = depts.length - active;
+    const pending = allApplications.filter(a => a.status === 'pending').length;
 
-    const esc = window.ProVance.escapeHtml;
+    document.getElementById('statTotalDepts').textContent = depts.length;
+    document.getElementById('statActiveDepts').textContent = active;
+    document.getElementById('statClosedDepts').textContent = closed;
+    document.getElementById('statTotalApps').textContent = allApplications.length;
+    document.getElementById('statPendingApps').textContent = pending;
 
-    // STATE
-    let companyUserId = null;
-    let companyData = null;
-    let allApplications = [];
-    let allInternships = [];
-    let allBranches = [];
-    let allDepartments = [];
-    let companySettings = {
-        max_capacity: 50,
-        work_start_time: '09:00',
-        work_end_time: '17:00',
-        provides_salary: false,
-        salary_amount: 0,
-        salary_currency: 'EGP',
-        provides_certificate: true,
-        provides_meals: false,
-        provides_transport: false,
-        auto_actions: {
-            auto_reject_on_full: false,
-            auto_reject_low_gpa: false,
-            min_gpa: 2.5,
-            auto_review_after_hours: 0
-        }
-    };
+    document.getElementById('allCount').textContent = depts.length;
+    document.getElementById('activeCount').textContent = active;
+    document.getElementById('closedCount').textContent = closed;
+}
 
-    function getInitial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
+// ========== Render Departments ==========
+function renderDepartments() {
+    const depts = getDepartments();
 
-    function renderModal(html) {
-        document.getElementById('modalsContainer').innerHTML = html;
-        document.body.style.overflow = 'hidden';
-    }
-    window.closeModal = (id) => {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-        if (document.querySelectorAll('.modal').length === 0) {
-            document.body.style.overflow = '';
-        }
-    };
-
-    window.logoutCompany = async (e) => {
-        e.preventDefault();
-        const ok = await window.ProVance.confirmModal({title: 'تسجيل الخروج', message: 'هل تريد تسجيل الخروج؟'});
-        if (ok) {
-            if (window.ProVance.logout) await window.ProVance.logout('company-login.html');
-            else window.location.href = 'company-login.html';
-        }
-    };
-
-    function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
-    function formatDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('ar-EG'); }
-    function timeAgo(d) {
-        if (!d) return '';
-        const diff = Date.now() - new Date(d).getTime();
-        const mins = Math.floor(diff/60000);
-        if (mins < 1) return 'الآن';
-        if (mins < 60) return `${mins} دقيقة`;
-        const hrs = Math.floor(mins/60);
-        if (hrs < 24) return `${hrs} ساعة`;
-        return `${Math.floor(hrs/24)} يوم`;
+    if (depts.length === 0) {
+        const empty = `
+            <div class="empty-state">
+                <i class="fas fa-th-list"></i>
+                <h3>لا توجد أقسام أو مجالات تدريبية</h3>
+                <p>اضغط "إضافة قسم/مجال جديد" لتبدأ</p>
+            </div>`;
+        document.getElementById('deptGrid').innerHTML = empty;
+        document.getElementById('activeGrid').innerHTML = empty;
+        document.getElementById('closedGrid').innerHTML = empty;
+        return;
     }
 
-    window.switchTab = (e, tabName) => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        document.getElementById('tab-' + tabName).classList.add('active');
+    const active = depts.filter(d => d.active);
+    const closed = depts.filter(d => !d.active);
 
-        const filters = document.getElementById('appsFilters');
-        if (tabName === 'internships' || tabName === 'settings') {
-            filters.style.display = 'none';
-        } else {
-            filters.style.display = 'flex';
-        }
+    document.getElementById('deptGrid').innerHTML = depts.map(createDeptCard).join('');
+    document.getElementById('activeGrid').innerHTML = active.length === 0
+        ? '<div class="empty-state"><i class="fas fa-check"></i><h3>لا توجد أقسام مفعّلة</h3></div>'
+        : active.map(createDeptCard).join('');
+    document.getElementById('closedGrid').innerHTML = closed.length === 0
+        ? '<div class="empty-state"><i class="fas fa-pause"></i><h3>لا توجد أقسام مغلقة</h3></div>'
+        : closed.map(createDeptCard).join('');
+}
 
-        if (tabName === 'internships') renderInternships();
-        if (tabName === 'settings') renderSettingsSummary();
-    };
+function createDeptCard(dept) {
+    const details = dept.details;
+    const appsCount = dept.apps.length;
+    const positionsCount = parseInt(details.count) || 0;
+    const traineeSystem = details.traineeSystem || 'first-time';
 
-    function updateStats() {
-        const pending = allApplications.filter(a => a.status === 'pending');
-        const reviewing = allApplications.filter(a => a.status === 'reviewing');
-        const accepted = allApplications.filter(a => ['interview_scheduled', 'interview_done', 'accepted', 'hired', 'in_training', 'completed'].includes(a.status));
-        const rejected = allApplications.filter(a => a.status === 'rejected');
-
-        document.getElementById('statTotal').textContent = allApplications.length;
-        document.getElementById('statPending').textContent = pending.length;
-        document.getElementById('statReviewing').textContent = reviewing.length;
-        document.getElementById('statAccepted').textContent = accepted.length;
-        document.getElementById('statRejected').textContent = rejected.length;
-
-        document.getElementById('pendingCount').textContent = pending.length;
-        document.getElementById('reviewingCount').textContent = reviewing.length;
-        document.getElementById('acceptedCount').textContent = accepted.length;
-        document.getElementById('rejectedCount').textContent = rejected.length;
-    }
-
-    function renderAppCard(a) {
-        const photo = a.student_photo
-            ? `<img src="${a.student_photo}" alt="${esc(a.student_name)}">`
-            : `<span>${getInitial(a.student_name)}</span>`;
-
-        const isNew = a.status === 'pending' && (Date.now() - new Date(a.created_at).getTime()) < 24 * 60 * 60 * 1000;
-
-        const statusBadge = {
-            'pending': '<span class="badge badge-warning">⏳ في الانتظار</span>',
-            'reviewing': '<span class="badge badge-info">👁️ قيد المراجعة</span>',
-            'interview_scheduled': '<span class="badge badge-info">📅 مقابلة مجدولة</span>',
-            'interview_done': '<span class="badge badge-info">✓ تمت المقابلة</span>',
-            'accepted': '<span class="badge badge-success">✓ مقبول</span>',
-            'rejected': '<span class="badge badge-error">✕ مرفوض</span>',
-            'hired': '<span class="badge badge-success">✓ تم التعيين</span>',
-            'in_training': '<span class="badge badge-success">🎓 قيد التدريب</span>',
-            'completed': '<span class="badge badge-success">🏆 أكمل</span>'
-        }[a.status] || `<span class="badge">${esc(a.status)}</span>`;
-
-        let actions = '';
-        if (a.status === 'pending') {
-            actions += `<button class="btn btn-info btn-sm" onclick="setReviewing('${a.id}')"><i class="fas fa-eye"></i> مراجعة</button>`;
-            actions += `<button class="btn btn-success btn-sm" onclick="acceptApp('${a.id}')"><i class="fas fa-check"></i> قبول</button>`;
-            actions += `<button class="btn btn-danger btn-sm" onclick="openRejectModal('${a.id}')"><i class="fas fa-times"></i> رفض</button>`;
-        } else if (a.status === 'reviewing') {
-            actions += `<button class="btn btn-success btn-sm" onclick="acceptApp('${a.id}')"><i class="fas fa-check"></i> قبول</button>`;
-            actions += `<button class="btn btn-danger btn-sm" onclick="openRejectModal('${a.id}')"><i class="fas fa-times"></i> رفض</button>`;
-        }
-        actions += `<button class="btn btn-secondary btn-sm" onclick="viewStudentDetails('${a.id}')"><i class="fas fa-user"></i> التفاصيل</button>`;
-
-        return `
-            <div class="app-card ${isNew ? 'new' : ''}">
-                <div class="app-card-header">
-                    <div class="student-avatar">${photo}</div>
-                    <div class="student-info">
-                        <div class="student-name">${esc(a.student_name || '-')}</div>
-                        <div class="student-uni"><i class="fas fa-university"></i> ${esc(a.student_university || 'غير محدد')}</div>
-                    </div>
-                    ${statusBadge}
+    return `
+        <div class="dept-card ${!dept.active ? 'disabled' : ''}">
+            <div class="dept-card-header">
+                <div class="dept-icon"><i class="fas ${getSystemIcon(traineeSystem)}"></i></div>
+                <div style="flex:1">
+                    <div class="dept-name">${escapeHtml(dept.name)}</div>
+                    <span class="dept-status ${dept.active ? 'active' : 'closed'}">
+                        <i class="fas fa-${dept.active ? 'check-circle' : 'pause-circle'}"></i>
+                        ${dept.active ? 'مفتوح للتقديم' : 'مغلق'}
+                    </span>
                 </div>
-
-                <div class="app-position">
-                    <i class="fas fa-briefcase"></i>
-                    <span>${esc(a.internship_title || 'فرصة عامة')}</span>
-                </div>
-
-                <div class="app-meta">
-                    <span><i class="fas fa-clock"></i> ${timeAgo(a.created_at)}</span>
-                    ${a.student_phone ? `<span><i class="fas fa-phone"></i> ${esc(a.student_phone)}</span>` : ''}
-                    ${a.student_cv_url ? '<span><i class="fas fa-file-pdf" style="color:var(--success)"></i> CV مرفق</span>' : ''}
-                </div>
-
-                ${a.application_message ? `<div class="app-message">${esc(a.application_message.length > 120 ? a.application_message.substring(0, 120) + '...' : a.application_message)}</div>` : ''}
-
-                ${a.rejection_reason ? `<div class="app-message" style="background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.2)"><strong style="color:var(--error)">سبب الرفض:</strong> ${esc(a.rejection_reason)}</div>` : ''}
-
-                <div class="app-actions">${actions}</div>
             </div>
-        `;
-    }
 
-    function renderApplications() {
-        const search = document.getElementById('searchApps').value.toLowerCase().trim();
-        const internshipFilter = document.getElementById('filterInternship').value;
-        const sort = document.getElementById('filterSort').value;
+            <div class="dept-meta">
+                <div class="dept-meta-item">
+                    <i class="fas fa-users" style="color:var(--primary)"></i> الفرص
+                    <strong>${positionsCount}</strong>
+                </div>
+                <div class="dept-meta-item">
+                    <i class="fas fa-file-alt" style="color:var(--primary)"></i> الطلبات
+                    <strong>${appsCount}</strong>
+                </div>
+                <div class="dept-meta-item">
+                    <i class="fas fa-clock" style="color:var(--primary)"></i> المدة
+                    <strong>${getDurationText(details.duration)}</strong>
+                </div>
+                <div class="dept-meta-item">
+                    <i class="fas fa-dollar-sign" style="color:var(--primary)"></i> الراتب
+                    <strong>${details.minSalary || 0}-${details.maxSalary || 0} ${details.currency || 'EGP'}</strong>
+                </div>
+            </div>
 
-        let filtered = allApplications.slice();
+            <div style="padding:10px;background:rgba(255,255,255,0.02);border-radius:10px;margin-bottom:10px;font-size:0.82rem;color:var(--text-muted)">
+                <i class="fas ${getSystemIcon(traineeSystem)}" style="color:var(--primary)"></i>
+                ${getSystemText(traineeSystem)}
+            </div>
 
-        if (search) {
-            filtered = filtered.filter(a =>
-                (a.student_name || '').toLowerCase().includes(search) ||
-                (a.student_university || '').toLowerCase().includes(search) ||
-                (a.internship_title || '').toLowerCase().includes(search)
-            );
+            <div class="dept-actions">
+                <button class="btn btn-info btn-sm" onclick="editDept('${escapeHtml(dept.field)}')">
+                    <i class="fas fa-edit"></i> تعديل
+                </button>
+                <button class="btn ${dept.active ? 'btn-warning' : 'btn-success'} btn-sm" onclick="toggleDept('${escapeHtml(dept.field)}')">
+                    <i class="fas fa-${dept.active ? 'pause' : 'play'}"></i> ${dept.active ? 'إغلاق' : 'فتح'}
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteDept('${escapeHtml(dept.field)}')">
+                    <i class="fas fa-trash"></i> حذف
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// ========== Toggle Department (active/closed) ==========
+window.toggleDept = async (field) => {
+    const depts = getDepartments();
+    const dept = depts.find(d => d.field === field);
+    if (!dept) return;
+
+    const newActive = !dept.active;
+    const msg = newActive ? 'فتح القسم للتقديم؟' : 'إغلاق القسم (المتدربين مش هيشوفوه)؟';
+    if (!confirm(msg)) return;
+
+    try {
+        // Update internship status لو موجود
+        if (dept.internship) {
+            await sb.from('internships').update({
+                status: newActive ? 'active' : 'closed',
+                updated_at: new Date().toISOString()
+            }).eq('id', dept.internship.id);
+        } else if (newActive) {
+            // اعمل internship جديد
+            await syncToInternship(field, dept.details);
         }
 
-        if (internshipFilter) {
-            filtered = filtered.filter(a => a.internship_id === internshipFilter);
+        showToast(newActive ? '✅ تم فتح القسم' : '⏸️ تم إغلاق القسم', 'success');
+        await loadAll();
+    } catch (err) {
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
+// ========== Delete Department ==========
+window.deleteDept = async (field) => {
+    if (!confirm(`هل تريد حذف القسم "${field}"؟\n⚠️ ده هيمسحه من المنصة و الطلاب مش هيشوفوه.`)) return;
+
+    try {
+        // 1. شيله من training_fields و training_details
+        const fields = safeParse(companyData.training_fields, []).filter(f => f !== field);
+        const details = safeParse(companyData.training_details, {});
+        delete details[field];
+
+        await sb.from('companies').update({
+            training_fields: fields,
+            training_details: details,
+            updated_at: new Date().toISOString()
+        }).eq('user_id', companyUserId);
+
+        // 2. امسح الـ internship المرتبط
+        const dept = getDepartments().find(d => d.field === field);
+        if (dept && dept.internship) {
+            await sb.from('internships').delete().eq('id', dept.internship.id);
         }
 
-        if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-        else if (sort === 'name') filtered.sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
-
-        const pending = filtered.filter(a => a.status === 'pending');
-        const reviewing = filtered.filter(a => a.status === 'reviewing');
-        const accepted = filtered.filter(a => ['interview_scheduled', 'interview_done', 'accepted', 'hired', 'in_training', 'completed'].includes(a.status));
-        const rejected = filtered.filter(a => a.status === 'rejected');
-
-        document.getElementById('pendingGrid').innerHTML = pending.length === 0
-            ? '<div class="empty-state"><i class="fas fa-inbox"></i><h3>مفيش طلبات في الانتظار</h3><p>الطلبات الجديدة هتظهر هنا</p></div>'
-            : pending.map(renderAppCard).join('');
-
-        document.getElementById('reviewingGrid').innerHTML = reviewing.length === 0
-            ? '<div class="empty-state"><i class="fas fa-eye"></i><h3>مفيش طلبات قيد المراجعة</h3></div>'
-            : reviewing.map(renderAppCard).join('');
-
-        document.getElementById('acceptedGrid').innerHTML = accepted.length === 0
-            ? '<div class="empty-state"><i class="fas fa-check"></i><h3>مفيش طلبات مقبولة</h3></div>'
-            : accepted.map(renderAppCard).join('');
-
-        document.getElementById('rejectedGrid').innerHTML = rejected.length === 0
-            ? '<div class="empty-state"><i class="fas fa-times"></i><h3>مفيش طلبات مرفوضة</h3></div>'
-            : rejected.map(renderAppCard).join('');
+        showToast('🗑️ تم حذف القسم', 'success');
+        await loadAll();
+    } catch (err) {
+        showToast('خطأ: ' + err.message, 'error');
     }
+};
 
-    function renderInternships() {
-        const grid = document.getElementById('internshipsGrid');
+// ========== Sync to Internships table (للظهور في صفحة الطالب) ==========
+async function syncToInternship(field, details) {
+    if (!companyData) return;
 
-        if (allInternships.length === 0) {
-            grid.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-bullhorn"></i>
-                    <h3>مفيش فرص تدريب بعد</h3>
-                    <p>اضغط "فرصة جديدة" لإضافة أول فرصة</p>
-                    <button class="btn btn-primary" onclick="openInternshipModal()" style="margin-top:14px">
-                        <i class="fas fa-plus"></i> فرصة جديدة
+    const internshipData = {
+        company_user_id: companyUserId,
+        company_name: companyData.company_name,
+        company_logo: companyData.logo,
+        company_location: companyData.company_location,
+        title: field,
+        field: field,
+        description: details.knowledgeBenefits || '',
+        duration: getDurationText(details.duration),
+        max_applicants: parseInt(details.count) || 10,
+        current_applicants: 0,
+        trainee_type: details.traineeSystem || 'first-time',
+        requirements: details.trainingRequirements || '',
+        knowledge_benefits: details.knowledgeBenefits || '',
+        financial_benefits: details.financialBenefits || '',
+        salary_min: parseFloat(details.minSalary) || 0,
+        salary_max: parseFloat(details.maxSalary) || 0,
+        salary_currency: details.currency || 'EGP',
+        status: 'active',
+        updated_at: new Date().toISOString()
+    };
+
+    // شوف لو فيه واحد بالفعل
+    const { data: existing } = await sb.from('internships')
+        .select('id')
+        .eq('company_user_id', companyUserId)
+        .eq('field', field)
+        .maybeSingle();
+
+    if (existing) {
+        await sb.from('internships').update(internshipData).eq('id', existing.id);
+    } else {
+        internshipData.created_at = new Date().toISOString();
+        await sb.from('internships').insert(internshipData);
+    }
+}
+
+// ========== Add/Edit Department Modal ==========
+let editingField = null;
+let selectedSystem = null;
+
+window.openAddDeptModal = () => {
+    editingField = null;
+    selectedSystem = 'first-time';
+    showDeptModal({}, '');
+};
+
+window.editDept = (field) => {
+    const dept = getDepartments().find(d => d.field === field);
+    if (!dept) return;
+    editingField = field;
+    selectedSystem = dept.details.traineeSystem || 'first-time';
+    showDeptModal(dept.details, field);
+};
+
+function showDeptModal(details, fieldName) {
+    const isEdit = !!editingField;
+
+    const html = `
+        <div class="modal active" id="deptModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <i class="fas fa-${isEdit ? 'edit' : 'plus-circle'}"></i>
+                        <span>${isEdit ? 'تعديل القسم' : 'إضافة قسم/مجال جديد'}</span>
+                    </div>
+                    <button class="modal-close" onclick="closeModal('deptModal')"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);padding:12px;border-radius:10px;margin-bottom:16px;font-size:0.86rem;color:var(--text-muted)">
+                    <i class="fas fa-info-circle" style="color:var(--info)"></i>
+                    الإعدادات اللي بتحطها هنا هتظهر للطلاب في صفحة الـ Internship
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-tag"></i> اسم القسم/المجال التدريبي <span class="req">*</span></label>
+                    <input type="text" id="deptField" value="${escapeHtml(fieldName)}" placeholder="مثال: تطوير الويب، التسويق الرقمي..." ${isEdit ? 'readonly' : ''}>
+                    ${isEdit ? '<div class="field-note">اسم القسم لا يمكن تعديله بعد الإنشاء</div>' : ''}
+                </div>
+
+                <!-- Trainee System -->
+                <div class="field">
+                    <label><i class="fas fa-user-graduate"></i> نظام المتدربين <span class="req">*</span></label>
+                    <div class="system-cards">
+                        <div class="system-card ${selectedSystem === 'first-time' ? 'selected' : ''}" onclick="selectSystem('first-time')">
+                            <div class="system-card-header">
+                                <div class="system-card-icon"><i class="fas fa-star"></i></div>
+                                <div>
+                                    <div class="system-card-name">النظام الأول</div>
+                                    <div class="system-card-desc">متدرب لأول مرة</div>
+                                </div>
+                            </div>
+                            <div class="system-card-info">طالب أو خريج ليس لديه أي خبرة تدريب سابقة</div>
+                            <div class="system-card-price">الشركة تحصل على 25% من رسوم التدريب</div>
+                        </div>
+
+                        <div class="system-card ${selectedSystem === 'once-trained' ? 'selected' : ''}" onclick="selectSystem('once-trained')">
+                            <div class="system-card-header">
+                                <div class="system-card-icon"><i class="fas fa-user-graduate"></i></div>
+                                <div>
+                                    <div class="system-card-name">النظام الثاني</div>
+                                    <div class="system-card-desc">متدرب ذو خبرة</div>
+                                </div>
+                            </div>
+                            <div class="system-card-info">سبق له التدريب في شركة واحدة فقط</div>
+                            <div class="system-card-price">خدمة مجانية تماماً</div>
+                        </div>
+
+                        <div class="system-card ${selectedSystem === 'twice-trained' ? 'selected' : ''}" onclick="selectSystem('twice-trained')">
+                            <div class="system-card-header">
+                                <div class="system-card-icon"><i class="fas fa-briefcase"></i></div>
+                                <div>
+                                    <div class="system-card-name">النظام الثالث</div>
+                                    <div class="system-card-desc">Training - متمرس</div>
+                                </div>
+                            </div>
+                            <div class="system-card-info">خبرة تدريب في شركتين أو أكثر</div>
+                            <div class="system-card-price">الشركة تدفع 25% من الرسوم</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duration & Count -->
+                <div class="salary-row">
+                    <div class="field">
+                        <label><i class="fas fa-clock"></i> مدة التدريب <span class="req">*</span></label>
+                        <select id="deptDuration">
+                            <option value="">اختر المدة</option>
+                            <option value="2-weeks" ${details.duration === '2-weeks' ? 'selected' : ''}>أسبوعين</option>
+                            <option value="3-weeks" ${details.duration === '3-weeks' ? 'selected' : ''}>3 أسابيع</option>
+                            <option value="1-month" ${details.duration === '1-month' ? 'selected' : ''}>شهر</option>
+                            <option value="1.5-months" ${details.duration === '1.5-months' ? 'selected' : ''}>شهر ونصف</option>
+                            <option value="2-months" ${details.duration === '2-months' ? 'selected' : ''}>شهرين</option>
+                            <option value="2.5-months" ${details.duration === '2.5-months' ? 'selected' : ''}>شهرين ونصف</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label><i class="fas fa-users"></i> عدد المتدربين المتاح <span class="req">*</span></label>
+                        <input type="number" id="deptCount" min="1" value="${details.count || 5}">
+                    </div>
+                </div>
+
+                <!-- Supervisor -->
+                <div class="field">
+                    <label><i class="fas fa-user-tie"></i> المشرف المسؤول <span class="req">*</span></label>
+                    <input type="text" id="deptSupervisor" value="${escapeHtml(details.supervisor || '')}" placeholder="اسم المشرف على التدريب">
+                </div>
+
+                <!-- Salary Range -->
+                <div class="field">
+                    <label><i class="fas fa-money-bill-wave"></i> نطاق الراتب بعد التعيين (إلزامي في كل الأنظمة) <span class="req">*</span></label>
+                    <div class="salary-row">
+                        <input type="number" id="deptMinSalary" min="0" value="${details.minSalary || ''}" placeholder="الحد الأدنى">
+                        <input type="number" id="deptMaxSalary" min="0" value="${details.maxSalary || ''}" placeholder="الحد الأقصى">
+                    </div>
+                    <select id="deptCurrency" style="margin-top:8px">
+                        <option value="EGP" ${details.currency === 'EGP' ? 'selected' : ''}>جنيه مصري (EGP)</option>
+                        <option value="USD" ${details.currency === 'USD' ? 'selected' : ''}>دولار أمريكي (USD)</option>
+                        <option value="SAR" ${details.currency === 'SAR' ? 'selected' : ''}>ريال سعودي (SAR)</option>
+                        <option value="EUR" ${details.currency === 'EUR' ? 'selected' : ''}>يورو (EUR)</option>
+                    </select>
+                    <div class="field-note">يظهر للمتدرب الراتب المحتمل لو الشركة قررت تعيينه بعد التدريب</div>
+                </div>
+
+                <!-- Knowledge Benefits -->
+                <div class="field">
+                    <label><i class="fas fa-brain"></i> الميزة المعرفية <span class="req">*</span></label>
+                    <textarea id="deptKnowledge" placeholder="المهارات والمعرفة اللي هياخدها المتدرب">${escapeHtml(details.knowledgeBenefits || '')}</textarea>
+                </div>
+
+                <!-- Financial Benefits (Required for systems 2 & 3) -->
+                <div class="field" id="financialField" style="${selectedSystem === 'first-time' ? 'display:none' : ''}">
+                    <label><i class="fas fa-gift"></i> الميزة المادية <span class="req">*</span></label>
+                    <textarea id="deptFinancial" placeholder="بدل مواصلات، وجبات، مكافأة...">${escapeHtml(details.financialBenefits || '')}</textarea>
+                    <div class="field-note">إلزامي في النظام الثاني والثالث</div>
+                </div>
+
+                <!-- Requirements -->
+                <div class="field">
+                    <label><i class="fas fa-clipboard-list"></i> مواصفات المتدرب المطلوبة</label>
+                    <textarea id="deptRequirements" placeholder="المؤهلات والمهارات المطلوبة في المتدرب">${escapeHtml(details.trainingRequirements || '')}</textarea>
+                </div>
+
+                <div style="display:flex;gap:10px;margin-top:18px">
+                    <button class="btn btn-secondary" onclick="closeModal('deptModal')" style="flex:1;justify-content:center">إلغاء</button>
+                    <button class="btn btn-primary" onclick="saveDept()" style="flex:1;justify-content:center">
+                        <i class="fas fa-save"></i> ${isEdit ? 'حفظ التعديلات' : 'إضافة القسم'}
                     </button>
                 </div>
-            `;
-            return;
-        }
-
-        grid.innerHTML = allInternships.map(i => {
-            const applicants = allApplications.filter(a => a.internship_id === i.id).length;
-            const max = i.capacity || 1;
-            const percent = Math.min(100, (applicants / max) * 100);
-            const fillCls = percent >= 100 ? 'full' : percent >= 80 ? 'warning' : '';
-
-            const statusBadge = i.is_active
-                ? '<span class="badge badge-success">✓ نشطة</span>'
-                : '<span class="badge badge-warning">⏸ متوقفة</span>';
-
-            return `
-                <div class="internship-card">
-                    <div class="internship-card-header">
-                        <div style="flex:1;min-width:0">
-                            <div class="internship-title">${esc(i.title || '-')}</div>
-                            <div class="internship-field">
-                                <i class="fas fa-tag" style="color:var(--primary);font-size:0.78rem"></i> ${esc(i.field || 'عام')}
-                            </div>
-                        </div>
-                        ${statusBadge}
-                    </div>
-
-                    <div class="internship-meta">
-                        <div class="meta-item-mini">
-                            <div class="label">المتقدمين</div>
-                            <div class="value">${applicants} / ${max}</div>
-                            <div class="capacity-bar"><div class="capacity-fill ${fillCls}" style="width:${percent}%"></div></div>
-                        </div>
-                        <div class="meta-item-mini">
-                            <div class="label">المدة</div>
-                            <div class="value">${i.duration_weeks || '-'} أسبوع</div>
-                        </div>
-                        <div class="meta-item-mini">
-                            <div class="label">المرتب</div>
-                            <div class="value">${i.salary ? `${i.salary} ${i.salary_currency || 'EGP'}` : 'بدون'}</div>
-                        </div>
-                        <div class="meta-item-mini">
-                            <div class="label">المكان</div>
-                            <div class="value">${esc(i.location || 'مقر الشركة')}</div>
-                        </div>
-                    </div>
-
-                    ${i.description ? `<div style="font-size:0.86rem;color:var(--text-muted);line-height:1.6;margin-bottom:10px">${esc(i.description.length > 100 ? i.description.substring(0, 100) + '...' : i.description)}</div>` : ''}
-
-                    <div class="internship-actions">
-                        <button class="btn btn-info btn-sm" onclick="openInternshipModal('${i.id}')" style="flex:1;justify-content:center"><i class="fas fa-edit"></i> تعديل</button>
-                        <button class="btn ${i.is_active ? 'btn-warning' : 'btn-success'} btn-sm" onclick="toggleInternship('${i.id}')" style="flex:1;justify-content:center">
-                            <i class="fas fa-${i.is_active ? 'pause' : 'play'}"></i> ${i.is_active ? 'إيقاف' : 'تنشيط'}
-                        </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteInternship('${i.id}')"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function renderSettingsSummary() {
-        const summary = document.getElementById('settingsSummary');
-        summary.innerHTML = `
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="info-label"><i class="fas fa-users"></i> السعة الكلية</div>
-                    <div class="info-value">${companySettings.max_capacity || 50} متدرب</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label"><i class="fas fa-clock"></i> ساعات العمل</div>
-                    <div class="info-value">${companySettings.work_start_time?.slice(0,5) || '09:00'} - ${companySettings.work_end_time?.slice(0,5) || '17:00'}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label"><i class="fas fa-money-bill-wave"></i> النظام المالي</div>
-                    <div class="info-value">${companySettings.provides_salary ? `مرتب ${companySettings.salary_amount} ${companySettings.salary_currency}` : 'بدون مرتب'}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label"><i class="fas fa-map-marker-alt"></i> الفروع</div>
-                    <div class="info-value">${allBranches.length} فرع</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label"><i class="fas fa-sitemap"></i> الأقسام</div>
-                    <div class="info-value">${allDepartments.length} قسم</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label"><i class="fas fa-bullhorn"></i> الفرص النشطة</div>
-                    <div class="info-value">${allInternships.filter(i => i.is_active).length} / ${allInternships.length}</div>
-                </div>
             </div>
-        `;
+        </div>
+    `;
+    renderModal(html);
+}
+
+window.selectSystem = (sys) => {
+    selectedSystem = sys;
+    document.querySelectorAll('.system-card').forEach(c => c.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+
+    // إظهار/إخفاء الميزة المادية حسب النظام
+    const financialField = document.getElementById('financialField');
+    if (financialField) {
+        financialField.style.display = sys === 'first-time' ? 'none' : '';
+    }
+};
+
+window.saveDept = async () => {
+    const field = document.getElementById('deptField').value.trim();
+    const duration = document.getElementById('deptDuration').value;
+    const count = document.getElementById('deptCount').value;
+    const supervisor = document.getElementById('deptSupervisor').value.trim();
+    const minSalary = document.getElementById('deptMinSalary').value;
+    const maxSalary = document.getElementById('deptMaxSalary').value;
+    const currency = document.getElementById('deptCurrency').value;
+    const knowledge = document.getElementById('deptKnowledge').value.trim();
+    const financial = document.getElementById('deptFinancial').value.trim();
+    const requirements = document.getElementById('deptRequirements').value.trim();
+
+    // Validation
+    if (!field) { showToast('أدخل اسم القسم', 'error'); return; }
+    if (!duration) { showToast('اختر مدة التدريب', 'error'); return; }
+    if (!count || parseInt(count) < 1) { showToast('أدخل عدد المتدربين', 'error'); return; }
+    if (!supervisor) { showToast('أدخل اسم المشرف', 'error'); return; }
+    if (!minSalary || !maxSalary) { showToast('أدخل نطاق الراتب', 'error'); return; }
+    if (!knowledge) { showToast('أدخل الميزة المعرفية', 'error'); return; }
+    if ((selectedSystem === 'once-trained' || selectedSystem === 'twice-trained') && !financial) {
+        showToast('الميزة المادية إلزامية في النظام المختار', 'error');
+        return;
     }
 
-    function renderInternshipFilter() {
-        const select = document.getElementById('filterInternship');
-        const current = select.value;
-        select.innerHTML = '<option value="">كل الفرص</option>' +
-            allInternships.map(i => `<option value="${i.id}">${esc(i.title)}</option>`).join('');
-        select.value = current;
-    }
-
-    // ============ APPLICATION ACTIONS ============
-    window.setReviewing = async (id) => {
-        try {
-            await window.ProVance.sb.from('applications').update({ status: 'reviewing' }).eq('id', id);
-            const app = allApplications.find(a => a.id === id);
-            if (app && window.ProVance.sendNotification) {
-                await window.ProVance.sendNotification({
-                    userId: app.student_user_id,
-                    userType: 'student',
-                    title: '👁️ طلبك قيد المراجعة',
-                    message: `${app.company_name || 'الشركة'} بدأت مراجعة طلبك لـ ${app.internship_title}`,
-                    type: 'info'
-                });
-            }
-            window.ProVance.showToast('تم تحديث الحالة ✓', 'success');
-            window.dispatchEvent(new CustomEvent('reload-requests'));
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ', 'error');
-        }
+    const newDetails = {
+        traineeSystem: selectedSystem,
+        duration, count: count.toString(), supervisor,
+        minSalary, maxSalary, currency,
+        knowledgeBenefits: knowledge,
+        financialBenefits: financial,
+        trainingRequirements: requirements,
+        otherCurrency: ''
     };
 
-    window.acceptApp = async (id) => {
-        const ok = await window.ProVance.confirmModal({
-            title: 'قبول الطالب',
-            message: 'هل تريد قبول الطالب وجدولة مقابلة؟ هتنتقل لصفحة المقابلات.'
-        });
-        if (!ok) return;
+    try {
+        // 1. حدّث الـ training_fields و training_details في companies
+        let fields = safeParse(companyData.training_fields, []);
+        let allDetails = safeParse(companyData.training_details, {});
 
-        try {
-            await window.ProVance.sb.from('applications').update({ status: 'reviewing' }).eq('id', id);
-            const app = allApplications.find(a => a.id === id);
-            if (app && window.ProVance.sendNotification) {
-                await window.ProVance.sendNotification({
-                    userId: app.student_user_id,
-                    userType: 'student',
-                    title: '🎉 تم قبول طلبك للمراجعة',
-                    message: `${app.company_name || 'الشركة'} ستتواصل معك لجدولة المقابلة`,
-                    type: 'success'
-                });
-            }
-            window.ProVance.showToast('تم القبول! اذهب لصفحة المقابلات لجدولة الموعد', 'success');
-            setTimeout(() => window.location.href = 'company-interviews.html', 1500);
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ', 'error');
-        }
-    };
-
-    window.openRejectModal = (id) => {
-        const app = allApplications.find(a => a.id === id);
-        if (!app) return;
-
-        const html = `
-            <div class="modal active" id="rejectModal">
-                <div class="modal-content" style="max-width:520px">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-times-circle"></i><span>رفض الطلب</span></div>
-                        <button class="modal-close" onclick="closeModal('rejectModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div style="padding:14px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:12px;margin-bottom:14px">
-                        <strong>${esc(app.student_name)}</strong>
-                        <div style="color:var(--text-muted);font-size:0.86rem">${esc(app.internship_title)}</div>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-comment"></i> سبب الرفض <span class="req">*</span></label>
-                        <select id="rejectReason" onchange="document.getElementById('rejectCustom').style.display = this.value === 'other' ? 'block' : 'none'">
-                            <option value="">-- اختر السبب --</option>
-                            <option value="السعة ممتلئة">السعة ممتلئة حالياً</option>
-                            <option value="المؤهلات غير مطابقة">المؤهلات غير مطابقة للمتطلبات</option>
-                            <option value="نقص الخبرة">نقص الخبرة المطلوبة</option>
-                            <option value="المهارات غير كافية">المهارات الفنية غير كافية</option>
-                            <option value="فترة التدريب غير مناسبة">فترة التدريب غير مناسبة</option>
-                            <option value="other">سبب آخر...</option>
-                        </select>
-                        <textarea id="rejectCustom" rows="3" placeholder="اكتب السبب..." style="display:none;margin-top:10px"></textarea>
-                    </div>
-
-                    <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:12px;border-radius:10px;margin-bottom:14px;font-size:0.84rem;color:var(--text-muted)">
-                        <i class="fas fa-info-circle" style="color:var(--warning)"></i>
-                        السبب هيتبعت للطالب عشان يفهم ويتطور.
-                    </div>
-
-                    <div style="display:flex;gap:10px">
-                        <button class="btn btn-secondary" onclick="closeModal('rejectModal')" style="flex:1;justify-content:center">إلغاء</button>
-                        <button class="btn btn-danger" onclick="confirmReject('${id}')" style="flex:1;justify-content:center"><i class="fas fa-times"></i> تأكيد الرفض</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    window.confirmReject = async (id) => {
-        const reasonSelect = document.getElementById('rejectReason').value;
-        const customReason = document.getElementById('rejectCustom').value.trim();
-        const reason = reasonSelect === 'other' ? customReason : reasonSelect;
-
-        if (!reason) {
-            window.ProVance.showToast('اختر سبب الرفض', 'warning');
-            return;
-        }
-
-        try {
-            await window.ProVance.sb.from('applications').update({
-                status: 'rejected',
-                rejection_reason: reason
-            }).eq('id', id);
-
-            const app = allApplications.find(a => a.id === id);
-            if (app && window.ProVance.sendNotification) {
-                await window.ProVance.sendNotification({
-                    userId: app.student_user_id,
-                    userType: 'student',
-                    title: 'تحديث على طلبك',
-                    message: `للأسف لم يتم قبول طلبك لـ ${app.internship_title}. السبب: ${reason}`,
-                    type: 'warning',
-                    link: 'student-applications.html'
-                });
-            }
-
-            window.ProVance.showToast('تم الرفض', 'success');
-            closeModal('rejectModal');
-            window.dispatchEvent(new CustomEvent('reload-requests'));
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ', 'error');
-        }
-    };
-
-    // ============ STUDENT DETAILS ============
-    window.viewStudentDetails = async (id) => {
-        const app = allApplications.find(a => a.id === id);
-        if (!app) return;
-
-        const sb = window.ProVance.sb;
-        const { data: student } = await sb.from('student').select('*').eq('user_id', app.student_user_id).maybeSingle();
-
-        const photo = student?.photo
-            ? `<img src="${student.photo}" alt="">`
-            : `<span>${getInitial(app.student_name)}</span>`;
-
-        const skills = Array.isArray(student?.skills) ? student.skills : [];
-        const interests = Array.isArray(student?.interested_fields) ? student.interested_fields : [];
-
-        const html = `
-            <div class="modal active" id="detailsModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-user"></i><span>تفاصيل الطالب</span></div>
-                        <button class="modal-close" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="student-detail-header">
-                        <div class="student-detail-avatar">${photo}</div>
-                        <div style="flex:1">
-                            <h3 style="font-size:1.15rem;font-weight:800">${esc(app.student_name || '-')}</h3>
-                            <div style="color:var(--text-muted);font-size:0.86rem">${esc(student?.email || '-')}</div>
-                            <div style="color:var(--primary);font-size:0.84rem;margin-top:3px;font-weight:600">
-                                <i class="fas fa-briefcase"></i> ${esc(app.internship_title || '-')}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="modal-section">
-                        <div class="modal-section-title"><i class="fas fa-id-card"></i> البيانات الأساسية</div>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-phone"></i> الهاتف</div>
-                                <div class="info-value">${esc(student?.phone || '-')}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-university"></i> الجامعة</div>
-                                <div class="info-value">${esc(student?.university || '-')}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-book"></i> الكلية</div>
-                                <div class="info-value">${esc(student?.faculty || '-')}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-star"></i> المعدل</div>
-                                <div class="info-value">${esc(student?.gpa || '-')}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-calendar"></i> سنة الدراسة</div>
-                                <div class="info-value">${student?.study_year === 'graduated' ? 'متخرج' : esc(student?.study_year || '-')}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    ${student?.bio ? `
-                        <div class="modal-section">
-                            <div class="modal-section-title"><i class="fas fa-pen-fancy"></i> نبذة</div>
-                            <div style="color:var(--text-muted);line-height:1.6;font-size:0.9rem">${esc(student.bio)}</div>
-                        </div>
-                    ` : ''}
-
-                    ${skills.length > 0 ? `
-                        <div class="modal-section">
-                            <div class="modal-section-title"><i class="fas fa-tools"></i> المهارات</div>
-                            <div class="skills-list">
-                                ${skills.map(s => `<span class="skill-tag">${esc(typeof s === 'string' ? s : s.name)}</span>`).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-
-                    ${interests.length > 0 ? `
-                        <div class="modal-section">
-                            <div class="modal-section-title"><i class="fas fa-bullseye"></i> المجالات المهتم بها</div>
-                            <div class="skills-list">
-                                ${interests.map(i => `<span class="skill-tag">${esc(typeof i === 'string' ? i : i.name)}</span>`).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-
-                    ${app.application_message ? `
-                        <div class="modal-section">
-                            <div class="modal-section-title"><i class="fas fa-comment"></i> رسالة التقديم</div>
-                            <div style="color:var(--text-muted);line-height:1.6;font-size:0.9rem">${esc(app.application_message)}</div>
-                        </div>
-                    ` : ''}
-
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
-                        ${app.student_cv_url ? `<a href="${esc(app.student_cv_url)}" target="_blank" class="btn btn-info" style="flex:1;justify-content:center"><i class="fas fa-file-pdf"></i> فتح CV</a>` : ''}
-                        ${student?.linkedin ? `<a href="${esc(student.linkedin)}" target="_blank" class="btn btn-secondary" style="flex:1;justify-content:center"><i class="fab fa-linkedin"></i> LinkedIn</a>` : ''}
-                        ${student?.github ? `<a href="${esc(student.github)}" target="_blank" class="btn btn-secondary" style="flex:1;justify-content:center"><i class="fab fa-github"></i> GitHub</a>` : ''}
-                    </div>
-
-                    ${app.status === 'pending' || app.status === 'reviewing' ? `
-                        <div style="display:flex;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
-                            <button class="btn btn-success" onclick="closeModal('detailsModal');acceptApp('${app.id}')" style="flex:1;justify-content:center"><i class="fas fa-check"></i> قبول</button>
-                            <button class="btn btn-danger" onclick="closeModal('detailsModal');openRejectModal('${app.id}')" style="flex:1;justify-content:center"><i class="fas fa-times"></i> رفض</button>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    // Expose for part 2
-    window._reqState = {
-        get companyUserId() { return companyUserId; },
-        set companyUserId(v) { companyUserId = v; },
-        get companyData() { return companyData; },
-        set companyData(v) { companyData = v; },
-        get allApplications() { return allApplications; },
-        set allApplications(v) { allApplications = v; },
-        get allInternships() { return allInternships; },
-        set allInternships(v) { allInternships = v; },
-        get allBranches() { return allBranches; },
-        set allBranches(v) { allBranches = v; },
-        get allDepartments() { return allDepartments; },
-        set allDepartments(v) { allDepartments = v; },
-        get companySettings() { return companySettings; },
-        set companySettings(v) { companySettings = v; },
-        renderModal, esc, getInitial,
-        renderApplications, renderInternships, renderInternshipFilter,
-        renderSettingsSummary, updateStats
-    };
-})();
-// ============================================================
-// Requests Control - Part 2: Internships, Settings, Help
-// ============================================================
-(function() {
-    'use strict';
-
-    function waitForState(cb) {
-        if (window._reqState) cb(window._reqState);
-        else setTimeout(() => waitForState(cb), 100);
-    }
-
-    waitForState((State) => {
-        const { esc, renderModal } = State;
-
-        // ============ INTERNSHIP CRUD ============
-        window.openInternshipModal = (id = null) => {
-            const internship = id ? State.allInternships.find(i => i.id === id) : null;
-            const isEdit = !!internship;
-
-            const html = `
-                <div class="modal active" id="internshipModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                <i class="fas fa-${isEdit ? 'edit' : 'plus-circle'}"></i>
-                                <span>${isEdit ? 'تعديل فرصة' : 'فرصة تدريب جديدة'}</span>
-                            </div>
-                            <button class="modal-close" onclick="closeModal('internshipModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div class="field">
-                            <label><i class="fas fa-briefcase"></i> اسم الفرصة <span class="req">*</span></label>
-                            <input type="text" id="int_title" value="${esc(internship?.title || '')}" placeholder="مثال: مطور React">
-                        </div>
-
-                        <div class="grid-2">
-                            <div class="field">
-                                <label><i class="fas fa-tag"></i> المجال</label>
-                                <select id="int_field">
-                                    <option value="">-- اختر --</option>
-                                    <option value="تطوير الويب" ${internship?.field === 'تطوير الويب' ? 'selected' : ''}>تطوير الويب</option>
-                                    <option value="تطبيقات الموبايل" ${internship?.field === 'تطبيقات الموبايل' ? 'selected' : ''}>تطبيقات الموبايل</option>
-                                    <option value="الذكاء الاصطناعي" ${internship?.field === 'الذكاء الاصطناعي' ? 'selected' : ''}>الذكاء الاصطناعي</option>
-                                    <option value="تصميم UX/UI" ${internship?.field === 'تصميم UX/UI' ? 'selected' : ''}>تصميم UX/UI</option>
-                                    <option value="التسويق الرقمي" ${internship?.field === 'التسويق الرقمي' ? 'selected' : ''}>التسويق الرقمي</option>
-                                    <option value="إدارة الأعمال" ${internship?.field === 'إدارة الأعمال' ? 'selected' : ''}>إدارة الأعمال</option>
-                                    <option value="الموارد البشرية" ${internship?.field === 'الموارد البشرية' ? 'selected' : ''}>الموارد البشرية</option>
-                                    <option value="المحاسبة" ${internship?.field === 'المحاسبة' ? 'selected' : ''}>المحاسبة</option>
-                                    <option value="الهندسة" ${internship?.field === 'الهندسة' ? 'selected' : ''}>الهندسة</option>
-                                    <option value="الصحة" ${internship?.field === 'الصحة' ? 'selected' : ''}>الصحة</option>
-                                    <option value="عام" ${internship?.field === 'عام' ? 'selected' : ''}>عام</option>
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label><i class="fas fa-users"></i> السعة <span class="req">*</span></label>
-                                <input type="number" id="int_capacity" value="${internship?.capacity || 5}" min="1" max="100">
-                            </div>
-                        </div>
-
-                        <div class="grid-2">
-                            <div class="field">
-                                <label><i class="fas fa-calendar"></i> المدة (أسبوع)</label>
-                                <input type="number" id="int_duration" value="${internship?.duration_weeks || 8}" min="1" max="52">
-                            </div>
-                            <div class="field">
-                                <label><i class="fas fa-map-marker-alt"></i> المكان</label>
-                                <input type="text" id="int_location" value="${esc(internship?.location || '')}" placeholder="مثال: مقر الشركة - القاهرة">
-                            </div>
-                        </div>
-
-                        <div class="grid-2">
-                            <div class="field">
-                                <label><i class="fas fa-money-bill-wave"></i> المرتب (اختياري)</label>
-                                <input type="number" id="int_salary" value="${internship?.salary || ''}" min="0" placeholder="0 = بدون مرتب">
-                            </div>
-                            <div class="field">
-                                <label><i class="fas fa-coins"></i> العملة</label>
-                                <select id="int_currency">
-                                    <option value="EGP" ${internship?.salary_currency === 'EGP' ? 'selected' : ''}>EGP - جنيه مصري</option>
-                                    <option value="USD" ${internship?.salary_currency === 'USD' ? 'selected' : ''}>USD - دولار</option>
-                                    <option value="EUR" ${internship?.salary_currency === 'EUR' ? 'selected' : ''}>EUR - يورو</option>
-                                    <option value="SAR" ${internship?.salary_currency === 'SAR' ? 'selected' : ''}>SAR - ريال سعودي</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label><i class="fas fa-info-circle"></i> الوصف</label>
-                            <textarea id="int_description" rows="4" placeholder="اشرح طبيعة التدريب والمهام...">${esc(internship?.description || '')}</textarea>
-                        </div>
-
-                        <div class="field">
-                            <label><i class="fas fa-list-check"></i> المتطلبات (سطر لكل متطلب)</label>
-                            <textarea id="int_requirements" rows="3" placeholder="مثال:&#10;معرفة بـ HTML, CSS&#10;المعدل التراكمي 2.5+">${esc(Array.isArray(internship?.requirements) ? internship.requirements.join('\n') : internship?.requirements || '')}</textarea>
-                        </div>
-
-                        <div class="field">
-                            <label><i class="fas fa-gift"></i> المزايا (سطر لكل ميزة)</label>
-                            <textarea id="int_benefits" rows="3" placeholder="مثال:&#10;شهادة معتمدة&#10;فرصة توظيف بعد التدريب&#10;وجبات مجانية">${esc(Array.isArray(internship?.benefits) ? internship.benefits.join('\n') : internship?.benefits || '')}</textarea>
-                        </div>
-
-                        <div style="display:flex;gap:10px;margin-top:14px">
-                            <button class="btn btn-secondary" onclick="closeModal('internshipModal')" style="flex:1;justify-content:center">إلغاء</button>
-                            <button class="btn btn-primary" onclick="saveInternship('${id || ''}')" style="flex:1;justify-content:center">
-                                <i class="fas fa-save"></i> ${isEdit ? 'حفظ التعديلات' : 'نشر الفرصة'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.saveInternship = async (id) => {
-            const data = {
-                company_user_id: State.companyUserId,
-                company_name: State.companyData?.company_name || 'الشركة',
-                title: document.getElementById('int_title').value.trim(),
-                field: document.getElementById('int_field').value || 'عام',
-                capacity: parseInt(document.getElementById('int_capacity').value) || 5,
-                duration_weeks: parseInt(document.getElementById('int_duration').value) || 8,
-                location: document.getElementById('int_location').value.trim() || null,
-                salary: parseInt(document.getElementById('int_salary').value) || null,
-                salary_currency: document.getElementById('int_currency').value,
-                description: document.getElementById('int_description').value.trim() || null,
-                requirements: document.getElementById('int_requirements').value.trim().split('\n').filter(Boolean),
-                benefits: document.getElementById('int_benefits').value.trim().split('\n').filter(Boolean),
-                is_active: true
-            };
-
-            if (!data.title) {
-                window.ProVance.showToast('اكتب اسم الفرصة', 'warning');
+        if (!editingField) {
+            // إضافة جديد
+            if (fields.includes(field)) {
+                showToast('القسم ده موجود بالفعل', 'error');
                 return;
             }
-
-            try {
-                const sb = window.ProVance.sb;
-                if (id) {
-                    delete data.company_user_id;
-                    await sb.from('internships').update(data).eq('id', id);
-                    window.ProVance.showToast('تم التحديث ✓', 'success');
-                } else {
-                    await sb.from('internships').insert(data);
-                    window.ProVance.showToast('تم نشر الفرصة 🎉', 'success');
-                }
-                closeModal('internshipModal');
-                window.dispatchEvent(new CustomEvent('reload-requests'));
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-            }
-        };
-
-        window.toggleInternship = async (id) => {
-            const internship = State.allInternships.find(i => i.id === id);
-            if (!internship) return;
-
-            try {
-                await window.ProVance.sb.from('internships').update({
-                    is_active: !internship.is_active
-                }).eq('id', id);
-                window.ProVance.showToast(internship.is_active ? 'تم الإيقاف' : 'تم التنشيط', 'success');
-                window.dispatchEvent(new CustomEvent('reload-requests'));
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        window.deleteInternship = async (id) => {
-            const internship = State.allInternships.find(i => i.id === id);
-            const applicants = State.allApplications.filter(a => a.internship_id === id).length;
-
-            const ok = await window.ProVance.confirmModal({
-                title: 'حذف الفرصة',
-                message: `هل تريد حذف "${internship?.title}"؟${applicants > 0 ? `\n⚠️ يوجد ${applicants} طلب على هذه الفرصة` : ''}`
-            });
-            if (!ok) return;
-
-            try {
-                await window.ProVance.sb.from('internships').delete().eq('id', id);
-                window.ProVance.showToast('تم الحذف', 'success');
-                window.dispatchEvent(new CustomEvent('reload-requests'));
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        // ============ CAPACITY SETTINGS ============
-        window.openCapacitySettings = () => {
-            const html = `
-                <div class="modal active" id="capacityModal">
-                    <div class="modal-content" style="max-width:520px">
-                        <div class="modal-header">
-                            <div class="modal-title"><i class="fas fa-users"></i><span>إعدادات السعة</span></div>
-                            <button class="modal-close" onclick="closeModal('capacityModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div class="field">
-                            <label><i class="fas fa-users"></i> السعة الكلية للشركة <span class="req">*</span></label>
-                            <input type="number" id="cap_max" value="${State.companySettings.max_capacity || 50}" min="1" max="1000">
-                            <div style="color:var(--text-muted);font-size:0.78rem;margin-top:4px">
-                                <i class="fas fa-info-circle"></i> أقصى عدد متدربين يمكن قبولهم في الشركة
-                            </div>
-                        </div>
-
-                        <div style="display:flex;gap:10px;margin-top:14px">
-                            <button class="btn btn-secondary" onclick="closeModal('capacityModal')" style="flex:1;justify-content:center">إلغاء</button>
-                            <button class="btn btn-primary" onclick="saveCapacity()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.saveCapacity = async () => {
-            const max = parseInt(document.getElementById('cap_max').value) || 50;
-            try {
-                await window.ProVance.sb.from('companies').update({ max_capacity: max }).eq('user_id', State.companyUserId);
-                State.companySettings.max_capacity = max;
-                window.ProVance.showToast('تم الحفظ ✓', 'success');
-                closeModal('capacityModal');
-                State.renderSettingsSummary();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        // ============ TIME SETTINGS ============
-        window.openTimeSettings = () => {
-            const html = `
-                <div class="modal active" id="timeModal">
-                    <div class="modal-content" style="max-width:520px">
-                        <div class="modal-header">
-                            <div class="modal-title"><i class="fas fa-clock"></i><span>إعدادات الوقت</span></div>
-                            <button class="modal-close" onclick="closeModal('timeModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div class="grid-2">
-                            <div class="field">
-                                <label><i class="fas fa-sun"></i> بداية اليوم</label>
-                                <input type="time" id="time_start" value="${(State.companySettings.work_start_time || '09:00:00').slice(0,5)}">
-                            </div>
-                            <div class="field">
-                                <label><i class="fas fa-moon"></i> نهاية اليوم</label>
-                                <input type="time" id="time_end" value="${(State.companySettings.work_end_time || '17:00:00').slice(0,5)}">
-                            </div>
-                        </div>
-
-                        <div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.2);padding:12px;border-radius:10px;margin:14px 0;font-size:0.84rem;color:var(--text-muted)">
-                            <i class="fas fa-info-circle" style="color:var(--info)"></i>
-                            ساعات العمل دي بتتطبق على كل المتدربين. تأخير أكتر من 15 دقيقة بيتسجل كتأخير.
-                        </div>
-
-                        <div style="display:flex;gap:10px">
-                            <button class="btn btn-secondary" onclick="closeModal('timeModal')" style="flex:1;justify-content:center">إلغاء</button>
-                            <button class="btn btn-primary" onclick="saveTime()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.saveTime = async () => {
-            const start = document.getElementById('time_start').value + ':00';
-            const end = document.getElementById('time_end').value + ':00';
-            try {
-                await window.ProVance.sb.from('companies').update({
-                    work_start_time: start,
-                    work_end_time: end
-                }).eq('user_id', State.companyUserId);
-                State.companySettings.work_start_time = start;
-                State.companySettings.work_end_time = end;
-                window.ProVance.showToast('تم الحفظ ✓', 'success');
-                closeModal('timeModal');
-                State.renderSettingsSummary();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        // ============ FINANCIAL SETTINGS ============
-        window.openFinancialSettings = () => {
-            const s = State.companySettings;
-            const html = `
-                <div class="modal active" id="financialModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title"><i class="fas fa-money-bill-wave"></i><span>النظام المالي والمزايا</span></div>
-                            <button class="modal-close" onclick="closeModal('financialModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div class="modal-section">
-                            <div class="modal-section-title"><i class="fas fa-money-bill-wave"></i> المرتب</div>
-                            <div class="field">
-                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                                    <input type="checkbox" id="fin_salary" ${s.provides_salary ? 'checked' : ''}>
-                                    <span>الشركة بتقدم مرتب للمتدربين</span>
-                                </label>
-                            </div>
-                            <div class="grid-2">
-                                <div class="field">
-                                    <label>قيمة المرتب</label>
-                                    <input type="number" id="fin_amount" value="${s.salary_amount || 0}" min="0">
-                                </div>
-                                <div class="field">
-                                    <label>العملة</label>
-                                    <select id="fin_currency">
-                                        <option value="EGP" ${s.salary_currency === 'EGP' ? 'selected' : ''}>EGP</option>
-                                        <option value="USD" ${s.salary_currency === 'USD' ? 'selected' : ''}>USD</option>
-                                        <option value="EUR" ${s.salary_currency === 'EUR' ? 'selected' : ''}>EUR</option>
-                                        <option value="SAR" ${s.salary_currency === 'SAR' ? 'selected' : ''}>SAR</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="modal-section">
-                            <div class="modal-section-title"><i class="fas fa-gift"></i> المزايا الإضافية</div>
-                            <div class="field">
-                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                                    <input type="checkbox" id="fin_certificate" ${s.provides_certificate ? 'checked' : ''}>
-                                    <span><i class="fas fa-certificate" style="color:var(--primary)"></i> شهادة معتمدة</span>
-                                </label>
-                            </div>
-                            <div class="field">
-                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                                    <input type="checkbox" id="fin_meals" ${s.provides_meals ? 'checked' : ''}>
-                                    <span><i class="fas fa-utensils" style="color:var(--primary)"></i> وجبات مجانية</span>
-                                </label>
-                            </div>
-                            <div class="field">
-                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                                    <input type="checkbox" id="fin_transport" ${s.provides_transport ? 'checked' : ''}>
-                                    <span><i class="fas fa-bus" style="color:var(--primary)"></i> مواصلات</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div style="display:flex;gap:10px;margin-top:14px">
-                            <button class="btn btn-secondary" onclick="closeModal('financialModal')" style="flex:1;justify-content:center">إلغاء</button>
-                            <button class="btn btn-primary" onclick="saveFinancial()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.saveFinancial = async () => {
-            const data = {
-                provides_salary: document.getElementById('fin_salary').checked,
-                salary_amount: parseInt(document.getElementById('fin_amount').value) || 0,
-                salary_currency: document.getElementById('fin_currency').value,
-                provides_certificate: document.getElementById('fin_certificate').checked,
-                provides_meals: document.getElementById('fin_meals').checked,
-                provides_transport: document.getElementById('fin_transport').checked
-            };
-            try {
-                await window.ProVance.sb.from('companies').update(data).eq('user_id', State.companyUserId);
-                Object.assign(State.companySettings, data);
-                window.ProVance.showToast('تم الحفظ ✓', 'success');
-                closeModal('financialModal');
-                State.renderSettingsSummary();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        // ============ BRANCHES ============
-        window.openBranchesSettings = () => {
-            const branches = State.allBranches;
-            const html = `
-                <div class="modal active" id="branchesModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title"><i class="fas fa-map-marker-alt"></i><span>إدارة الفروع</span></div>
-                            <button class="modal-close" onclick="closeModal('branchesModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div id="branchesList">
-                            ${branches.length === 0
-                                ? '<div class="empty-state" style="padding:30px"><i class="fas fa-map-marker-alt"></i><p>لا توجد فروع بعد</p></div>'
-                                : branches.map(b => `
-                                    <div class="branch-card" style="margin-bottom:8px">
-                                        <div class="branch-icon"><i class="fas fa-map-marker-alt"></i></div>
-                                        <div class="branch-body">
-                                            <div class="branch-name">${esc(b.name)}</div>
-                                            <div class="branch-address">${esc(b.address || 'لا يوجد عنوان')}</div>
-                                        </div>
-                                        <button class="btn btn-danger btn-sm" onclick="deleteBranch('${b.id}')"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                `).join('')
-                            }
-                        </div>
-
-                        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-                            <h4 style="font-size:0.95rem;margin-bottom:10px"><i class="fas fa-plus" style="color:var(--primary)"></i> إضافة فرع جديد</h4>
-                            <div class="grid-2">
-                                <div class="field" style="margin-bottom:8px">
-                                    <input type="text" id="newBranchName" placeholder="اسم الفرع - مثال: فرع المعادي">
-                                </div>
-                                <div class="field" style="margin-bottom:8px">
-                                    <input type="text" id="newBranchAddress" placeholder="العنوان">
-                                </div>
-                            </div>
-                            <button class="btn btn-primary" onclick="addBranch()" style="width:100%;justify-content:center">
-                                <i class="fas fa-plus"></i> إضافة الفرع
-                            </button>
-                        </div>
-
-                        <div style="margin-top:14px">
-                            <button class="btn btn-secondary" onclick="closeModal('branchesModal')" style="width:100%;justify-content:center">إغلاق</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.addBranch = async () => {
-            const name = document.getElementById('newBranchName').value.trim();
-            const address = document.getElementById('newBranchAddress').value.trim();
-
-            if (!name) {
-                window.ProVance.showToast('اكتب اسم الفرع', 'warning');
-                return;
-            }
-
-            // اعمل branches list في companies.metadata
-            const newBranch = { id: 'br_' + Date.now(), name, address: address || null };
-            const updated = [...State.allBranches, newBranch];
-
-            try {
-                await window.ProVance.sb.from('companies').update({ branches: updated }).eq('user_id', State.companyUserId);
-                State.allBranches = updated;
-                window.ProVance.showToast('تم إضافة الفرع ✓', 'success');
-                closeModal('branchesModal');
-                openBranchesSettings();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ - تأكد إن جدول companies فيه عمود branches', 'error');
-            }
-        };
-
-        window.deleteBranch = async (id) => {
-            const ok = await window.ProVance.confirmModal({title: 'حذف الفرع', message: 'هل تريد حذف هذا الفرع؟'});
-            if (!ok) return;
-
-            const updated = State.allBranches.filter(b => b.id !== id);
-            try {
-                await window.ProVance.sb.from('companies').update({ branches: updated }).eq('user_id', State.companyUserId);
-                State.allBranches = updated;
-                window.ProVance.showToast('تم الحذف', 'success');
-                closeModal('branchesModal');
-                openBranchesSettings();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        // ============ DEPARTMENTS ============
-        window.openDepartmentsSettings = () => {
-            const depts = State.allDepartments;
-            const html = `
-                <div class="modal active" id="departmentsModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title"><i class="fas fa-sitemap"></i><span>إدارة الأقسام</span></div>
-                            <button class="modal-close" onclick="closeModal('departmentsModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div id="departmentsList">
-                            ${depts.length === 0
-                                ? '<div class="empty-state" style="padding:30px"><i class="fas fa-sitemap"></i><p>لا توجد أقسام بعد</p></div>'
-                                : depts.map(d => `
-                                    <div class="branch-card" style="margin-bottom:8px">
-                                        <div class="branch-icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"><i class="fas fa-sitemap"></i></div>
-                                        <div class="branch-body">
-                                            <div class="branch-name">${esc(d.name)}</div>
-                                            <div class="branch-address">السعة: ${d.capacity || 0} متدرب</div>
-                                        </div>
-                                        <button class="btn btn-danger btn-sm" onclick="deleteDepartment('${d.id}')"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                `).join('')
-                            }
-                        </div>
-
-                        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-                            <h4 style="font-size:0.95rem;margin-bottom:10px"><i class="fas fa-plus" style="color:var(--primary)"></i> إضافة قسم جديد</h4>
-                            <div class="grid-2">
-                                <div class="field" style="margin-bottom:8px">
-                                    <input type="text" id="newDeptName" placeholder="اسم القسم - مثال: قسم البرمجة">
-                                </div>
-                                <div class="field" style="margin-bottom:8px">
-                                    <input type="number" id="newDeptCapacity" placeholder="السعة" min="1" value="5">
-                                </div>
-                            </div>
-                            <button class="btn btn-primary" onclick="addDepartment()" style="width:100%;justify-content:center">
-                                <i class="fas fa-plus"></i> إضافة القسم
-                            </button>
-                        </div>
-
-                        <div style="margin-top:14px">
-                            <button class="btn btn-secondary" onclick="closeModal('departmentsModal')" style="width:100%;justify-content:center">إغلاق</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.addDepartment = async () => {
-            const name = document.getElementById('newDeptName').value.trim();
-            const capacity = parseInt(document.getElementById('newDeptCapacity').value) || 5;
-
-            if (!name) {
-                window.ProVance.showToast('اكتب اسم القسم', 'warning');
-                return;
-            }
-
-            const newDept = { id: 'dept_' + Date.now(), name, capacity };
-            const updated = [...State.allDepartments, newDept];
-
-            try {
-                await window.ProVance.sb.from('companies').update({ departments: updated }).eq('user_id', State.companyUserId);
-                State.allDepartments = updated;
-                window.ProVance.showToast('تم الإضافة ✓', 'success');
-                closeModal('departmentsModal');
-                openDepartmentsSettings();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ - تأكد إن جدول companies فيه عمود departments', 'error');
-            }
-        };
-
-        window.deleteDepartment = async (id) => {
-            const ok = await window.ProVance.confirmModal({title: 'حذف القسم', message: 'هل تريد حذف هذا القسم؟'});
-            if (!ok) return;
-
-            const updated = State.allDepartments.filter(d => d.id !== id);
-            try {
-                await window.ProVance.sb.from('companies').update({ departments: updated }).eq('user_id', State.companyUserId);
-                State.allDepartments = updated;
-                window.ProVance.showToast('تم الحذف', 'success');
-                closeModal('departmentsModal');
-                openDepartmentsSettings();
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        // ============ AUTO ACTIONS ============
-        window.openAutoActions = () => {
-            const a = State.companySettings.auto_actions || {};
-            const html = `
-                <div class="modal active" id="autoActionsModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title"><i class="fas fa-robot"></i><span>الإجراءات التلقائية</span></div>
-                            <button class="modal-close" onclick="closeModal('autoActionsModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:14px">
-                            <i class="fas fa-info-circle" style="color:var(--info)"></i>
-                            قواعد تتطبق تلقائياً على الطلبات الجديدة لتوفير وقتك
-                        </p>
-
-                        <div class="modal-section">
-                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                                <input type="checkbox" id="auto_full" ${a.auto_reject_on_full ? 'checked' : ''}>
-                                <strong>رفض تلقائي عند امتلاء السعة</strong>
-                            </label>
-                            <div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px">
-                                لو الفرصة وصلت لأقصى سعة، الطلبات الجديدة هترفض تلقائياً
-                            </div>
-                        </div>
-
-                        <div class="modal-section">
-                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                                <input type="checkbox" id="auto_gpa" ${a.auto_reject_low_gpa ? 'checked' : ''}>
-                                <strong>رفض تلقائي للمعدل المنخفض</strong>
-                            </label>
-                            <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
-                                <span style="font-size:0.86rem;color:var(--text-muted)">الحد الأدنى للمعدل:</span>
-                                <input type="number" id="auto_min_gpa" value="${a.min_gpa || 2.5}" min="0" max="4" step="0.1" style="width:80px;padding:6px 10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;color:var(--text)">
-                            </div>
-                        </div>
-
-                        <div class="modal-section">
-                            <label style="font-size:0.92rem;font-weight:700">
-                                <i class="fas fa-clock" style="color:var(--primary)"></i>
-                                تحويل تلقائي لـ "قيد المراجعة" بعد:
-                            </label>
-                            <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
-                                <input type="number" id="auto_review_hours" value="${a.auto_review_after_hours || 0}" min="0" max="168" style="width:80px;padding:6px 10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;color:var(--text)">
-                                <span style="font-size:0.86rem;color:var(--text-muted)">ساعة (0 = إلغاء)</span>
-                            </div>
-                        </div>
-
-                        <div style="display:flex;gap:10px;margin-top:14px">
-                            <button class="btn btn-secondary" onclick="closeModal('autoActionsModal')" style="flex:1;justify-content:center">إلغاء</button>
-                            <button class="btn btn-primary" onclick="saveAutoActions()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.saveAutoActions = async () => {
-            const data = {
-                auto_reject_on_full: document.getElementById('auto_full').checked,
-                auto_reject_low_gpa: document.getElementById('auto_gpa').checked,
-                min_gpa: parseFloat(document.getElementById('auto_min_gpa').value) || 2.5,
-                auto_review_after_hours: parseInt(document.getElementById('auto_review_hours').value) || 0
-            };
-            try {
-                await window.ProVance.sb.from('companies').update({ auto_actions: data }).eq('user_id', State.companyUserId);
-                State.companySettings.auto_actions = data;
-                try { localStorage.setItem('provance_auto_actions_' + State.companyUserId, JSON.stringify(data)); } catch (e) {}
-                window.ProVance.showToast('تم الحفظ ✓', 'success');
-                closeModal('autoActionsModal');
-            } catch (err) {
-                // fallback - localStorage فقط
-                try { localStorage.setItem('provance_auto_actions_' + State.companyUserId, JSON.stringify(data)); } catch (e) {}
-                State.companySettings.auto_actions = data;
-                window.ProVance.showToast('تم الحفظ محلياً ✓', 'success');
-                closeModal('autoActionsModal');
-            }
-        };
-
-        // ============ HELP MODAL ============
-        window.openHelpModal = () => {
-            const html = `
-                <div class="modal active" id="helpModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title"><i class="fas fa-question-circle"></i><span>دليل الاستخدام</span></div>
-                            <button class="modal-close" onclick="closeModal('helpModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div class="help-section">
-                            <h4><i class="fas fa-inbox"></i> استقبال الطلبات</h4>
-                            <ul>
-                                <li><i class="fas fa-check"></i> الطلبات الجديدة بتظهر في تاب "في الانتظار"</li>
-                                <li><i class="fas fa-check"></i> اضغط على الطلب لشوف تفاصيل الطالب الكاملة</li>
-                                <li><i class="fas fa-check"></i> CV + LinkedIn + GitHub موجودين لو الطالب رفعهم</li>
-                                <li><i class="fas fa-check"></i> الطلبات الجديدة (أقل من 24 ساعة) ليها علامة "جديد"</li>
-                            </ul>
-                        </div>
-
-                        <div class="help-section">
-                            <h4><i class="fas fa-gavel"></i> اتخاذ القرار</h4>
-                            <ul>
-                                <li><i class="fas fa-eye"></i> <strong>مراجعة:</strong> عشان تدرس الطلب أكتر</li>
-                                <li><i class="fas fa-check"></i> <strong>قبول:</strong> الطالب ينتقل للمقابلات لتحديد موعد</li>
-                                <li><i class="fas fa-times"></i> <strong>رفض:</strong> لازم تختار سبب الرفض (الطالب يستلم إشعار)</li>
-                            </ul>
-                        </div>
-
-                        <div class="help-section">
-                            <h4><i class="fas fa-bullhorn"></i> فرص التدريب</h4>
-                            <ul>
-                                <li><i class="fas fa-plus"></i> اضغط "فرصة جديدة" لإضافة فرصة تدريب</li>
-                                <li><i class="fas fa-edit"></i> يمكنك تعديل أو إيقاف الفرصة في أي وقت</li>
-                                <li><i class="fas fa-eye"></i> الطلاب بيشوفوا الفرص النشطة فقط</li>
-                                <li><i class="fas fa-users"></i> لما السعة تمتلئ، الفرصة تتقفل تلقائياً</li>
-                            </ul>
-                        </div>
-
-                        <div class="help-section">
-                            <h4><i class="fas fa-cog"></i> الإعدادات</h4>
-                            <ul>
-                                <li><i class="fas fa-users"></i> <strong>السعة:</strong> الحد الأقصى للمتدربين في الشركة</li>
-                                <li><i class="fas fa-clock"></i> <strong>الوقت:</strong> ساعات العمل لحساب التأخير</li>
-                                <li><i class="fas fa-money-bill-wave"></i> <strong>المالية:</strong> المرتب والمزايا للمتدربين</li>
-                                <li><i class="fas fa-map-marker-alt"></i> <strong>الفروع:</strong> فروع الشركة المختلفة</li>
-                                <li><i class="fas fa-sitemap"></i> <strong>الأقسام:</strong> أقسام التدريب الداخلية</li>
-                                <li><i class="fas fa-robot"></i> <strong>إجراءات تلقائية:</strong> قواعد قبول/رفض ذكية</li>
-                            </ul>
-                        </div>
-
-                        <div class="help-section">
-                            <h4><i class="fas fa-bolt"></i> نصائح للسرعة</h4>
-                            <ul>
-                                <li><i class="fas fa-check"></i> فعّل الإجراءات التلقائية لتوفير وقت في الطلبات الواضحة</li>
-                                <li><i class="fas fa-check"></i> اكتب وصف واضح للفرصة عشان الطلاب المناسبين يقدموا</li>
-                                <li><i class="fas fa-check"></i> استخدم الفلترة لو فيه طلبات كتيرة</li>
-                                <li><i class="fas fa-check"></i> ESC = إغلاق المودال</li>
-                            </ul>
-                        </div>
-
-                        <button class="btn btn-primary" onclick="closeModal('helpModal')" style="width:100%;justify-content:center;margin-top:14px">
-                            <i class="fas fa-check"></i> فهمت
-                        </button>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        console.log('✅ Internships, settings & help registered');
-    });
-
-    // ============ MAIN INIT ============
-    let isInitialized = false;
-    async function loadAll() {
-        if (!window._reqState) {
-            setTimeout(loadAll, 100);
-            return;
+            fields.push(field);
         }
-        const State = window._reqState;
+
+        allDetails[field] = newDetails;
+
+        await sb.from('companies').update({
+            training_fields: fields,
+            training_details: allDetails,
+            updated_at: new Date().toISOString()
+        }).eq('user_id', companyUserId);
+
+        // 2. اعمل sync مع internships عشان يظهر للطالب
+        await syncToInternship(field, newDetails);
+
+        showToast(editingField ? '✅ تم حفظ التعديلات' : '✅ تم إضافة القسم بنجاح', 'success');
+        closeModal('deptModal');
+        await loadAll();
+    } catch (err) {
+        console.error(err);
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
+// ========== Init ==========
+async function init() {
+    try {
         // انتظر sb لو لسه مش جاهز
-        let sb = window.ProVance && window.ProVance.sb;
         if (!sb) {
-            // محاولة 1: انتظر شوية
-            for (let i = 0; i < 30; i++) {
-                await new Promise(r => setTimeout(r, 200));
-                sb = window.ProVance && window.ProVance.sb;
-                if (sb) break;
-            }
-            // محاولة 2: اعمل client مباشرة
-            if (!sb && typeof supabase !== 'undefined' && supabase.createClient) {
-                sb = supabase.createClient(
-                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                    { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } }
-                );
-                if (window.ProVance) window.ProVance.sb = sb;
-            }
-            if (!sb) {
-                console.error('❌ Supabase not available');
-                return;
-            }
+            showToast('فشل تحميل Supabase', 'error');
+            return;
         }
-
-        try {
-            const session = await sb.auth.getSession();
-            const userId = session?.data?.session?.user?.id;
-            if (!userId) {
-                window.location.href = 'company-login.html';
-                return;
-            }
-            State.companyUserId = userId;
-
-            const results = await Promise.allSettled([
-                sb.from('companies').select('*').eq('user_id', userId).maybeSingle(),
-                sb.from('applications').select('*').eq('company_user_id', userId).order('created_at', { ascending: false }),
-                sb.from('internships').select('*').eq('company_user_id', userId).order('created_at', { ascending: false })
-            ]);
-            const companyRes = results[0] && results[0].status === "fulfilled" ? results[0].value : { data: [], error: results[0] && results[0].reason };
-            const appsRes = results[1] && results[1].status === "fulfilled" ? results[1].value : { data: [], error: results[1] && results[1].reason };
-            const internshipsRes = results[2] && results[2].status === "fulfilled" ? results[2].value : { data: [], error: results[2] && results[2].reason };
-
-            State.companyData = companyRes.data;
-            State.allApplications = appsRes.data || [];
-            State.allInternships = internshipsRes.data || [];
-
-            // Load settings from company
-            if (companyRes.data) {
-                State.companySettings = {
-                    max_capacity: companyRes.data.max_capacity || 50,
-                    work_start_time: companyRes.data.work_start_time || '09:00:00',
-                    work_end_time: companyRes.data.work_end_time || '17:00:00',
-                    provides_salary: !!companyRes.data.provides_salary,
-                    salary_amount: companyRes.data.salary_amount || 0,
-                    salary_currency: companyRes.data.salary_currency || 'EGP',
-                    provides_certificate: companyRes.data.provides_certificate !== false,
-                    provides_meals: !!companyRes.data.provides_meals,
-                    provides_transport: !!companyRes.data.provides_transport,
-                    auto_actions: companyRes.data.auto_actions || {}
-                };
-                State.allBranches = Array.isArray(companyRes.data.branches) ? companyRes.data.branches : [];
-                State.allDepartments = Array.isArray(companyRes.data.departments) ? companyRes.data.departments : [];
-            }
-
-            // Load auto_actions from localStorage as fallback
-            try {
-                const stored = localStorage.getItem('provance_auto_actions_' + userId);
-                if (stored) State.companySettings.auto_actions = JSON.parse(stored);
-            } catch (e) {}
-
-            State.updateStats();
-            State.renderApplications();
-            State.renderInternshipFilter();
-
-            if (!isInitialized) {
-                isInitialized = true;
-
-                // Realtime
-                sb.channel('requests-' + userId)
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `company_user_id=eq.${userId}` }, () => loadAll())
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'internships', filter: `company_user_id=eq.${userId}` }, () => loadAll())
-                    .subscribe();
-
-                window.addEventListener('reload-requests', loadAll);
-
-                // Listeners
-                document.getElementById('searchApps').addEventListener('input', () => State.renderApplications());
-                document.getElementById('filterInternship').addEventListener('change', () => State.renderApplications());
-                document.getElementById('filterSort').addEventListener('change', () => State.renderApplications());
-
-                // ESC
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        const modals = document.querySelectorAll('.modal.active');
-                        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
-                    }
-                });
-            }
-        } catch (err) {
-            console.error('Load error:', err);
-            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
-        }
+        await loadAll();
+    } catch (err) {
+        console.error('Init error:', err);
+        document.getElementById('loadingOverlay').classList.add('hidden');
     }
+}
 
-    function init() {
-        if (window._reqState) loadAll();
-        else setTimeout(init, 100);
+document.addEventListener('DOMContentLoaded', init);
+
+// Safety: 12 ثانية ولو لسه بيحمل، أخفي الـ loading
+setTimeout(() => {
+    const el = document.getElementById('loadingOverlay');
+    if (el && !el.classList.contains('hidden')) {
+        console.warn('⚠️ Loading timeout');
+        el.classList.add('hidden');
     }
-    init();
-})();
+}, 12000);
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modals = document.querySelectorAll('.modal.active');
+        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
+    }
+});
     </script>
 </body>
 </html>
