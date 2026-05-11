@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>إدارة الطلبات والأقسام - ProVance</title>
+    <title>إدارة الأقسام والفروع - ProVance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -204,10 +204,11 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
             </div>
             <a href="company-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
             <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
-            <a href="company-requests-control.html" class="nav-item active"><i class="fas fa-envelope-open-text"></i> الطلبات</a>
+            <a href="company-requests-control.html" class="nav-item active"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
             <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
             <a href="company-QR_Code.html" class="nav-item"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
             <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
+            <a href="company-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
             <a href="company-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
             <a href="#" onclick="logoutCompany(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
@@ -219,7 +220,7 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
                 <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="topbar-title"><i class="fas fa-cogs" style="color:var(--primary)"></i> إدارة الطلبات والأقسام</h1>
+                <h1 class="topbar-title"><i class="fas fa-cogs" style="color:var(--primary)"></i> إدارة الأقسام والفروع</h1>
                 <div class="topbar-actions">
                     <button class="btn btn-secondary btn-sm" onclick="openBranchesModal()">
                         <i class="fas fa-map-marked-alt"></i> إدارة الفروع
@@ -930,33 +931,83 @@ window.saveDept = async () => {
     };
 
     try {
-        // 1. حدّث الـ training_fields و training_details في companies
-        let fields = safeParse(companyData.training_fields, []);
         let allDetails = safeParse(companyData.training_details, {});
-
-        if (!editingField) {
-            // إضافة جديد
+        
+        if (editingField) {
+            // === تعديل قسم موجود - يعدّل مباشرة ===
+            allDetails[field] = newDetails;
+            await sb.from('companies').update({
+                training_details: allDetails,
+                updated_at: new Date().toISOString()
+            }).eq('user_id', companyUserId);
+            
+            await syncToInternship(field, newDetails);
+            
+            showToast('✅ تم حفظ التعديلات', 'success');
+            closeModal('deptModal');
+            await loadAll();
+        } else {
+            // === قسم جديد - يبعت للأدمن للموافقة ===
+            let fields = safeParse(companyData.training_fields, []);
             if (fields.includes(field)) {
                 showToast('القسم ده موجود بالفعل', 'error');
                 return;
             }
-            fields.push(field);
+            
+            // شوف لو في طلب pending للقسم ده
+            try {
+                const { data: existing } = await sb.from('pending_approvals')
+                    .select('id')
+                    .eq('company_user_id', companyUserId)
+                    .eq('type', 'department')
+                    .eq('item_name', field)
+                    .eq('status', 'pending')
+                    .maybeSingle();
+                
+                if (existing) {
+                    showToast('⏳ القسم ده مستني موافقة الأدمن بالفعل', 'warning');
+                    closeModal('deptModal');
+                    await loadAll();
+                    return;
+                }
+            } catch(e) { /* table may not exist yet */ }
+            
+            // ابعت للأدمن
+            const { error: insertErr } = await sb.from('pending_approvals').insert({
+                company_user_id: companyUserId,
+                type: 'department',
+                item_name: field,
+                data: newDetails,
+                status: 'pending',
+                created_at: new Date().toISOString()
+            });
+            
+            if (insertErr) {
+                console.error(insertErr);
+                if (insertErr.message && insertErr.message.includes('pending_approvals')) {
+                    showToast('⚠️ جدول الموافقات مش موجود - شغّل SQL migration 18 الأول', 'error');
+                } else {
+                    showToast('خطأ: ' + insertErr.message, 'error');
+                }
+                return;
+            }
+            
+            // ابعت notification للأدمن
+            try {
+                await sb.from('notifications').insert({
+                    user_id: companyUserId,  // مؤقت - الأدمن يشوفها من query على pending_approvals
+                    user_type: 'admin',
+                    type: 'new_approval',
+                    title: 'طلب موافقة جديد',
+                    message: `الشركة "${companyData.company_name}" طلبت إضافة قسم: ${field}`,
+                    link: 'admin-approvals.html'
+                });
+            } catch(e) { /* notifications table may not exist */ }
+            
+            showToast('⏳ تم إرسال القسم للأدمن للمراجعة والموافقة', 'success');
+            closeModal('deptModal');
+            await loadAll();
         }
-
-        allDetails[field] = newDetails;
-
-        await sb.from('companies').update({
-            training_fields: fields,
-            training_details: allDetails,
-            updated_at: new Date().toISOString()
-        }).eq('user_id', companyUserId);
-
-        // 2. اعمل sync مع internships عشان يظهر للطالب
-        await syncToInternship(field, newDetails);
-
-        showToast(editingField ? '✅ تم حفظ التعديلات' : '✅ تم إضافة القسم بنجاح', 'success');
-        closeModal('deptModal');
-        await loadAll();
     } catch (err) {
         console.error(err);
         showToast('خطأ: ' + err.message, 'error');
@@ -1093,28 +1144,76 @@ window.saveBranch = async (existingId) => {
     if (!address) { showToast('أدخل عنوان الفرع', 'error'); return; }
 
     try {
-        let branches = [...allBranches];
-
         if (existingId) {
-            // تعديل فرع موجود
+            // === تعديل فرع موجود - يعدّل مباشرة ===
+            let branches = [...allBranches];
             const idx = branches.findIndex(b => b.id === existingId);
             if (idx >= 0) {
                 branches[idx] = { id: existingId, name, fullAddress: address, city, phone, manager };
             }
+            
+            await sb.from('companies').update({
+                branch_locations: branches,
+                updated_at: new Date().toISOString()
+            }).eq('user_id', companyUserId);
+            
+            showToast('✅ تم حفظ التعديلات', 'success');
+            closeModal('branchModal');
+            await loadAll();
         } else {
-            // فرع جديد
-            const newId = 'branch_' + Date.now();
-            branches.push({ id: newId, name, fullAddress: address, city, phone, manager });
+            // === فرع جديد - يبعت للأدمن للموافقة ===
+            const branchData = { name, fullAddress: address, city, phone, manager };
+            
+            // شوف لو في طلب pending للفرع ده
+            try {
+                const { data: existing } = await sb.from('pending_approvals')
+                    .select('id')
+                    .eq('company_user_id', companyUserId)
+                    .eq('type', 'branch')
+                    .eq('item_name', name)
+                    .eq('status', 'pending')
+                    .maybeSingle();
+                
+                if (existing) {
+                    showToast('⏳ الفرع ده مستني موافقة الأدمن بالفعل', 'warning');
+                    closeModal('branchModal');
+                    return;
+                }
+            } catch(e) { /* table may not exist */ }
+            
+            const { error: insertErr } = await sb.from('pending_approvals').insert({
+                company_user_id: companyUserId,
+                type: 'branch',
+                item_name: name,
+                data: branchData,
+                status: 'pending',
+                created_at: new Date().toISOString()
+            });
+            
+            if (insertErr) {
+                if (insertErr.message && insertErr.message.includes('pending_approvals')) {
+                    showToast('⚠️ جدول الموافقات مش موجود - شغّل SQL migration 18 الأول', 'error');
+                } else {
+                    showToast('خطأ: ' + insertErr.message, 'error');
+                }
+                return;
+            }
+            
+            // ابعت notification للأدمن
+            try {
+                await sb.from('notifications').insert({
+                    user_id: companyUserId,
+                    user_type: 'admin',
+                    type: 'new_approval',
+                    title: 'طلب فرع جديد',
+                    message: `الشركة "${companyData.company_name}" طلبت إضافة فرع: ${name}`,
+                    link: 'admin-approvals.html'
+                });
+            } catch(e) { /* notifications table may not exist */ }
+            
+            showToast('⏳ تم إرسال الفرع للأدمن للموافقة', 'success');
+            closeModal('branchModal');
         }
-
-        await sb.from('companies').update({
-            branch_locations: branches,
-            updated_at: new Date().toISOString()
-        }).eq('user_id', companyUserId);
-
-        showToast(existingId ? '✅ تم حفظ التعديلات' : '✅ تم إضافة الفرع', 'success');
-        closeModal('branchModal');
-        await loadAll();
     } catch (err) {
         showToast('خطأ: ' + err.message, 'error');
     }
