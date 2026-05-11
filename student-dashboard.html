@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
+<link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
+<title>لوحة الطالب - ProVance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root { --primary: #4facfe; --secondary: #00f2fe; --gradient: linear-gradient(135deg, #4facfe, #00f2fe); --bg: #0a0e27; --bg-2: #1a1535; --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6); --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe; --orange: #ff9800; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(79,172,254,0.12), transparent 45%), radial-gradient(circle at 80% 80%, rgba(0,242,254,0.08), transparent 45%), var(--bg); }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
+.sidebar-logo { padding: 8px 4px 18px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.logo-wrapper { display: flex; align-items: center; gap: 10px; padding: 4px; }
+.logo-icon { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; filter: drop-shadow(0 4px 12px rgba(79,172,254,0.3)); }
+.logo-icon svg { width: 100%; height: 100%; }
+.logo-text { display: flex; flex-direction: column; gap: 2px; }
+.logo-brand { font-size: 1.15rem; font-weight: 900; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.3px; line-height: 1; }
+.logo-tagline { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; }
+.user-info-mini { padding: 12px 14px; background: rgba(79,172,254,0.05); border: 1px solid rgba(79,172,254,0.15); border-radius: 12px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.user-info-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 0.95rem; }
+.user-info-meta { flex: 1; min-width: 0; }
+.user-info-name { font-weight: 700; font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-info-role { font-size: 0.72rem; color: var(--text-muted); }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: var(--gradient); color: #fff; }
+.nav-item i { width: 18px; }
+.nav-badge { margin-right: auto; background: rgba(255,255,255,0.2); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 800; }
+.main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
+.menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
+.topbar-title { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.topbar-title i { color: var(--primary); }
+.welcome-banner { background: linear-gradient(135deg, rgba(79,172,254,0.1), rgba(0,242,254,0.05)); border: 1px solid rgba(79,172,254,0.2); border-radius: 16px; padding: 22px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; }
+.welcome-icon { width: 60px; height: 60px; border-radius: 16px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #fff; flex-shrink: 0; }
+.welcome-text h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; }
+.welcome-text p { color: var(--text-muted); font-size: 0.92rem; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; display: flex; align-items: center; gap: 14px; transition: all .2s; cursor: pointer; }
+.stat-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+.stat-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #fff; flex-shrink: 0; }
+.stat-icon.primary { background: var(--gradient); }
+.stat-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.stat-icon.danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.stat-num { font-size: 1.7rem; font-weight: 900; line-height: 1; }
+.stat-label { font-size: 0.84rem; color: var(--text-muted); margin-top: 4px; }
+.section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 18px; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.section-title { font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.section-title i { color: var(--primary); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.88rem; cursor: pointer; transition: all .2s; text-decoration: none; }
+.btn-primary { background: var(--gradient); color: #fff; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(79,172,254,0.3); }
+.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+.btn-secondary:hover { background: var(--card-hover); }
+.btn-sm { padding: 7px 12px; font-size: 0.82rem; }
+.apps-list { display: flex; flex-direction: column; gap: 10px; }
+.app-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 14px; transition: all .2s; }
+.app-card:hover { border-color: var(--primary); }
+.app-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1rem; flex-shrink: 0; }
+.app-info { flex: 1; min-width: 0; }
+.app-title { font-weight: 800; font-size: 0.96rem; margin-bottom: 3px; }
+.app-meta { color: var(--text-muted); font-size: 0.82rem; }
+.status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.74rem; font-weight: 700; }
+.status-pending { background: rgba(245,158,11,0.15); color: var(--warning); }
+.status-accepted { background: rgba(16,185,129,0.15); color: var(--success); }
+.status-rejected { background: rgba(239,68,68,0.15); color: var(--error); }
+.status-interview { background: rgba(79,172,254,0.15); color: var(--info); }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+.empty-state i { font-size: 3rem; color: rgba(148,163,184,0.3); margin-bottom: 12px; display: block; }
+.empty-state h3 { color: var(--text); font-size: 1rem; margin-bottom: 6px; }
+.empty-state p { font-size: 0.84rem; margin-bottom: 14px; }
+.actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.action-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 18px; text-align: center; cursor: pointer; transition: all .2s; text-decoration: none; color: var(--text); }
+.action-card:hover { transform: translateY(-3px); border-color: var(--primary); background: rgba(79,172,254,0.05); }
+.action-icon { width: 56px; height: 56px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.4rem; margin: 0 auto 10px; }
+.action-title { font-weight: 800; font-size: 0.92rem; margin-bottom: 3px; }
+.action-desc { font-size: 0.78rem; color: var(--text-muted); }
+.loading-overlay { position: fixed; inset: 0; background: rgba(10,14,39,0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .3s; }
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+@media (max-width: 1024px) {
+    .sidebar { transform: translateX(100%); width: 280px; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-right: 0; }
+    .menu-toggle { display: flex; align-items: center; justify-content: center; }
+}
+@media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .welcome-banner { flex-direction: column; text-align: center; }
+    .topbar-title { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+<div class="bg-anim"></div>
+<div class="layout">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-wrapper">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#4facfe"/>
+                                <stop offset="100%" stop-color="#00f2fe"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M16 2 L28 8 V20 Q28 26 16 30 Q4 26 4 20 V8 Z" fill="url(#logoGrad)" stroke="#fff" stroke-width="0.5" opacity="0.95"/>
+                        <text x="16" y="20" text-anchor="middle" font-family="Cairo, sans-serif" font-size="14" font-weight="900" fill="#fff">P</text>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <div class="logo-brand">ProVance</div>
+                    <div class="logo-tagline">منصة التدريب</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="user-info-mini">
+            <div class="user-info-avatar" id="userAvatar">?</div>
+            <div class="user-info-meta">
+                <div class="user-info-name" id="userName">جاري التحميل...</div>
+                <div class="user-info-role">طالب</div>
+            </div>
+        </div>
+
+        <a href="student-dashboard.html" class="nav-item active"><i class="fas fa-th-large"></i> الرئيسية</a>
+        <a href="student-internship.html" class="nav-item"><i class="fas fa-briefcase"></i> فرص التدريب</a>
+        <a href="student-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلباتي <span class="nav-badge" id="appsBadge" style="display:none">0</span></a>
+        <a href="student-profile.html" class="nav-item"><i class="fas fa-user"></i> الملف الشخصي</a>
+        <a href="student-payments.html" class="nav-item"><i class="fas fa-credit-card"></i> المدفوعات</a>
+        <a href="student-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
+        <a href="student-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات <span class="nav-badge" id="notifBadge" style="display:none">0</span></a>
+        <a href="#" onclick="logoutStudent(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
+            <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+        </a>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="topbar-title"><i class="fas fa-th-large"></i> الرئيسية</h1>
+        </div>
+
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+            <div class="welcome-icon"><i class="fas fa-graduation-cap"></i></div>
+            <div class="welcome-text">
+                <h2 id="welcomeMsg">أهلاً بك في ProVance</h2>
+                <p>ابحث عن فرص التدريب المناسبة وقدّم عليها بسهولة</p>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <a href="student-internship.html" class="stat-card" style="text-decoration:none;color:inherit">
+                <div class="stat-icon primary"><i class="fas fa-briefcase"></i></div>
+                <div>
+                    <div class="stat-num" id="statAvailable">0</div>
+                    <div class="stat-label">فرص متاحة</div>
+                </div>
+            </a>
+            <a href="student-applications.html" class="stat-card" style="text-decoration:none;color:inherit">
+                <div class="stat-icon warning"><i class="fas fa-clock"></i></div>
+                <div>
+                    <div class="stat-num" id="statPending">0</div>
+                    <div class="stat-label">طلبات معلقة</div>
+                </div>
+            </a>
+            <a href="student-applications.html" class="stat-card" style="text-decoration:none;color:inherit">
+                <div class="stat-icon success"><i class="fas fa-check"></i></div>
+                <div>
+                    <div class="stat-num" id="statAccepted">0</div>
+                    <div class="stat-label">طلبات مقبولة</div>
+                </div>
+            </a>
+            <a href="student-applications.html" class="stat-card" style="text-decoration:none;color:inherit">
+                <div class="stat-icon danger"><i class="fas fa-times"></i></div>
+                <div>
+                    <div class="stat-num" id="statRejected">0</div>
+                    <div class="stat-label">طلبات مرفوضة</div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title"><i class="fas fa-bolt"></i> إجراءات سريعة</div>
+            </div>
+            <div class="actions-grid">
+                <a href="student-internship.html" class="action-card">
+                    <div class="action-icon"><i class="fas fa-search"></i></div>
+                    <div class="action-title">ابحث عن فرص</div>
+                    <div class="action-desc">استكشف الفرص المتاحة</div>
+                </a>
+                <a href="student-applications.html" class="action-card">
+                    <div class="action-icon"><i class="fas fa-file-alt"></i></div>
+                    <div class="action-title">طلباتي</div>
+                    <div class="action-desc">تابع حالة طلباتك</div>
+                </a>
+                <a href="student-profile.html" class="action-card">
+                    <div class="action-icon"><i class="fas fa-user-edit"></i></div>
+                    <div class="action-title">تحديث البيانات</div>
+                    <div class="action-desc">عدّل ملفك الشخصي</div>
+                </a>
+                <a href="student-payments.html" class="action-card">
+                    <div class="action-icon"><i class="fas fa-credit-card"></i></div>
+                    <div class="action-title">المدفوعات</div>
+                    <div class="action-desc">المدفوعات والفواتير</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Applications -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title"><i class="fas fa-history"></i> أحدث طلباتي</div>
+                <a href="student-applications.html" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> عرض الكل
+                </a>
+            </div>
+            <div id="recentApps" class="apps-list">
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>جاري التحميل...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
+});
+
+let studentUserId = null;
+let studentData = null;
+
+function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
+
+function showToast(msg, type = 'info') {
+    const t = document.createElement('div');
+    const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+    t.className = 'toast'; t.style.background = c[type] || c.info; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+}
+
+window.logoutStudent = async (e) => {
+    if (e) e.preventDefault();
+    if (!confirm('هل تريد تسجيل الخروج؟')) return;
+    try { await sb.auth.signOut(); } catch {}
+    localStorage.clear();
+    window.location.href = 'student-login.html';
+};
+
+function getStatusBadge(status) {
+    const map = {
+        'pending': { class: 'status-pending', text: 'قيد المراجعة' },
+        'accepted': { class: 'status-accepted', text: 'مقبول' },
+        'rejected': { class: 'status-rejected', text: 'مرفوض' },
+        'interview': { class: 'status-interview', text: 'مقابلة' },
+        'withdrawn': { class: 'status-rejected', text: 'منسحب' }
+    };
+    const s = map[status] || { class: 'status-pending', text: status || 'غير محدد' };
+    return `<span class="status-badge ${s.class}">${s.text}</span>`;
+}
+
+async function loadDashboard() {
+    try {
+        const { data: sessData } = await sb.auth.getSession();
+        if (!sessData || !sessData.session) {
+            window.location.href = 'student-login.html';
+            return;
+        }
+        studentUserId = sessData.session.user.id;
+
+        // اجلب بيانات الطالب
+        const { data: student, error: studentErr } = await sb.from('student')
+            .select('user_id, full_name, status, training_status, photo')
+            .eq('user_id', studentUserId)
+            .maybeSingle();
+
+        if (studentErr || !student) {
+            await sb.auth.signOut();
+            window.location.href = 'student-login.html';
+            return;
+        }
+        
+        if (student.status === 'suspended') {
+            showToast('حسابك متوقف', 'error');
+            await sb.auth.signOut();
+            setTimeout(() => window.location.href = 'student-login.html', 2000);
+            return;
+        }
+
+        studentData = student;
+
+        // تحديث الـ UI
+        document.getElementById('userName').textContent = student.full_name || 'طالب';
+        const firstName = (student.full_name || '').split(' ')[0] || '';
+        document.getElementById('welcomeMsg').textContent = `أهلاً بك، ${firstName} 👋`;
+        document.getElementById('userAvatar').textContent = (student.full_name || '?').charAt(0).toUpperCase();
+
+        // اجلب الـ stats بالتوازي
+        const results = await Promise.allSettled([
+            sb.from('applications').select('id, status').eq('student_user_id', studentUserId),
+            sb.from('internships').select('id').eq('status', 'active'),
+            sb.from('applications').select('id, status, internship_id, created_at, company_name').eq('student_user_id', studentUserId).order('created_at', { ascending: false }).limit(5),
+            sb.from('notifications').select('id').eq('user_id', studentUserId).eq('is_read', false)
+        ]);
+
+        const apps = results[0].status === 'fulfilled' ? (results[0].value.data || []) : [];
+        const internships = results[1].status === 'fulfilled' ? (results[1].value.data || []) : [];
+        const recentApps = results[2].status === 'fulfilled' ? (results[2].value.data || []) : [];
+        const notifs = results[3].status === 'fulfilled' ? (results[3].value.data || []) : [];
+
+        // تحديث Stats
+        const pending = apps.filter(a => a.status === 'pending' || a.status === 'interview').length;
+        const accepted = apps.filter(a => a.status === 'accepted').length;
+        const rejected = apps.filter(a => a.status === 'rejected').length;
+
+        document.getElementById('statAvailable').textContent = internships.length;
+        document.getElementById('statPending').textContent = pending;
+        document.getElementById('statAccepted').textContent = accepted;
+        document.getElementById('statRejected').textContent = rejected;
+
+        // Badges
+        if (apps.length > 0) {
+            const appsBadge = document.getElementById('appsBadge');
+            appsBadge.textContent = apps.length;
+            appsBadge.style.display = 'inline-block';
+        }
+        if (notifs.length > 0) {
+            const notifBadge = document.getElementById('notifBadge');
+            notifBadge.textContent = notifs.length;
+            notifBadge.style.display = 'inline-block';
+        }
+
+        // Recent Apps
+        renderRecentApps(recentApps);
+
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    } catch (err) {
+        console.error(err);
+        showToast('حدث خطأ، حاول تحديث الصفحة', 'error');
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+}
+
+function renderRecentApps(apps) {
+    const container = document.getElementById('recentApps');
+    if (!apps || apps.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>مفيش طلبات لسه</h3>
+                <p>ابحث عن فرص التدريب وقدّم عليها</p>
+                <a href="student-internship.html" class="btn btn-primary btn-sm">
+                    <i class="fas fa-search"></i> ابحث عن فرص
+                </a>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = apps.map(app => `
+        <div class="app-card">
+            <div class="app-icon"><i class="fas fa-briefcase"></i></div>
+            <div class="app-info">
+                <div class="app-title">${escapeHtml(app.company_name || 'شركة')}</div>
+                <div class="app-meta">
+                    <i class="fas fa-clock"></i> ${formatDate(app.created_at)}
+                </div>
+            </div>
+            ${getStatusBadge(app.status)}
+        </div>
+    `).join('');
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboard);
+setTimeout(() => {
+    const el = document.getElementById('loadingOverlay');
+    if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
+}, 12000);
+</script>
+</body>
+</html>
