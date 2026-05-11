@@ -14,8 +14,51 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 .bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%), var(--bg); }
 .layout { display: flex; min-height: 100vh; }
 .sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
-.sidebar-logo { display: flex; align-items: center; justify-content: center; padding: 0 8px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
-.sidebar-logo img { height: 32px; max-width: 100%; }
+.sidebar-logo {
+            padding: 8px 4px 18px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px;
+        }
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            filter: drop-shadow(0 4px 12px rgba(239,68,68,0.3));
+        }
+        .logo-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        .logo-brand {
+            font-size: 1.15rem;
+            font-weight: 900;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.3px;
+            line-height: 1;
+        }
+        .logo-tagline {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
 .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
 .nav-item:hover { background: var(--card); color: var(--text); }
 .nav-item.active { background: var(--gradient); color: #fff; }
@@ -140,7 +183,24 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
     <div class="layout">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">
-                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
+                <div class="logo-wrapper">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#ef4444"/>
+                                    <stop offset="100%" stop-color="#dc2626"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M16 2 L28 8 V20 Q28 26 16 30 Q4 26 4 20 V8 Z" fill="url(#logoGrad)" stroke="#fff" stroke-width="0.5" opacity="0.95"/>
+                            <text x="16" y="20" text-anchor="middle" font-family="Cairo, sans-serif" font-size="14" font-weight="900" fill="#fff">P</text>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <div class="logo-brand">ProVance</div>
+                        <div class="logo-tagline">منصة التدريب</div>
+                    </div>
+                </div>
             </div>
             <a href="company-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
             <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
@@ -161,6 +221,9 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
                 </button>
                 <h1 class="topbar-title"><i class="fas fa-cogs" style="color:var(--primary)"></i> إدارة الطلبات والأقسام</h1>
                 <div class="topbar-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="openBranchesModal()">
+                        <i class="fas fa-map-marked-alt"></i> إدارة الفروع
+                    </button>
                     <button class="btn btn-primary btn-sm" onclick="openAddDeptModal()">
                         <i class="fas fa-plus"></i> إضافة قسم/مجال جديد
                     </button>
@@ -209,6 +272,23 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
                 </div>
             </div>
 
+            <!-- Branch Filter -->
+            <div class="section" style="margin-bottom:14px;padding:14px">
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                    <label style="font-weight:700;font-size:0.9rem;display:flex;align-items:center;gap:6px;color:var(--text)">
+                        <i class="fas fa-map-marker-alt" style="color:var(--primary)"></i>
+                        الفرع الحالي:
+                    </label>
+                    <select id="branchFilter" onchange="onBranchChange()" style="flex:1;min-width:200px;padding:10px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-size:0.92rem;font-family:inherit">
+                        <option value="">-- كل الفروع --</option>
+                    </select>
+                    <button class="btn btn-success btn-sm" onclick="openAddBranchModal()">
+                        <i class="fas fa-plus-circle"></i> إضافة فرع
+                    </button>
+                </div>
+                <div id="branchInfo" style="margin-top:10px;display:none"></div>
+            </div>
+
             <!-- Tabs -->
             <div class="tabs-container">
                 <button class="tab-btn active" data-tab="all" onclick="switchTab(event, 'all')">
@@ -254,6 +334,8 @@ let companyUserId = null;
 let companyData = null;
 let allInternships = [];
 let allApplications = [];
+let currentBranchId = ''; // الفرع المختار حالياً
+let allBranches = []; // قائمة كل الفروع
 
 // ========== Helpers ==========
 function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
@@ -319,6 +401,11 @@ function getSystemText(s) {
 function getSystemIcon(s) {
     return { 'first-time': 'fa-star', 'once-trained': 'fa-user-graduate', 'twice-trained': 'fa-briefcase' }[s] || 'fa-cog';
 }
+function getBranchName(branchId) {
+    if (!branchId) return 'كل الفروع';
+    const b = allBranches.find(x => x.id === branchId);
+    return b ? b.name : 'فرع غير معروف';
+}
 
 // ========== Load Data ==========
 async function loadAll() {
@@ -357,6 +444,9 @@ async function loadAll() {
             return;
         }
 
+        // تحميل الفروع
+        loadBranches();
+
         renderDepartments();
         updateStats();
 
@@ -375,22 +465,27 @@ function getDepartments() {
     const trainingFields = safeParse(companyData.training_fields, []);
     const trainingDetails = safeParse(companyData.training_details, {});
 
-    return trainingFields.map(field => {
+    let depts = trainingFields.map(field => {
         const details = trainingDetails[field] || {};
-        // Find existing internship لو موجود
         const existingInt = allInternships.find(i => i.field === field || i.title === field);
 
         return {
             field: field,
             name: field,
             details: details,
+            branchId: details.branchId || '',
             internship: existingInt,
-            // عدد الطلبات لده القسم
             apps: allApplications.filter(a => a.internship_id === existingInt?.id || a.field === field),
-            // مفعّل = active، لو فيه internship و status active
             active: !existingInt || existingInt.status === 'active'
         };
     });
+
+    // فلترة بالفرع المختار
+    if (currentBranchId) {
+        depts = depts.filter(d => d.branchId === currentBranchId);
+    }
+
+    return depts;
 }
 
 function updateStats() {
@@ -481,6 +576,12 @@ function createDeptCard(dept) {
                 <i class="fas ${getSystemIcon(traineeSystem)}" style="color:var(--primary)"></i>
                 ${getSystemText(traineeSystem)}
             </div>
+            ${dept.branchId ? `
+                <div style="padding:8px 10px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:8px;margin-bottom:10px;font-size:0.8rem;color:var(--info)">
+                    <i class="fas fa-map-marker-alt"></i>
+                    ${escapeHtml(getBranchName(dept.branchId))}
+                </div>
+            ` : ''}
 
             <div class="dept-actions">
                 <button class="btn btn-info btn-sm" onclick="editDept('${escapeHtml(dept.field)}')">
@@ -559,11 +660,23 @@ window.deleteDept = async (field) => {
 async function syncToInternship(field, details) {
     if (!companyData) return;
 
+    // لو فيه branchId، استخدم عنوان الفرع
+    let location = companyData.company_location;
+    if (details.branchId) {
+        const branch = allBranches.find(b => b.id === details.branchId);
+        if (branch) {
+            location = (branch.fullAddress || branch.name);
+            if (branch.city && !location.includes(branch.city)) {
+                location = branch.city + ' - ' + location;
+            }
+        }
+    }
+    
     const internshipData = {
         company_user_id: companyUserId,
         company_name: companyData.company_name,
         company_logo: companyData.logo,
-        company_location: companyData.company_location,
+        company_location: location,
         title: field,
         field: field,
         description: details.knowledgeBenefits || '',
@@ -637,6 +750,18 @@ function showDeptModal(details, fieldName) {
                     <label><i class="fas fa-tag"></i> اسم القسم/المجال التدريبي <span class="req">*</span></label>
                     <input type="text" id="deptField" value="${escapeHtml(fieldName)}" placeholder="مثال: تطوير الويب، التسويق الرقمي..." ${isEdit ? 'readonly' : ''}>
                     ${isEdit ? '<div class="field-note">اسم القسم لا يمكن تعديله بعد الإنشاء</div>' : ''}
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-map-marker-alt"></i> الفرع <span class="req">*</span></label>
+                    <select id="deptBranch">
+                        <option value="">-- اختر الفرع --</option>
+                        ${allBranches.map(b => `<option value="${escapeHtml(b.id)}" ${details.branchId === b.id ? 'selected' : ''}>${escapeHtml(b.name)}${b.fullAddress ? ' - ' + escapeHtml(b.fullAddress) : ''}</option>`).join('')}
+                    </select>
+                    <div class="field-note">
+                        لو الفرع مش موجود، 
+                        <a href="#" onclick="event.preventDefault();closeModal('deptModal');openAddBranchModal()" style="color:var(--primary);font-weight:700">اضغط هنا لإضافة فرع جديد</a>
+                    </div>
                 </div>
 
                 <!-- Trainee System -->
@@ -779,7 +904,10 @@ window.saveDept = async () => {
     const requirements = document.getElementById('deptRequirements').value.trim();
 
     // Validation
+    const branchId = document.getElementById('deptBranch').value;
+    
     if (!field) { showToast('أدخل اسم القسم', 'error'); return; }
+    if (!branchId) { showToast('اختر الفرع', 'error'); return; }
     if (!duration) { showToast('اختر مدة التدريب', 'error'); return; }
     if (!count || parseInt(count) < 1) { showToast('أدخل عدد المتدربين', 'error'); return; }
     if (!supervisor) { showToast('أدخل اسم المشرف', 'error'); return; }
@@ -792,6 +920,7 @@ window.saveDept = async () => {
 
     const newDetails = {
         traineeSystem: selectedSystem,
+        branchId: branchId,
         duration, count: count.toString(), supervisor,
         minSalary, maxSalary, currency,
         knowledgeBenefits: knowledge,
@@ -832,6 +961,266 @@ window.saveDept = async () => {
         console.error(err);
         showToast('خطأ: ' + err.message, 'error');
     }
+};
+
+
+// ========== Branches ==========
+function loadBranches() {
+    allBranches = safeParse(companyData.branch_locations, []);
+    
+    // لو مفيش فروع، أنشئ "الفرع الرئيسي" تلقائياً
+    if (allBranches.length === 0) {
+        allBranches = [{ id: 'main', name: 'الفرع الرئيسي', fullAddress: companyData.company_location || '' }];
+    }
+    
+    // تأكد إن كل فرع له id
+    allBranches = allBranches.map((b, i) => {
+        if (typeof b === 'string') {
+            return { id: 'branch_' + i, name: 'فرع ' + (i + 1), fullAddress: b };
+        }
+        if (!b.id) b.id = 'branch_' + i;
+        if (!b.name) b.name = b.fullAddress || ('فرع ' + (i + 1));
+        return b;
+    });
+    
+    // املأ الـ dropdown
+    const select = document.getElementById('branchFilter');
+    select.innerHTML = '<option value="">-- كل الفروع --</option>' +
+        allBranches.map(b => `<option value="${escapeHtml(b.id)}" ${currentBranchId === b.id ? 'selected' : ''}>${escapeHtml(b.name)}</option>`).join('');
+    
+    updateBranchInfo();
+}
+
+function updateBranchInfo() {
+    const info = document.getElementById('branchInfo');
+    if (!currentBranchId) {
+        info.style.display = 'none';
+        return;
+    }
+    const branch = allBranches.find(b => b.id === currentBranchId);
+    if (!branch) { info.style.display = 'none'; return; }
+    
+    info.style.display = 'block';
+    info.innerHTML = `
+        <div style="padding:10px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:10px;font-size:0.84rem">
+            <i class="fas fa-info-circle" style="color:var(--primary)"></i>
+            بتعرض دلوقتي أقسام: <strong>${escapeHtml(branch.name)}</strong>
+            ${branch.fullAddress ? ' - ' + escapeHtml(branch.fullAddress) : ''}
+            <button class="btn btn-secondary btn-sm" onclick="editBranch('${escapeHtml(branch.id)}')" style="margin-right:8px;padding:4px 10px;font-size:0.78rem">
+                <i class="fas fa-edit"></i> تعديل
+            </button>
+        </div>
+    `;
+}
+
+window.onBranchChange = () => {
+    currentBranchId = document.getElementById('branchFilter').value;
+    updateBranchInfo();
+    renderDepartments();
+    updateStats();
+};
+
+// ========== Add Branch Modal ==========
+window.openAddBranchModal = () => {
+    showBranchModal(null);
+};
+
+window.editBranch = (branchId) => {
+    const branch = allBranches.find(b => b.id === branchId);
+    if (branch) showBranchModal(branch);
+};
+
+function showBranchModal(branch) {
+    const isEdit = !!branch;
+    const html = `
+        <div class="modal active" id="branchModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <i class="fas fa-${isEdit ? 'edit' : 'map-marked-alt'}"></i>
+                        <span>${isEdit ? 'تعديل الفرع' : 'إضافة فرع جديد'}</span>
+                    </div>
+                    <button class="modal-close" onclick="closeModal('branchModal')"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-building"></i> اسم الفرع <span class="req">*</span></label>
+                    <input type="text" id="branchName" value="${branch ? escapeHtml(branch.name) : ''}" placeholder="مثال: الفرع الرئيسي، فرع جدة، فرع التجمع...">
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-map-marker-alt"></i> العنوان الكامل <span class="req">*</span></label>
+                    <input type="text" id="branchAddress" value="${branch ? escapeHtml(branch.fullAddress || '') : ''}" placeholder="العنوان التفصيلي للفرع">
+                </div>
+
+                <div class="salary-row">
+                    <div class="field">
+                        <label><i class="fas fa-city"></i> المدينة</label>
+                        <input type="text" id="branchCity" value="${branch ? escapeHtml(branch.city || '') : ''}" placeholder="القاهرة، الرياض...">
+                    </div>
+                    <div class="field">
+                        <label><i class="fas fa-phone"></i> هاتف الفرع</label>
+                        <input type="text" id="branchPhone" value="${branch ? escapeHtml(branch.phone || '') : ''}" placeholder="0123456789">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-user-tie"></i> مدير الفرع</label>
+                    <input type="text" id="branchManager" value="${branch ? escapeHtml(branch.manager || '') : ''}" placeholder="اسم مدير الفرع">
+                </div>
+
+                <div style="display:flex;gap:10px;margin-top:18px">
+                    <button class="btn btn-secondary" onclick="closeModal('branchModal')" style="flex:1;justify-content:center">إلغاء</button>
+                    ${isEdit ? `<button class="btn btn-danger" onclick="deleteBranch('${escapeHtml(branch.id)}')" style="flex:1;justify-content:center"><i class="fas fa-trash"></i> حذف الفرع</button>` : ''}
+                    <button class="btn btn-primary" onclick="saveBranch('${isEdit ? escapeHtml(branch.id) : ''}')" style="flex:1;justify-content:center">
+                        <i class="fas fa-save"></i> ${isEdit ? 'حفظ' : 'إضافة'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    renderModal(html);
+}
+
+window.saveBranch = async (existingId) => {
+    const name = document.getElementById('branchName').value.trim();
+    const address = document.getElementById('branchAddress').value.trim();
+    const city = document.getElementById('branchCity').value.trim();
+    const phone = document.getElementById('branchPhone').value.trim();
+    const manager = document.getElementById('branchManager').value.trim();
+
+    if (!name) { showToast('أدخل اسم الفرع', 'error'); return; }
+    if (!address) { showToast('أدخل عنوان الفرع', 'error'); return; }
+
+    try {
+        let branches = [...allBranches];
+
+        if (existingId) {
+            // تعديل فرع موجود
+            const idx = branches.findIndex(b => b.id === existingId);
+            if (idx >= 0) {
+                branches[idx] = { id: existingId, name, fullAddress: address, city, phone, manager };
+            }
+        } else {
+            // فرع جديد
+            const newId = 'branch_' + Date.now();
+            branches.push({ id: newId, name, fullAddress: address, city, phone, manager });
+        }
+
+        await sb.from('companies').update({
+            branch_locations: branches,
+            updated_at: new Date().toISOString()
+        }).eq('user_id', companyUserId);
+
+        showToast(existingId ? '✅ تم حفظ التعديلات' : '✅ تم إضافة الفرع', 'success');
+        closeModal('branchModal');
+        await loadAll();
+    } catch (err) {
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
+window.deleteBranch = async (branchId) => {
+    // شوف لو في أقسام مرتبطة بالفرع
+    const trainingDetails = safeParse(companyData.training_details, {});
+    const linkedDepts = Object.keys(trainingDetails).filter(field => trainingDetails[field].branchId === branchId);
+
+    if (linkedDepts.length > 0) {
+        if (!confirm(`⚠️ في ${linkedDepts.length} قسم/أقسام مرتبطة بالفرع ده:\n${linkedDepts.join(', ')}\n\nهل تريد حذف الفرع؟ (الأقسام مش هتتمسح لكن مش هتكون مربوطة بفرع)`)) return;
+    } else {
+        if (!confirm('هل تريد حذف الفرع ده؟')) return;
+    }
+
+    try {
+        const branches = allBranches.filter(b => b.id !== branchId);
+
+        // شيل الـ branchId من الأقسام
+        const newDetails = { ...trainingDetails };
+        linkedDepts.forEach(field => {
+            delete newDetails[field].branchId;
+        });
+
+        await sb.from('companies').update({
+            branch_locations: branches,
+            training_details: newDetails,
+            updated_at: new Date().toISOString()
+        }).eq('user_id', companyUserId);
+
+        if (currentBranchId === branchId) currentBranchId = '';
+
+        showToast('🗑️ تم حذف الفرع', 'success');
+        closeModal('branchModal');
+        await loadAll();
+    } catch (err) {
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
+// ========== Branches Management Modal ==========
+window.openBranchesModal = () => {
+    const html = `
+        <div class="modal active" id="branchesModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>إدارة فروع الشركة</span>
+                    </div>
+                    <button class="modal-close" onclick="closeModal('branchesModal')"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);padding:12px;border-radius:10px;margin-bottom:16px;font-size:0.86rem;color:var(--text-muted)">
+                    <i class="fas fa-info-circle" style="color:var(--info)"></i>
+                    تقدر تضيف عدد غير محدود من الفروع وتربط كل قسم تدريبي بفرع معين
+                </div>
+
+                <div style="max-height:400px;overflow-y:auto;margin-bottom:14px">
+                    ${allBranches.length === 0 ? `
+                        <div style="text-align:center;padding:30px;color:var(--text-muted)">
+                            <i class="fas fa-map-marker-alt" style="font-size:3rem;opacity:0.3;display:block;margin-bottom:10px"></i>
+                            <p>لا توجد فروع مسجلة</p>
+                        </div>
+                    ` : allBranches.map(b => {
+                        const trainingDetails = safeParse(companyData.training_details, {});
+                        const deptsCount = Object.keys(trainingDetails).filter(f => trainingDetails[f].branchId === b.id).length;
+                        return `
+                            <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+                                <div style="display:flex;align-items:center;gap:12px">
+                                    <div style="width:44px;height:44px;border-radius:12px;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;flex-shrink:0">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <div style="flex:1;min-width:0">
+                                        <div style="font-weight:800;font-size:1rem">${escapeHtml(b.name)}</div>
+                                        <div style="color:var(--text-muted);font-size:0.84rem;margin-top:2px">
+                                            <i class="fas fa-map-marker-alt"></i> ${escapeHtml(b.fullAddress || '-')}
+                                        </div>
+                                        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;font-size:0.78rem">
+                                            ${b.city ? `<span style="color:var(--text-muted)"><i class="fas fa-city"></i> ${escapeHtml(b.city)}</span>` : ''}
+                                            ${b.phone ? `<span style="color:var(--text-muted)"><i class="fas fa-phone"></i> ${escapeHtml(b.phone)}</span>` : ''}
+                                            <span style="background:rgba(239,68,68,0.1);color:var(--primary);padding:2px 8px;border-radius:10px;font-weight:700">
+                                                ${deptsCount} قسم مرتبط
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-info btn-sm" onclick="closeModal('branchesModal');editBranch('${escapeHtml(b.id)}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                <div style="display:flex;gap:10px">
+                    <button class="btn btn-secondary" onclick="closeModal('branchesModal')" style="flex:1;justify-content:center">إغلاق</button>
+                    <button class="btn btn-primary" onclick="closeModal('branchesModal');openAddBranchModal()" style="flex:1;justify-content:center">
+                        <i class="fas fa-plus"></i> إضافة فرع جديد
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    renderModal(html);
 };
 
 // ========== Init ==========
