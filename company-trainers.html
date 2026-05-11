@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
+
     <title>المتدربين - ProVance</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1474,7 +1477,7 @@
                 const { error } = await sb.from('internships').update(data).eq('id', id);
                 if (error) throw error;
             } else {
-                const { data: company } = await sb.from('companies').select('company_name, logo, company_location').eq('user_id', companyUserId).maybeSingle();
+                const { data: company } = await sb.from('companies').select('company_name, company_location').eq('user_id', companyUserId).maybeSingle();
 
                 const { error } = await sb.from('internships').insert({
                     ...data,
@@ -2414,7 +2417,7 @@
         try {
             const results = await Promise.allSettled([
                 sb.from('applications').select('*').eq('company_user_id', companyUserId).order('created_at', { ascending: false }),
-                sb.from('internships').select('*').eq('company_user_id', companyUserId).order('created_at', { ascending: false }),
+                sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, description, duration, max_applicants, current_applicants, trainee_type, requirements, knowledge_benefits, financial_benefits, salary_min, salary_max, salary_currency, status, start_date, end_date, created_at, updated_at').eq('company_user_id', companyUserId).order('created_at', { ascending: false }),
                 sb.from('performance_evaluations').select('*').eq('company_user_id', companyUserId),
                 sb.from('task_reports').select('*').eq('company_user_id', companyUserId).order('task_date', { ascending: false }),
                 sb.from('recommendations').select('*').eq('company_user_id', companyUserId).order('created_at', { ascending: false }),
