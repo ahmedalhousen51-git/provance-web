@@ -574,15 +574,76 @@ console.log('✅ Login form initialized');
                     .eq('user_id', data.user.id)
                     .maybeSingle();
 
+                let finalStudentData = studentData;
+                
                 if (studentErr || !studentData) {
-                    await sb.auth.signOut();
-                    showBanner('الحساب ده مش مسجل كطالب. لو إنت شركة استخدم تسجيل دخول الشركات، أو سجل حساب طالب جديد');
-                    btn.classList.remove('loading');
-                    btn.disabled = false;
-                    return;
+                    // ممكن يكون الـ register فشل في الـ insert بسبب RLS
+                    // نحاول نعمل الـ student row بـ RPC من البيانات الـ pending
+                    let pendingData = null;
+                    try {
+                        const stored = localStorage.getItem('pending_student_data');
+                        if (stored) pendingData = JSON.parse(stored);
+                    } catch(e) {}
+                    
+                    if (pendingData && pendingData.user_id === data.user.id) {
+                        // عندنا بيانات محفوظة - نعمل الـ student row
+                        try {
+                            const { data: rpcResult, error: rpcErr } = await sb.rpc('register_student', {
+                                p_user_id: data.user.id,
+                                p_full_name: pendingData.full_name,
+                                p_email: pendingData.email || email,
+                                p_phone: pendingData.phone || null,
+                                p_birth_date: pendingData.birth_date || null,
+                                p_gender: pendingData.gender || null,
+                                p_university: pendingData.university || null,
+                                p_faculty: pendingData.faculty || null,
+                                p_major: pendingData.major || null,
+                                p_city: pendingData.city || null,
+                                p_country: pendingData.country || null,
+                                p_skills: pendingData.skills || null
+                            });
+                            
+                            if (!rpcErr) {
+                                localStorage.removeItem('pending_student_data');
+                                // اقرأ البيانات تاني
+                                const { data: newData } = await sb.from('student')
+                                    .select('user_id, full_name, status')
+                                    .eq('user_id', data.user.id)
+                                    .maybeSingle();
+                                if (newData) finalStudentData = newData;
+                            }
+                        } catch(e) { console.warn('RPC failed:', e); }
+                    }
+                    
+                    // لو لسه مفيش student row، نحاول insert minimal
+                    if (!finalStudentData) {
+                        try {
+                            const { data: rpcResult, error: rpcErr } = await sb.rpc('register_student', {
+                                p_user_id: data.user.id,
+                                p_full_name: email.split('@')[0],
+                                p_email: email
+                            });
+                            
+                            if (!rpcErr) {
+                                const { data: newData } = await sb.from('student')
+                                    .select('user_id, full_name, status')
+                                    .eq('user_id', data.user.id)
+                                    .maybeSingle();
+                                if (newData) finalStudentData = newData;
+                            }
+                        } catch(e) { /* RPC may not exist */ }
+                    }
+                    
+                    if (!finalStudentData) {
+                        await sb.auth.signOut();
+                        showBanner('الحساب ده مش مسجل كطالب. لو إنت شركة استخدم تسجيل دخول الشركات، أو سجل حساب طالب جديد');
+                        btn.classList.remove('loading');
+                        btn.disabled = false;
+                        return;
+                    }
                 }
 
-                if (studentData.status === 'suspended') {
+                if (finalStudentData.status === 'suspended') {
                     await sb.auth.signOut();
                     showBanner('حسابك متوقف. تواصل مع الإدارة على support@provance.com');
                     btn.classList.remove('loading');
@@ -594,10 +655,10 @@ console.log('✅ Login form initialized');
                 else localStorage.removeItem('rememberStudentEmail');
 
                 localStorage.setItem('userType', 'student');
-                localStorage.setItem('studentName', studentData.full_name);
+                localStorage.setItem('studentName', finalStudentData.full_name);
                 localStorage.setItem('userEmail', email);
 
-                window.ProVance.showToast('🎉 أهلاً بعودتك ' + (studentData.full_name?.split(' ')[0] || ''), 'success');
+                window.ProVance.showToast('🎉 أهلاً بعودتك ' + (finalStudentData.full_name?.split(' ')[0] || ''), 'success');
                 setTimeout(() => window.location.href = 'student-dashboard.html', 800);
 
             } catch (err) {
