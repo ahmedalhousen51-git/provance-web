@@ -260,28 +260,21 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
                     <input type="text" id="searchInput" placeholder="🔍 ابحث باسم الشركة أو الفرصة...">
                     <select id="filterField">
                         <option value="">كل المجالات</option>
-                        <option value="تطوير الويب">تطوير الويب</option>
-                        <option value="تطبيقات الموبايل">تطبيقات الموبايل</option>
-                        <option value="الذكاء الاصطناعي">الذكاء الاصطناعي</option>
-                        <option value="تصميم UX/UI">تصميم UX/UI</option>
-                        <option value="التسويق الرقمي">التسويق الرقمي</option>
-                        <option value="إدارة الأعمال">إدارة الأعمال</option>
-                        <option value="الموارد البشرية">الموارد البشرية</option>
-                        <option value="المحاسبة">المحاسبة</option>
-                        <option value="الهندسة">الهندسة</option>
-                        <option value="الصحة">الصحة</option>
-                        <option value="عام">عام</option>
                     </select>
-                    <select id="filterSalary">
-                        <option value="">المرتب</option>
-                        <option value="paid">مدفوع</option>
-                        <option value="unpaid">بدون مرتب</option>
+                    <select id="filterPrice">
+                        <option value="">كل الفئات السعرية</option>
+                        <option value="free">مجاني</option>
+                        <option value="0-500">حتى 500</option>
+                        <option value="500-1000">500 - 1000</option>
+                        <option value="1000-2000">1000 - 2000</option>
+                        <option value="2000-5000">2000 - 5000</option>
+                        <option value="5000+">أكثر من 5000</option>
                     </select>
                     <select id="filterSort">
                         <option value="newest">الأحدث أولاً</option>
                         <option value="oldest">الأقدم أولاً</option>
-                        <option value="duration_short">مدة قصيرة</option>
-                        <option value="duration_long">مدة طويلة</option>
+                        <option value="price_low">السعر الأقل أولاً</option>
+                        <option value="price_high">السعر الأعلى أولاً</option>
                     </select>
                     <button class="btn btn-secondary" onclick="resetFilters()">
                         <i class="fas fa-redo"></i> مسح
@@ -382,10 +375,18 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         const isApplied = hasApplied(i.id);
 
         const features = [];
-        if (i.salary > 0) {
-            features.push(`<div class="feature-icon"><i class="fas fa-money-bill-wave"></i> ${i.salary} ${i.salary_currency || 'EGP'}</div>`);
+        // عرض الراتب (بعد التعيين)
+        if (i.salary_min && i.salary_max) {
+            features.push(`<div class="feature-icon"><i class="fas fa-money-bill-wave"></i> راتب: ${i.salary_min}-${i.salary_max} ${i.salary_currency || 'EGP'}</div>`);
+        } else if (i.salary_max) {
+            features.push(`<div class="feature-icon"><i class="fas fa-money-bill-wave"></i> راتب: ${i.salary_max} ${i.salary_currency || 'EGP'}</div>`);
+        }
+        
+        // عرض سعر التدريب (اللي الطالب يدفعه)
+        if (i.training_price && parseFloat(i.training_price) > 0) {
+            features.push(`<div class="feature-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="fas fa-credit-card"></i> رسوم: ${i.training_price} ${i.training_currency || 'EGP'}</div>`);
         } else {
-            features.push(`<div class="feature-icon disabled"><i class="fas fa-times"></i> بدون مرتب</div>`);
+            features.push(`<div class="feature-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="fas fa-gift"></i> مجاني</div>`);
         }
         if (company.provides_certificate !== false) {
             features.push(`<div class="feature-icon"><i class="fas fa-certificate"></i> شهادة</div>`);
@@ -445,7 +446,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
     function renderInternships() {
         const search = document.getElementById('searchInput').value.toLowerCase().trim();
         const fieldFilter = document.getElementById('filterField').value;
-        const salaryFilter = document.getElementById('filterSalary').value;
+        const priceFilter = document.getElementById('filterPrice').value;
         const sort = document.getElementById('filterSort').value;
 
         let filtered = allInternships.filter(i => i.status === 'active');
@@ -459,13 +460,25 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         }
 
         if (fieldFilter) filtered = filtered.filter(i => i.field === fieldFilter);
-        if (salaryFilter === 'paid') filtered = filtered.filter(i => i.salary > 0);
-        if (salaryFilter === 'unpaid') filtered = filtered.filter(i => !i.salary || i.salary === 0);
+
+        // فلتر بالسعر (training_price من companies)
+        if (priceFilter) {
+            filtered = filtered.filter(i => {
+                const price = parseFloat(i.training_price || 0);
+                if (priceFilter === 'free') return price === 0;
+                if (priceFilter === '0-500') return price > 0 && price <= 500;
+                if (priceFilter === '500-1000') return price > 500 && price <= 1000;
+                if (priceFilter === '1000-2000') return price > 1000 && price <= 2000;
+                if (priceFilter === '2000-5000') return price > 2000 && price <= 5000;
+                if (priceFilter === '5000+') return price > 5000;
+                return true;
+            });
+        }
 
         if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-        else if (sort === 'duration_short') filtered.sort((a, b) => (a.duration_weeks || 99) - (b.duration_weeks || 99));
-        else if (sort === 'duration_long') filtered.sort((a, b) => (b.duration_weeks || 0) - (a.duration_weeks || 0));
+        else if (sort === 'price_low') filtered.sort((a, b) => (parseFloat(a.training_price) || 0) - (parseFloat(b.training_price) || 0));
+        else if (sort === 'price_high') filtered.sort((a, b) => (parseFloat(b.training_price) || 0) - (parseFloat(a.training_price) || 0));
 
         document.getElementById('totalCount').textContent = filtered.length;
         document.getElementById('myActiveCount').textContent = getMyActiveCount();
@@ -478,19 +491,56 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
         grid.innerHTML = filtered.map(renderInternshipCard).join('');
     }
+    
+    // املأ الـ field options من البيانات الفعلية
+    function populateFieldOptions() {
+        const fieldSelect = document.getElementById('filterField');
+        if (!fieldSelect) return;
+        
+        // جمع المجالات الفريدة من active internships
+        const fields = [...new Set(allInternships
+            .filter(i => i.status === 'active' && i.field)
+            .map(i => i.field)
+        )].sort();
+        
+        // امسح الـ options القديمة (ما عدا "كل المجالات")
+        fieldSelect.innerHTML = '<option value="">كل المجالات (' + fields.length + ')</option>';
+        
+        fields.forEach(field => {
+            const count = allInternships.filter(i => i.status === 'active' && i.field === field).length;
+            const option = document.createElement('option');
+            option.value = field;
+            option.textContent = `${field} (${count})`;
+            fieldSelect.appendChild(option);
+        });
+    }
 
     window.resetFilters = () => {
         document.getElementById('searchInput').value = '';
         document.getElementById('filterField').value = '';
-        document.getElementById('filterSalary').value = '';
+        document.getElementById('filterPrice').value = '';
         document.getElementById('filterSort').value = 'newest';
         renderInternships();
     };
 
     // VIEW DETAILS
-    window.viewInternshipDetails = (id) => {
+    window.viewInternshipDetails = async (id) => {
         const i = allInternships.find(x => x.id === id);
         if (!i) return;
+        
+        // اجلب التفاصيل الكاملة من DB لو لسه ما اتجبتش
+        if (!i._fullDetailsLoaded) {
+            try {
+                const sb = window.ProVance.sb;
+                const { data: fullData } = await sb.from('internships')
+                    .select('description, requirements, knowledge_benefits, financial_benefits')
+                    .eq('id', id).maybeSingle();
+                if (fullData) {
+                    Object.assign(i, fullData);
+                    i._fullDetailsLoaded = true;
+                }
+            } catch (e) { console.warn('Details load failed:', e); }
+        }
 
         const company = allCompanies[i.company_user_id] || {};
         const logo = company.logo
@@ -803,10 +853,10 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
             studentUserId = userId;
 
             const [studentRes, internshipsRes, appsRes, companiesRes] = await Promise.all([
-                sb.from('student').select('*').eq('user_id', userId).maybeSingle(),
-                sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, description, duration, max_applicants, current_applicants, trainee_type, requirements, knowledge_benefits, financial_benefits, salary_min, salary_max, salary_currency, status, start_date, end_date, created_at, updated_at').eq('status', 'active').order('created_at', { ascending: false }),
-                sb.from('applications').select('*').eq('student_user_id', userId),
-                sb.from('companies').select('user_id, company_name, provides_certificate, provides_meals, provides_transport')
+                sb.from('student').select('user_id, full_name, email, status, training_status').eq('user_id', userId).maybeSingle(),
+                sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, duration, max_applicants, current_applicants, trainee_type, salary_min, salary_max, salary_currency, status, created_at').eq('status', 'active').order('created_at', { ascending: false }),
+                sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at').eq('student_user_id', userId),
+                sb.from('companies').select('user_id, company_name, training_price, training_currency, provides_certificate, provides_meals, provides_transport')
             ]);
 
             studentData = studentRes.data;
@@ -828,6 +878,18 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
                 }
             });
 
+            // اربط training_price بكل internship من الشركة
+            allInternships.forEach(int => {
+                const comp = allCompanies[int.company_user_id];
+                if (comp) {
+                    int.training_price = comp.training_price;
+                    int.training_currency = comp.training_currency;
+                }
+            });
+            
+            // املأ filter options من البيانات
+            populateFieldOptions();
+            
             renderInternships();
 
             if (!isInitialized) {
@@ -841,7 +903,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
                 document.getElementById('searchInput').addEventListener('input', renderInternships);
                 document.getElementById('filterField').addEventListener('change', renderInternships);
-                document.getElementById('filterSalary').addEventListener('change', renderInternships);
+                document.getElementById('filterPrice').addEventListener('change', renderInternships);
                 document.getElementById('filterSort').addEventListener('change', renderInternships);
 
                 document.addEventListener('keydown', (e) => {
