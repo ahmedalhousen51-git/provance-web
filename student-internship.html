@@ -229,6 +229,9 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
                 </button>
                 <h1 class="topbar-title"><i class="fas fa-search" style="color:var(--primary)"></i> فرص التدريب</h1>
                 <div class="topbar-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="loadAll(); window.ProVance.showToast('تم التحديث', 'success')" style="margin-left:8px">
+                        <i class="fas fa-sync-alt"></i> تحديث
+                    </button>
                     <button class="btn btn-secondary btn-sm" onclick="openHelpModal()">
                         <i class="fas fa-question-circle"></i> مساعدة
                     </button>
@@ -361,14 +364,29 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         return myApplications.some(a => a.internship_id === internshipId && isActiveStatus(a.status));
     }
 
-    function renderInternshipCard(i) {
+        // تحويل duration code لـ text عربي
+    function getDurationText(d) {
+        return { 
+            '2-weeks': 'أسبوعين', 
+            '3-weeks': '3 أسابيع', 
+            '1-month': 'شهر', 
+            '1.5-months': 'شهر ونصف', 
+            '2-months': 'شهرين', 
+            '2.5-months': 'شهرين ونصف',
+            '3-months': '3 شهور',
+            '4-months': '4 شهور',
+            '6-months': '6 شهور'
+        }[d] || d || '-';
+    }
+    
+function renderInternshipCard(i) {
         const company = allCompanies[i.company_user_id] || {};
         const logo = company.logo
             ? `<img src="${company.logo}" alt="">`
             : `<span>${getInitial(i.company_name || company.company_name)}</span>`;
 
         const applicants = appCountsByInternship[i.id] || 0;
-        const max = i.capacity || 5;
+        const max = i.max_applicants || 10;
         const percent = Math.min(100, (applicants / max) * 100);
         const isFull = applicants >= max;
         const fillCls = percent >= 100 ? 'full' : percent >= 80 ? 'warning' : '';
@@ -410,8 +428,8 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
                 <div class="internship-tags">
                     <span class="tag">${esc(i.field || 'عام')}</span>
-                    ${i.duration_weeks ? `<span class="tag">${i.duration_weeks} أسبوع</span>` : ''}
-                    ${i.location ? `<span class="tag">${esc(i.location)}</span>` : ''}
+                    ${i.duration ? `<span class="tag"><i class="fas fa-clock"></i> ${getDurationText(i.duration)}</span>` : ''}
+                    ${i.company_location ? `<span class="tag"><i class="fas fa-map-marker-alt"></i> ${esc(i.company_location)}</span>` : ''}
                     ${isApplied ? '<span class="tag success">✓ قدمت بالفعل</span>' : ''}
                     ${isFull ? '<span class="tag warning">امتلأت</span>' : ''}
                 </div>
@@ -548,12 +566,12 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
             : `<span>${getInitial(i.company_name || company.company_name)}</span>`;
 
         const applicants = appCountsByInternship[i.id] || 0;
-        const max = i.capacity || 5;
+        const max = i.max_applicants || 10;
         const isFull = applicants >= max;
         const isApplied = hasApplied(i.id);
 
         const requirements = Array.isArray(i.requirements) ? i.requirements : [];
-        const benefits = Array.isArray(i.benefits) ? i.benefits : [];
+        // benefits come as text from knowledge_benefits and financial_benefits
 
         const html = `
             <div class="modal active" id="detailsModal">
@@ -580,7 +598,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
                             </div>
                             <div class="info-item">
                                 <div class="info-label"><i class="fas fa-calendar"></i> المدة</div>
-                                <div class="info-value">${i.duration_weeks || '-'} أسبوع</div>
+                                <div class="info-value">${getDurationText(i.duration)}</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label"><i class="fas fa-users"></i> السعة</div>
@@ -869,13 +887,10 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
                 allCompanies[c.user_id] = c;  // No phone, no exact address
             });
 
-            // Count applications per internship
-            const { data: allApps } = await sb.from('applications').select('internship_id');
+            // استخدم current_applicants من جدول internships (موجود بالفعل)
             appCountsByInternship = {};
-            (allApps || []).forEach(a => {
-                if (a.internship_id) {
-                    appCountsByInternship[a.internship_id] = (appCountsByInternship[a.internship_id] || 0) + 1;
-                }
+            allInternships.forEach(int => {
+                appCountsByInternship[int.id] = int.current_applicants || 0;
             });
 
             // اربط training_price بكل internship من الشركة
@@ -920,6 +935,9 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
     }
 
     loadAll();
+    // Auto-refresh كل 30 ثانية
+    setInterval(() => { if (!document.hidden) loadAll(); }, 30000);
+
 })();
     </script>
 </body>
