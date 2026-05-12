@@ -1764,10 +1764,44 @@ console.log('✅ Form initialized successfully');
                     }
                 }
 
-                const { error: profileErr } = await sb.from('student').insert({
-                    user_id: authData.user.id,
-                    ...data
+                // استخدم RPC function لتجاوز RLS لو الـ email confirmation مفعل
+                const { data: rpcResult, error: profileErr } = await sb.rpc('register_student', {
+                    p_user_id: authData.user.id,
+                    p_full_name: data.full_name,
+                    p_email: data.email,
+                    p_phone: data.phone || null,
+                    p_birth_date: data.birth_date || null,
+                    p_gender: data.gender || null,
+                    p_national_id: data.national_id || null,
+                    p_university: data.university || null,
+                    p_faculty: data.faculty || null,
+                    p_major: data.major || null,
+                    p_gpa: data.gpa ? parseFloat(data.gpa) : null,
+                    p_graduation_year: data.graduation_year ? parseInt(data.graduation_year) : null,
+                    p_city: data.city || null,
+                    p_address: data.address || null,
+                    p_country: data.country || null,
+                    p_linkedin: data.linkedin || null,
+                    p_github: data.github || null,
+                    p_portfolio: data.portfolio || null,
+                    p_cv_url: data.cv_url || null,
+                    p_skills: data.skills || null,
+                    p_languages: data.languages || null,
+                    p_photo: data.photo || null
                 });
+                
+                // لو الـ RPC مش موجودة (لسه ما اتشغلش SQL migration 20)، fallback لـ insert عادي
+                if (profileErr && (profileErr.message || '').includes('register_student')) {
+                    console.warn('RPC not found, falling back to direct insert');
+                    const { error: directErr } = await sb.from('student').insert({
+                        user_id: authData.user.id,
+                        ...data
+                    });
+                    if (directErr) {
+                        // نخزن البيانات في localStorage عشان نكمل بعد verification
+                        try { localStorage.setItem('pending_student_data', JSON.stringify({ user_id: authData.user.id, ...data })); } catch(e) {}
+                    }
+                }
 
                 if (profileErr) {
                     console.error('Profile error:', profileErr);
