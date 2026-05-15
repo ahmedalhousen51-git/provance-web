@@ -725,10 +725,13 @@ async function checkAdmin() {
 
 async function loadAll() {
     try {
-        const [studentsRes, violationsRes] = await Promise.all([
+        const _results = await Promise.allSettled([
             sb.from('student').select('*').order('created_at', { ascending: false }),
             sb.from('penalties').select('*').eq('target_type', 'student').order('created_at', { ascending: false })
         ]);
+            const studentsRes = _results[0].status === 'fulfilled' ? _results[0].value : { data: null, error: _results[0].reason };
+            const violationsRes = _results[1].status === 'fulfilled' ? _results[1].value : { data: null, error: _results[1].reason };
+            
 
         allStudents = studentsRes.data || [];
         allViolations = violationsRes.data || [];
@@ -765,6 +768,14 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Safety: hide loading overlay after 10s no matter what
+    setTimeout(() => {
+        const el = document.getElementById('loadingOverlay');
+        if (el && !el.classList.contains('hidden')) {
+            el.classList.add('hidden');
+            console.warn('Loading timeout - showing UI anyway');
+        }
+    }, 10000);
     init();
     document.getElementById('searchTrainee').addEventListener('input', renderTrainees);
     document.getElementById('filterStrikes').addEventListener('change', renderTrainees);
