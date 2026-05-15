@@ -2169,8 +2169,23 @@
             return;
         }
         const State = window._studentProfileState;
-        const sb = window.ProVance.sb;
-        if (!sb) return;
+        const sb = await (window.ProVance?.waitForSupabaseClient?.(10000) || Promise.resolve(window.ProVance?.sb || null));
+        if (!sb) {
+            console.error('Supabase client not available');
+            // أعرض رسالة خطأ بدل ما الصفحة تعلق
+            const sidebarName = document.getElementById('sidebarName');
+            if (sidebarName) sidebarName.textContent = 'خطأ في الاتصال';
+            const personalGrid = document.getElementById('personalInfoGrid');
+            if (personalGrid) personalGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">
+                <i class="fas fa-wifi" style="font-size:3rem;color:#ef4444;margin-bottom:14px;display:block;opacity:0.5"></i>
+                <h3 style="color:var(--text);margin-bottom:8px">⚠️ تعذر الاتصال بالخادم</h3>
+                <p style="margin-bottom:14px">تأكد من الاتصال بالإنترنت وحاول مرة أخرى</p>
+                <button onclick="location.reload()" style="background:linear-gradient(135deg, #4facfe, #00f2fe);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer">
+                    <i class="fas fa-sync-alt"></i> إعادة المحاولة
+                </button>
+            </div>`;
+            return;
+        }
 
         try {
             const session = await sb.auth.getSession();
@@ -2214,9 +2229,21 @@
             State.allViolations = results[5].status === 'fulfilled' ? (results[5].value.data || []) : [];
 
             if (!State.studentData) {
-                window.ProVance.showToast('بيانات الطالب غير موجودة', 'error');
-                setTimeout(() => window.location.href = 'student-login.html', 2000);
-                return;
+                // محاولة أخيرة: اقرأ minimal data
+                try {
+                    const { data: minimalData } = await sb.from('student')
+                        .select('user_id, full_name, email, status')
+                        .eq('user_id', userId).maybeSingle();
+                    if (minimalData) {
+                        State.studentData = minimalData;
+                    }
+                } catch(e) {}
+                
+                if (!State.studentData) {
+                    window.ProVance.showToast('بيانات الطالب غير موجودة - جاري تسجيل الخروج', 'error');
+                    setTimeout(() => window.location.href = 'student-login.html', 2500);
+                    return;
+                }
             }
 
             if (!isInitialized) {
@@ -2244,7 +2271,27 @@
             State.renderProfile();
         } catch (err) {
             console.error('Load error:', err);
-            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
+            window.ProVance?.showToast?.('خطأ في تحميل البيانات. حاول إعادة تحميل الصفحة', 'error');
+            
+            // أعرض رسالة خطأ للمستخدم بدل ما الصفحة تعلق
+            const sidebarName = document.getElementById('sidebarName');
+            if (sidebarName && sidebarName.textContent === 'جاري التحميل...') {
+                sidebarName.textContent = 'خطأ في التحميل';
+            }
+            const welcomeName = document.getElementById('welcomeName');
+            if (welcomeName) welcomeName.textContent = '-';
+            
+            // إخفاء العناصر الفارغة وعرض زرار إعادة المحاولة
+            const personalGrid = document.getElementById('personalInfoGrid');
+            if (personalGrid && !personalGrid.innerHTML.trim()) {
+                personalGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">
+                    <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:#f59e0b;margin-bottom:10px;display:block"></i>
+                    <p style="margin-bottom:14px">تعذر تحميل البيانات</p>
+                    <button onclick="location.reload()" style="background:linear-gradient(135deg, #4facfe, #00f2fe);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer">
+                        <i class="fas fa-sync-alt"></i> إعادة المحاولة
+                    </button>
+                </div>`;
+            }
         }
     }
 
