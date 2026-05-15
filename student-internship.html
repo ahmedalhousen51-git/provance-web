@@ -237,13 +237,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
                     </button>
                 </div>
             </div>
-            <div class="privacy-notice">
-                <i class="fas fa-shield-alt"></i>
-                <div class="privacy-notice-text">
-                    <div class="privacy-notice-title">🔒 خصوصيتك مهمة</div>
-                    <div class="privacy-notice-desc">بيانات الشركة الحساسة (تليفون - عنوان دقيق) مخفية حماية للمنصة. هتوصلك بعد قبولك للمقابلة فقط.</div>
-                </div>
-            </div>
+
             <div class="stats-bar">
                 <div class="stats-bar-item">
                     <i class="fas fa-bullhorn"></i>
@@ -870,12 +864,18 @@ function renderInternshipCard(i) {
             }
             studentUserId = userId;
 
-            const [studentRes, internshipsRes, appsRes, companiesRes] = await Promise.all([
+            const results = await Promise.allSettled([
                 sb.from('student').select('user_id, full_name, email, status, training_status').eq('user_id', userId).maybeSingle(),
                 sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, duration, max_applicants, current_applicants, trainee_type, salary_min, salary_max, salary_currency, status, created_at').eq('status', 'active').order('created_at', { ascending: false }),
                 sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at').eq('student_user_id', userId),
                 sb.from('companies').select('user_id, company_name, training_price, training_currency, provides_certificate, provides_meals, provides_transport')
             ]);
+
+            // التعامل مع الـ results حتى لو واحد فشل
+            const studentRes = results[0].status === 'fulfilled' ? results[0].value : { data: null };
+            const internshipsRes = results[1].status === 'fulfilled' ? results[1].value : { data: [] };
+            const appsRes = results[2].status === 'fulfilled' ? results[2].value : { data: [] };
+            const companiesRes = results[3].status === 'fulfilled' ? results[3].value : { data: [] };
 
             studentData = studentRes.data;
             allInternships = internshipsRes.data || [];
@@ -929,6 +929,10 @@ function renderInternshipCard(i) {
                 });
             }
         } catch (err) {
+            // أعرض رسالة بدل ما الـ "جاري التحميل" يفضل
+            const grid = document.getElementById('internshipsGrid');
+            if (grid) grid.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--warning)"></i><h3>تعذر تحميل البيانات</h3><p>اضغط على زر التحديث أو حاول لاحقاً</p></div>';
+            // إظهار رسالة
             console.error('Load error:', err);
             window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
         }
