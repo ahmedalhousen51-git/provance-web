@@ -432,8 +432,11 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
     let isInitialized = false;
     async function loadAll() {
-        const sb = window.ProVance.sb;
-        if (!sb) return;
+        const sb = await (window.ProVance?.waitForSupabaseClient?.(10000) || Promise.resolve(window.ProVance?.sb || null));
+        if (!sb) {
+            console.error('Supabase client not available');
+            return;
+        }
         try {
             const session = await sb.auth.getSession();
             const uid = session?.data?.session?.user?.id;
