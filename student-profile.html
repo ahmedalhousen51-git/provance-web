@@ -2169,21 +2169,82 @@
             return;
         }
         const State = window._studentProfileState;
-        const sb = await (window.ProVance?.waitForSupabaseClient?.(10000) || Promise.resolve(window.ProVance?.sb || null));
+        // محاولة الحصول على Supabase client بطرق مختلفة
+        let sb = null;
+        
+        // الطريقة 1: من ProVance helper (الأسرع لو موجود)
+        if (window.ProVance?.waitForSupabaseClient) {
+            try {
+                sb = await window.ProVance.waitForSupabaseClient(15000);
+            } catch (e) { console.warn('waitForSupabaseClient failed:', e); }
+        }
+        
+        // الطريقة 2: إنشاء client مباشر لو ProVance ما اشتغلش
+        if (!sb && typeof supabase !== 'undefined' && supabase.createClient) {
+            try {
+                console.log('🔄 إنشاء Supabase client مباشر...');
+                sb = supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                    { auth: { persistSession: true, storage: window.localStorage } }
+                );
+                console.log('✅ تم إنشاء Supabase client');
+            } catch (e) { console.error('Direct client creation failed:', e); }
+        }
+        
+        // الطريقة 3: تحميل المكتبة ديناميكياً وإعادة المحاولة
         if (!sb) {
-            console.error('Supabase client not available');
-            // أعرض رسالة خطأ بدل ما الصفحة تعلق
-            const sidebarName = document.getElementById('sidebarName');
-            if (sidebarName) sidebarName.textContent = 'خطأ في الاتصال';
-            const personalGrid = document.getElementById('personalInfoGrid');
-            if (personalGrid) personalGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">
-                <i class="fas fa-wifi" style="font-size:3rem;color:#ef4444;margin-bottom:14px;display:block;opacity:0.5"></i>
-                <h3 style="color:var(--text);margin-bottom:8px">⚠️ تعذر الاتصال بالخادم</h3>
-                <p style="margin-bottom:14px">تأكد من الاتصال بالإنترنت وحاول مرة أخرى</p>
-                <button onclick="location.reload()" style="background:linear-gradient(135deg, #4facfe, #00f2fe);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer">
-                    <i class="fas fa-sync-alt"></i> إعادة المحاولة
-                </button>
-            </div>`;
+            console.log('🔄 جاري تحميل Supabase library...');
+            await new Promise((resolve) => {
+                const s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+                s.onload = resolve;
+                s.onerror = resolve;
+                document.head.appendChild(s);
+                setTimeout(resolve, 5000);
+            });
+            
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                sb = supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                    { auth: { persistSession: true, storage: window.localStorage } }
+                );
+            }
+        }
+        
+        // لو فشل، عرض رسالة واضحة مع retry تلقائي
+        if (!sb) {
+            console.error('═══════════════════════════════════════════');
+            console.error('❌ فشل تحميل Supabase library كلياً');
+            console.error('Checked: window.ProVance, supabase.createClient');
+            console.error('Available globals:', Object.keys(window).filter(k => k.toLowerCase().includes('supa')));
+            console.error('═══════════════════════════════════════════');
+            
+            // محاولة retry تلقائي بعد 3 ثواني (مرة واحدة)
+            if (!window._profileRetried) {
+                window._profileRetried = true;
+                setTimeout(() => location.reload(), 3000);
+                
+                const sidebarName = document.getElementById('sidebarName');
+                if (sidebarName) sidebarName.textContent = 'جاري إعادة المحاولة...';
+                const personalGrid = document.getElementById('personalInfoGrid');
+                if (personalGrid) personalGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">
+                    <i class="fas fa-sync-alt fa-spin" style="font-size:3rem;color:#4facfe;margin-bottom:14px;display:block"></i>
+                    <h3 style="color:var(--text);margin-bottom:8px">جاري إعادة الاتصال...</h3>
+                    <p>الصفحة هتعيد التحميل تلقائياً خلال 3 ثواني</p>
+                </div>`;
+            } else {
+                const personalGrid = document.getElementById('personalInfoGrid');
+                if (personalGrid) personalGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">
+                    <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:#f59e0b;margin-bottom:14px;display:block"></i>
+                    <h3 style="color:var(--text);margin-bottom:8px">⚠️ مشكلة في تحميل النظام</h3>
+                    <p style="margin-bottom:14px">قد يكون السبب: حاجب إعلانات أو نت بطيء</p>
+                    <button onclick="window._profileRetried=false;location.reload()" style="background:linear-gradient(135deg, #4facfe, #00f2fe);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer">
+                        <i class="fas fa-sync-alt"></i> إعادة المحاولة
+                    </button>
+                </div>`;
+            }
             return;
         }
 
