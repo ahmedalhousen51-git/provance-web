@@ -932,9 +932,9 @@
     // Avatar Presets - 12 colorful gradients
     
     // ============================================================
-    // 🛡️ Resilient Supabase Client (4-tier fallback)
+    // 🛡️ Resilient Supabase Client (متاح في كل الـ scopes)
     // ============================================================
-    async function getSafeSupabase() {
+    window.getSafeSupabase = async function() {
         if (window.ProVance?.waitForSupabaseClient) {
             try {
                 const sb = await window.ProVance.waitForSupabaseClient(8000);
@@ -1501,7 +1501,7 @@
             }
 
             try {
-                const sb = await getSafeSupabase();
+                const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
                 const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
                 if (error) throw error;
@@ -1583,7 +1583,7 @@
             };
 
             try {
-                const sb = await getSafeSupabase();
+                const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
                 const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
                 if (error) throw error;
@@ -1629,7 +1629,7 @@
         window.saveBio = async () => {
             const bio = document.getElementById('bio_text').value.trim() || null;
             try {
-                const sb = await getSafeSupabase();
+                const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
                 const { error } = await sb.from('student').update({ bio }).eq('user_id', State.studentUserId);
                 if (error) throw error;
@@ -1689,7 +1689,7 @@
             const interests = interestsStr ? interestsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
 
             try {
-                const sb = await getSafeSupabase();
+                const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
                 const { error } = await sb.from('student').update({
                     skills, interested_fields: interests
@@ -1756,7 +1756,7 @@
             };
 
             try {
-                const sb = await getSafeSupabase();
+                const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
                 const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
                 if (error) throw error;
@@ -1854,7 +1854,7 @@
         window.saveAvatar = async () => {
             const url = document.getElementById('av_url').value.trim();
             try {
-                const sb = await getSafeSupabase();
+                const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
                 const { error } = await sb.from('student').update({ photo: url || null }).eq('user_id', State.studentUserId);
                 if (error) throw error;
@@ -1937,7 +1937,7 @@
 
         async function processQRScan(code) {
             try {
-                const sb = await getSafeSupabase();
+                const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
                 const { data: qrCode, error } = await sb.from('qr_codes').select('*').eq('code', code).maybeSingle();
 
