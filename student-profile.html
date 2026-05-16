@@ -930,6 +930,33 @@
     let qrStream = null;
 
     // Avatar Presets - 12 colorful gradients
+    
+    // ============================================================
+    // 🛡️ Resilient Supabase Client (4-tier fallback)
+    // ============================================================
+    async function getSafeSupabase() {
+        if (window.ProVance?.waitForSupabaseClient) {
+            try {
+                const sb = await window.ProVance.waitForSupabaseClient(8000);
+                if (sb && typeof sb.from === 'function') return sb;
+            } catch(e) {}
+        }
+        try {
+            const sb = window.ProVance?.sb;
+            if (sb && typeof sb.from === 'function') return sb;
+        } catch(e) {}
+        if (typeof supabase !== 'undefined' && supabase.createClient) {
+            try {
+                return supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                    { auth: { persistSession: true, storage: window.localStorage } }
+                );
+            } catch(e) {}
+        }
+        return null;
+    }
+
     const AVATAR_PRESETS = [
         { gradient: 'linear-gradient(135deg, #667eea, #764ba2)', emoji: '👨‍💻' },
         { gradient: 'linear-gradient(135deg, #f093fb, #f5576c)', emoji: '👨‍🎓' },
@@ -1474,7 +1501,9 @@
             }
 
             try {
-                const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', State.studentUserId);
+                const sb = await getSafeSupabase();
+                if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
+                const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
                 if (error) throw error;
                 addEditHistory('تعديل البيانات الشخصية', 'تم تحديث الاسم/الهاتف/التاريخ/النوع/العنوان');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
@@ -1554,7 +1583,9 @@
             };
 
             try {
-                const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', State.studentUserId);
+                const sb = await getSafeSupabase();
+                if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
+                const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
                 if (error) throw error;
                 addEditHistory('تعديل التعليم', 'تم تحديث بيانات التعليم');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
@@ -1598,7 +1629,9 @@
         window.saveBio = async () => {
             const bio = document.getElementById('bio_text').value.trim() || null;
             try {
-                const { error } = await window.ProVance.sb.from('student').update({ bio }).eq('user_id', State.studentUserId);
+                const sb = await getSafeSupabase();
+                if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
+                const { error } = await sb.from('student').update({ bio }).eq('user_id', State.studentUserId);
                 if (error) throw error;
                 addEditHistory('تعديل النبذة', bio ? 'تم تحديث النبذة' : 'تم مسح النبذة');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
@@ -1656,7 +1689,9 @@
             const interests = interestsStr ? interestsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
 
             try {
-                const { error } = await window.ProVance.sb.from('student').update({
+                const sb = await getSafeSupabase();
+                if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
+                const { error } = await sb.from('student').update({
                     skills, interested_fields: interests
                 }).eq('user_id', State.studentUserId);
                 if (error) throw error;
@@ -1721,7 +1756,9 @@
             };
 
             try {
-                const { error } = await window.ProVance.sb.from('student').update(data).eq('user_id', State.studentUserId);
+                const sb = await getSafeSupabase();
+                if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
+                const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
                 if (error) throw error;
                 addEditHistory('تعديل الروابط', 'تم تحديث LinkedIn/GitHub/Portfolio/CV');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
@@ -1817,7 +1854,9 @@
         window.saveAvatar = async () => {
             const url = document.getElementById('av_url').value.trim();
             try {
-                const { error } = await window.ProVance.sb.from('student').update({ photo: url || null }).eq('user_id', State.studentUserId);
+                const sb = await getSafeSupabase();
+                if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
+                const { error } = await sb.from('student').update({ photo: url || null }).eq('user_id', State.studentUserId);
                 if (error) throw error;
                 addEditHistory('تغيير الصورة', 'تم تغيير الصورة الشخصية');
                 window.ProVance.showToast('تم تغيير الصورة ✓', 'success');
@@ -1898,7 +1937,8 @@
 
         async function processQRScan(code) {
             try {
-                const sb = window.ProVance.sb;
+                const sb = await getSafeSupabase();
+                if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
                 const { data: qrCode, error } = await sb.from('qr_codes').select('*').eq('code', code).maybeSingle();
 
                 if (error || !qrCode) {
