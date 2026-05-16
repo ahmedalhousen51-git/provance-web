@@ -1,358 +1,351 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تشخيص ProVance</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Cairo', 'Tahoma', sans-serif;
-            background: #0f0c29;
-            color: #fff;
-            padding: 20px;
-            min-height: 100vh;
-            line-height: 1.7;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 1.8rem;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 14px;
-            padding: 18px;
-            margin-bottom: 14px;
-        }
-        .test-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .test-row:last-child { border-bottom: none; }
-        .test-name { font-weight: 700; flex: 1; min-width: 200px; }
-        .test-result {
-            padding: 6px 14px;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 0.9rem;
-            min-width: 100px;
-            text-align: center;
-        }
-        .pass { background: #10b981; color: #fff; }
-        .fail { background: #ef4444; color: #fff; }
-        .pending { background: #f59e0b; color: #fff; }
-        .info { background: #3b82f6; color: #fff; }
-        .details {
-            background: #1a1535;
-            padding: 14px;
-            border-radius: 10px;
-            margin-top: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            color: #b8b5c9;
-            word-break: break-all;
-            white-space: pre-wrap;
-        }
-        button {
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-            color: #fff;
-            border: none;
-            padding: 14px 24px;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 800;
-            cursor: pointer;
-            font-family: inherit;
-            width: 100%;
-            margin-top: 14px;
-        }
-        .summary {
-            text-align: center;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 14px;
-            font-size: 1.1rem;
-            font-weight: 800;
-        }
-        .summary.success { background: rgba(16,185,129,0.2); border: 2px solid #10b981; }
-        .summary.fail { background: rgba(239,68,68,0.2); border: 2px solid #ef4444; }
-        .browser-info {
-            background: rgba(79,172,254,0.1);
-            border: 1px solid rgba(79,172,254,0.3);
-            padding: 14px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            margin-bottom: 14px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔧 تشخيص ProVance</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Cairo',sans-serif; background:linear-gradient(135deg,#0a0e27 0%,#1a1535 100%); color:#fff; padding:20px; line-height:1.6; min-height:100vh; }
+.container { max-width:900px; margin:0 auto; }
+h1 { font-size:1.6rem; margin-bottom:14px; background:linear-gradient(135deg,#4facfe,#00f2fe); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-align:center }
+.subtitle { text-align:center; color:rgba(255,255,255,0.7); margin-bottom:20px; font-size:0.95rem; }
+.section { background:rgba(255,255,255,0.05); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:18px; margin-bottom:14px; }
+.section-title { font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; font-size:1.05rem; }
+.row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:0.92rem; flex-wrap:wrap; gap:8px; }
+.row:last-child { border:none; }
+.ok { color:#10b981; font-weight:700; }
+.fail { color:#ef4444; font-weight:700; }
+.warn { color:#f59e0b; font-weight:700; }
+.btn { background:linear-gradient(135deg,#4facfe,#00f2fe); color:#fff; border:none; padding:12px 24px; border-radius:10px; font-weight:700; font-family:inherit; cursor:pointer; margin:5px; font-size:0.95rem; }
+.btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(79,172,254,0.3); }
+.btn-success { background:linear-gradient(135deg,#10b981,#059669); }
+.btn-warning { background:linear-gradient(135deg,#f59e0b,#f97316); }
+.btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.log { background:#000; color:#10b981; padding:14px; border-radius:8px; font-family:'Courier New',monospace; font-size:0.84rem; max-height:300px; overflow-y:auto; margin-top:10px; line-height:1.5; }
+.log-error { color:#ef4444; }
+.log-warn { color:#f59e0b; }
+.code { background:rgba(0,0,0,0.5); padding:4px 8px; border-radius:6px; font-family:monospace; font-size:0.82rem; display:inline-block; }
+input { padding:11px 14px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#fff; font-family:inherit; font-size:0.92rem; width:200px; }
+.flex { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.action-box { background:rgba(79,172,254,0.08); border:1px solid rgba(79,172,254,0.25); padding:14px; border-radius:10px; margin-top:14px; }
+.test-result { padding:10px; border-radius:8px; margin-top:8px; font-size:0.9rem; }
+.test-pass { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); }
+.test-fail { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); }
+.field-row { background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:6px; margin:4px 0; display:flex; justify-content:space-between; font-size:0.86rem; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔧 تشخيص ProVance</h1>
+<div class="container">
+<h1>🔧 تشخيص ProVance</h1>
+<p class="subtitle">صفحة لتشخيص وإصلاح مشاكل البيانات</p>
 
-        <div class="browser-info">
-            <strong>📱 معلومات الجهاز:</strong>
-            <div id="browserInfo"></div>
-        </div>
+<div class="section">
+    <div class="section-title">⚡ 1. الاتصال بـ Supabase</div>
+    <div id="connectionStatus">جاري الفحص...</div>
+</div>
 
-        <button onclick="runAllTests()" id="runBtn">🚀 ابدأ التشخيص</button>
+<div class="section">
+    <div class="section-title">📊 2. حالة الجداول</div>
+    <div id="tablesStatus">جاري الفحص...</div>
+</div>
 
-        <div id="results"></div>
+<div class="section">
+    <div class="section-title">👤 3. جلستك الحالية</div>
+    <div id="authStatus">جاري الفحص...</div>
+</div>
 
-        <div id="summary"></div>
-
-        <div class="card" style="margin-top: 20px; background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.3);">
-            <h3 style="color: #f59e0b; margin-bottom: 8px;">📋 ابعت الصورة دي للأدمن</h3>
-            <p style="color: #b8b5c9; font-size: 0.9rem;">
-                بعد ما الاختبار يخلص، اعمل screenshot للصفحة كلها وابعتها عشان نعرف المشكلة بالظبط.
-            </p>
+<div class="section">
+    <div class="section-title">🔍 4. بياناتك في DB</div>
+    <div id="userDataStatus">جاري الفحص...</div>
+    <div class="action-box" id="fixActions" style="display:none">
+        <strong>🔧 إصلاحات متاحة:</strong>
+        <div class="flex" style="margin-top:10px">
+            <button class="btn btn-success" onclick="fixMyAccount()">صلّح حسابي كطالب</button>
+            <button class="btn btn-warning" onclick="makeMyselfAdmin()">اعمل نفسي أدمن</button>
+            <button class="btn" onclick="location.reload()">🔄 إعادة الفحص</button>
         </div>
     </div>
+</div>
 
-    <script>
-        // معلومات الجهاز
-        document.getElementById('browserInfo').innerHTML =
-            'Browser: ' + navigator.userAgent + '<br>' +
-            'Online: ' + (navigator.onLine ? '✅ متصل' : '❌ مفصول') + '<br>' +
-            'Language: ' + navigator.language;
+<div class="section">
+    <div class="section-title">🧪 5. اختبار قراءة بيانات</div>
+    <div id="testResults">اضغط الزرار للاختبار</div>
+    <button class="btn" onclick="runTests()">▶️ شغّل الاختبارات</button>
+</div>
 
-        const tests = [];
-        const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+<div class="section">
+    <div class="section-title">📜 6. سجل الـ Console</div>
+    <div class="log" id="logArea">انتظر...</div>
+</div>
 
-        function addTest(name, status, details) {
-            const cls = status === 'pass' ? 'pass' : status === 'fail' ? 'fail' : 'info';
-            const txt = status === 'pass' ? '✓ نجح' : status === 'fail' ? '✗ فشل' : 'ℹ️';
-            tests.push({ name, status, details, cls, txt });
-            renderResults();
-        }
+</div>
 
-        function renderResults() {
-            let html = '<div class="card"><h2 style="margin-bottom:14px;color:#4facfe">📊 نتائج الاختبار</h2>';
-            tests.forEach(t => {
-                html += `<div class="test-row">
-                    <span class="test-name">${t.name}</span>
-                    <span class="test-result ${t.cls}">${t.txt}</span>
-                </div>`;
-                if (t.details) {
-                    html += `<div class="details">${t.details}</div>`;
-                }
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
+});
+
+const logs = [];
+function log(msg, type='info') {
+    const time = new Date().toLocaleTimeString('ar-EG');
+    const prefix = type === 'error' ? '❌' : type === 'warn' ? '⚠️' : type === 'success' ? '✅' : '🔹';
+    const className = type === 'error' ? 'log-error' : type === 'warn' ? 'log-warn' : '';
+    logs.push(`<span class="${className}">[${time}] ${prefix} ${msg}</span>`);
+    document.getElementById('logArea').innerHTML = logs.slice(-50).join('<br>');
+    document.getElementById('logArea').scrollTop = 999999;
+}
+
+const origError = console.error;
+console.error = (...args) => {
+    log(args.join(' '), 'error');
+    origError.apply(console, args);
+};
+
+async function runDiagnostics() {
+    log('بدء التشخيص...');
+    
+    // 1. Connection
+    try {
+        const t0 = Date.now();
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/`, { 
+            headers: { 'apikey': SUPABASE_KEY }
+        });
+        const ms = Date.now() - t0;
+        document.getElementById('connectionStatus').innerHTML = `
+            <div class="row"><span>الحالة:</span><span class="${r.ok ? 'ok' : 'fail'}">${r.ok ? '✓ متصل' : '✗ فشل'}</span></div>
+            <div class="row"><span>السرعة:</span><span class="${ms < 1000 ? 'ok' : 'warn'}">${ms}ms</span></div>
+        `;
+        log(`الاتصال نجح في ${ms}ms`, 'success');
+    } catch (e) {
+        document.getElementById('connectionStatus').innerHTML = `<span class="fail">✗ ${e.message}</span>`;
+        log(`فشل الاتصال: ${e.message}`, 'error');
+    }
+    
+    // 2. Tables
+    const tables = ['student', 'companies', 'internships', 'admins', 'applications', 'notifications', 'support_messages', 'pending_approvals'];
+    let tablesHtml = '';
+    for (const t of tables) {
+        try {
+            const t0 = Date.now();
+            const r = await fetch(`${SUPABASE_URL}/rest/v1/${t}?select=*&limit=1`, { 
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'count=exact' }
             });
-            html += '</div>';
-            document.getElementById('results').innerHTML = html;
+            const ms = Date.now() - t0;
+            const range = r.headers.get('content-range') || '';
+            const count = range.includes('/') ? range.split('/')[1] : '?';
+            const has42501 = (await r.clone().text()).includes('42501');
+            const statusIcon = has42501 ? '🔒 RLS Blocked' : r.ok ? '✓' : '✗';
+            const statusClass = has42501 ? 'fail' : r.ok ? 'ok' : 'fail';
+            tablesHtml += `<div class="row"><span><strong>${t}</strong></span><span class="${statusClass}">${statusIcon} ${ms}ms | ${count} rows</span></div>`;
+            if (has42501) log(`${t}: RLS مرفوضة! شغّل migration 24`, 'error');
+        } catch (e) {
+            tablesHtml += `<div class="row"><span>${t}</span><span class="fail">✗ ${e.message}</span></div>`;
         }
-
-        async function runAllTests() {
-            tests.length = 0;
-            document.getElementById('runBtn').disabled = true;
-            document.getElementById('runBtn').textContent = '⏳ جاري الاختبار...';
-            document.getElementById('summary').innerHTML = '';
-
-            // 1. اتصال الإنترنت
-            addTest('1️⃣ اتصال الإنترنت', navigator.onLine ? 'pass' : 'fail',
-                navigator.onLine ? 'الإنترنت متصل' : 'مش متصل بالإنترنت!');
-
-            // 2. اختبار Google (للتأكد من الإنترنت)
-            try {
-                const r = await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors' });
-                addTest('2️⃣ اتصال بـ Google', 'pass', 'الإنترنت بيشتغل');
-            } catch (e) {
-                addTest('2️⃣ اتصال بـ Google', 'fail', 'فشل الوصول لـ Google: ' + e.message);
-            }
-
-            // 3. اختبار CDN جسdelivr
-            try {
-                const start = Date.now();
-                const r = await fetch('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/package.json');
-                const duration = Date.now() - start;
-                if (r.ok) {
-                    addTest('3️⃣ CDN jsDelivr', 'pass', `الـ CDN شغال (${duration}ms)`);
-                } else {
-                    addTest('3️⃣ CDN jsDelivr', 'fail', 'الـ CDN رد بـ status: ' + r.status);
-                }
-            } catch (e) {
-                addTest('3️⃣ CDN jsDelivr', 'fail', 'CDN مفصول: ' + e.message);
-            }
-
-            // 4. اختبار CDN unpkg (احتياطي)
-            try {
-                const r = await fetch('https://unpkg.com/@supabase/supabase-js@2/package.json');
-                if (r.ok) {
-                    addTest('4️⃣ CDN unpkg (احتياطي)', 'pass', 'يشتغل');
-                } else {
-                    addTest('4️⃣ CDN unpkg (احتياطي)', 'fail', 'Status: ' + r.status);
-                }
-            } catch (e) {
-                addTest('4️⃣ CDN unpkg (احتياطي)', 'fail', e.message);
-            }
-
-            // 5. اختبار Supabase Health
-            try {
-                const r = await fetch(SUPABASE_URL + '/auth/v1/health', {
-                    headers: { 'apikey': SUPABASE_KEY }
-                });
-                if (r.ok) {
-                    const data = await r.json();
-                    addTest('5️⃣ Supabase Auth API', 'pass', 'يعمل: ' + (data.name || 'OK'));
-                } else {
-                    addTest('5️⃣ Supabase Auth API', 'fail', 'Status: ' + r.status);
-                }
-            } catch (e) {
-                addTest('5️⃣ Supabase Auth API', 'fail', e.message);
-            }
-
-            // 6. اختبار جدول companies
-            try {
-                const r = await fetch(SUPABASE_URL + '/rest/v1/companies?select=user_id&limit=1', {
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': 'Bearer ' + SUPABASE_KEY
-                    }
-                });
-                if (r.ok) {
-                    addTest('6️⃣ جدول companies', 'pass', 'متاح ويرد');
-                } else {
-                    const txt = await r.text();
-                    addTest('6️⃣ جدول companies', 'fail', `Status ${r.status}: ${txt.substring(0,100)}`);
-                }
-            } catch (e) {
-                addTest('6️⃣ جدول companies', 'fail', e.message);
-            }
-
-            // 7. تحميل Supabase library ديناميكياً
-            await new Promise((resolve) => {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
-                let handled = false;
-                script.onload = () => {
-                    if (handled) return;
-                    handled = true;
-                    if (typeof supabase !== 'undefined' && supabase.createClient) {
-                        addTest('7️⃣ تحميل Supabase Library', 'pass', 'تم التحميل والـ window.supabase موجود');
-                    } else {
-                        addTest('7️⃣ تحميل Supabase Library', 'fail', 'لوّد لكن window.supabase مش موجود');
-                    }
-                    resolve();
-                };
-                script.onerror = (e) => {
-                    if (handled) return;
-                    handled = true;
-                    addTest('7️⃣ تحميل Supabase Library', 'fail', 'فشل التحميل: ' + (e.message || 'unknown'));
-                    resolve();
-                };
-                document.head.appendChild(script);
-
-                // Timeout بعد 10 ثواني
-                setTimeout(() => {
-                    if (handled) return;
-                    handled = true;
-                    addTest('7️⃣ تحميل Supabase Library', 'fail', 'Timeout - أخد أكتر من 10 ثواني');
-                    resolve();
-                }, 10000);
-            });
-
-            // 8. إنشاء Supabase client
-            if (typeof supabase !== 'undefined' && supabase.createClient) {
-                try {
-                    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                    if (sb && sb.auth && sb.from) {
-                        addTest('8️⃣ إنشاء Supabase Client', 'pass', 'الـ client اتعمل');
-
-                        // 9. اختبار signin بـ test user
-                        try {
-                            const { data, error } = await sb.auth.signInWithPassword({
-                                email: 'invalid_test_' + Date.now() + '@invalid.test',
-                                password: 'wrong'
-                            });
-                            if (error && error.message.toLowerCase().includes('invalid')) {
-                                addTest('9️⃣ اختبار signInWithPassword', 'pass',
-                                    'الدالة بتشتغل (الخطأ متوقع لأن المستخدم مش موجود)');
-                            } else if (error) {
-                                addTest('9️⃣ اختبار signInWithPassword', 'fail',
-                                    'خطأ غير متوقع: ' + error.message);
-                            } else {
-                                addTest('9️⃣ اختبار signInWithPassword', 'pass', 'استجابة سليمة');
-                            }
-                        } catch (e) {
-                            addTest('9️⃣ اختبار signInWithPassword', 'fail', e.message);
-                        }
-                    } else {
-                        addTest('8️⃣ إنشاء Supabase Client', 'fail', 'الـ client مكتمل');
-                    }
-                } catch (e) {
-                    addTest('8️⃣ إنشاء Supabase Client', 'fail', e.message);
-                }
-            } else {
-                addTest('8️⃣ إنشاء Supabase Client', 'fail', 'window.supabase غير موجود');
-            }
-
-            // 10. اختبار localStorage
-            try {
-                localStorage.setItem('test_provance', '1');
-                if (localStorage.getItem('test_provance') === '1') {
-                    localStorage.removeItem('test_provance');
-                    addTest('🔟 localStorage', 'pass', 'يشتغل');
-                } else {
-                    addTest('🔟 localStorage', 'fail', 'مش بيخزن');
-                }
-            } catch (e) {
-                addTest('🔟 localStorage', 'fail', 'محظور: ' + e.message);
-            }
-
-            // الملخص النهائي
-            const passed = tests.filter(t => t.status === 'pass').length;
-            const failed = tests.filter(t => t.status === 'fail').length;
-            const total = tests.length;
-
-            const isAllPass = failed === 0;
-            const summaryHtml = `
-                <div class="summary ${isAllPass ? 'success' : 'fail'}">
-                    ${isAllPass
-                        ? '🎉 كل الاختبارات نجحت! النظام يعمل بشكل سليم'
-                        : `⚠️ فشل ${failed} من ${total} اختبارات`
-                    }
-                    <div style="font-size:0.9rem;margin-top:8px;font-weight:400">
-                        نجح: ${passed} | فشل: ${failed} | المجموع: ${total}
+    }
+    document.getElementById('tablesStatus').innerHTML = tablesHtml;
+    
+    // 3. Auth
+    try {
+        const { data: { session }, error } = await sb.auth.getSession();
+        let authHtml = '';
+        if (session) {
+            window._session = session;
+            authHtml = `
+                <div class="row"><span>الحالة:</span><span class="ok">✓ مسجل دخول</span></div>
+                <div class="row"><span>User ID:</span><span class="code">${session.user.id}</span></div>
+                <div class="row"><span>Email:</span><span>${session.user.email}</span></div>
+                <div class="row"><span>Email Confirmed:</span><span class="${session.user.email_confirmed_at ? 'ok' : 'warn'}">${session.user.email_confirmed_at ? '✓' : '⚠️ غير مؤكد'}</span></div>
+                <div class="row"><span>User Type:</span><span>${session.user.user_metadata?.user_type || '<span class="warn">غير محدد</span>'}</span></div>
+                <div class="row"><span>Full Name:</span><span>${session.user.user_metadata?.full_name || '<span class="warn">غير محدد</span>'}</span></div>
+            `;
+            log(`أنت مسجل دخول كـ ${session.user.email}`, 'success');
+        } else {
+            authHtml = `
+                <div class="row"><span>الحالة:</span><span class="warn">⚠️ غير مسجل دخول</span></div>
+                <div class="action-box">
+                    <strong>سجل دخول هنا:</strong>
+                    <div class="flex" style="margin-top:10px">
+                        <input type="email" id="diagEmail" placeholder="إيميلك">
+                        <input type="password" id="diagPass" placeholder="باسوردك">
+                        <button class="btn" onclick="diagLogin()">دخول</button>
                     </div>
                 </div>
             `;
-            document.getElementById('summary').innerHTML = summaryHtml;
-
-            document.getElementById('runBtn').disabled = false;
-            document.getElementById('runBtn').textContent = '🔄 إعادة الاختبار';
-
-            // اعرض ملخص نصي قابل للنسخ
-            let textSummary = '=== ProVance Diagnostic ===\n';
-            textSummary += 'Browser: ' + navigator.userAgent + '\n';
-            textSummary += 'Online: ' + navigator.onLine + '\n\n';
-            tests.forEach(t => {
-                textSummary += `[${t.status === 'pass' ? '✓' : '✗'}] ${t.name}\n`;
-                if (t.details) textSummary += `    ${t.details}\n`;
-            });
-
-            document.getElementById('summary').innerHTML += `
-                <div class="card" style="margin-top:14px">
-                    <h3 style="margin-bottom:10px">📋 نص للنسخ والإرسال:</h3>
-                    <textarea readonly style="width:100%;height:200px;background:#1a1535;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;font-family:monospace;font-size:0.8rem">${textSummary}</textarea>
-                    <button onclick="this.previousElementSibling.select();document.execCommand('copy');this.textContent='✓ تم النسخ'" style="margin-top:10px">📋 انسخ النص</button>
-                </div>
-            `;
+            log('غير مسجل دخول - سجل من فوق', 'warn');
         }
-    </script>
+        document.getElementById('authStatus').innerHTML = authHtml;
+    } catch (e) {
+        log(`خطأ في الجلسة: ${e.message}`, 'error');
+    }
+    
+    // 4. User Data
+    if (window._session) {
+        const uid = window._session.user.id;
+        let dataHtml = '';
+        let needsFix = false;
+        
+        // student
+        try {
+            const { data: student, error } = await sb.from('student').select('*').eq('user_id', uid).maybeSingle();
+            if (error) {
+                dataHtml += `<div class="field-row"><span>في جدول student:</span><span class="fail">✗ خطأ: ${error.code} - ${error.message}</span></div>`;
+                log(`خطأ في قراءة student: ${error.message}`, 'error');
+            } else if (student) {
+                const fields = ['full_name', 'email', 'phone', 'national_id', 'university', 'faculty', 'major', 'gpa', 'city', 'bio', 'education_level'];
+                const filledCount = fields.filter(f => student[f]).length;
+                dataHtml += `<div class="field-row"><span><strong>✓ في جدول student</strong></span><span class="ok">${filledCount}/${fields.length} حقول مليانة</span></div>`;
+                fields.forEach(f => {
+                    const val = student[f];
+                    dataHtml += `<div class="field-row" style="font-size:0.8rem;padding:4px 12px"><span style="opacity:0.7">${f}:</span><span>${val || '<span class="warn">فاضي</span>'}</span></div>`;
+                });
+            } else {
+                dataHtml += `<div class="field-row"><span>في جدول student:</span><span class="fail">✗ <strong>غير موجود!</strong></span></div>`;
+                needsFix = true;
+                log(`student row غير موجود لـ ${window._session.user.email}`, 'warn');
+            }
+        } catch (e) {
+            log(`خطأ: ${e.message}`, 'error');
+        }
+        
+        // company
+        try {
+            const { data: company } = await sb.from('companies').select('user_id, company_name, status').eq('user_id', uid).maybeSingle();
+            if (company) {
+                dataHtml += `<div class="field-row"><span>في جدول companies:</span><span class="ok">✓ ${company.company_name} (${company.status})</span></div>`;
+            }
+        } catch (e) {}
+        
+        // admin
+        try {
+            const { data: admin } = await sb.from('admins').select('user_id, role').eq('user_id', uid).maybeSingle();
+            if (admin) {
+                dataHtml += `<div class="field-row"><span>في جدول admins:</span><span class="ok">✓ ${admin.role}</span></div>`;
+            }
+        } catch (e) {}
+        
+        document.getElementById('userDataStatus').innerHTML = dataHtml || '<span class="warn">⚠️ ما لقيتش بياناتك في أي جدول!</span>';
+        document.getElementById('fixActions').style.display = 'block';
+    } else {
+        document.getElementById('userDataStatus').innerHTML = '<span class="warn">⚠️ سجل دخول الأول</span>';
+    }
+}
+
+window.diagLogin = async () => {
+    const email = document.getElementById('diagEmail').value.trim();
+    const pass = document.getElementById('diagPass').value;
+    if (!email || !pass) return alert('املأ الإيميل والباسورد');
+    log(`جاري تسجيل دخول ${email}...`);
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) {
+        log(`فشل تسجيل الدخول: ${error.message}`, 'error');
+        return alert('خطأ: ' + error.message);
+    }
+    log('تم تسجيل الدخول!', 'success');
+    setTimeout(runDiagnostics, 500);
+};
+
+window.fixMyAccount = async () => {
+    if (!window._session) return alert('سجل دخول الأول');
+    const session = window._session;
+    const fullName = prompt('اكتب اسمك الكامل:', session.user.user_metadata?.full_name || session.user.email.split('@')[0]);
+    if (!fullName || !fullName.trim()) return;
+    
+    log(`جاري إنشاء student row لـ ${session.user.email}...`);
+    
+    try {
+        const { data, error } = await sb.rpc('register_student', {
+            p_user_id: session.user.id,
+            p_full_name: fullName.trim(),
+            p_email: session.user.email
+        });
+        
+        if (error) {
+            log(`فشل: ${error.message}`, 'error');
+            alert('فشل: ' + error.message + '\n\nتأكد إنك شغّلت SQL migration 23 و 24');
+            return;
+        }
+        
+        if (data && data.success) {
+            log(`تم! ${data.created ? 'تم إنشاء الحساب' : 'تم تحديث البيانات'}`, 'success');
+            alert('✅ تم!\n' + (data.created ? 'تم إنشاء حسابك كطالب' : 'تم تحديث بياناتك'));
+            setTimeout(runDiagnostics, 1000);
+        } else {
+            log(`فشل غير معروف: ${JSON.stringify(data)}`, 'error');
+            alert('فشل: ' + (data?.error || 'غير معروف'));
+        }
+    } catch (e) {
+        log(`خطأ: ${e.message}`, 'error');
+        alert('خطأ: ' + e.message);
+    }
+};
+
+window.makeMyselfAdmin = async () => {
+    if (!window._session) return alert('سجل دخول الأول');
+    if (!confirm('هتعمل نفسك سوبر أدمن؟ ده هيديك صلاحية كاملة على النظام')) return;
+    
+    log('جاري إنشاء admin row...');
+    try {
+        const { error } = await sb.from('admins').insert({
+            user_id: window._session.user.id,
+            email: window._session.user.email,
+            full_name: window._session.user.user_metadata?.full_name || window._session.user.email.split('@')[0],
+            role: 'super_admin'
+        });
+        
+        if (error) {
+            log(`فشل: ${error.message}`, 'error');
+            alert('فشل: ' + error.message + '\n\nقد يكون السبب: مفيش insert policy للأدمن.\nاستخدم SQL مباشرة في Supabase Dashboard.');
+            return;
+        }
+        
+        log('تم! دلوقتي أنت super_admin', 'success');
+        alert('✅ تم! دلوقتي أنت سوبر أدمن');
+        setTimeout(runDiagnostics, 1000);
+    } catch (e) {
+        log(`خطأ: ${e.message}`, 'error');
+    }
+};
+
+window.runTests = async () => {
+    if (!window._session) return alert('سجل دخول الأول');
+    log('بدء الاختبارات...');
+    
+    const tests = [
+        { name: 'قراءة student الخاص بك', fn: () => sb.from('student').select('*').eq('user_id', window._session.user.id) },
+        { name: 'قراءة كل الـ companies', fn: () => sb.from('companies').select('*') },
+        { name: 'قراءة كل الـ internships', fn: () => sb.from('internships').select('*') },
+        { name: 'قراءة الـ applications الخاصة بك', fn: () => sb.from('applications').select('*').eq('student_user_id', window._session.user.id) },
+        { name: 'قراءة الـ notifications', fn: () => sb.from('notifications').select('*').limit(5) },
+    ];
+    
+    let html = '';
+    for (const t of tests) {
+        const t0 = Date.now();
+        try {
+            const { data, error } = await t.fn();
+            const ms = Date.now() - t0;
+            if (error) {
+                html += `<div class="test-result test-fail">❌ ${t.name}: ${error.code} - ${error.message} (${ms}ms)</div>`;
+                log(`${t.name}: ${error.message}`, 'error');
+            } else {
+                html += `<div class="test-result test-pass">✅ ${t.name}: ${Array.isArray(data) ? data.length : (data ? 1 : 0)} نتائج (${ms}ms)</div>`;
+                log(`${t.name}: ${Array.isArray(data) ? data.length : 1} rows في ${ms}ms`, 'success');
+            }
+        } catch (e) {
+            html += `<div class="test-result test-fail">❌ ${t.name}: ${e.message}</div>`;
+            log(`${t.name}: ${e.message}`, 'error');
+        }
+    }
+    document.getElementById('testResults').innerHTML = html;
+};
+
+runDiagnostics();
+</script>
 </body>
 </html>
