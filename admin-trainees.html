@@ -396,7 +396,7 @@ function renderStrikesDisplay(count) {
 }
 
 function renderTraineeCard(s) {
-    const photo = s.photo ? `<img src="${escapeHtml(s.photo)}" alt="">` : `<span>${getInitial(s.full_name)}</span>`;
+    const photo = s.photo ? `<img src="${escapeHtml(s.photo)}" alt="">` : `<span>${getInitial(s.full_name || s.email || '?')}</span>`;
     const strikes = getStrikes(s.user_id);
     const banned = isBanned(s.user_id);
     return `
@@ -622,9 +622,29 @@ window.resolveViolation = async (id) => {
     } catch (err) { showToast('حدث خطأ', 'error'); }
 };
 
-window.viewTraineeDetails = (userId) => {
-    const s = allStudents.find(x => x.user_id === userId);
-    if (!s) return;
+window.viewTraineeDetails = async (userId) => {
+    let s = allStudents.find(x => x.user_id === userId);
+    if (!s) {
+        window.ProVance?.showToast?.('الطالب غير موجود في القائمة', 'warning');
+        return;
+    }
+    
+    // اجلب بيانات حديثة من DB (مش الـ cached)
+    try {
+        const { data: freshData, error } = await sb.from('student').select('*').eq('user_id', userId).maybeSingle();
+        if (error) {
+            console.error('❌ Failed to fetch fresh student data:', error);
+            console.error('Code:', error.code, 'Message:', error.message);
+            window.ProVance?.showToast?.('تعذر جلب البيانات الحديثة، عرض البيانات المخزنة', 'warning');
+        } else if (freshData) {
+            s = freshData;
+            // حدّث الـ cache
+            const idx = allStudents.findIndex(x => x.user_id === userId);
+            if (idx >= 0) allStudents[idx] = freshData;
+        }
+    } catch (err) {
+        console.error('❌ viewTraineeDetails error:', err);
+    }
     const photo = s.photo ? `<img src="${escapeHtml(s.photo)}" alt="">` : `<span>${getInitial(s.full_name)}</span>`;
     const userViolations = allViolations.filter(v => v.target_user_id === userId);
     const strikes = getStrikes(userId);
@@ -755,7 +775,14 @@ async function loadAll() {
         renderTrainees();
         updateStats();
     } catch (err) {
-        console.error('Load error:', err);
+        console.error('═══════════ LOAD ERROR ═══════════');
+            console.error('Page:', window.location.pathname);
+            console.error('Error:', err);
+            console.error('Code:', err?.code);
+            console.error('Message:', err?.message);
+            console.error('Details:', err?.details);
+            console.error('Hint:', err?.hint);
+            console.error('═════════════════════════════════');
         showToast('خطأ في تحميل البيانات', 'error');
     }
 }
