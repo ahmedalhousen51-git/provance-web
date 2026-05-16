@@ -2270,8 +2270,21 @@
 
             State.renderProfile();
         } catch (err) {
-            console.error('Load error:', err);
-            window.ProVance?.showToast?.('خطأ في تحميل البيانات. حاول إعادة تحميل الصفحة', 'error');
+            console.error('═══════════════════════════════════════════');
+            console.error('❌ LOAD ERROR في student-profile:');
+            console.error('Error:', err);
+            console.error('Message:', err?.message);
+            console.error('Code:', err?.code);
+            console.error('Details:', err?.details);
+            console.error('Hint:', err?.hint);
+            console.error('═══════════════════════════════════════════');
+            
+            // لو 42501 = RLS error
+            if (err?.code === '42501' || (err?.message || '').includes('row-level security')) {
+                window.ProVance?.showToast?.('خطأ صلاحيات (RLS) - شغّل SQL migration 24', 'error');
+            } else {
+                window.ProVance?.showToast?.('خطأ في تحميل البيانات. افتح F12 → Console لمعرفة التفاصيل', 'error');
+            }
             
             // أعرض رسالة خطأ للمستخدم بدل ما الصفحة تعلق
             const sidebarName = document.getElementById('sidebarName');
