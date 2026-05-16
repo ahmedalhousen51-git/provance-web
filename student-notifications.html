@@ -432,9 +432,26 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
     let isInitialized = false;
     async function loadAll() {
-        const sb = await (window.ProVance?.waitForSupabaseClient?.(10000) || Promise.resolve(window.ProVance?.sb || null));
+                // محاولة الحصول على Supabase client بطرق متعددة
+        let sb = null;
+        if (window.ProVance?.waitForSupabaseClient) {
+            try { sb = await window.ProVance.waitForSupabaseClient(15000); } catch(e) {}
+        }
+        if (!sb && typeof supabase !== 'undefined' && supabase.createClient) {
+            try {
+                sb = supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                    { auth: { persistSession: true, storage: window.localStorage } }
+                );
+            } catch(e) { console.error('Direct client creation failed:', e); }
+        }
         if (!sb) {
-            console.error('Supabase client not available');
+            console.error('❌ Supabase client unavailable');
+            if (!window._pageRetried) {
+                window._pageRetried = true;
+                setTimeout(() => location.reload(), 3000);
+            }
             return;
         }
         try {
