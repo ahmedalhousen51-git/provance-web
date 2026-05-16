@@ -536,6 +536,33 @@ function renderInternshipCard(i) {
     };
 
     // VIEW DETAILS
+    
+    // ============================================================
+    // 🛡️ Resilient Supabase Client
+    // ============================================================
+    async function getSafeSupabase() {
+        if (window.ProVance?.waitForSupabaseClient) {
+            try {
+                const sb = await window.ProVance.waitForSupabaseClient(8000);
+                if (sb && typeof sb.from === 'function') return sb;
+            } catch(e) {}
+        }
+        try {
+            const sb = window.ProVance?.sb;
+            if (sb && typeof sb.from === 'function') return sb;
+        } catch(e) {}
+        if (typeof supabase !== 'undefined' && supabase.createClient) {
+            try {
+                return supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                    { auth: { persistSession: true, storage: window.localStorage } }
+                );
+            } catch(e) {}
+        }
+        return null;
+    }
+
     window.viewInternshipDetails = async (id) => {
         const i = allInternships.find(x => x.id === id);
         if (!i) return;
@@ -543,15 +570,17 @@ function renderInternshipCard(i) {
         // اجلب التفاصيل الكاملة من DB لو لسه ما اتجبتش
         if (!i._fullDetailsLoaded) {
             try {
-                const sb = window.ProVance.sb;
-                const { data: fullData } = await sb.from('internships')
-                    .select('description, requirements, knowledge_benefits, financial_benefits')
-                    .eq('id', id).maybeSingle();
-                if (fullData) {
-                    Object.assign(i, fullData);
-                    i._fullDetailsLoaded = true;
+                const sb = await getSafeSupabase();
+                if (sb) {
+                    const { data: fullData } = await sb.from('internships')
+                        .select('description, requirements, knowledge_benefits, financial_benefits')
+                        .eq('id', id).maybeSingle();
+                    if (fullData) {
+                        Object.assign(i, fullData);
+                        i._fullDetailsLoaded = true;
+                    }
                 }
-            } catch (e) { console.warn('Details load failed:', e); }
+            } catch (e) { console.warn('Details load failed (showing without details):', e); }
         }
 
         const company = allCompanies[i.company_user_id] || {};
@@ -629,12 +658,11 @@ function renderInternshipCard(i) {
                         </div>
                     ` : ''}
 
-                    ${benefits.length > 0 ? `
+                    ${i.knowledge_benefits || i.financial_benefits ? `
                         <div class="modal-section">
                             <div class="modal-section-title"><i class="fas fa-gift"></i> المزايا</div>
-                            <ul class="ben-list">
-                                ${benefits.map(b => `<li><i class="fas fa-star"></i> ${esc(b)}</li>`).join('')}
-                            </ul>
+                            ${i.knowledge_benefits ? `<div style="background:rgba(79,172,254,0.05);padding:12px;border-radius:10px;margin-bottom:10px"><strong style="color:var(--primary)">💡 مكتسبات معرفية:</strong><div style="margin-top:6px;line-height:1.7">${esc(i.knowledge_benefits)}</div></div>` : ''}
+                            ${i.financial_benefits ? `<div style="background:rgba(16,185,129,0.05);padding:12px;border-radius:10px"><strong style="color:#10b981">💰 مكتسبات مادية:</strong><div style="margin-top:6px;line-height:1.7">${esc(i.financial_benefits)}</div></div>` : ''}
                         </div>
                     ` : ''}
 
@@ -886,7 +914,7 @@ function renderInternshipCard(i) {
 
             const results = await Promise.allSettled([
                 sb.from('student').select('user_id, full_name, email, status, training_status').eq('user_id', userId).maybeSingle(),
-                sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, duration, max_applicants, current_applicants, trainee_type, salary_min, salary_max, salary_currency, status, created_at').eq('status', 'active').order('created_at', { ascending: false }),
+                sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, duration, max_applicants, current_applicants, trainee_type, salary_min, salary_max, salary_currency, training_price, training_currency, status, created_at').eq('status', 'active').order('created_at', { ascending: false }),
                 sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at').eq('student_user_id', userId),
                 sb.from('companies').select('user_id, company_name, training_price, training_currency, provides_certificate, provides_meals, provides_transport')
             ]);
@@ -913,12 +941,17 @@ function renderInternshipCard(i) {
                 appCountsByInternship[int.id] = int.current_applicants || 0;
             });
 
-            // اربط training_price بكل internship من الشركة
+            // اربط training_price - من internship نفسها إذا موجود، وإلا من company
             allInternships.forEach(int => {
                 const comp = allCompanies[int.company_user_id];
                 if (comp) {
-                    int.training_price = comp.training_price;
-                    int.training_currency = comp.training_currency;
+                    // training_price من internship.training_price له الأولوية
+                    if (!int.training_price && comp.training_price) {
+                        int.training_price = comp.training_price;
+                    }
+                    if (!int.training_currency) {
+                        int.training_currency = comp.training_currency || 'EGP';
+                    }
                 }
             });
             
