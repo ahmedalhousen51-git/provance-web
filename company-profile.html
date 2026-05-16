@@ -736,7 +736,15 @@
             companyData = data;
 
             // Header
-            const initial = (data.company_name || '?').trim().charAt(0).toUpperCase();
+            // استخدم اول حرف من الاسم، أو من الإيميل، أو "ش" كـ fallback
+            let initial = '?';
+            if (data.company_name && data.company_name.trim()) {
+                initial = data.company_name.trim().charAt(0).toUpperCase();
+            } else if (data.email && data.email.trim()) {
+                initial = data.email.trim().charAt(0).toUpperCase();
+            } else {
+                initial = 'ش';
+            }
             document.getElementById('avatarInitial').textContent = initial;
 
             if (data.logo) {
@@ -958,22 +966,41 @@
             };
 
             try {
-                const sb = window.ProVance.sb;
+                const sb = await (window.ProVance?.waitForSupabaseClient?.(8000) || Promise.resolve(window.ProVance?.sb || null));
+                if (!sb) throw new Error('فشل الاتصال بـ Supabase');
+                
                 const session = await window.ProVance.getSession();
-                const { error } = await sb.from('companies')
+                if (!session) throw new Error('انتهت الجلسة - سجل دخول تاني');
+                
+                console.log('💾 Saving company profile...', updates);
+                const { data, error } = await sb.from('companies')
                     .update(updates)
-                    .eq('user_id', session.user.id);
+                    .eq('user_id', session.user.id)
+                    .select();
 
-                if (error) throw error;
-
+                if (error) {
+                    console.error('═══════════════════════════════════════════');
+                    console.error('❌ SAVE ERROR في company-profile:');
+                    console.error('Code:', error.code);
+                    console.error('Message:', error.message);
+                    console.error('Details:', error.details);
+                    console.error('Hint:', error.hint);
+                    console.error('═══════════════════════════════════════════');
+                    throw error;
+                }
+                
+                console.log('✅ Saved successfully:', data);
                 Object.assign(companyData, updates);
                 loadCompanyData(companyData);
 
                 window.ProVance.showToast('تم حفظ التعديلات بنجاح ✓', 'success');
                 closeEditModal();
             } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ في الحفظ', 'error');
+                console.error('❌ Save failed:', err);
+                let msg = 'فشل الحفظ';
+                if (err?.code === '42501') msg = 'خطأ صلاحيات (RLS) - شغّل SQL migration 24';
+                else if (err?.message) msg = 'فشل الحفظ: ' + err.message.substring(0, 80);
+                window.ProVance.showToast(msg, 'error');
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ التعديلات';
