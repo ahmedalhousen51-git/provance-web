@@ -885,6 +885,34 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script>
+
+    // ============================================================
+    // 🛡️ Resilient Supabase Client - GLOBAL (في أعلى الـ script)
+    // متاح في كل الـ IIFEs والـ scopes
+    // ============================================================
+    window.getSafeSupabase = async function() {
+        if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
+            try {
+                const sb = await window.ProVance.waitForSupabaseClient(8000);
+                if (sb && typeof sb.from === 'function') return sb;
+            } catch(e) {}
+        }
+        try {
+            const sb = window.ProVance && window.ProVance.sb;
+            if (sb && typeof sb.from === 'function') return sb;
+        } catch(e) {}
+        if (typeof supabase !== 'undefined' && supabase.createClient) {
+            try {
+                return supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                    { auth: { persistSession: true, storage: window.localStorage } }
+                );
+            } catch(e) { console.error('Direct sb creation failed:', e); }
+        }
+        return null;
+    };
+
 // ============================================================
 // ProVance: Student Profile - Full Featured
 // ============================================================
@@ -931,32 +959,6 @@
 
     // Avatar Presets - 12 colorful gradients
     
-    // ============================================================
-    // 🛡️ Resilient Supabase Client (متاح في كل الـ scopes)
-    // ============================================================
-    window.getSafeSupabase = async function() {
-        if (window.ProVance?.waitForSupabaseClient) {
-            try {
-                const sb = await window.ProVance.waitForSupabaseClient(8000);
-                if (sb && typeof sb.from === 'function') return sb;
-            } catch(e) {}
-        }
-        try {
-            const sb = window.ProVance?.sb;
-            if (sb && typeof sb.from === 'function') return sb;
-        } catch(e) {}
-        if (typeof supabase !== 'undefined' && supabase.createClient) {
-            try {
-                return supabase.createClient(
-                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                    { auth: { persistSession: true, storage: window.localStorage } }
-                );
-            } catch(e) {}
-        }
-        return null;
-    }
-
     const AVATAR_PRESETS = [
         { gradient: 'linear-gradient(135deg, #667eea, #764ba2)', emoji: '👨‍💻' },
         { gradient: 'linear-gradient(135deg, #f093fb, #f5576c)', emoji: '👨‍🎓' },
