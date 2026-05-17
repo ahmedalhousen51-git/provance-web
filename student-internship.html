@@ -817,7 +817,11 @@ function renderInternshipCard(i) {
         const message = document.getElementById('applyMessage').value.trim();
 
         try {
-            const sb = window.ProVance.sb;
+            const sb = await window.getSafeSupabase();
+            if (!sb) {
+                window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error');
+                return;
+            }
             const company = allCompanies[internship.company_user_id] || {};
 
             const { error } = await sb.from('applications').insert({
