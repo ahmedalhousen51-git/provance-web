@@ -803,6 +803,35 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script>
+
+    // ============================================================
+    // 🛡️ Resilient Supabase Client - GLOBAL
+    // ============================================================
+    if (!window.getSafeSupabase) {
+        window.getSafeSupabase = async function() {
+            if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
+                try {
+                    const sb = await window.ProVance.waitForSupabaseClient(8000);
+                    if (sb && typeof sb.from === 'function') return sb;
+                } catch(e) {}
+            }
+            try {
+                const sb = window.ProVance && window.ProVance.sb;
+                if (sb && typeof sb.from === 'function') return sb;
+            } catch(e) {}
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                try {
+                    return supabase.createClient(
+                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                        { auth: { persistSession: true, storage: window.localStorage } }
+                    );
+                } catch(e) {}
+            }
+            return null;
+        };
+    }
+
 // ============================================================
 // ProVance: Interviews Management - Full Featured
 // ============================================================
@@ -1242,7 +1271,8 @@
 
         // ============ SCHEDULE MODAL ============
         window.openScheduleModal = async (appId = null) => {
-            const sb = window.ProVance.sb;
+            const sb = await window.getSafeSupabase();
+            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
             const { data: pendingApps } = await sb.from('applications')
                 .select('*')
                 .eq('company_user_id', State.companyUserId)
@@ -1337,7 +1367,8 @@
             const interviewDate = new Date(`${date}T${time}:00`);
 
             try {
-                const sb = window.ProVance.sb;
+                const sb = await window.getSafeSupabase();
+            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
                 const { error } = await sb.from('applications').update({
                     status: 'interview_scheduled',
                     interview_date: interviewDate.toISOString(),
@@ -1459,7 +1490,8 @@
             const interview = State.allInterviews.find(i => i.id === appId);
 
             try {
-                const sb = window.ProVance.sb;
+                const sb = await window.getSafeSupabase();
+            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
                 await sb.from('applications').update({
                     interview_date: newDate.toISOString()
                 }).eq('id', appId);
@@ -1594,7 +1626,8 @@
             if (!ok) return;
 
             try {
-                const sb = window.ProVance.sb;
+                const sb = await window.getSafeSupabase();
+            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
                 const interview = State.allInterviews.find(i => i.id === id);
 
                 await sb.from('late_reports').insert({
@@ -1629,7 +1662,8 @@
 
         window.acceptStudent = async (id) => {
             try {
-                const sb = window.ProVance.sb;
+                const sb = await window.getSafeSupabase();
+            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
                 await sb.from('applications').update({ status: 'accepted' }).eq('id', id);
 
                 const interview = State.allInterviews.find(i => i.id === id);
@@ -1654,7 +1688,8 @@
 
         window.rejectStudent = async (id, reason) => {
             try {
-                const sb = window.ProVance.sb;
+                const sb = await window.getSafeSupabase();
+            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
                 await sb.from('applications').update({
                     status: 'rejected',
                     rejection_reason: reason
@@ -1687,7 +1722,8 @@
             let qrCode = State.allQrCodes.find(q => q.application_id === interviewId && q.qr_type === 'interview' && q.status === 'active');
 
             if (!qrCode) {
-                const sb = window.ProVance.sb;
+                const sb = await window.getSafeSupabase();
+            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
                 const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
                 const interviewDate = new Date(interview.interview_date);
                 const validUntil = new Date(interviewDate.getTime() + 60 * 60 * 1000);
@@ -2102,7 +2138,7 @@
 
             const results = await Promise.allSettled([
                 sb.from('companies').select('company_name').eq('user_id', userId).maybeSingle(),
-                sb.from('applications').select('*').eq('company_user_id', userId)
+                sb.from('applications').select('id, student_user_id, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date').eq('company_user_id', userId)
                     .in('status', ['interview_scheduled', 'interview_done', 'accepted', 'rejected', 'hired', 'in_training', 'completed'])
                     .order('interview_date', { ascending: true }),
                 sb.from('qr_codes').select('*').eq('company_user_id', userId)
