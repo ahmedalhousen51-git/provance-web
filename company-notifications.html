@@ -262,6 +262,35 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script>
+
+    // ============================================================
+    // 🛡️ Resilient Supabase Client - GLOBAL
+    // ============================================================
+    if (!window.getSafeSupabase) {
+        window.getSafeSupabase = async function() {
+            if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
+                try {
+                    const sb = await window.ProVance.waitForSupabaseClient(8000);
+                    if (sb && typeof sb.from === 'function') return sb;
+                } catch(e) {}
+            }
+            try {
+                const sb = window.ProVance && window.ProVance.sb;
+                if (sb && typeof sb.from === 'function') return sb;
+            } catch(e) {}
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                try {
+                    return supabase.createClient(
+                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                        { auth: { persistSession: true, storage: window.localStorage } }
+                    );
+                } catch(e) {}
+            }
+            return null;
+        };
+    }
+
 (function() {
     'use strict';
 
