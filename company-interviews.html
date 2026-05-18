@@ -831,6 +831,21 @@
             }
             return null;
         };
+
+        // ============================================================
+        // 🛡️ Resilient session check - ينتظر قبل ما يرجع للـ login
+        // ============================================================
+        async function getResilientSession(sb, maxRetries = 5) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const { data: { session } } = await sb.auth.getSession();
+                    if (session && session.user) return session;
+                } catch(e) { console.warn('Session check attempt ' + (i+1) + ' failed:', e); }
+                await new Promise(r => setTimeout(r, 500));
+            }
+            return null;
+        }
+
     }
 
 // ============================================================
