@@ -208,6 +208,7 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
             <a href="company-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
             <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
             <a href="company-requests-control.html" class="nav-item active"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
+            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم</a>
             <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
             <a href="company-QR_Code.html" class="nav-item"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
             <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
@@ -426,7 +427,7 @@ async function loadAll() {
         const results = await Promise.allSettled([
             sb.from('companies').select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency').eq('user_id', companyUserId).maybeSingle(),
             sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, description, duration, max_applicants, current_applicants, trainee_type, requirements, knowledge_benefits, financial_benefits, salary_min, salary_max, salary_currency, status, start_date, end_date, created_at, updated_at').eq('company_user_id', companyUserId).order('created_at', { ascending: false }),
-            sb.from('applications').select('id, student_user_id, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date').eq('company_user_id', companyUserId)
+            sb.from('applications').select('id, student_user_id, student_name, student_email, student_photo, student_university, student_cv_url, internship_id, company_name, internship_title, application_message, status, created_at, updated_at, interview_date, rejection_reason').eq('company_user_id', companyUserId).order('created_at', { ascending: false })
         ]);
 
         const companyRes = results[0].status === 'fulfilled' ? results[0].value : { data: null };
