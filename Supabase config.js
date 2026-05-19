@@ -114,7 +114,7 @@
         const start = Date.now();
         let sb = getSupabase();
         while (!sb && (Date.now() - start) < maxWaitMs) {
-            await new Promise(r => setTimeout(r, 200));
+            await new Promise(r => setTimeout(r, 50));
             sb = getSupabase();
         }
         return sb;
