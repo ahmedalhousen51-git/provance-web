@@ -229,8 +229,8 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
             <a href="admin-trainees.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
             <a href="admin-users.html" class="nav-item"><i class="fas fa-user-shield"></i> الأدمنز</a>
             <a href="admin-approvals.html" class="nav-item"><i class="fas fa-check-double"></i> الموافقات <span class="nav-badge" id="approvalsBadge" style="display:none">0</span></a>
-            <a href="admin-student-support.html" class="nav-item"><i class="fas fa-user-graduate"></i> دعم الطلاب</a>
-            <a href="admin-company-support.html" class="nav-item"><i class="fas fa-headset"></i> دعم الشركات</a>
+            <a href="admin-student-support.html" class="nav-item" id="navStudentSupport"><i class="fas fa-user-graduate"></i> دعم الطلاب</a>
+            <a href="admin-company-support.html" class="nav-item" id="navCompanySupport"><i class="fas fa-headset"></i> دعم الشركات</a>
             <a href="admin-notification.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
             <a href="#" onclick="logoutAdmin(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
@@ -338,6 +338,21 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
 });
 
+
+// إخفاء support links حسب الصلاحيات
+function applyAdminPermissions(adminCheck) {
+    if (!adminCheck) return;
+    const isSuper = adminCheck.role === 'super_admin';
+    const perms = adminCheck.permissions || {};
+    if (!isSuper && !perms.reply_to_students) {
+        document.querySelectorAll('a[href="admin-student-support.html"]').forEach(a => a.style.display = 'none');
+    }
+    if (!isSuper && !perms.reply_to_companies) {
+        document.querySelectorAll('a[href="admin-company-support.html"]').forEach(a => a.style.display = 'none');
+    }
+}
+
+
 let allCompanies = [];
 let currentFilter = 'all';
 let selectedId = null;
@@ -377,6 +392,23 @@ function showToast(msg, type = 'info') {
     setTimeout(() => t.remove(), 4000);
 }
 
+
+// إخفاء support links لو الأدمن مفيش عنده صلاحية
+function hideUnauthorizedNavLinks(adminCheck) {
+    if (!adminCheck) return;
+    const isSuper = adminCheck.is_super_admin === true || adminCheck.role === 'super_admin';
+    const perms = adminCheck.permissions || {};
+    
+    if (!isSuper && perms.reply_to_students !== true) {
+        const link = document.getElementById('navStudentSupport');
+        if (link) link.style.display = 'none';
+    }
+    if (!isSuper && perms.reply_to_companies !== true) {
+        const link = document.getElementById('navCompanySupport');
+        if (link) link.style.display = 'none';
+    }
+}
+
 window.logoutAdmin = async (e) => {
     e.preventDefault();
     if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) return;
@@ -401,6 +433,7 @@ async function checkAdmin() {
         const { data: { session } } = await sb.auth.getSession();
         if (!session) { window.location.href = 'admin-login.html'; return null; }
         const { data: admin } = await sb.from('admins').select('*').eq('user_id', session.user.id).maybeSingle();
+        applyAdminPermissions(admin);
         if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
         return admin;
     } catch (e) { window.location.href = 'admin-login.html'; return null; }
@@ -958,11 +991,23 @@ window.confirmPenalty = async () => {
 
     try {
         const { error } = await sb.from('companies').update(updateData).eq('user_id', c.id);
-        if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
+        if (error) {
+            // معالجة خاصة لو الـ column مش موجود
+            if (error.message && (error.message.includes('penalties') || error.message.includes('column'))) {
+                showToast('⚠️ شغّل SQL Migration 38 الأول! (columns مفقودة)', 'error');
+                console.error('Missing columns. Run 38_companies_penalties_admin_permissions.sql');
+                return;
+            }
+            showToast('خطأ: ' + error.message, 'error');
+            return;
+        }
         showToast('تم إضافة العقوبة', 'warning');
         closeModal('penaltyModal');
         await loadCompanies();
-    } catch (e) { showToast('خطأ في الاتصال', 'error'); }
+    } catch (e) { 
+        console.error(e);
+        showToast('خطأ: ' + e.message, 'error'); 
+    }
 };
 
 // ========== Export CSV ==========
