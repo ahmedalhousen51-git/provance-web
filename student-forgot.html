@@ -268,9 +268,34 @@
     (function() {
         'use strict';
 
+        window.getSafeSupabase = async function() {
+            if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
+                try {
+                    const sb = await window.ProVance.waitForSupabaseClient(5000);
+                    if (sb && typeof sb.from === 'function') return sb;
+                } catch(e) {}
+            }
+            try {
+                const sb = window.ProVance && window.ProVance.sb;
+                if (sb && typeof sb.from === 'function') return sb;
+            } catch(e) {}
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                try {
+                    return supabase.createClient(
+                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                        { auth: { persistSession: true, storage: window.localStorage } }
+                    );
+                } catch(e) {}
+            }
+            return null;
+        };
+        
         const form = document.getElementById('forgotForm');
         const emailInp = document.getElementById('email');
         const submitBtn = document.getElementById('submitBtn');
+        const showToast = (m, t) => window.ProVance && window.ProVance.showToast ? window.ProVance.showToast(m, t) : alert(m);
+        const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
         function showErr(msg) {
             document.getElementById('emailErr').textContent = msg;
@@ -289,21 +314,22 @@
             clearErr();
 
             if (!email) { showErr('البريد الإلكتروني مطلوب'); return; }
-            if (!window.ProVance.isValidEmail(email)) { showErr('صيغة البريد غير صحيحة'); return; }
+            if (!isValidEmail(email)) { showErr('صيغة البريد غير صحيحة'); return; }
 
             submitBtn.classList.add('loading');
             submitBtn.disabled = true;
 
             try {
-                const sb = window.ProVance.sb;
-                const redirectTo = window.location.origin +
-                    window.location.pathname.replace('student-forgot.html', 'student-reset-password.html');
+                const sb = await window.getSafeSupabase();
+                if (!sb) throw new Error('فشل الاتصال بالخادم');
+                
+                const redirectTo = window.location.origin + window.location.pathname.replace('student-forgot.html', 'student-reset-password.html');
 
                 const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
 
                 if (error) {
                     console.error(error);
-                    window.ProVance.showToast('حدث خطأ، حاول مرة أخرى', 'error');
+                    showToast('حدث خطأ: ' + error.message, 'error');
                     submitBtn.classList.remove('loading');
                     submitBtn.disabled = false;
                     return;
@@ -315,7 +341,7 @@
 
             } catch (err) {
                 console.error(err);
-                window.ProVance.showToast('خطأ في الاتصال', 'error');
+                showToast('خطأ في الاتصال: ' + err.message, 'error');
                 submitBtn.classList.remove('loading');
                 submitBtn.disabled = false;
             }
