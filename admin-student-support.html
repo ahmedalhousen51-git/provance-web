@@ -65,6 +65,11 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 .loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; }
+.no-permission { display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:24px; }
+.no-permission i { font-size: 5rem; color: var(--warning); margin-bottom: 18px; }
+.no-permission h2 { font-size:1.4rem;font-weight:800;margin-bottom:10px; }
+.no-permission p { color:var(--text-muted);max-width:420px;line-height:1.6; margin-bottom: 18px; }
+.no-permission a { background:var(--gradient);color:#fff;text-decoration:none;padding:11px 22px;border-radius:10px;font-weight:700; }
 @media (max-width: 1024px) {
 .sidebar { transform: translateX(100%); width: 280px; }
 .sidebar.open { transform: translateX(0); }
@@ -107,14 +112,14 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 <a href="admin-trainees.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
 <a href="admin-users.html" class="nav-item"><i class="fas fa-user-shield"></i> الأدمنز</a>
 <a href="admin-approvals.html" class="nav-item"><i class="fas fa-check-double"></i> الموافقات</a>
-<a href="admin-student-support.html" class="nav-item active"><i class="fas fa-user-graduate"></i> دعم الطلاب</a>
-<a href="admin-company-support.html" class="nav-item"><i class="fas fa-headset"></i> دعم الشركات</a>
+<a href="admin-student-support.html" class="nav-item active" id="navStudentSupport"><i class="fas fa-user-graduate"></i> دعم الطلاب</a>
+<a href="admin-company-support.html" class="nav-item" id="navCompanySupport"><i class="fas fa-headset"></i> دعم الشركات</a>
 <a href="admin-notification.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
 <a href="#" onclick="logoutAdmin(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
 </a>
 </aside>
-<main class="main">
+<main class="main" id="mainContent">
 <div class="topbar">
 <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
 <i class="fas fa-bars"></i>
@@ -169,66 +174,117 @@ try { await sb.auth.signOut(); } catch {}
 localStorage.clear();
 window.location.href = 'admin-login.html';
 };
-async function loadAll() {
-try {
-const { data: sessData } = await sb.auth.getSession();
-if (!sessData || !sessData.session) {
-window.location.href = 'admin-login.html';
-return;
-        }
-adminUserId = sessData.session.user.id;
-const { data: adminCheck } = await sb.from('admins').select('*').eq('user_id', adminUserId).maybeSingle();
-if (!adminCheck) {
-showToast('غير مصرح', 'error');
-setTimeout(() => window.location.href = 'admin-login.html', 1500);
-return;
-        }
-// نجلب فقط الرسائل المتعلقة بالطلاب
-const results = await Promise.allSettled([
-sb.from('support_messages').select('*').or('sender_type.eq.student,recipient_type.eq.student').order('created_at', { ascending: true }),
-sb.from('student').select('user_id, full_name, photo')
-        ]);
-if (results[0].status === 'rejected' || (results[0].value && results[0].value.error)) {
-const err = results[0].value?.error || results[0].reason;
-if (err && err.message && err.message.includes('support_messages')) {
-showToast('⚠️ شغّل SQL migration 37 الأول', 'warning');
-            }
-allMessages = [];
-        } else {
-allMessages = results[0].value.data || [];
-        }
-if (results[1].status === 'fulfilled') {
-            (results[1].value.data || []).forEach(s => { studentsMap[s.user_id] = s; });
-        }
-renderThreads();
-document.getElementById('loadingOverlay').classList.add('hidden');
-    } catch (err) {
-console.error(err);
-showToast('خطأ: ' + err.message, 'error');
-document.getElementById('loadingOverlay').classList.add('hidden');
+
+// إخفاء الـ links اللي مفيش صلاحية ليها
+function hideUnauthorizedNavLinks(adminCheck) {
+    if (!adminCheck) return;
+    const isSuper = adminCheck.is_super_admin === true || adminCheck.role === 'super_admin';
+    const perms = adminCheck.permissions || {};
+    
+    if (!isSuper && perms.reply_to_students !== true) {
+        const link = document.getElementById('navStudentSupport');
+        if (link) link.style.display = 'none';
+    }
+    if (!isSuper && perms.reply_to_companies !== true) {
+        const link = document.getElementById('navCompanySupport');
+        if (link) link.style.display = 'none';
     }
 }
-function renderThreads() {
-const threadsByStudent = {};
-allMessages.forEach(m => {
-const studentId = m.sender_type === 'student' ? m.sender_id : (m.recipient_type === 'student' ? m.recipient_id : null);
-if (!studentId) return;
-if (!threadsByStudent[studentId]) threadsByStudent[studentId] = [];
-threadsByStudent[studentId].push(m);
-    });
-const list = document.getElementById('threadsList');
-const students = Object.keys(threadsByStudent);
-if (students.length === 0) {
-list.innerHTML = '<div class="empty-chat" style="height:200px;flex:none"><i class="fas fa-inbox"></i><p>لا توجد محادثات</p></div>';
-return;
+
+function showNoPermission(action) {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    document.getElementById('mainContent').innerHTML = `
+        <div class="no-permission">
+            <i class="fas fa-lock"></i>
+            <h2>ليس لديك صلاحية</h2>
+            <p>صلاحية "${action}" غير مفعلة لحسابك. تواصل مع السوبر أدمن لتفعيلها.</p>
+            <a href="admin-dashboard.html"><i class="fas fa-arrow-left"></i> العودة للوحة التحكم</a>
+        </div>
+    `;
+}
+
+async function loadAll() {
+    try {
+        const { data: sessData } = await sb.auth.getSession();
+        if (!sessData || !sessData.session) {
+            window.location.href = 'admin-login.html';
+            return;
+        }
+        adminUserId = sessData.session.user.id;
+        
+        const { data: adminCheck } = await sb.from('admins').select('*').eq('user_id', adminUserId).maybeSingle();
+        if (!adminCheck) {
+            showToast('غير مصرح', 'error');
+            setTimeout(() => window.location.href = 'admin-login.html', 1500);
+            return;
+        }
+        
+        // إخفاء الـ links حسب الصلاحيات
+        hideUnauthorizedNavLinks(adminCheck);
+        
+        // تحقق من صلاحية الرد على الطلاب
+        const isSuper = adminCheck.is_super_admin === true || adminCheck.role === 'super_admin';
+        const perms = adminCheck.permissions || {};
+        const canReply = isSuper || perms.reply_to_students === true;
+        
+        if (!canReply) {
+            showNoPermission('الرد على دعم الطلاب');
+            return;
+        }
+        
+        // نجلب فقط الرسائل المتعلقة بالطلاب
+        const results = await Promise.allSettled([
+            sb.from('support_messages').select('*').or('sender_type.eq.student,recipient_type.eq.student').order('created_at', { ascending: true }),
+            sb.from('student').select('user_id, full_name, photo')
+        ]);
+        
+        if (results[0].status === 'rejected' || (results[0].value && results[0].value.error)) {
+            const err = results[0].value?.error || results[0].reason;
+            if (err && err.message && err.message.includes('support_messages')) {
+                showToast('⚠️ شغّل SQL migration 37 الأول', 'warning');
+            }
+            allMessages = [];
+        } else {
+            allMessages = results[0].value.data || [];
+        }
+        
+        if (results[1].status === 'fulfilled') {
+            (results[1].value.data || []).forEach(s => { studentsMap[s.user_id] = s; });
+        }
+        
+        renderThreads();
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    } catch (err) {
+        console.error(err);
+        showToast('خطأ: ' + err.message, 'error');
+        document.getElementById('loadingOverlay').classList.add('hidden');
     }
-list.innerHTML = students.map(studentId => {
-const msgs = threadsByStudent[studentId];
-const lastMsg = msgs[msgs.length - 1];
-const unreadCount = msgs.filter(m => m.sender_type === 'student' && !m.is_read).length;
-const student = studentsMap[studentId];
-const studentName = student ? student.full_name : '(غير معروف)';
-return `
+}
+
+function renderThreads() {
+    const threadsByStudent = {};
+    allMessages.forEach(m => {
+        const studentId = m.sender_type === 'student' ? m.sender_id : (m.recipient_type === 'student' ? m.recipient_id : null);
+        if (!studentId) return;
+        if (!threadsByStudent[studentId]) threadsByStudent[studentId] = [];
+        threadsByStudent[studentId].push(m);
+    });
+    
+    const list = document.getElementById('threadsList');
+    const students = Object.keys(threadsByStudent);
+    
+    if (students.length === 0) {
+        list.innerHTML = '<div class="empty-chat" style="height:200px;flex:none"><i class="fas fa-inbox"></i><p>لا توجد محادثات</p></div>';
+        return;
+    }
+    
+    list.innerHTML = students.map(studentId => {
+        const msgs = threadsByStudent[studentId];
+        const lastMsg = msgs[msgs.length - 1];
+        const unreadCount = msgs.filter(m => m.sender_type === 'student' && !m.is_read).length;
+        const student = studentsMap[studentId];
+        const studentName = student ? student.full_name : '(غير معروف)';
+        return `
             <div class="thread-item ${activeStudentId === studentId ? 'active' : ''}" onclick="openThread('${studentId}')">
                 <div class="thread-company">
                     <i class="fas fa-user-graduate"></i> ${escapeHtml(studentName)}
@@ -236,46 +292,50 @@ return `
                 <div class="thread-preview">${escapeHtml(lastMsg.message.substring(0, 80))}</div>
                 <div class="thread-meta">
                     <span>${formatDate(lastMsg.created_at)}</span>
-${unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : ''}
+                    ${unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : ''}
                 </div>
             </div>
         `;
     }).join('');
 }
+
 window.openThread = async (studentId) => {
-activeStudentId = studentId;
-renderThreads();
-renderChat();
-const studentMsgs = allMessages.filter(m => m.sender_id === studentId && m.sender_type === 'student' && !m.is_read);
-if (studentMsgs.length > 0) {
-const ids = studentMsgs.map(m => m.id);
-await sb.from('support_messages').update({ is_read: true }).in('id', ids);
-studentMsgs.forEach(m => m.is_read = true);
-renderThreads();
+    activeStudentId = studentId;
+    renderThreads();
+    renderChat();
+    const studentMsgs = allMessages.filter(m => m.sender_id === studentId && m.sender_type === 'student' && !m.is_read);
+    if (studentMsgs.length > 0) {
+        const ids = studentMsgs.map(m => m.id);
+        await sb.from('support_messages').update({ is_read: true }).in('id', ids);
+        studentMsgs.forEach(m => m.is_read = true);
+        renderThreads();
     }
 };
+
 function renderChat() {
-const container = document.getElementById('chatContent');
-if (!activeStudentId) {
-container.innerHTML = `
+    const container = document.getElementById('chatContent');
+    if (!activeStudentId) {
+        container.innerHTML = `
             <div class="empty-chat">
                 <i class="fas fa-comment-dots"></i>
                 <p>اختر محادثة من القائمة لعرض الرسائل</p>
             </div>`;
-return;
+        return;
     }
-const student = studentsMap[activeStudentId];
-const studentName = student ? student.full_name : '(غير معروف)';
-const initial = (studentName || '?').charAt(0).toUpperCase();
-const photo = student && student.photo && !student.photo.startsWith('preset:') ? student.photo : null;
-const avatarHtml = photo 
+    
+    const student = studentsMap[activeStudentId];
+    const studentName = student ? student.full_name : '(غير معروف)';
+    const initial = (studentName || '?').charAt(0).toUpperCase();
+    const photo = student && student.photo && !String(student.photo).startsWith('preset:') ? student.photo : null;
+    const avatarHtml = photo 
         ? `<img src="${escapeHtml(photo)}" alt="" style="width:100%;height:100%;object-fit:cover">` 
         : escapeHtml(initial);
-const messages = allMessages.filter(m => 
+    const messages = allMessages.filter(m => 
         (m.sender_id === activeStudentId && m.sender_type === 'student') ||
         (m.recipient_id === activeStudentId && m.recipient_type === 'student')
     );
-container.innerHTML = `
+    
+    container.innerHTML = `
         <div class="chat-header">
             <div class="company-avatar">${avatarHtml}</div>
             <div style="flex:1">
@@ -284,13 +344,13 @@ container.innerHTML = `
             </div>
         </div>
         <div class="chat-messages" id="chatMessages">
-${messages.map(m => {
-const isAdmin = m.sender_type === 'admin';
-return `
+            ${messages.map(m => {
+                const isAdmin = m.sender_type === 'admin';
+                return `
                     <div class="msg ${isAdmin ? 'outgoing' : 'incoming'}">
                         <div class="msg-sender">
                             <i class="fas fa-${isAdmin ? 'user-shield' : 'user-graduate'}"></i>
-${isAdmin ? 'أنت (إدارة ProVance)' : escapeHtml(studentName)}
+                            ${isAdmin ? 'أنت (إدارة ProVance)' : escapeHtml(studentName)}
                         </div>
                         <div class="msg-body">${escapeHtml(m.message)}</div>
                         <div class="msg-time">${formatDate(m.created_at)}</div>
@@ -308,58 +368,62 @@ ${isAdmin ? 'أنت (إدارة ProVance)' : escapeHtml(studentName)}
             </form>
         </div>
     `;
-setTimeout(() => {
-const msgsEl = document.getElementById('chatMessages');
-if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+    
+    setTimeout(() => {
+        const msgsEl = document.getElementById('chatMessages');
+        if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
     }, 50);
 }
+
 window.sendReply = async (e) => {
-e.preventDefault();
-if (!activeStudentId) return;
-const input = document.getElementById('replyInput');
-const message = input.value.trim();
-if (!message) return;
-try {
-const { error } = await sb.from('support_messages').insert({
-sender_id: adminUserId,
-sender_type: 'admin',
-recipient_id: activeStudentId,
-recipient_type: 'student',
-message: message,
-is_read: false,
-created_at: new Date().toISOString()
+    e.preventDefault();
+    if (!activeStudentId) return;
+    const input = document.getElementById('replyInput');
+    const message = input.value.trim();
+    if (!message) return;
+    
+    try {
+        const { error } = await sb.from('support_messages').insert({
+            sender_id: adminUserId,
+            sender_type: 'admin',
+            recipient_id: activeStudentId,
+            recipient_type: 'student',
+            message: message,
+            is_read: false,
+            created_at: new Date().toISOString()
         });
-if (error) {
-showToast('خطأ: ' + error.message, 'error');
-return;
+        if (error) {
+            showToast('خطأ: ' + error.message, 'error');
+            return;
         }
-try {
-await sb.from('notifications').insert({
-user_id: activeStudentId,
-user_type: 'student',
-type: 'support_reply',
-title: '💬 رد من إدارة ProVance',
-message: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
-link: 'student-support.html'
+        try {
+            await sb.from('notifications').insert({
+                user_id: activeStudentId,
+                user_type: 'student',
+                type: 'support_reply',
+                title: '💬 رد من إدارة ProVance',
+                message: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
+                link: 'student-support.html'
             });
         } catch(e) {}
-input.value = '';
-showToast('✅ تم الإرسال', 'success');
-await loadAll();
-renderChat();
+        input.value = '';
+        showToast('✅ تم الإرسال', 'success');
+        await loadAll();
+        renderChat();
     } catch (err) {
-showToast('خطأ: ' + err.message, 'error');
+        showToast('خطأ: ' + err.message, 'error');
     }
 };
+
 document.addEventListener('DOMContentLoaded', loadAll);
 setTimeout(() => {
-const el = document.getElementById('loadingOverlay');
-if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
+    const el = document.getElementById('loadingOverlay');
+    if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
 }, 12000);
 document.addEventListener('keydown', (e) => {
-if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'replyInput') {
-e.preventDefault();
-document.querySelector('.send-form').requestSubmit();
+    if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'replyInput') {
+        e.preventDefault();
+        document.querySelector('.send-form').requestSubmit();
     }
 });
 </script>
