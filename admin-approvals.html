@@ -125,8 +125,8 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         <a href="admin-trainees.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
         <a href="admin-users.html" class="nav-item"><i class="fas fa-user-shield"></i> الأدمنز</a>
         <a href="admin-approvals.html" class="nav-item active"><i class="fas fa-check-double"></i> الموافقات</a>
-            <a href="admin-student-support.html" class="nav-item"><i class="fas fa-user-graduate"></i> دعم الطلاب</a>
-            <a href="admin-company-support.html" class="nav-item"><i class="fas fa-headset"></i> دعم الشركات</a>
+            <a href="admin-student-support.html" class="nav-item" id="navStudentSupport"><i class="fas fa-user-graduate"></i> دعم الطلاب</a>
+            <a href="admin-company-support.html" class="nav-item" id="navCompanySupport"><i class="fas fa-headset"></i> دعم الشركات</a>
             <a href="admin-notification.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
         <a href="#" onclick="logoutAdmin(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
             <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
@@ -213,6 +213,23 @@ window.closeModal = (id) => {
     document.body.style.overflow = '';
 };
 
+
+// إخفاء support links لو الأدمن مفيش عنده صلاحية
+function hideUnauthorizedNavLinks(adminCheck) {
+    if (!adminCheck) return;
+    const isSuper = adminCheck.is_super_admin === true || adminCheck.role === 'super_admin';
+    const perms = adminCheck.permissions || {};
+    
+    if (!isSuper && perms.reply_to_students !== true) {
+        const link = document.getElementById('navStudentSupport');
+        if (link) link.style.display = 'none';
+    }
+    if (!isSuper && perms.reply_to_companies !== true) {
+        const link = document.getElementById('navCompanySupport');
+        if (link) link.style.display = 'none';
+    }
+}
+
 window.logoutAdmin = async (e) => {
     if (e) e.preventDefault();
     if (!confirm('هل تريد تسجيل الخروج؟')) return;
@@ -245,6 +262,23 @@ async function loadApprovals() {
         adminUserId = sessData.session.user.id;
 
         // تأكد إنه أدمن
+        // إخفاء support links حسب الصلاحيات
+function applyAdminPermissions(adminCheck) {
+    if (!adminCheck) return;
+    const isSuper = adminCheck.role === 'super_admin';
+    const perms = adminCheck.permissions || {}
+        applyAdminPermissions(adminCheck);;
+    
+    // دعم الطلاب
+    if (!isSuper && !perms.reply_to_students) {
+        document.querySelectorAll('a[href="admin-student-support.html"]').forEach(a => a.style.display = 'none');
+    }
+    // دعم الشركات
+    if (!isSuper && !perms.reply_to_companies) {
+        document.querySelectorAll('a[href="admin-company-support.html"]').forEach(a => a.style.display = 'none');
+    }
+}
+
         const { data: adminCheck } = await sb.from('admins')
             .select('*').eq('user_id', adminUserId).maybeSingle();
         if (!adminCheck) {
@@ -252,6 +286,8 @@ async function loadApprovals() {
             setTimeout(() => window.location.href = 'admin-login.html', 1500);
             return;
         }
+        hideUnauthorizedNavLinks(adminCheck);
+
 
         // اجلب الـ approvals + الشركات
         const results = await Promise.allSettled([
