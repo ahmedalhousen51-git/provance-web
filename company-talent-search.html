@@ -1225,9 +1225,42 @@ function renderStudents() {
     }).join('');
 }
 
-window.viewStudent = (userId) => {
+window.viewStudent = async (userId) => {
     const s = allStudents.find(x => x.user_id === userId);
     if (!s) return;
+    
+    // جلب past trainings + evaluations + recommendations
+    const sb = await window.getSafeSupabase();
+    let pastApplications = [];
+    let pastEvaluations = [];
+    let pastRecommendations = [];
+    
+    if (sb) {
+        try {
+            const { data: appsData } = await sb.from('applications')
+                .select('id, company_user_id, company_name, internship_title, status, created_at')
+                .eq('student_user_id', userId)
+                .in('status', ['hired', 'in_training', 'completed', 'interview_done'])
+                .order('created_at', { ascending: false });
+            pastApplications = appsData || [];
+            
+            if (pastApplications.length > 0) {
+                const appIds = pastApplications.map(a => a.id);
+                
+                const { data: evalsData } = await sb.from('ai_evaluations')
+                    .select('id, application_id, field, overall_score, summary_feedback, created_at')
+                    .in('application_id', appIds)
+                    .eq('status', 'sent');
+                pastEvaluations = evalsData || [];
+                
+                const { data: recsData } = await sb.from('career_recommendations')
+                    .select('id, application_id, career_assessment, recommendations, evaluation_score, created_at')
+                    .in('application_id', appIds)
+                    .eq('sent_to_student', true);
+                pastRecommendations = recsData || [];
+            }
+        } catch(e) { console.warn('Could not load past data:', e); }
+    }
     
     const initial = (s.full_name || '?').charAt(0).toUpperCase();
     const photo = s.photo && !s.photo.startsWith('preset:') ? s.photo : null;
@@ -1247,6 +1280,83 @@ window.viewStudent = (userId) => {
     
     const eduLevels = {high_school:'ثانوي', diploma:'دبلوم', university:'جامعي', graduate:'خريج', postgraduate:'دراسات عليا', bachelor:'بكالوريوس', master:'ماجستير', phd:'دكتوراه'};
     
+    // Past trainings HTML
+    let pastTrainingsHtml = '';
+    if (pastApplications.length > 0) {
+        const byCompany = {};
+        pastApplications.forEach(p => {
+            const key = p.company_user_id || p.company_name;
+            if (!byCompany[key]) byCompany[key] = { name: p.company_name, items: [] };
+            byCompany[key].items.push(p);
+        });
+        
+        const STATUS_LABELS = {'hired': 'مقبول', 'in_training': 'يتدرب', 'completed': 'أكمل', 'interview_done': 'تمت المقابلة'};
+        
+        pastTrainingsHtml = '<h4 style="font-size:0.95rem;margin-bottom:10px;color:var(--primary)"><i class="fas fa-history"></i> سابقة التدريبات (' + pastApplications.length + ')</h4>' +
+            '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">' +
+                Object.values(byCompany).map(c => {
+                    return '<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:12px">' +
+                        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
+                            '<i class="fas fa-building" style="color:var(--primary);font-size:1.1rem"></i>' +
+                            '<div style="font-weight:800;font-size:0.95rem">' + esc(c.name || 'بدون اسم') + '</div>' +
+                            '<span style="background:rgba(239,68,68,0.1);color:#ef4444;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">' + c.items.length + '</span>' +
+                        '</div>' +
+                        c.items.map(item => 
+                            '<div style="margin-right:24px;padding:6px 0;border-top:1px dashed var(--border);font-size:0.85rem">' +
+                                '<div><strong>' + esc(item.internship_title || '-') + '</strong></div>' +
+                                '<div style="color:var(--text-muted);font-size:0.78rem;margin-top:2px"><i class="fas fa-calendar"></i> ' + new Date(item.created_at).toLocaleDateString('ar-EG') + ' • <span style="color:#10b981">' + (STATUS_LABELS[item.status] || item.status) + '</span></div>' +
+                            '</div>'
+                        ).join('') +
+                    '</div>';
+                }).join('') +
+            '</div>';
+    }
+    
+    let pastEvalsHtml = '';
+    if (pastEvaluations.length > 0) {
+        pastEvalsHtml = '<h4 style="font-size:0.95rem;margin-bottom:10px;color:var(--primary)"><i class="fas fa-chart-line"></i> تقييمات الأداء السابقة (' + pastEvaluations.length + ')</h4>' +
+            '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">' +
+                pastEvaluations.map(e => {
+                    const score = Number(e.overall_score || 0);
+                    const scoreColor = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
+                    const relatedApp = pastApplications.find(p => p.id === e.application_id);
+                    const companyName = relatedApp ? relatedApp.company_name : 'شركة سابقة';
+                    
+                    return '<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:12px">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap;margin-bottom:6px">' +
+                            '<div style="flex:1"><div style="font-weight:800;font-size:0.92rem">' + esc(companyName) + '</div>' +
+                            '<div style="color:var(--text-muted);font-size:0.78rem;margin-top:2px">' + esc(e.field || '-') + ' • ' + new Date(e.created_at).toLocaleDateString('ar-EG') + '</div></div>' +
+                            '<div style="background:' + scoreColor + '22;color:' + scoreColor + ';padding:5px 12px;border-radius:14px;font-weight:800"><i class="fas fa-star"></i> ' + score.toFixed(1) + '/100</div>' +
+                        '</div>' +
+                        (e.summary_feedback ? '<div style="background:rgba(0,0,0,0.15);padding:8px;border-radius:6px;font-size:0.82rem;color:var(--text-muted);margin-top:6px;line-height:1.6">' + esc(e.summary_feedback) + '</div>' : '') +
+                    '</div>';
+                }).join('') +
+            '</div>';
+    }
+    
+    let pastRecsHtml = '';
+    if (pastRecommendations.length > 0) {
+        pastRecsHtml = '<h4 style="font-size:0.95rem;margin-bottom:10px;color:var(--primary)"><i class="fas fa-bullseye"></i> الترشيحات الوظيفية السابقة (' + pastRecommendations.length + ')</h4>' +
+            '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">' +
+                pastRecommendations.map(r => {
+                    const relatedApp = pastApplications.find(p => p.id === r.application_id);
+                    const companyName = relatedApp ? relatedApp.company_name : 'شركة سابقة';
+                    const recs = Array.isArray(r.recommendations) ? r.recommendations : [];
+                    
+                    return '<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:12px">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap;margin-bottom:8px">' +
+                            '<div style="flex:1"><div style="font-weight:800;font-size:0.92rem">' + esc(companyName) + '</div>' +
+                            '<div style="color:var(--text-muted);font-size:0.78rem;margin-top:2px">' + new Date(r.created_at).toLocaleDateString('ar-EG') + '</div></div>' +
+                        '</div>' +
+                        (r.career_assessment ? '<div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:8px;line-height:1.6">' + esc(r.career_assessment) + '</div>' : '') +
+                        (recs.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:6px">' + 
+                            recs.slice(0, 5).map(rec => '<span style="background:rgba(239,68,68,0.1);color:#ef4444;padding:3px 10px;border-radius:10px;font-size:0.78rem;font-weight:600">' + esc(rec.job_title || '-') + '</span>').join('') +
+                        '</div>' : '') +
+                    '</div>';
+                }).join('') +
+            '</div>';
+    }
+    
     const html = '<div id="profileModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this)closeProfileModal()">' +
         '<div style="background:var(--bg);border:1px solid var(--border);border-radius:20px;width:100%;max-width:700px;padding:24px;margin:auto">' +
             '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:18px;gap:14px">' +
@@ -1254,7 +1364,6 @@ window.viewStudent = (userId) => {
                 '<button onclick="closeProfileModal()" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>' +
             '</div>' +
             
-            '<!-- Header -->' +
             '<div style="display:flex;align-items:center;gap:18px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--border);flex-wrap:wrap">' +
                 avatar +
                 '<div style="flex:1;min-width:200px">' +
@@ -1270,9 +1379,6 @@ window.viewStudent = (userId) => {
                     '</div>' +
                 '</div>' +
             '</div>' +
-            
-            '<!-- Privacy Notice -->' +
-            '<div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:10px;border-radius:8px;margin-bottom:14px;font-size:0.84rem;color:#f59e0b"><i class="fas fa-shield-alt"></i> <strong>للخصوصية:</strong> بيانات التواصل (هاتف، إيميل) مخفية. للتواصل مع الطالب، اعرض فرصة تدريب وانتظره يقدّم.</div>' +
             
             (s.bio ? '<h4 style="font-size:0.95rem;margin-bottom:8px;color:var(--primary)"><i class="fas fa-pen-fancy"></i> نبذة عني</h4><p style="background:var(--bg-card);padding:12px;border-radius:8px;color:var(--text-muted);line-height:1.7;font-size:0.92rem;margin-bottom:14px">' + esc(s.bio) + '</p>' : '') +
             
@@ -1305,6 +1411,11 @@ window.viewStudent = (userId) => {
                 (s.portfolio ? '<a href="' + esc(s.portfolio) + '" target="_blank" style="color:var(--primary);text-decoration:none;background:var(--bg-card);padding:8px 12px;border-radius:8px"><i class="fas fa-globe"></i> Portfolio</a>' : '') +
                 (s.cv_url ? '<a href="' + esc(s.cv_url) + '" target="_blank" style="color:var(--primary);text-decoration:none;background:var(--bg-card);padding:8px 12px;border-radius:8px"><i class="fas fa-file-pdf"></i> السيرة الذاتية (CV)</a>' : '') +
             '</div>' : '') +
+            
+            // سابقة التدريبات
+            pastTrainingsHtml +
+            pastEvalsHtml +
+            pastRecsHtml +
             
             '<div style="display:flex;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">' +
                 '<button onclick="closeProfileModal()" style="flex:1;background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إغلاق</button>' +
