@@ -1260,10 +1260,11 @@
 
     // Expose state for part 2
     window._interviewsState = {
-        get companyUserId() { return companyUserId; },
-        get companyName() { return companyName; },
+        get companyUserId() { return companyUserId || window._companyUserId; },
+        get companyName() { return companyName || window._companyName; },
         get allInterviews() { return allInterviews; },
         get allQrCodes() { return allQrCodes; },
+        get allLateReports() { return allLateReports; },
         get dataPolicy() { return dataPolicy; },
         set dataPolicy(v) { dataPolicy = v; },
         addLog,
@@ -2151,11 +2152,9 @@
                 return;
             }
 
-            // Set companyUserId on first load
-            if (!State.companyUserId) {
-                State._companyUserId = userId;
-                Object.defineProperty(State, 'companyUserId', { get: () => userId, configurable: true });
-            }
+            // Set companyUserId - نخزنه في window عشان الـ getter في State يلاقيه
+            window._companyUserId = userId;
+            // ما نلمسش State.companyUserId لأن في getter بالفعل
 
             const results = await Promise.allSettled([
                 sb.from('companies').select('company_name').eq('user_id', userId).maybeSingle(),
@@ -2172,7 +2171,8 @@
             const lateRes = results[3] && results[3].status === "fulfilled" ? results[3].value : { data: [], error: results[3] && results[3].reason };
 
             const companyName = companyRes.data?.company_name || 'الشركة';
-            Object.defineProperty(State, 'companyName', { get: () => companyName, configurable: true });
+            // ما نلمسش State.companyName - الـ getter موجود
+            window._companyName = companyName;
 
             const interviews = appsRes.data || [];
             const qrCodes = qrRes.data || [];
@@ -2196,9 +2196,8 @@
             allLateReports.push(...lateReports);
             
             // و الـ State object كمان
-            Object.defineProperty(State, 'allInterviews', { get: () => window._state.allInterviews, configurable: true });
-            Object.defineProperty(State, 'allQrCodes', { get: () => window._state.allQrCodes, configurable: true });
-            Object.defineProperty(State, 'allLateReports', { get: () => window._state.allLateReports, configurable: true });
+            // ما نلمسش State.* لأن الـ getters موجودة بالفعل وبتقرأ من الـ local arrays
+            // والـ local arrays اتحدثت فوق (allInterviews.push, etc)
             
             console.log('📊 Loaded:', interviews.length, 'interviews,', qrCodes.length, 'QR codes,', lateReports.length, 'late reports');
 
@@ -2249,8 +2248,26 @@
                 });
             }
         } catch (err) {
-            console.error('Load error:', err);
-            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
+            console.error('═══ Load error in company-interviews ═══');
+            console.error('Error:', err);
+            console.error('Message:', err?.message);
+            console.error('Stack:', err?.stack);
+            console.error('═════════════════════════════════════');
+            
+            // ما نظهرش toast لو الخطأ بسيط (مثلاً defineProperty fail)
+            // بس نـ log في الـ console
+            if (err && err.message) {
+                if (err.message.includes('Cannot redefine property')) {
+                    console.warn('Property redefine attempted - ignoring');
+                    return;
+                }
+                if (err.message.includes('network') || err.message.includes('fetch')) {
+                    // Network error - نحاول تاني بعد ثانية
+                    setTimeout(() => loadAll(), 2000);
+                    return;
+                }
+            }
+            window.ProVance.showToast('خطأ في تحميل البيانات: ' + (err?.message || 'unknown'), 'error');
         }
     }
 
