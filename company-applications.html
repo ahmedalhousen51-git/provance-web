@@ -1285,8 +1285,10 @@ window.confirmChangeDate = async (appId) => {
     if (!sb) { showToast('فشل الاتصال', 'error'); return; }
     
     try {
+        // ✅ Convert datetime-local إلى ISO صح
+        const newDateISO = new Date(newDate).toISOString();
         const updates = {
-            interview_date: newDate,
+            interview_date: newDateISO,
             updated_at: new Date().toISOString()
         };
         if (newLocation) updates.interview_location = newLocation;
@@ -1393,9 +1395,14 @@ window.confirmAccept = async (appId) => {
     if (!sb) { showToast('فشل الاتصال', 'error'); return; }
     
     try {
+        // ✅ Convert datetime-local إلى ISO string صحيح
+        // datetime-local input بترجع "YYYY-MM-DDTHH:MM" بدون timezone
+        // new Date() بيـفهمها كـ local time → toISOString() بيحولها لـ UTC
+        const interviewDateISO = interviewDate ? new Date(interviewDate).toISOString() : null;
+        
         const updates = {
             status: 'interview_scheduled',
-            interview_date: interviewDate,
+            interview_date: interviewDateISO,
             updated_at: new Date().toISOString()
         };
         if (interviewLocation) updates.interview_location = interviewLocation;
