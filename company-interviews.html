@@ -991,7 +991,21 @@
         } catch(e) {
             data = (window._state && window._state.allInterviews) || [];
         }
-        const upcoming = data.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
+        
+        // 🔍 Debug: شوف الـ data و الـ dates
+        if (data.length > 0) {
+            console.log('📊 updateStats data:', data.length, 'items');
+            data.forEach((i, idx) => {
+                const d = i.interview_date ? new Date(i.interview_date) : null;
+                console.log(`  ${idx+1}. status=${i.status}, interview_date=${i.interview_date}, parsed=${d}, isFuture=${d && d.getTime() > now}`);
+            });
+        }
+        
+        const upcoming = data.filter(i => {
+            if (i.interview_date && new Date(i.interview_date).getTime() > now) return true;
+            if (i.status === 'interview_scheduled' && !i.interview_date) return true;
+            return false;
+        });
         const past = data.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
         const attended = past.filter(i => ['interview_done', 'accepted', 'hired', 'in_training', 'completed'].includes(i.status));
         const missed = past.filter(i => i.status === 'interview_scheduled');
@@ -1184,7 +1198,13 @@
             filtered.sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
         }
 
-        const upcoming = filtered.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
+        // ✅ Upcoming = لها date في المستقبل، أو status='interview_scheduled' بدون date
+        const upcoming = filtered.filter(i => {
+            if (i.interview_date && new Date(i.interview_date).getTime() > now) return true;
+            // لو status='interview_scheduled' حتى لو مفيش date، يبان في upcoming
+            if (i.status === 'interview_scheduled' && !i.interview_date) return true;
+            return false;
+        });
         const todayInts = filtered.filter(i => {
             if (!i.interview_date) return false;
             const d = new Date(i.interview_date);
