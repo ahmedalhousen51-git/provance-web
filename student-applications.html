@@ -897,9 +897,18 @@
         }
 
         try {
-            const session = await sb.auth.getSession();
-            const userId = session?.data?.session?.user?.id;
+                // Get session بـ retry
+            let userId = null;
+            for (let i = 0; i < 3; i++) {
+                try {
+                    const session = await sb.auth.getSession();
+                    userId = session?.data?.session?.user?.id;
+                    if (userId) break;
+                } catch(e) {}
+                if (i < 2) await new Promise(r => setTimeout(r, 500));
+            }
             if (!userId) {
+                console.error('No session - redirecting');
                 window.location.href = 'student-login.html';
                 return;
             }
