@@ -544,6 +544,17 @@ function getDepartments() {
     let depts = trainingFields.map(field => {
         const details = trainingDetails[field] || {};
         const existingInt = allInternships.find(i => i.field === field || i.title === field);
+        
+        // نلاقي كل الطلبات المتعلقة بالقسم ده:
+        // 1. اللي عندها internship_id بيتطابق مع الـ internship بتاع القسم
+        // 2. أو اللي عنوان التدريب فيها بيطابق اسم القسم/المجال
+        const apps = allApplications.filter(a => {
+            // التطابق بـ internship_id
+            if (existingInt && a.internship_id === existingInt.id) return true;
+            // التطابق بـ internship_title
+            if (a.internship_title && (a.internship_title === field || a.internship_title.includes(field))) return true;
+            return false;
+        });
 
         return {
             field: field,
@@ -551,7 +562,7 @@ function getDepartments() {
             details: details,
             branchId: details.branchId || '',
             internship: existingInt,
-            apps: allApplications.filter(a => a.internship_id === existingInt?.id || a.field === field),
+            apps: apps,
             active: !existingInt || existingInt.status === 'active'
         };
     });
@@ -560,6 +571,11 @@ function getDepartments() {
     if (currentBranchId) {
         depts = depts.filter(d => d.branchId === currentBranchId);
     }
+    
+    // Debug log
+    console.log('Departments:', depts.length, 
+                'Total apps:', allApplications.length, 
+                'Apps mapped to depts:', depts.reduce((s, d) => s + d.apps.length, 0));
 
     return depts;
 }
