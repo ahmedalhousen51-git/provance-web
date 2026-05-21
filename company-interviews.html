@@ -1098,20 +1098,20 @@
         let actions = '';
         // أزرار للمقابلات المجدولة (في أي وقت)
         if (i.status === 'interview_scheduled') {
-            // أزرار حضر/غاب - دايماً متاحة للمقابلات المجدولة
             actions += `<button class="btn btn-success btn-sm" onclick="markAttended('${i.id}')"><i class="fas fa-check"></i> حضر</button>`;
             actions += `<button class="btn btn-danger btn-sm" onclick="markMissed('${i.id}')"><i class="fas fa-times"></i> غاب</button>`;
-            // QR Code وتعديل - للمقابلات اللي لسه قدامها وقت أو دلوقتي
             if (isUpcoming || qrStillValid || !i.interview_date) {
                 actions += `<button class="btn btn-primary btn-sm" onclick="generateQRCode('${i.id}')"><i class="fas fa-qrcode"></i> QR Code</button>`;
-                actions += `<button class="btn btn-secondary btn-sm" onclick="openRescheduleModal('${i.id}')"><i class="fas fa-edit"></i> تعديل المعاد</button>`;
-            } else if (isPast) {
-                // المعاد فات - زرار تعديل المعاد مهم
-                actions += `<button class="btn btn-secondary btn-sm" onclick="openRescheduleModal('${i.id}')"><i class="fas fa-edit"></i> تعديل المعاد</button>`;
             }
+            actions += `<button class="btn btn-secondary btn-sm" onclick="openRescheduleModal('${i.id}')"><i class="fas fa-edit"></i> تعديل المعاد</button>`;
         }
         if (i.status === 'interview_done') {
             actions += `<button class="btn btn-success btn-sm" onclick="openDecisionModal('${i.id}')"><i class="fas fa-gavel"></i> اتخاذ قرار</button>`;
+            actions += `<button class="btn btn-secondary btn-sm" onclick="openRescheduleModal('${i.id}')"><i class="fas fa-redo"></i> مقابلة جديدة</button>`;
+        }
+        // لو مرفوض بسبب غياب - زرار "إعادة الجدولة"
+        if (i.status === 'rejected' && i.rejection_reason && i.rejection_reason.includes('حضر')) {
+            actions += `<button class="btn btn-secondary btn-sm" onclick="reopenInterview('${i.id}')"><i class="fas fa-redo"></i> إعادة جدولة المقابلة</button>`;
         }
         actions += `<button class="btn btn-info btn-sm" onclick="viewInterviewDetails('${i.id}')"><i class="fas fa-eye"></i> التفاصيل</button>`;
 
@@ -1668,6 +1668,64 @@
                 await window.rejectStudent(appId, reason.trim());
             } else {
                 await window.acceptStudent(appId);
+            }
+        };
+
+        // إعادة فتح مقابلة (لو الطالب اعتذر أو قرر يحضر)
+        window.reopenInterview = async (id) => {
+            const ok = await window.ProVance.confirmModal({
+                title: 'إعادة جدولة المقابلة',
+                message: 'سترجع المقابلة لحالة "مجدولة" وتقدر تعدّل الموعد. هل تريد المتابعة؟'
+            });
+            if (!ok) return;
+
+            try {
+                let sb = window.ProVance?.sb;
+                if (!sb && window.getSafeSupabase) sb = await window.getSafeSupabase();
+                if (!sb && typeof supabase !== 'undefined') {
+                    sb = supabase.createClient(
+                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                        { auth: { persistSession: true, storage: window.localStorage } }
+                    );
+                }
+                if (!sb) {
+                    window.ProVance.showToast('فشل الاتصال', 'error');
+                    return;
+                }
+                
+                const { data, error } = await sb.from('applications')
+                    .update({ 
+                        status: 'interview_scheduled',
+                        rejection_reason: null,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', id)
+                    .select();
+                
+                if (error) {
+                    console.error('reopenInterview error:', error);
+                    window.ProVance.showToast('خطأ: ' + error.message, 'error');
+                    return;
+                }
+                if (!data || data.length === 0) {
+                    window.ProVance.showToast('⚠️ مفيش صلاحية', 'error');
+                    return;
+                }
+                
+                window.ProVance.showToast('✅ تم إعادة فتح المقابلة', 'success');
+                addLog('إعادة جدولة', 'تم إعادة فتح المقابلة');
+                window.dispatchEvent(new CustomEvent('reload-interviews'));
+                
+                // افتح modal تعديل الموعد
+                setTimeout(() => {
+                    if (typeof window.openRescheduleModal === 'function') {
+                        window.openRescheduleModal(id);
+                    }
+                }, 500);
+            } catch (err) {
+                console.error('reopenInterview catch:', err);
+                window.ProVance.showToast('خطأ: ' + (err.message || 'فشل'), 'error');
             }
         };
 
