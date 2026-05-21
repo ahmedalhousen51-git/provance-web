@@ -828,22 +828,38 @@ function renderInternshipCard(i) {
             }
             const company = allCompanies[internship.company_user_id] || {};
 
-            const { error } = await sb.from('applications').insert({
+            // جرب أول application_message، لو ما اشتغلش جرب message
+            const applicationData = {
                 student_user_id: studentUserId,
                 student_name: studentData.full_name,
                 student_email: studentData.email,
-                student_phone: studentData.phone,
-                student_photo: studentData.photo,
-                student_university: studentData.university,
-                student_cv_url: studentData.cv_url,
+                student_phone: studentData.phone || null,
+                student_photo: studentData.photo || null,
+                student_university: studentData.university || null,
+                student_cv_url: studentData.cv_url || null,
                 company_user_id: internship.company_user_id,
                 company_name: internship.company_name || company.company_name,
-                company_logo: company.logo,
+                company_logo: company.logo || null,
                 internship_id: id,
                 internship_title: internship.title,
-                application_message: message || null,
                 status: 'pending'
-            });
+            };
+            
+            // ضيف الرسالة (نجرب الاسمين بحسب الـ schema)
+            if (message) {
+                applicationData.application_message = message;
+            }
+            
+            let { error } = await sb.from('applications').insert(applicationData);
+            
+            // لو الخطأ في application_message، جرب message
+            if (error && error.message && error.message.includes('application_message')) {
+                console.log('🔄 application_message column missing, trying message instead');
+                delete applicationData.application_message;
+                if (message) applicationData.message = message;
+                const retry = await sb.from('applications').insert(applicationData);
+                error = retry.error;
+            }
 
             if (error) throw error;
 
@@ -946,20 +962,38 @@ function renderInternshipCard(i) {
             } catch(e) { console.error('Direct client creation failed:', e); }
         }
         if (!sb) {
-            console.error('❌ Supabase client unavailable');
-            if (!window._pageRetried) {
-                window._pageRetried = true;
-                setTimeout(() => location.reload(), 3000);
+            console.error('❌ Supabase client unavailable - will retry in 3s');
+            // نحاول مرة تانية بعد 3 ثواني (بدون reload للصفحة)
+            if (!window._sbRetryCount) window._sbRetryCount = 0;
+            if (window._sbRetryCount < 3) {
+                window._sbRetryCount++;
+                setTimeout(() => loadAll(), 3000);
             }
             return;
         }
 
         try {
-            const session = await sb.auth.getSession();
-            const userId = session?.data?.session?.user?.id;
+            // Get session بـ retry للـ resilience
+            let userId = null;
+            for (let i = 0; i < 3; i++) {
+                try {
+                    const session = await sb.auth.getSession();
+                    userId = session?.data?.session?.user?.id;
+                    if (userId) break;
+                } catch(e) {}
+                if (i < 2) await new Promise(r => setTimeout(r, 500));
+            }
+            
             if (!userId) {
-                window.location.href = 'student-login.html';
-                return;
+                // محاولة أخيرة بعد ثانية
+                await new Promise(r => setTimeout(r, 1000));
+                const finalCheck = await sb.auth.getSession();
+                userId = finalCheck?.data?.session?.user?.id;
+                if (!userId) {
+                    console.error('No session after retries - redirecting to login');
+                    window.location.href = 'student-login.html';
+                    return;
+                }
             }
             studentUserId = userId;
 
@@ -1013,26 +1047,37 @@ function renderInternshipCard(i) {
 
             if (!isInitialized) {
                 isInitialized = true;
-                sb.channel('internships-gallery')
+                // 🚀 Debounced reload: لو حصل تغيير، استنى 1 ثانية قبل reload
+                // ده يمنع الـ reload المتكرر لو في تغييرات كتير في وقت قصير
+                let _reloadTimer = null;
+                const debouncedLoad = () => {
+                    if (_reloadTimer) clearTimeout(_reloadTimer);
+                    _reloadTimer = setTimeout(() => {
+                        console.log('🔄 Debounced reload');
+                        loadAll();
+                    }, 1000);
+                };
+                
+                sb.channel('student-gallery-' + userId)
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'internships' }, () => {
                         console.log('🔄 Realtime: internships changed');
-                        loadAll();
+                        debouncedLoad();
                     })
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `student_user_id=eq.${userId}` }, () => {
-                        console.log('🔄 Realtime: applications changed');
-                        loadAll();
+                        console.log('🔄 Realtime: applications changed (mine)');
+                        debouncedLoad();
                     })
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => {
-                        console.log('🔄 Realtime: companies changed');
-                        loadAll();
-                    })
+                    // تجاهل الـ companies changes - مش لازم نـ reload عند كل تعديل في الشركة
+                    // (لو الشركة معاقَبة، الـ internships هتترفع status فيها وده هيـ trigger reload)
                     .subscribe();
                 
-                // Fallback: auto-refresh كل 30 ثانية (لو الـ realtime مش شغّال)
+                // Fallback: auto-refresh كل 60 ثانية (الـ realtime + visibility هما الأساس)
                 setInterval(() => {
-                    console.log('⏱️ Auto-refresh internships');
-                    loadAll();
-                }, 30000);
+                    if (document.visibilityState === 'visible') {
+                        console.log('⏱️ Auto-refresh');
+                        loadAll();
+                    }
+                }, 60000);
                 
                 // Refresh on focus (لو رجع للصفحة بعد ما اتعدلت)
                 window.addEventListener('focus', () => {
