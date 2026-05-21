@@ -637,22 +637,63 @@ window.saveViolation = async (userId) => {
             severity: selectedSeverity,
             status: 'active'
         });
-        if (error) throw error;
-        showToast('تم تسجيل المخالفة', 'success');
+        if (error) {
+            console.error('Penalty save error:', error);
+            if (error.message && (error.message.includes('penalties') || error.message.includes('relation') || error.message.includes('does not exist'))) {
+                showToast('⚠️ شغّل SQL Migration 39 الأول! جدول penalties غير موجود', 'error');
+                return;
+            }
+            throw error;
+        }
+        showToast('✅ تم تسجيل المخالفة', 'success');
         closeModal('addViolationModal');
+        // إشعار للطالب
+        try {
+            const severityLabels = {minor:'بسيطة', moderate:'متوسطة', major:'كبيرة', critical:'حرجة'};
+            await sb.from('notifications').insert({
+                user_id: userId,
+                user_type: 'student',
+                type: 'penalty',
+                title: '⚠️ تم تسجيل مخالفة',
+                message: title + ' (' + (severityLabels[selectedSeverity] || selectedSeverity) + ')',
+                link: 'student-profile.html'
+            });
+        } catch(e) {}
         await loadAll();
+        // أعد فتح details modal لعرض المخالفة الجديدة
+        await viewTraineeDetails(userId);
     } catch (err) {
         showToast('حدث خطأ: ' + err.message, 'error');
     }
 };
 
-window.resolveViolation = async (id) => {
-    if (!confirm('هل تريد إغلاق هذه المخالفة؟')) return;
+window.resolveViolation = async (id, userId) => {
+    if (!confirm('هل تريد تعليم هذه المخالفة كمحلولة؟')) return;
     try {
-        await sb.from('penalties').update({ status: 'resolved', resolved_at: new Date().toISOString() }).eq('id', id);
-        showToast('تم الحل', 'success');
+        const { error } = await sb.from('penalties').update({ 
+            status: 'resolved', 
+            resolved_at: new Date().toISOString() 
+        }).eq('id', id);
+        if (error) throw error;
+        showToast('✅ تم تعليم المخالفة كمحلولة', 'success');
         await loadAll();
-    } catch (err) { showToast('حدث خطأ', 'error'); }
+        if (userId) await viewTraineeDetails(userId);
+    } catch (err) { 
+        showToast('خطأ: ' + err.message, 'error'); 
+    }
+};
+
+window.deleteViolation = async (id, userId) => {
+    if (!confirm('هل أنت متأكد من حذف هذه المخالفة؟ لا يمكن التراجع.')) return;
+    try {
+        const { error } = await sb.from('penalties').delete().eq('id', id);
+        if (error) throw error;
+        showToast('🗑️ تم الحذف', 'success');
+        await loadAll();
+        if (userId) await viewTraineeDetails(userId);
+    } catch (err) { 
+        showToast('خطأ: ' + err.message, 'error'); 
+    }
 };
 
 window.viewTraineeDetails = async (userId) => {
@@ -744,15 +785,27 @@ window.viewTraineeDetails = async (userId) => {
                     <div class="modal-section-title"><i class="fas fa-clipboard-list"></i> سجل المخالفات (${userViolations.length})</div>
                     ${userViolations.length === 0
                         ? '<div style="text-align:center;color:var(--success);padding:14px"><i class="fas fa-shield-alt"></i> سجل نظيف</div>'
-                        : userViolations.slice(0, 10).map(v => `
-                            <div class="violation-card ${v.severity === 'critical' ? 'critical' : v.severity === 'major' ? 'major' : 'minor'}" style="margin-bottom:8px">
-                                <div class="violation-icon ${v.severity === 'critical' ? 'critical' : v.severity === 'major' ? 'major' : 'minor'}"><i class="fas fa-exclamation-triangle"></i></div>
-                                <div class="violation-body">
-                                    <div class="violation-title">${escapeHtml(v.title)}</div>
-                                    <div class="violation-meta">${formatDateTime(v.created_at)} • ${v.status}</div>
+                        : userViolations.slice(0, 20).map(v => {
+                            const sevClass = v.severity === 'critical' ? 'critical' : v.severity === 'major' ? 'major' : 'minor';
+                            const statusLabels = {active: 'نشطة', resolved: 'محلولة', cancelled: 'ملغية'};
+                            const statusColors = {active: '#ef4444', resolved: '#10b981', cancelled: '#94a3b8'};
+                            return `
+                            <div class="violation-card ${sevClass}" style="margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:10px">
+                                <div class="violation-icon ${sevClass}" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(239,68,68,0.15);color:var(--error)"><i class="fas fa-exclamation-triangle"></i></div>
+                                <div class="violation-body" style="flex:1;min-width:0">
+                                    <div class="violation-title" style="font-weight:800;font-size:0.92rem;margin-bottom:4px">${escapeHtml(v.title)}</div>
+                                    ${v.description ? `<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:6px;line-height:1.5">${escapeHtml(v.description)}</div>` : ''}
+                                    <div class="violation-meta" style="font-size:0.74rem;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                                        <span><i class="fas fa-clock"></i> ${formatDateTime(v.created_at)}</span>
+                                        <span style="color:${statusColors[v.status] || 'var(--text-muted)'};font-weight:700">● ${statusLabels[v.status] || v.status}</span>
+                                    </div>
+                                </div>
+                                <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+                                    ${v.status === 'active' ? `<button onclick="resolveViolation('${v.id}', '${userId}')" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:5px 10px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap" title="تعليم كمحلولة"><i class="fas fa-check"></i> حل</button>` : ''}
+                                    <button onclick="deleteViolation('${v.id}', '${userId}')" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:5px 10px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap" title="حذف"><i class="fas fa-trash"></i> حذف</button>
                                 </div>
                             </div>
-                        `).join('')}
+                        `;}).join('')}
                 </div>
                 <div style="display:flex;gap:10px;margin-top:14px">
                     <button class="btn btn-secondary" onclick="closeModal('detailsModal')" style="flex:1;justify-content:center">إغلاق</button>
@@ -786,6 +839,13 @@ async function loadAll() {
             const studentsRes = _results[0].status === 'fulfilled' ? _results[0].value : { data: null, error: _results[0].reason };
             const violationsRes = _results[1].status === 'fulfilled' ? _results[1].value : { data: null, error: _results[1].reason };
             
+            // تحذير لو جدول penalties مش موجود
+            if (violationsRes.error) {
+                const errMsg = violationsRes.error.message || '';
+                if (errMsg.includes('penalties') || errMsg.includes('relation') || errMsg.includes('does not exist')) {
+                    showToast('⚠️ شغّل SQL Migration 39 الأول! جدول penalties غير موجود', 'warning');
+                }
+            }
 
         allStudents = studentsRes.data || [];
         allViolations = violationsRes.data || [];
