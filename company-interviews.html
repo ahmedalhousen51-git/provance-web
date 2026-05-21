@@ -985,7 +985,12 @@
     function updateStats() {
         const now = Date.now();
         // استخدم أحدث data من window._state أو fallback للـ local
-        const data = (window._state && window._state.allInterviews) ? window._state.allInterviews : allInterviews;
+        let data;
+        try {
+            data = (window._state && window._state.allInterviews) ? window._state.allInterviews : allInterviews;
+        } catch(e) {
+            data = (window._state && window._state.allInterviews) || [];
+        }
         const upcoming = data.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
         const past = data.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
         const attended = past.filter(i => ['interview_done', 'accepted', 'hired', 'in_training', 'completed'].includes(i.status));
@@ -1010,7 +1015,12 @@
         document.getElementById('todayCount').textContent = todayInts.length;
         document.getElementById('pastCount').textContent = past.length;
         // استخدم window._state أو local fallback
-        const lateData = (window._state && window._state.allLateReports) ? window._state.allLateReports : (window._allLateReports || allLateReports);
+        let lateData;
+        try {
+            lateData = (window._state && window._state.allLateReports) ? window._state.allLateReports : (window._allLateReports || allLateReports);
+        } catch(e) {
+            lateData = (window._state && window._state.allLateReports) || window._allLateReports || [];
+        }
         document.getElementById('lateCount').textContent = lateData.length;
     }
 
@@ -1128,7 +1138,12 @@
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
 
         // استخدم أحدث data من window._state أو fallback
-        const dataSrc = (window._state && window._state.allInterviews) ? window._state.allInterviews : allInterviews;
+        let dataSrc;
+        try {
+            dataSrc = (window._state && window._state.allInterviews) ? window._state.allInterviews : allInterviews;
+        } catch(e) {
+            dataSrc = (window._state && window._state.allInterviews) || [];
+        }
         let filtered = dataSrc.slice();
 
         if (search) {
@@ -1195,7 +1210,12 @@
     function renderLateReports() {
         const list = document.getElementById('lateReportsList');
         // استخدم window._state أو local fallback
-        const lateData = (window._state && window._state.allLateReports) ? window._state.allLateReports : (window._allLateReports || allLateReports);
+        let lateData;
+        try {
+            lateData = (window._state && window._state.allLateReports) ? window._state.allLateReports : (window._allLateReports || allLateReports);
+        } catch(e) {
+            lateData = (window._state && window._state.allLateReports) || window._allLateReports || [];
+        }
         if (lateData.length === 0) {
             list.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>لا توجد تقارير تأخير</h3><p>هنا تظهر التقارير لما يحصل تأخير</p></div>';
             return;
@@ -1266,9 +1286,9 @@
     window._interviewsState = {
         get companyUserId() { return companyUserId || window._companyUserId; },
         get companyName() { return companyName || window._companyName; },
-        get allInterviews() { return allInterviews; },
-        get allQrCodes() { return allQrCodes; },
-        get allLateReports() { return allLateReports; },
+        get allInterviews() { if (window._state && window._state.allInterviews) return window._state.allInterviews; try { return allInterviews; } catch(e) { return []; } },
+        get allQrCodes() { if (window._state && window._state.allQrCodes) return window._state.allQrCodes; try { return allQrCodes; } catch(e) { return []; } },
+        get allLateReports() { if (window._state && window._state.allLateReports) return window._state.allLateReports; try { return allLateReports; } catch(e) { return []; } },
         get dataPolicy() { return dataPolicy; },
         set dataPolicy(v) { dataPolicy = v; },
         addLog,
@@ -2191,24 +2211,8 @@
             window._state.companyName = companyName;
             window._state.companyUserId = userId;
             
-            // Sync مع الـ local arrays في Part 1 (لو موجودة)
-            try {
-                if (typeof allInterviews !== 'undefined') {
-                    allInterviews.length = 0;
-                    allInterviews.push(...interviews);
-                }
-                if (typeof allQrCodes !== 'undefined') {
-                    allQrCodes.length = 0;
-                    allQrCodes.push(...qrCodes);
-                }
-                if (typeof allLateReports !== 'undefined') {
-                    allLateReports.length = 0;
-                    allLateReports.push(...lateReports);
-                }
-            } catch(e) {
-                // local arrays مش accessible من هنا - استخدم window._state
-                console.log('Using window._state instead of local arrays');
-            }
+            // ✅ كل البيانات في window._state - مش محتاجين نعدل local arrays
+            // الـ getters الموجودة في State بتقرأ من window._state أوتوماتيكياً
             
             // و الـ State object كمان
             // ما نلمسش State.* لأن الـ getters موجودة بالفعل وبتقرأ من الـ local arrays
