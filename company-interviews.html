@@ -984,13 +984,15 @@
     // ============ STATS ============
     function updateStats() {
         const now = Date.now();
-        const upcoming = allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
-        const past = allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
+        // استخدم أحدث data من window backup لو موجود
+        const data = (window._allInterviewsData && window._allInterviewsData.length) ? window._allInterviewsData : allInterviews;
+        const upcoming = data.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
+        const past = data.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
         const attended = past.filter(i => ['interview_done', 'accepted', 'hired', 'in_training', 'completed'].includes(i.status));
         const missed = past.filter(i => i.status === 'interview_scheduled');
         const rate = past.length ? Math.round(attended.length / past.length * 100) : 0;
 
-        document.getElementById('statTotal').textContent = allInterviews.length;
+        document.getElementById('statTotal').textContent = data.length;
         document.getElementById('statUpcoming').textContent = upcoming.length;
         document.getElementById('statAttended').textContent = attended.length;
         document.getElementById('statMissed').textContent = missed.length;
@@ -998,7 +1000,7 @@
 
         const today = new Date(); today.setHours(0,0,0,0);
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-        const todayInts = allInterviews.filter(i => {
+        const todayInts = data.filter(i => {
             if (!i.interview_date) return false;
             const d = new Date(i.interview_date);
             return d >= today && d < tomorrow;
@@ -1123,7 +1125,9 @@
         const today = new Date(); today.setHours(0,0,0,0);
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
 
-        let filtered = allInterviews.slice();
+        // استخدم أحدث data
+        const dataSrc = (window._allInterviewsData && window._allInterviewsData.length) ? window._allInterviewsData : allInterviews;
+        let filtered = dataSrc.slice();
 
         if (search) {
             filtered = filtered.filter(i =>
@@ -2175,13 +2179,34 @@
             const myAppIds = new Set(interviews.map(a => a.id));
             const lateReports = (lateRes.data || []).filter(r => myAppIds.has(r.application_id));
 
+            // حدّث الـ local variables (مهم: الـ functions بتستخدمها) + الـ State
+            window._allInterviewsData = interviews;
+            window._allQrCodesData = qrCodes;
+            window._allLateReports = lateReports;
+            
             Object.defineProperty(State, 'allInterviews', { get: () => interviews, configurable: true });
             Object.defineProperty(State, 'allQrCodes', { get: () => qrCodes, configurable: true });
-            window._allLateReports = lateReports;
-
-            // patch the renderLateReports getter
-            const origLate = State.allLateReports;
             Object.defineProperty(State, 'allLateReports', { get: () => lateReports, configurable: true });
+            
+            // تحديث الـ local variables بطريقة مباشرة
+            try {
+                if (typeof allInterviews !== 'undefined') {
+                    allInterviews.length = 0;
+                    allInterviews.push(...interviews);
+                }
+            } catch(e) {}
+            try {
+                if (typeof allQrCodes !== 'undefined') {
+                    allQrCodes.length = 0;
+                    allQrCodes.push(...qrCodes);
+                }
+            } catch(e) {}
+            try {
+                if (typeof allLateReports !== 'undefined') {
+                    allLateReports.length = 0;
+                    allLateReports.push(...lateReports);
+                }
+            } catch(e) {}
 
             State.updateStats();
             State.renderAllTabs();
@@ -2199,6 +2224,20 @@
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `company_user_id=eq.${userId}` }, () => loadAll())
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'qr_codes', filter: `company_user_id=eq.${userId}` }, () => loadAll())
                     .subscribe();
+                
+                // Auto-refresh لما المستخدم يرجع للصفحة + polling كل 30s
+                let _focusTimer = null;
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        clearTimeout(_focusTimer);
+                        _focusTimer = setTimeout(() => { if (typeof loadAll === 'function') loadAll(); }, 300);
+                    }
+                });
+                window.addEventListener('focus', () => {
+                    clearTimeout(_focusTimer);
+                    _focusTimer = setTimeout(() => { if (typeof loadAll === 'function') loadAll(); }, 300);
+                });
+                setInterval(() => { if (document.visibilityState === 'visible' && typeof loadAll === 'function') loadAll(); }, 10000);
 
                 // Listeners
                 document.getElementById('searchInterviews').addEventListener('input', () => State.renderAllTabs());
