@@ -730,12 +730,15 @@ window.viewDetails = (id) => {
                     <button class="modal-close" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
                 </div>
 
-                <div style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:14px;margin-bottom:14px">
+                <div style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:14px;margin-bottom:14px;flex-wrap:wrap">
                     <div class="company-avatar" style="width:80px;height:80px">${photo}</div>
-                    <div style="flex:1">
+                    <div style="flex:1;min-width:180px">
                         <h3 style="font-size:1.3rem;font-weight:800">${escapeHtml(c.name)}</h3>
                         <div style="color:var(--text-muted);font-size:0.88rem;margin-top:3px">${escapeHtml(c.field)}</div>
-                        <div style="margin-top:6px">${statusText}</div>
+                        <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                            ${statusText}
+                            ${c.suspended ? `<button onclick="unsuspendCompany('${c.id}')" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.82rem"><i class="fas fa-play"></i> فك التعليق الآن</button>` : ''}
+                        </div>
                     </div>
                 </div>
 
@@ -1152,6 +1155,13 @@ window.cancelPenalty = async (companyId, penaltyId) => {
         }
     }
     
+    // أمان إضافي: لو مفيش أي suspension نشطة، فك التعليق
+    const hasActiveSuspension = updatedPenalties.some(p => p.type === 'suspension' && p.status !== 'cancelled' && p.status !== 'expired');
+    if (!hasActiveSuspension && c.suspended) {
+        updateData.suspended = false;
+        updateData.suspended_until = null;
+    }
+    
     try {
         const { error } = await sb.from('companies').update(updateData).eq('user_id', c.id);
         if (error) {
@@ -1194,6 +1204,13 @@ window.deletePenalty = async (companyId, penaltyId) => {
             updateData.suspended = false;
             updateData.suspended_until = null;
         }
+    }
+    
+    // أمان إضافي: لو مفيش أي suspension penalties نشطة في الـ array، فك التعليق
+    const hasActiveSuspension = updatedPenalties.some(p => p.type === 'suspension' && p.status !== 'cancelled' && p.status !== 'expired');
+    if (!hasActiveSuspension && c.suspended) {
+        updateData.suspended = false;
+        updateData.suspended_until = null;
     }
     
     try {
