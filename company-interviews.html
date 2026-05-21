@@ -1673,56 +1673,129 @@
             if (!ok) return;
 
             try {
-                await window.ProVance.sb.from('applications').update({ status: 'interview_done' }).eq('id', id);
+                // الحصول على supabase client بطريقة موثوقة
+                let sb = window.ProVance?.sb;
+                if (!sb && window.getSafeSupabase) sb = await window.getSafeSupabase();
+                if (!sb && typeof supabase !== 'undefined') {
+                    sb = supabase.createClient(
+                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                        { auth: { persistSession: true, storage: window.localStorage } }
+                    );
+                }
+                if (!sb) {
+                    window.ProVance.showToast('فشل الاتصال - حاول مرة أخرى', 'error');
+                    return;
+                }
+                
+                const { data, error } = await sb.from('applications')
+                    .update({ status: 'interview_done', updated_at: new Date().toISOString() })
+                    .eq('id', id)
+                    .select();
+                
+                if (error) {
+                    console.error('markAttended error:', error);
+                    window.ProVance.showToast('خطأ: ' + error.message, 'error');
+                    return;
+                }
+                
+                if (!data || data.length === 0) {
+                    window.ProVance.showToast('⚠️ مفيش صلاحية لتسجيل الحضور', 'error');
+                    return;
+                }
+                
                 const interview = State.allInterviews.find(i => i.id === id);
-                addLog('تسجيل حضور', `${interview?.student_name} حضر المقابلة`);
-                window.ProVance.showToast('تم تسجيل الحضور ✓', 'success');
+                addLog('تسجيل حضور', `${interview?.student_name || ''} حضر المقابلة`);
+                window.ProVance.showToast('✅ تم تسجيل الحضور', 'success');
                 window.dispatchEvent(new CustomEvent('reload-interviews'));
             } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
+                console.error('markAttended catch:', err);
+                window.ProVance.showToast('خطأ: ' + (err.message || 'فشل الاتصال'), 'error');
             }
         };
 
         window.markMissed = async (id) => {
             const ok = await window.ProVance.confirmModal({
                 title: 'تأكيد الغياب',
-                message: 'هل تريد تسجيل أن الطالب غاب؟ هيتم إنشاء تقرير تأخير'
+                message: 'هل تريد تسجيل أن الطالب غاب؟'
             });
             if (!ok) return;
 
             try {
-                const sb = await window.getSafeSupabase();
-            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
+                // الحصول على supabase client
+                let sb = window.ProVance?.sb;
+                if (!sb && window.getSafeSupabase) sb = await window.getSafeSupabase();
+                if (!sb && typeof supabase !== 'undefined') {
+                    sb = supabase.createClient(
+                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                        { auth: { persistSession: true, storage: window.localStorage } }
+                    );
+                }
+                if (!sb) {
+                    window.ProVance.showToast('فشل الاتصال', 'error');
+                    return;
+                }
+                
                 const interview = State.allInterviews.find(i => i.id === id);
-
-                await sb.from('late_reports').insert({
-                    application_id: id,
-                    reported_by: 'company',
-                    reporter_user_id: State.companyUserId,
-                    blame_target: 'student',
-                    reason: 'الطالب لم يحضر المقابلة في الوقت المحدد',
-                    expected_time: interview.interview_date,
-                    status: 'pending'
-                });
-
-                if (interview && window.ProVance.sendNotification) {
-                    await window.ProVance.sendNotification({
-                        userId: interview.student_user_id,
-                        userType: 'student',
-                        title: '⚠️ تم تسجيل غيابك',
-                        message: `الشركة سجلت أنك غبت عن مقابلة ${interview.internship_title}. يرجى إبلاغ سبب الغياب`,
-                        type: 'warning',
-                        link: 'student-applications.html'
+                
+                // 1. حدّث الـ application status لـ rejected (الطالب غاب)
+                const { data, error: updateError } = await sb.from('applications')
+                    .update({ 
+                        status: 'rejected',
+                        rejection_reason: 'الطالب لم يحضر المقابلة',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', id)
+                    .select();
+                
+                if (updateError) {
+                    console.error('markMissed update error:', updateError);
+                    window.ProVance.showToast('خطأ: ' + updateError.message, 'error');
+                    return;
+                }
+                
+                if (!data || data.length === 0) {
+                    window.ProVance.showToast('⚠️ مفيش صلاحية لتسجيل الغياب', 'error');
+                    return;
+                }
+                
+                // 2. حاول تسجل late_report (لو فشل، مش مشكلة)
+                try {
+                    await sb.from('late_reports').insert({
+                        application_id: id,
+                        reported_by: 'company',
+                        reporter_user_id: State.companyUserId,
+                        blame_target: 'student',
+                        reason: 'الطالب لم يحضر المقابلة في الوقت المحدد',
+                        expected_time: interview?.interview_date,
+                        status: 'pending'
                     });
+                } catch(e) {
+                    console.warn('late_report insert failed (table may not exist):', e?.message);
+                    // مش مشكلة - الـ status اتحدث صح
                 }
 
-                addLog('تسجيل غياب', `${interview?.student_name} غاب عن المقابلة`);
-                window.ProVance.showToast('تم تسجيل الغياب', 'warning');
+                // 3. إشعار للطالب
+                if (interview && window.ProVance.sendNotification) {
+                    try {
+                        await window.ProVance.sendNotification({
+                            userId: interview.student_user_id,
+                            userType: 'student',
+                            title: '⚠️ تم تسجيل غيابك',
+                            message: `الشركة سجلت أنك غبت عن مقابلة ${interview.internship_title || ''}`,
+                            type: 'warning',
+                            link: 'student-applications.html'
+                        });
+                    } catch(e) { console.warn('notification failed:', e); }
+                }
+
+                addLog('تسجيل غياب', `${interview?.student_name || ''} غاب عن المقابلة`);
+                window.ProVance.showToast('✅ تم تسجيل الغياب', 'success');
                 window.dispatchEvent(new CustomEvent('reload-interviews'));
             } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
+                console.error('markMissed catch:', err);
+                window.ProVance.showToast('خطأ: ' + (err.message || 'فشل الاتصال'), 'error');
             }
         };
 
@@ -2202,9 +2275,10 @@
 
             const results = await Promise.allSettled([
                 sb.from('companies').select('company_name').eq('user_id', userId).maybeSingle(),
-                sb.from('applications').select('id, student_user_id, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date').eq('company_user_id', userId)
-                    .in('status', ['interview_scheduled', 'interview_done', 'accepted', 'rejected', 'hired', 'in_training', 'completed'])
-                    .order('interview_date', { ascending: true }),
+                // نجيب كل المقابلات اللي لها interview_date أو status معين
+                // (شيلنا الـ status filter لأن ممكن في statuses غير معروفة)
+                sb.from('applications').select('id, student_user_id, student_name, student_email, student_photo, student_university, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date, interview_location, interview_notes, rejection_reason').eq('company_user_id', userId)
+                    .order('interview_date', { ascending: false, nullsFirst: false }),
                 sb.from('qr_codes').select('*').eq('company_user_id', userId)
                     .eq('qr_type', 'interview').order('created_at', { ascending: false }),
                 sb.from('late_reports').select('*').order('created_at', { ascending: false })
@@ -2218,7 +2292,17 @@
             // ما نلمسش State.companyName - الـ getter موجود
             window._companyName = companyName;
 
-            const interviews = appsRes.data || [];
+            // ✅ فلتر: المقابلات = اللي لها interview_date أو status='interview_scheduled' أو 'interview_done'
+            const allApps = appsRes.data || [];
+            const interviews = allApps.filter(a => 
+                a.interview_date || 
+                a.status === 'interview_scheduled' || 
+                a.status === 'interview_done' ||
+                a.status === 'accepted' || 
+                a.status === 'hired' ||
+                a.status === 'in_training'
+            );
+            console.log('📊 Total apps:', allApps.length, 'Interviews:', interviews.length);
             const qrCodes = qrRes.data || [];
             const myAppIds = new Set(interviews.map(a => a.id));
             const lateReports = (lateRes.data || []).filter(r => myAppIds.has(r.application_id));
