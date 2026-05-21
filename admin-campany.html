@@ -442,12 +442,28 @@ async function checkAdmin() {
 // ========== Load Data ==========
 async function loadCompanies() {
     try {
-        const { data, error } = await sb.from('companies').select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency').order('created_at', { ascending: false });
-        if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
+        const { data, error } = await sb.from('companies').select('*').order('created_at', { ascending: false });
+        if (error) { 
+            showToast('خطأ: ' + error.message, 'error'); 
+            console.error('Load error:', error);
+            return; 
+        }
+        
+        // Debug: شوف لو في companies بعقوبات
+        const withPenalties = (data || []).filter(c => {
+            if (!c.penalties) return false;
+            const arr = typeof c.penalties === 'string' ? JSON.parse(c.penalties) : c.penalties;
+            return Array.isArray(arr) && arr.length > 0;
+        });
+        console.log('Loaded', (data || []).length, 'companies,', withPenalties.length, 'have penalties');
+        
         allCompanies = (data || []).map(normalizeCompany);
         updateStats();
         renderCompanies();
-    } catch (e) { showToast('خطأ في الاتصال', 'error'); }
+    } catch (e) { 
+        console.error('Catch:', e);
+        showToast('خطأ في الاتصال: ' + e.message, 'error'); 
+    }
 }
 
 function normalizeCompany(c) {
@@ -481,7 +497,13 @@ function normalizeCompany(c) {
         trainingPrice: c.training_price,
         trainingCurrency: c.training_currency || 'EGP',
         trainingNotes: c.training_notes || '',
-        penalties: safeJSON(c.penalties, []),
+        penalties: (() => {
+            const p = safeJSON(c.penalties, []);
+            if (c.penalties && (!Array.isArray(p) || p.length === 0) && String(c.penalties) !== '[]' && String(c.penalties) !== 'null') {
+                console.warn('Could not parse penalties for company', c.user_id, '- raw:', c.penalties);
+            }
+            return Array.isArray(p) ? p : [];
+        })(),
         suspended: c.suspended || false,
         suspendedUntil: c.suspended_until,
         agreedAt: c.agreed_at
@@ -1014,9 +1036,23 @@ window.confirmPenalty = async () => {
             showToast('خطأ: ' + error.message, 'error');
             return;
         }
-        showToast('تم إضافة العقوبة', 'warning');
+        showToast('✅ تم إضافة العقوبة', 'warning');
+        const companyId = c.id;
         closeModal('penaltyModal');
+        closeModal('detailsModal');
         await loadCompanies();
+        
+        // أعد فتح details modal بعد قليل عشان البيانات الجديدة تتعرض
+        setTimeout(() => { 
+            if (typeof window.viewDetails === 'function') {
+                window.viewDetails(companyId);
+                // افتح tab العقوبات تلقائياً
+                setTimeout(() => {
+                    const penTab = document.querySelector('[onclick*="penalties"]');
+                    if (penTab) penTab.click();
+                }, 150);
+            }
+        }, 200);
     } catch (e) { 
         console.error(e);
         showToast('خطأ: ' + e.message, 'error'); 
@@ -1059,8 +1095,14 @@ window.cancelPenalty = async (companyId, penaltyId) => {
         showToast('✅ تم إلغاء العقوبة', 'success');
         closeModal('detailsModal');
         await loadCompanies();
-        // أعد فتح details
-        setTimeout(() => viewDetails(companyId), 100);
+        // أعد فتح details + افتح tab العقوبات
+        setTimeout(() => { 
+            viewDetails(companyId);
+            setTimeout(() => {
+                const penTab = document.querySelector('[onclick*="penalties"]');
+                if (penTab) penTab.click();
+            }, 150);
+        }, 200);
     } catch (e) {
         showToast('خطأ في الاتصال', 'error');
     }
@@ -1097,7 +1139,13 @@ window.deletePenalty = async (companyId, penaltyId) => {
         showToast('🗑️ تم حذف العقوبة نهائياً', 'success');
         closeModal('detailsModal');
         await loadCompanies();
-        setTimeout(() => viewDetails(companyId), 100);
+        setTimeout(() => { 
+            viewDetails(companyId);
+            setTimeout(() => {
+                const penTab = document.querySelector('[onclick*="penalties"]');
+                if (penTab) penTab.click();
+            }, 150);
+        }, 200);
     } catch (e) {
         showToast('خطأ في الاتصال', 'error');
     }
