@@ -1009,7 +1009,9 @@
         document.getElementById('upcomingCount').textContent = upcoming.length;
         document.getElementById('todayCount').textContent = todayInts.length;
         document.getElementById('pastCount').textContent = past.length;
-        document.getElementById('lateCount').textContent = allLateReports.length;
+        // استخدم window._state أو local fallback
+        const lateData = (window._state && window._state.allLateReports) ? window._state.allLateReports : (window._allLateReports || allLateReports);
+        document.getElementById('lateCount').textContent = lateData.length;
     }
 
     // ============ RENDER INTERVIEW CARD ============
@@ -1192,7 +1194,9 @@
 
     function renderLateReports() {
         const list = document.getElementById('lateReportsList');
-        if (allLateReports.length === 0) {
+        // استخدم window._state أو local fallback
+        const lateData = (window._state && window._state.allLateReports) ? window._state.allLateReports : (window._allLateReports || allLateReports);
+        if (lateData.length === 0) {
             list.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>لا توجد تقارير تأخير</h3><p>هنا تظهر التقارير لما يحصل تأخير</p></div>';
             return;
         }
@@ -1202,7 +1206,7 @@
             'both': 'الطرفين', 'force_majeure': 'قوة قاهرة'
         };
 
-        list.innerHTML = allLateReports.map(r => `
+        list.innerHTML = lateData.map(r => `
             <div class="late-report-card">
                 <div class="late-icon"><i class="fas fa-exclamation-triangle"></i></div>
                 <div class="late-body">
@@ -2187,13 +2191,24 @@
             window._state.companyName = companyName;
             window._state.companyUserId = userId;
             
-            // Sync مع الـ local arrays (للـ backward compatibility)
-            allInterviews.length = 0;
-            allInterviews.push(...interviews);
-            allQrCodes.length = 0;
-            allQrCodes.push(...qrCodes);
-            allLateReports.length = 0;
-            allLateReports.push(...lateReports);
+            // Sync مع الـ local arrays في Part 1 (لو موجودة)
+            try {
+                if (typeof allInterviews !== 'undefined') {
+                    allInterviews.length = 0;
+                    allInterviews.push(...interviews);
+                }
+                if (typeof allQrCodes !== 'undefined') {
+                    allQrCodes.length = 0;
+                    allQrCodes.push(...qrCodes);
+                }
+                if (typeof allLateReports !== 'undefined') {
+                    allLateReports.length = 0;
+                    allLateReports.push(...lateReports);
+                }
+            } catch(e) {
+                // local arrays مش accessible من هنا - استخدم window._state
+                console.log('Using window._state instead of local arrays');
+            }
             
             // و الـ State object كمان
             // ما نلمسش State.* لأن الـ getters موجودة بالفعل وبتقرأ من الـ local arrays
