@@ -499,9 +499,6 @@ function normalizeCompany(c) {
         trainingNotes: c.training_notes || '',
         penalties: (() => {
             const p = safeJSON(c.penalties, []);
-            if (c.penalties && (!Array.isArray(p) || p.length === 0) && String(c.penalties) !== '[]' && String(c.penalties) !== 'null') {
-                console.warn('Could not parse penalties for company', c.user_id, '- raw:', c.penalties);
-            }
             return Array.isArray(p) ? p : [];
         })(),
         suspended: c.suspended || false,
@@ -784,6 +781,18 @@ window.viewDetails = (id) => {
                 <div class="detail-content" id="trainingDetail">${trainingHTML}</div>
                 <div class="detail-content" id="branchesDetail">${branchesHTML}</div>
                 <div class="detail-content" id="penaltiesDetail">
+                    ${c.suspended ? `
+                        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                            <div style="width:46px;height:46px;background:linear-gradient(135deg,#f59e0b,#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.3rem;flex-shrink:0"><i class="fas fa-pause"></i></div>
+                            <div style="flex:1;min-width:180px">
+                                <div style="font-weight:800;color:#f59e0b;font-size:0.95rem">⏸️ الشركة معلقة حالياً</div>
+                                ${c.suspendedUntil ? `<div style="color:var(--text-muted);font-size:0.82rem;margin-top:3px">ينتهي التعليق في: ${formatDate(c.suspendedUntil)}</div>` : ''}
+                            </div>
+                            <button onclick="unsuspendCompany('${c.id}')" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:9px 16px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap">
+                                <i class="fas fa-play"></i> فك التعليق
+                            </button>
+                        </div>
+                    ` : ''}
                     ${penaltiesHTML}
                     <button class="btn btn-penalty" onclick="closeModal('detailsModal');openPenalty('${c.id}')" style="width:100%;justify-content:center;margin-top:14px">
                         <i class="fas fa-plus"></i> إضافة عقوبة جديدة
@@ -1056,6 +1065,67 @@ window.confirmPenalty = async () => {
     } catch (e) { 
         console.error(e);
         showToast('خطأ: ' + e.message, 'error'); 
+    }
+};
+
+// ========== Unsuspend Company ==========
+window.unsuspendCompany = async (companyId) => {
+    if (!confirm('هل تريد فك التعليق عن هذه الشركة؟ ستصبح فعالة مرة أخرى.')) return;
+    const c = allCompanies.find(x => x.id === companyId);
+    if (!c) return;
+    
+    // تحديث الـ suspension في الـ penalties النشطة (نخليها expired)
+    const updatedPenalties = (c.penalties || []).map(p => {
+        if (p.type === 'suspension' && p.status === 'active') {
+            return { ...p, status: 'expired', expired_at: new Date().toISOString().split('T')[0] };
+        }
+        return p;
+    });
+    
+    try {
+        const { error } = await sb.from('companies').update({
+            suspended: false,
+            suspended_until: null,
+            penalties: updatedPenalties,
+            updated_at: new Date().toISOString()
+        }).eq('user_id', c.id);
+        
+        if (error) {
+            if (error.message && error.message.includes('column')) {
+                showToast('⚠️ شغّل SQL Migration 40 الأول!', 'error');
+                return;
+            }
+            showToast('خطأ: ' + error.message, 'error');
+            return;
+        }
+        
+        showToast('✅ تم فك التعليق - الشركة فعالة الآن', 'success');
+        
+        // إشعار للشركة
+        try {
+            await sb.from('notifications').insert({
+                user_id: companyId,
+                user_type: 'company',
+                type: 'unsuspended',
+                title: '✅ تم فك التعليق',
+                message: 'تم رفع التعليق عن حسابك. مرحباً بعودتك!',
+                link: 'company-dashboard.html'
+            });
+        } catch(e) {}
+        
+        closeModal('detailsModal');
+        await loadCompanies();
+        // أعد فتح details + tab العقوبات
+        setTimeout(() => { 
+            viewDetails(companyId);
+            setTimeout(() => {
+                const penTab = document.querySelector('[onclick*="penalties"]');
+                if (penTab) penTab.click();
+            }, 150);
+        }, 200);
+    } catch (e) {
+        console.error(e);
+        showToast('خطأ: ' + e.message, 'error');
     }
 };
 
