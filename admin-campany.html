@@ -440,29 +440,77 @@ async function checkAdmin() {
 }
 
 // ========== Load Data ==========
-async function loadCompanies() {
+async function loadCompanies(retryCount = 0) {
+    const grid = document.getElementById('companiesGrid');
+    
+    // نحاول حتى 3 مرات
+    const MAX_RETRIES = 2;
+    
     try {
-        const { data, error } = await sb.from('companies').select('*').order('created_at', { ascending: false });
+        // Timeout protection: لو الـ query طول أكتر من 15 ثانية، نلغيها
+        const queryPromise = sb.from('companies')
+            .select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency, penalties, suspended, suspended_until, logo_url, created_at, updated_at')
+            .order('created_at', { ascending: false });
+        
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timeout بعد 15 ثانية')), 15000)
+        );
+        
+        const result = await Promise.race([queryPromise, timeoutPromise]);
+        const { data, error } = result;
+        
         if (error) { 
-            showToast('خطأ: ' + error.message, 'error'); 
             console.error('Load error:', error);
+            // retry لو في فرصة
+            if (retryCount < MAX_RETRIES) {
+                console.log(`Retry ${retryCount + 1}/${MAX_RETRIES}...`);
+                await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
+                return loadCompanies(retryCount + 1);
+            }
+            
+            if (grid) {
+                grid.innerHTML = `
+                    <div style="grid-column:1/-1;text-align:center;padding:60px 20px">
+                        <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:#f59e0b;margin-bottom:14px;display:block"></i>
+                        <h3 style="color:var(--text);margin-bottom:8px">⚠️ فشل تحميل البيانات</h3>
+                        <p style="color:var(--text-muted);margin-bottom:16px">${error.message || 'مشكلة في الاتصال بقاعدة البيانات'}</p>
+                        <button onclick="loadCompanies()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer">
+                            <i class="fas fa-sync-alt"></i> إعادة المحاولة
+                        </button>
+                    </div>
+                `;
+            }
             return; 
         }
         
-        // Debug: شوف لو في companies بعقوبات
-        const withPenalties = (data || []).filter(c => {
-            if (!c.penalties) return false;
-            const arr = typeof c.penalties === 'string' ? JSON.parse(c.penalties) : c.penalties;
-            return Array.isArray(arr) && arr.length > 0;
-        });
-        console.log('Loaded', (data || []).length, 'companies,', withPenalties.length, 'have penalties');
+        const list = data || [];
+        console.log('Loaded', list.length, 'companies');
         
-        allCompanies = (data || []).map(normalizeCompany);
+        allCompanies = list.map(normalizeCompany);
         updateStats();
         renderCompanies();
     } catch (e) { 
         console.error('Catch:', e);
-        showToast('خطأ في الاتصال: ' + e.message, 'error'); 
+        
+        // retry لو في فرصة
+        if (retryCount < MAX_RETRIES) {
+            console.log(`Retry ${retryCount + 1}/${MAX_RETRIES} after error...`);
+            await new Promise(r => setTimeout(r, 1500 * (retryCount + 1)));
+            return loadCompanies(retryCount + 1);
+        }
+        
+        if (grid) {
+            grid.innerHTML = `
+                <div style="grid-column:1/-1;text-align:center;padding:60px 20px">
+                    <i class="fas fa-wifi" style="font-size:3rem;color:#f59e0b;margin-bottom:14px;display:block"></i>
+                    <h3 style="color:var(--text);margin-bottom:8px">⚠️ مشكلة في الاتصال</h3>
+                    <p style="color:var(--text-muted);margin-bottom:16px">${e.message || 'تأكد من الإنترنت وحاول مرة أخرى'}</p>
+                    <button onclick="loadCompanies()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer">
+                        <i class="fas fa-sync-alt"></i> إعادة المحاولة
+                    </button>
+                </div>
+            `;
+        }
     }
 }
 
@@ -1256,20 +1304,27 @@ window.exportCSV = () => {
 // ========== Init ==========
 async function init() {
     const admin = await checkAdmin();
-    if (!admin) return;
-    await loadCompanies();
+    if (!admin) {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        return;
+    }
+    
+    // Hide loading أول ما checkAdmin يخلص (السرعة المرئية)
     document.getElementById('loadingOverlay').classList.add('hidden');
+    
+    // ثم اللود (الـ retry mechanism بيهتم بالباقي)
+    await loadCompanies();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Safety: hide loading overlay after 10s no matter what
+    // Safety: hide loading overlay after 6s no matter what
     setTimeout(() => {
         const el = document.getElementById('loadingOverlay');
         if (el && !el.classList.contains('hidden')) {
             el.classList.add('hidden');
             console.warn('Loading timeout - showing UI anyway');
         }
-    }, 10000);
+    }, 6000);
     init();
     let st;
     document.getElementById('searchInput').addEventListener('input', () => {
