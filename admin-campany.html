@@ -672,19 +672,32 @@ window.viewDetails = (id) => {
     let penaltiesHTML = '<p style="text-align:center;color:var(--success);padding:20px"><i class="fas fa-shield-alt"></i> سجل نظيف</p>';
     if (c.penalties && c.penalties.length > 0) {
         penaltiesHTML = c.penalties.map(p => {
-            const isExpired = p.status === 'expired';
+            const isExpired = p.status === 'expired' || p.status === 'cancelled';
+            const isCancelled = p.status === 'cancelled';
             const cls = p.type === 'warning' ? 'warning-type' : '';
+            const statusBadge = isCancelled
+                ? '<span style="background:rgba(148,163,184,0.15);color:#94a3b8;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">ملغية</span>'
+                : isExpired
+                ? '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">منتهية</span>'
+                : '<span style="background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">نشطة</span>';
+            
             return `
-                <div class="penalty-card ${cls} ${isExpired ? 'expired' : ''}">
-                    <div class="penalty-header">
-                        <span class="penalty-type-badge ${p.type}">${getPenaltyTypeText(p.type)}</span>
+                <div class="penalty-card ${cls} ${isExpired ? 'expired' : ''}" style="margin-bottom:10px">
+                    <div class="penalty-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                            <span class="penalty-type-badge ${p.type}">${getPenaltyTypeText(p.type)}</span>
+                            ${statusBadge}
+                        </div>
                         <span style="color:var(--text-muted);font-size:0.82rem">${formatDate(p.date)}</span>
                     </div>
                     <div style="font-weight:600;margin-bottom:6px">${escapeHtml(p.reason || '')}</div>
                     ${p.amount ? `<div style="color:var(--penalty);font-weight:700">القيمة: ${p.amount} ${getCurrencyText(p.currency)}</div>` : ''}
                     ${p.duration ? `<div style="color:var(--text-muted);font-size:0.84rem">المدة: ${p.duration} يوم</div>` : ''}
                     ${p.endDate ? `<div style="color:var(--text-muted);font-size:0.84rem">ينتهي: ${formatDate(p.endDate)}</div>` : ''}
-                    ${isExpired ? '<div style="color:var(--success);font-size:0.82rem;margin-top:5px"><i class="fas fa-check"></i> منتهية</div>' : ''}
+                    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+                        ${!isCancelled && !isExpired ? `<button onclick="cancelPenalty('${c.id}', '${p.id}')" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);padding:6px 12px;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;font-family:inherit"><i class="fas fa-ban"></i> إلغاء العقوبة</button>` : ''}
+                        <button onclick="deletePenalty('${c.id}', '${p.id}')" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:6px 12px;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;font-family:inherit"><i class="fas fa-trash"></i> حذف نهائي</button>
+                    </div>
                 </div>
             `;
         }).join('');
@@ -1007,6 +1020,86 @@ window.confirmPenalty = async () => {
     } catch (e) { 
         console.error(e);
         showToast('خطأ: ' + e.message, 'error'); 
+    }
+};
+
+// ========== Cancel / Delete Penalty ==========
+window.cancelPenalty = async (companyId, penaltyId) => {
+    if (!confirm('هل تريد إلغاء هذه العقوبة؟ ستصبح غير فعالة لكن تبقى في السجل.')) return;
+    const c = allCompanies.find(x => x.id === companyId);
+    if (!c || !c.penalties) return;
+    
+    const updatedPenalties = c.penalties.map(p => 
+        p.id === penaltyId ? { ...p, status: 'cancelled', cancelled_at: new Date().toISOString() } : p
+    );
+    
+    // لو العقوبة كانت suspension، ارفع الـ suspended flag
+    const cancelledPenalty = c.penalties.find(p => p.id === penaltyId);
+    const updateData = { penalties: updatedPenalties, updated_at: new Date().toISOString() };
+    
+    if (cancelledPenalty && cancelledPenalty.type === 'suspension') {
+        // شوف لو في suspensions تانية نشطة
+        const stillSuspended = updatedPenalties.some(p => p.type === 'suspension' && p.status !== 'cancelled' && p.status !== 'expired');
+        if (!stillSuspended) {
+            updateData.suspended = false;
+            updateData.suspended_until = null;
+        }
+    }
+    
+    try {
+        const { error } = await sb.from('companies').update(updateData).eq('user_id', c.id);
+        if (error) {
+            if (error.message && error.message.includes('column')) {
+                showToast('⚠️ شغّل SQL Migration 38 الأول!', 'error');
+                return;
+            }
+            showToast('خطأ: ' + error.message, 'error');
+            return;
+        }
+        showToast('✅ تم إلغاء العقوبة', 'success');
+        closeModal('detailsModal');
+        await loadCompanies();
+        // أعد فتح details
+        setTimeout(() => viewDetails(companyId), 100);
+    } catch (e) {
+        showToast('خطأ في الاتصال', 'error');
+    }
+};
+
+window.deletePenalty = async (companyId, penaltyId) => {
+    if (!confirm('هل أنت متأكد من الحذف النهائي؟ لا يمكن التراجع.')) return;
+    const c = allCompanies.find(x => x.id === companyId);
+    if (!c || !c.penalties) return;
+    
+    const updatedPenalties = c.penalties.filter(p => p.id !== penaltyId);
+    const updateData = { penalties: updatedPenalties, updated_at: new Date().toISOString() };
+    
+    // لو العقوبة المحذوفة كانت suspension، شوف لو في suspensions تانية نشطة
+    const deletedPenalty = c.penalties.find(p => p.id === penaltyId);
+    if (deletedPenalty && deletedPenalty.type === 'suspension') {
+        const stillSuspended = updatedPenalties.some(p => p.type === 'suspension' && p.status !== 'cancelled' && p.status !== 'expired');
+        if (!stillSuspended) {
+            updateData.suspended = false;
+            updateData.suspended_until = null;
+        }
+    }
+    
+    try {
+        const { error } = await sb.from('companies').update(updateData).eq('user_id', c.id);
+        if (error) {
+            if (error.message && error.message.includes('column')) {
+                showToast('⚠️ شغّل SQL Migration 38 الأول!', 'error');
+                return;
+            }
+            showToast('خطأ: ' + error.message, 'error');
+            return;
+        }
+        showToast('🗑️ تم حذف العقوبة نهائياً', 'success');
+        closeModal('detailsModal');
+        await loadCompanies();
+        setTimeout(() => viewDetails(companyId), 100);
+    } catch (e) {
+        showToast('خطأ في الاتصال', 'error');
     }
 };
 
