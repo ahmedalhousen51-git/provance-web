@@ -1150,7 +1150,12 @@ window.unsuspendCompany = async (companyId) => {
             return;
         }
         
-        showToast('✅ تم فك التعليق - الشركة فعالة الآن', 'success');
+        // تأكد إن الـ internships رجعت active (في حالة كانت paused لأي سبب)
+        try {
+            await sb.from('internships').update({ status: 'active' }).eq('company_user_id', companyId).neq('status', 'closed');
+        } catch(e) { console.warn('Could not reactivate internships:', e); }
+        
+        showToast('✅ تم فك التعليق - الشركة فعالة الآن + التدريبات نشطة', 'success');
         
         // إشعار للشركة
         try {
@@ -1159,7 +1164,7 @@ window.unsuspendCompany = async (companyId) => {
                 user_type: 'company',
                 type: 'unsuspended',
                 title: '✅ تم فك التعليق',
-                message: 'تم رفع التعليق عن حسابك. مرحباً بعودتك!',
+                message: 'تم رفع التعليق عن حسابك ورجعت التدريبات نشطة. مرحباً بعودتك!',
                 link: 'company-dashboard.html'
             });
         } catch(e) {}
