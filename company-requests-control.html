@@ -453,19 +453,26 @@ function getBranchName(branchId) {
 
 // ========== Load Data ==========
 async function loadAll(retryCount = 0) {
-    const MAX_RETRIES = 2;
+    const MAX_RETRIES = 1;  // قللنا الـ retries عشان السرعة
     try {
-        // Make sure sb is ready
+        // الـ session مرة واحدة بس - مش هنحتاج retries هنا
         const { data: sessData } = await sb.auth.getSession();
         if (!sessData || !sessData.session) {
-            window.location.href = 'company-login.html';
-            return;
+            // لو مفيش session، استنى شوية وحاول تاني
+            await new Promise(r => setTimeout(r, 500));
+            const { data: retrySession } = await sb.auth.getSession();
+            if (!retrySession || !retrySession.session) {
+                window.location.href = 'company-login.html';
+                return;
+            }
+            companyUserId = retrySession.session.user.id;
+        } else {
+            companyUserId = sessData.session.user.id;
         }
-        companyUserId = sessData.session.user.id;
 
         // Company + Internships + Applications - Promise.allSettled to handle failures gracefully
         const results = await Promise.allSettled([
-            sb.from('companies').select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency').eq('user_id', companyUserId).maybeSingle(),
+            sb.from('companies').select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency, suspended, suspended_until').eq('user_id', companyUserId).maybeSingle(),
             sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, description, duration, max_applicants, current_applicants, trainee_type, requirements, knowledge_benefits, financial_benefits, salary_min, salary_max, salary_currency, status, start_date, end_date, created_at, updated_at').eq('company_user_id', companyUserId).order('created_at', { ascending: false }),
             sb.from('applications').select('id, student_user_id, student_name, student_email, student_photo, student_university, student_cv_url, internship_id, company_name, internship_title, application_message, status, created_at, updated_at, interview_date, rejection_reason').eq('company_user_id', companyUserId).order('created_at', { ascending: false })
         ]);
@@ -473,13 +480,32 @@ async function loadAll(retryCount = 0) {
         const companyRes = results[0].status === 'fulfilled' ? results[0].value : { data: null };
         const internshipsRes = results[1].status === 'fulfilled' ? results[1].value : { data: [] };
         const applicationsRes = results[2].status === 'fulfilled' ? results[2].value : { data: [] };
+        
+        // Debug
+        console.log('Load:', 
+            'company:', companyRes.data ? '✓' : '✗',
+            'internships:', (internshipsRes.data || []).length,
+            'applications:', (applicationsRes.data || []).length
+        );
+        if (results[0].status === 'rejected') console.warn('Company error:', results[0].reason);
+        if (results[1].status === 'rejected') console.warn('Internships error:', results[1].reason);
+        if (results[2].status === 'rejected') console.warn('Applications error:', results[2].reason);
 
         companyData = companyRes.data;
         allInternships = internshipsRes.data || [];
         allApplications = applicationsRes.data || [];
 
         if (!companyData) {
-            showToast('خطأ في تحميل بيانات الشركة', 'error');
+            // companies query فشلت لكن ممكن internships + applications نجحوا
+            // لو في retries متبقية، نحاول
+            if (retryCount < MAX_RETRIES) {
+                console.log(`Company data missing, retrying ${retryCount + 1}/${MAX_RETRIES}...`);
+                await new Promise(r => setTimeout(r, 1000));
+                return loadAll(retryCount + 1);
+            }
+            
+            showToast('خطأ في تحميل بيانات الشركة - حاول الـ refresh', 'error');
+            document.getElementById('loadingOverlay').classList.add('hidden');
             return;
         }
 
@@ -1437,7 +1463,7 @@ setTimeout(() => {
         console.warn('⚠️ Loading timeout');
         el.classList.add('hidden');
     }
-}, 6000);
+}, 15000);
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
