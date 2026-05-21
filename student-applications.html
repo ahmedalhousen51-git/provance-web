@@ -723,27 +723,84 @@
         if (!ok) return;
 
         try {
-            const sb = window.ProVance.sb;
-            await sb.from('applications').update({
-                status: 'withdrawn',
-                withdrawn_at: new Date().toISOString()
-            }).eq('id', id);
-
-            if (window.ProVance.sendNotification) {
-                await window.ProVance.sendNotification({
-                    userId: a.company_user_id,
-                    userType: 'company',
-                    title: '↩️ الطالب سحب طلبه',
-                    message: `${a.student_name || 'طالب'} سحب طلبه على ${a.internship_title}`,
-                    type: 'info'
-                });
+            // نتأكد إن الـ supabase client جاهز
+            let sb = window.ProVance?.sb;
+            if (!sb && window.ProVance?.waitForSupabaseClient) {
+                try {
+                    sb = await window.ProVance.waitForSupabaseClient(5000);
+                } catch(e) {}
+            }
+            
+            // Fallback: نعمل client مباشر
+            if (!sb && typeof supabase !== 'undefined') {
+                sb = supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                    { auth: { persistSession: true, storage: window.localStorage } }
+                );
+            }
+            
+            if (!sb) {
+                window.ProVance.showToast('فشل الاتصال - حاول مرة أخرى', 'error');
+                return;
+            }
+            
+            // المحاولة الأولى: مع withdrawn_at
+            let { data, error } = await sb.from('applications')
+                .update({
+                    status: 'withdrawn',
+                    withdrawn_at: new Date().toISOString()
+                })
+                .eq('id', id)
+                .select();
+            
+            // لو فشل بسبب withdrawn_at، جرب بدونها
+            if (error && error.message && error.message.includes('withdrawn_at')) {
+                console.warn('withdrawn_at column missing, retrying without it');
+                const retry = await sb.from('applications')
+                    .update({ status: 'withdrawn' })
+                    .eq('id', id)
+                    .select();
+                data = retry.data;
+                error = retry.error;
+            }
+            
+            if (error) {
+                console.error('Withdraw error:', error);
+                if (error.message && error.message.includes('check')) {
+                    window.ProVance.showToast('⚠️ شغّل SQL Migration 43 الأول!', 'error');
+                } else if (error.message && error.message.includes('policy')) {
+                    window.ProVance.showToast('⚠️ مشكلة في الصلاحيات - شغّل SQL Migration 43', 'error');
+                } else {
+                    window.ProVance.showToast('خطأ في السحب: ' + error.message, 'error');
+                }
+                return;
+            }
+            
+            // تأكد إن الـ data رجعت (يعني الـ update فعلاً اشتغل)
+            if (!data || data.length === 0) {
+                window.ProVance.showToast('⚠️ مفيش صلاحية لسحب الطلب - شغّل SQL Migration 43', 'error');
+                return;
             }
 
-            window.ProVance.showToast('تم سحب الطلب', 'success');
+            // ✅ نجح السحب
+            if (window.ProVance.sendNotification) {
+                try {
+                    await window.ProVance.sendNotification({
+                        userId: a.company_user_id,
+                        userType: 'company',
+                        title: '↩️ الطالب سحب طلبه',
+                        message: `${a.student_name || 'طالب'} سحب طلبه على ${a.internship_title}`,
+                        type: 'info'
+                    });
+                } catch(e) { console.warn('notification failed:', e); }
+            }
+
+            window.ProVance.showToast('✅ تم سحب الطلب بنجاح', 'success');
             window.dispatchEvent(new CustomEvent('reload-apps'));
         } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ', 'error');
+            console.error('Withdraw catch:', err);
+            window.ProVance.showToast('خطأ: ' + (err.message || 'في الاتصال'), 'error');
         }
     };
 
