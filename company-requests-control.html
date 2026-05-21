@@ -452,7 +452,8 @@ function getBranchName(branchId) {
 }
 
 // ========== Load Data ==========
-async function loadAll() {
+async function loadAll(retryCount = 0) {
+    const MAX_RETRIES = 2;
     try {
         // Make sure sb is ready
         const { data: sessData } = await sb.auth.getSession();
@@ -497,15 +498,39 @@ async function loadAll() {
         document.getElementById('loadingOverlay').classList.add('hidden');
     } catch (err) {
         console.error('═══════════ LOAD ERROR ═══════════');
-            console.error('Page:', window.location.pathname);
-            console.error('Error:', err);
-            console.error('Code:', err?.code);
-            console.error('Message:', err?.message);
-            console.error('Details:', err?.details);
-            console.error('Hint:', err?.hint);
-            console.error('═════════════════════════════════');
-        showToast('خطأ في تحميل البيانات', 'error');
+        console.error('Error:', err);
+        console.error('Message:', err?.message);
+        console.error('═════════════════════════════════');
+        
+        // Retry mechanism
+        if (retryCount < MAX_RETRIES) {
+            console.log(`Retry ${retryCount + 1}/${MAX_RETRIES} after ${(retryCount + 1) * 1500}ms...`);
+            await new Promise(r => setTimeout(r, (retryCount + 1) * 1500));
+            return loadAll(retryCount + 1);
+        }
+        
         document.getElementById('loadingOverlay').classList.add('hidden');
+        
+        // نعرض error UI واضح مع زرار retry
+        const mainContent = document.querySelector('.main-content') || document.querySelector('main') || document.body;
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'loadErrorUI';
+        errorDiv.style.cssText = 'text-align:center;padding:60px 20px;max-width:500px;margin:40px auto;background:var(--card);border:1px solid var(--border);border-radius:14px';
+        errorDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:#f59e0b;margin-bottom:14px;display:block"></i>
+            <h3 style="color:var(--text);margin-bottom:8px">⚠️ فشل تحميل البيانات</h3>
+            <p style="color:var(--text-muted);margin-bottom:16px">${err?.message || 'مشكلة في الاتصال بالخادم'}</p>
+            <button onclick="document.getElementById('loadErrorUI').remove();document.getElementById('loadingOverlay').classList.remove('hidden');loadAll()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer">
+                <i class="fas fa-sync-alt"></i> إعادة المحاولة
+            </button>
+        `;
+        const existing = document.getElementById('loadErrorUI');
+        if (existing) existing.remove();
+        if (mainContent.firstChild) {
+            mainContent.insertBefore(errorDiv, mainContent.firstChild);
+        } else {
+            mainContent.appendChild(errorDiv);
+        }
     }
 }
 
@@ -1396,7 +1421,7 @@ setTimeout(() => {
         console.warn('⚠️ Loading timeout');
         el.classList.add('hidden');
     }
-}, 12000);
+}, 6000);
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
