@@ -984,8 +984,8 @@
     // ============ STATS ============
     function updateStats() {
         const now = Date.now();
-        // استخدم أحدث data من window backup لو موجود
-        const data = (window._allInterviewsData && window._allInterviewsData.length) ? window._allInterviewsData : allInterviews;
+        // استخدم أحدث data من window._state أو fallback للـ local
+        const data = (window._state && window._state.allInterviews) ? window._state.allInterviews : allInterviews;
         const upcoming = data.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
         const past = data.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
         const attended = past.filter(i => ['interview_done', 'accepted', 'hired', 'in_training', 'completed'].includes(i.status));
@@ -1125,8 +1125,8 @@
         const today = new Date(); today.setHours(0,0,0,0);
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
 
-        // استخدم أحدث data
-        const dataSrc = (window._allInterviewsData && window._allInterviewsData.length) ? window._allInterviewsData : allInterviews;
+        // استخدم أحدث data من window._state أو fallback
+        const dataSrc = (window._state && window._state.allInterviews) ? window._state.allInterviews : allInterviews;
         let filtered = dataSrc.slice();
 
         if (search) {
@@ -2179,34 +2179,28 @@
             const myAppIds = new Set(interviews.map(a => a.id));
             const lateReports = (lateRes.data || []).filter(r => myAppIds.has(r.application_id));
 
-            // حدّث الـ local variables (مهم: الـ functions بتستخدمها) + الـ State
-            window._allInterviewsData = interviews;
-            window._allQrCodesData = qrCodes;
-            window._allLateReports = lateReports;
+            // ✅ تحديث global state موحد - الـ functions تقرأ من window._state دايماً
+            if (!window._state) window._state = {};
+            window._state.allInterviews = interviews;
+            window._state.allQrCodes = qrCodes;
+            window._state.allLateReports = lateReports;
+            window._state.companyName = companyName;
+            window._state.companyUserId = userId;
             
-            Object.defineProperty(State, 'allInterviews', { get: () => interviews, configurable: true });
-            Object.defineProperty(State, 'allQrCodes', { get: () => qrCodes, configurable: true });
-            Object.defineProperty(State, 'allLateReports', { get: () => lateReports, configurable: true });
+            // Sync مع الـ local arrays (للـ backward compatibility)
+            allInterviews.length = 0;
+            allInterviews.push(...interviews);
+            allQrCodes.length = 0;
+            allQrCodes.push(...qrCodes);
+            allLateReports.length = 0;
+            allLateReports.push(...lateReports);
             
-            // تحديث الـ local variables بطريقة مباشرة
-            try {
-                if (typeof allInterviews !== 'undefined') {
-                    allInterviews.length = 0;
-                    allInterviews.push(...interviews);
-                }
-            } catch(e) {}
-            try {
-                if (typeof allQrCodes !== 'undefined') {
-                    allQrCodes.length = 0;
-                    allQrCodes.push(...qrCodes);
-                }
-            } catch(e) {}
-            try {
-                if (typeof allLateReports !== 'undefined') {
-                    allLateReports.length = 0;
-                    allLateReports.push(...lateReports);
-                }
-            } catch(e) {}
+            // و الـ State object كمان
+            Object.defineProperty(State, 'allInterviews', { get: () => window._state.allInterviews, configurable: true });
+            Object.defineProperty(State, 'allQrCodes', { get: () => window._state.allQrCodes, configurable: true });
+            Object.defineProperty(State, 'allLateReports', { get: () => window._state.allLateReports, configurable: true });
+            
+            console.log('📊 Loaded:', interviews.length, 'interviews,', qrCodes.length, 'QR codes,', lateReports.length, 'late reports');
 
             State.updateStats();
             State.renderAllTabs();
