@@ -981,6 +981,9 @@ function renderApps() {
         const actions = a.status === 'pending' ? 
             '<button onclick="acceptApp(\''+a.id+'\')" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer"><i class="fas fa-check"></i> قبول وجدولة المقابلة</button>' +
             '<button onclick="rejectApp(\''+a.id+'\')" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer"><i class="fas fa-times"></i> رفض</button>'
+            : (a.status === 'interview_scheduled' || a.status === 'interview_done') 
+            ? '<button onclick="changeInterviewDate(\''+a.id+'\')" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer"><i class="fas fa-calendar-alt"></i> تغيير المعاد</button>' +
+              '<button onclick="cancelInterview(\''+a.id+'\')" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer"><i class="fas fa-times"></i> إلغاء المقابلة</button>'
             : '';
         
         return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px">' +
@@ -1242,6 +1245,112 @@ window.viewDetails = async (appId) => {
     document.body.insertAdjacentHTML('beforeend', html);
 };
 
+
+window.changeInterviewDate = (appId) => {
+    const app = allApplications.find(a => a.id === appId);
+    if (!app) return;
+    
+    const currentDate = app.interview_date ? new Date(app.interview_date).toISOString().slice(0, 16) : '';
+    
+    const html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px" id="changeDateModal">' +
+        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:20px;width:100%;max-width:500px;padding:24px">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">' +
+                '<h3 style="font-size:1.15rem;font-weight:800"><i class="fas fa-calendar-alt" style="color:#f59e0b"></i> تغيير موعد المقابلة</h3>' +
+                '<button onclick="closeModal(&apos;changeDateModal&apos;)" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>' +
+            '</div>' +
+            '<div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:12px;border-radius:10px;margin-bottom:14px;color:#fbbf24;font-size:0.9rem"><i class="fas fa-info-circle"></i> هتغيّر موعد مقابلة <strong>' + esc(app.student_name || 'الطالب') + '</strong>. الطالب هيوصله إشعار بالموعد الجديد.</div>' +
+            '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-calendar-alt"></i> الموعد الجديد <span style="color:var(--danger)">*</span></label>' +
+            '<input type="datetime-local" id="newInterviewDate" value="' + currentDate + '" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem"></div>' +
+            '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-map-marker-alt"></i> المكان (اختياري)</label>' +
+            '<input type="text" id="newInterviewLocation" placeholder="مقر الشركة - الدور 3" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem" value="' + esc(app.interview_location || '') + '"></div>' +
+            '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-comment"></i> سبب التغيير (اختياري)</label>' +
+            '<textarea id="newInterviewReason" rows="2" placeholder="مثلاً: تأجيل بسبب إجازة" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem;resize:vertical"></textarea></div>' +
+            '<div style="display:flex;gap:10px">' +
+                '<button onclick="closeModal(&apos;changeDateModal&apos;)" style="flex:1;background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>' +
+                '<button onclick="confirmChangeDate(&apos;'+appId+'&apos;)" style="flex:1;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;border:none;padding:10px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-check"></i> تأكيد التغيير</button>' +
+            '</div>' +
+        '</div>' +
+    '</div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.confirmChangeDate = async (appId) => {
+    const newDate = document.getElementById('newInterviewDate').value;
+    const newLocation = document.getElementById('newInterviewLocation').value.trim();
+    const reason = document.getElementById('newInterviewReason').value.trim();
+    
+    if (!newDate) { showToast('حدد الموعد الجديد', 'warning'); return; }
+    
+    const sb = await window.getSafeSupabase();
+    if (!sb) { showToast('فشل الاتصال', 'error'); return; }
+    
+    try {
+        const updates = {
+            interview_date: newDate,
+            updated_at: new Date().toISOString()
+        };
+        if (newLocation) updates.interview_location = newLocation;
+        
+        const { error } = await sb.from('applications').update(updates).eq('id', appId);
+        if (error) throw error;
+        
+        const app = allApplications.find(a => a.id === appId);
+        if (window.ProVance && window.ProVance.sendNotification && app) {
+            try {
+                await window.ProVance.sendNotification({
+                    userId: app.student_user_id,
+                    userType: 'student',
+                    title: '📅 تم تغيير موعد المقابلة',
+                    message: 'الموعد الجديد: ' + new Date(newDate).toLocaleString('ar-EG') + (reason ? ' - ' + reason : ''),
+                    type: 'warning',
+                    link: 'student-applications.html'
+                });
+            } catch(e){}
+        }
+        
+        showToast('✅ تم تغيير الموعد', 'success');
+        closeModal('changeDateModal');
+        await loadApps();
+    } catch(err) {
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
+window.cancelInterview = async (appId) => {
+    if (!confirm('هل تريد إلغاء المقابلة؟ الطالب سيوصله إشعار بالإلغاء.')) return;
+    
+    const sb = await window.getSafeSupabase();
+    if (!sb) { showToast('فشل الاتصال', 'error'); return; }
+    
+    try {
+        const { error } = await sb.from('applications').update({
+            status: 'pending',
+            interview_date: null,
+            updated_at: new Date().toISOString()
+        }).eq('id', appId);
+        if (error) throw error;
+        
+        const app = allApplications.find(a => a.id === appId);
+        if (window.ProVance && window.ProVance.sendNotification && app) {
+            try {
+                await window.ProVance.sendNotification({
+                    userId: app.student_user_id,
+                    userType: 'student',
+                    title: '❌ تم إلغاء المقابلة',
+                    message: 'الشركة ألغت موعد المقابلة. الطلب رجع لحالة الانتظار.',
+                    type: 'warning',
+                    link: 'student-applications.html'
+                });
+            } catch(e){}
+        }
+        
+        showToast('تم إلغاء المقابلة', 'success');
+        await loadApps();
+    } catch(err) {
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
 window.acceptApp = (appId) => {
     const app = allApplications.find(a => a.id === appId);
     if (!app) return;
@@ -1399,8 +1508,14 @@ window.closeModal = (id) => {
         } catch(e) { console.warn('Realtime failed:', e); }
     }
     
-    setInterval(loadAll, 30000);
+    // Polling أسرع (10s بدل 30s)
+    setInterval(loadAll, 10000);
+    
+    // Reload لما المستخدم يرجع للـ tab
     window.addEventListener('focus', loadAll);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) loadAll();
+    });
 })();
 </script>
 </body>
