@@ -922,6 +922,20 @@
                 sb.channel('apps-' + userId)
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `student_user_id=eq.${userId}` }, () => loadAll())
                     .subscribe();
+                
+                // Auto-refresh لما المستخدم يرجع للصفحة + polling كل 30s
+                let _focusTimer = null;
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        clearTimeout(_focusTimer);
+                        _focusTimer = setTimeout(() => { if (typeof loadAll === 'function') loadAll(); }, 300);
+                    }
+                });
+                window.addEventListener('focus', () => {
+                    clearTimeout(_focusTimer);
+                    _focusTimer = setTimeout(() => { if (typeof loadAll === 'function') loadAll(); }, 300);
+                });
+                setInterval(() => { if (document.visibilityState === 'visible' && typeof loadAll === 'function') loadAll(); }, 10000);
 
                 window.addEventListener('reload-apps', loadAll);
 
