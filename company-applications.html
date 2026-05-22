@@ -1260,7 +1260,16 @@ window.changeInterviewDate = (appId) => {
             '</div>' +
             '<div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:12px;border-radius:10px;margin-bottom:14px;color:#fbbf24;font-size:0.9rem"><i class="fas fa-info-circle"></i> هتغيّر موعد مقابلة <strong>' + esc(app.student_name || 'الطالب') + '</strong>. الطالب هيوصله إشعار بالموعد الجديد.</div>' +
             '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-calendar-alt"></i> الموعد الجديد <span style="color:var(--danger)">*</span></label>' +
-            '<input type="datetime-local" id="newInterviewDate" value="' + currentDate + '" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem"></div>' +
+            '<input type="date" id="newDateOnly" value="' + currentDate.slice(0, 10) + '" min="' + new Date().toISOString().slice(0, 10) + '" style="width:100%;padding:12px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;color-scheme:dark;margin-bottom:10px">' +
+            '<label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;margin-top:8px"><i class="fas fa-clock"></i> الوقت الجديد</label>' +
+            '<div style="display:flex;gap:8px;align-items:center">' +
+                '<input type="time" id="newTimeOnly" value="' + (currentDate.slice(11, 16) || '10:00') + '" style="flex:1;padding:12px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;color-scheme:dark">' +
+                '<div style="display:flex;gap:4px">' +
+                    '<button type="button" onclick="document.getElementById(\'newTimeOnly\').value=\'09:00\'" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">9:00</button>' +
+                    '<button type="button" onclick="document.getElementById(\'newTimeOnly\').value=\'12:00\'" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">12:00</button>' +
+                    '<button type="button" onclick="document.getElementById(\'newTimeOnly\').value=\'15:00\'" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">3:00 م</button>' +
+                '</div>' +
+            '</div></div>' +
             '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-map-marker-alt"></i> المكان (اختياري)</label>' +
             '<input type="text" id="newInterviewLocation" placeholder="مقر الشركة - الدور 3" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem" value="' + esc(app.interview_location || '') + '"></div>' +
             '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-comment"></i> سبب التغيير (اختياري)</label>' +
@@ -1275,11 +1284,14 @@ window.changeInterviewDate = (appId) => {
 };
 
 window.confirmChangeDate = async (appId) => {
-    const newDate = document.getElementById('newInterviewDate').value;
+    const dateOnly = document.getElementById('newDateOnly').value;
+    const timeOnly = document.getElementById('newTimeOnly').value;
+    if (!dateOnly || !timeOnly) { showToast('حدد التاريخ والوقت', 'warning'); return; }
+    const newDate = dateOnly + 'T' + timeOnly;
     const newLocation = document.getElementById('newInterviewLocation').value.trim();
     const reason = document.getElementById('newInterviewReason').value.trim();
     
-    if (!newDate) { showToast('حدد الموعد الجديد', 'warning'); return; }
+    // newDate موجود
     
     const sb = await window.getSafeSupabase();
     if (!sb) { showToast('فشل الاتصال', 'error'); return; }
@@ -1369,8 +1381,17 @@ window.acceptApp = (appId) => {
                 '<button onclick="closeModal(\'acceptModal\')" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>' +
             '</div>' +
             '<div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.2);padding:12px;border-radius:10px;margin-bottom:14px;color:#86efac;font-size:0.9rem"><i class="fas fa-info-circle"></i> هتقبل طلب <strong>' + esc(app.student_name || 'الطالب') + '</strong> وتحدد موعد للمقابلة.</div>' +
-            '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-calendar-alt"></i> موعد المقابلة <span style="color:var(--danger)">*</span></label>' +
-            '<input type="datetime-local" id="interviewDate" value="' + defaultDateStr + '" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem"></div>' +
+            '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-calendar-alt"></i> تاريخ المقابلة <span style="color:var(--danger)">*</span></label>' +
+            '<input type="date" id="interviewDateOnly" value="' + defaultDateStr.slice(0, 10) + '" min="' + new Date().toISOString().slice(0, 10) + '" style="width:100%;padding:12px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;color-scheme:dark"></div>' +
+            '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-clock"></i> وقت المقابلة <span style="color:var(--danger)">*</span></label>' +
+            '<div style="display:flex;gap:8px;align-items:center">' +
+                '<input type="time" id="interviewTimeOnly" value="10:00" style="flex:1;padding:12px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;color-scheme:dark">' +
+                '<div style="display:flex;gap:4px">' +
+                    '<button type="button" onclick="document.getElementById(\'interviewTimeOnly\').value=\'09:00\'" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">9:00</button>' +
+                    '<button type="button" onclick="document.getElementById(\'interviewTimeOnly\').value=\'12:00\'" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">12:00</button>' +
+                    '<button type="button" onclick="document.getElementById(\'interviewTimeOnly\').value=\'15:00\'" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">3:00 م</button>' +
+                '</div>' +
+            '</div></div>' +
             '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-map-marker-alt"></i> مكان المقابلة (اختياري)</label>' +
             '<input type="text" id="interviewLocation" placeholder="مثال: مقر الشركة - الدور 3" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem"></div>' +
             '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-comment"></i> ملاحظات للطالب (اختياري)</label>' +
@@ -1385,11 +1406,15 @@ window.acceptApp = (appId) => {
 };
 
 window.confirmAccept = async (appId) => {
-    const interviewDate = document.getElementById('interviewDate').value;
+    const dateOnly = document.getElementById('interviewDateOnly').value;
+    const timeOnly = document.getElementById('interviewTimeOnly').value;
     const interviewLocation = document.getElementById('interviewLocation').value.trim();
     const notes = document.getElementById('interviewNotes').value.trim();
     
-    if (!interviewDate) { showToast('حدد موعد المقابلة', 'warning'); return; }
+    if (!dateOnly || !timeOnly) { showToast('حدد التاريخ والوقت', 'warning'); return; }
+    
+    // اربط التاريخ + الوقت
+    const interviewDate = dateOnly + 'T' + timeOnly;
     
     const sb = await window.getSafeSupabase();
     if (!sb) { showToast('فشل الاتصال', 'error'); return; }
