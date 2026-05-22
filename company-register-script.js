@@ -486,6 +486,25 @@ class SmartNavigation {
     handleElementNavigation(element, event) {
         const tagName = element.tagName.toLowerCase();
         const type = element.type ? element.type.toLowerCase() : '';
+        const elementId = element.id || '';
+        
+        // 🎯 خاص: لو الـ input بتاع benefit، نـ trigger الـ add
+        if (elementId.startsWith('knowledgeBenefitInput-')) {
+            const field = elementId.substring('knowledgeBenefitInput-'.length);
+            if (typeof addKnowledgeBenefit === 'function') {
+                event.preventDefault();
+                addKnowledgeBenefit(field);
+                return;
+            }
+        }
+        if (elementId.startsWith('financialBenefitInput-')) {
+            const field = elementId.substring('financialBenefitInput-'.length);
+            if (typeof addFinancialBenefit === 'function') {
+                event.preventDefault();
+                addFinancialBenefit(field);
+                return;
+            }
+        }
         
         switch (true) {
             case (tagName === 'input' && type === 'text'):
@@ -901,7 +920,7 @@ class FixedFeaturesManager {
         container.innerHTML = benefits.map((benefit, index) => `
             <div class="feature-tag">
                 <span class="feature-text">${this.sanitizeHTML(benefit)}</span>
-                <button type="button" class="feature-remove" onclick="fixedFeaturesManager.removeKnowledgeBenefit('${field}', ${index})" aria-label="حذف الميزة المعرفية">
+                <button type="button" class="feature-remove" onclick="fixedFeaturesManager.removeKnowledgeBenefit('${fixedFeaturesManager.sanitizeFieldId(field)}', ${index})" aria-label="حذف الميزة المعرفية">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -931,7 +950,7 @@ class FixedFeaturesManager {
         container.innerHTML = benefits.map((benefit, index) => `
             <div class="feature-tag">
                 <span class="feature-text">${this.sanitizeHTML(benefit)}</span>
-                <button type="button" class="feature-remove" onclick="fixedFeaturesManager.removeFinancialBenefit('${field}', ${index})" aria-label="حذف الميزة المادية">
+                <button type="button" class="feature-remove" onclick="fixedFeaturesManager.removeFinancialBenefit('${fixedFeaturesManager.sanitizeFieldId(field)}', ${index})" aria-label="حذف الميزة المادية">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -1322,21 +1341,37 @@ function handleLogoUpload(event) {
     const reader = new FileReader();
     
     reader.onload = function(e) {
-        state.companyLogoData = e.target.result;
-        
-        const preview = document.getElementById('logoPreview');
-        const placeholder = document.querySelector('.logo-placeholder');
-        const removeBtn = document.getElementById('logoRemoveBtn');
-        
-        if (preview) {
-            preview.src = e.target.result;
-            preview.classList.add('show');
-        }
-        if (placeholder) placeholder.style.display = 'none';
-        if (removeBtn) removeBtn.classList.remove('hidden');
-        
-        // لا نعرض إشعار نجاح - المستخدم يرى التغيير مباشرة
-        saveStateToStorage();
+        // ضغط الصورة قبل التخزين - يقلل الحجم من 1-2MB لـ 50-100KB
+        compressImage(e.target.result, 400, 0.85).then(compressedData => {
+            state.companyLogoData = compressedData;
+            
+            const preview = document.getElementById('logoPreview');
+            const placeholder = document.querySelector('.logo-placeholder');
+            const removeBtn = document.getElementById('logoRemoveBtn');
+            
+            if (preview) {
+                preview.src = compressedData;
+                preview.classList.add('show');
+            }
+            if (placeholder) placeholder.style.display = 'none';
+            if (removeBtn) removeBtn.classList.remove('hidden');
+            
+            // عرض حجم الصورة بعد الضغط
+            const sizeKB = Math.round(compressedData.length / 1024);
+            console.log('✓ Logo compressed:', sizeKB, 'KB');
+            
+            saveStateToStorage();
+        }).catch(err => {
+            console.error('Compression error:', err);
+            // fallback: استخدم الصورة الأصلية
+            state.companyLogoData = e.target.result;
+            const preview = document.getElementById('logoPreview');
+            if (preview) {
+                preview.src = e.target.result;
+                preview.classList.add('show');
+            }
+            saveStateToStorage();
+        });
     };
     
     reader.onerror = function() {
@@ -1344,6 +1379,43 @@ function handleLogoUpload(event) {
     };
     
     reader.readAsDataURL(file);
+}
+
+// ============================================
+// Image Compression - ضغط الصور قبل التخزين
+// ============================================
+function compressImage(base64Str, maxWidth = 400, quality = 0.85) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = function() {
+            // احسب الأبعاد الجديدة (مع الحفاظ على النسبة)
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+            
+            // ارسم على canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            
+            // خلفية بيضاء للـ PNG شفاف
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+            
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // حول لـ JPEG مضغوط (أصغر بكتير من PNG)
+            const compressed = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressed);
+        };
+        img.onerror = reject;
+        img.src = base64Str;
+    });
 }
 
 // ============================================
@@ -2380,15 +2452,15 @@ function createTrainingDetailItem(field, details) {
                 </label>
                 <div class="features-input-group">
                     <div class="input-wrapper" style="flex: 1;">
-                        <input type="text" id="knowledgeBenefitInput-${AdvancedValidator.sanitizeHTML(field)}" class="form-input" placeholder="ما هي المهارات والمعرفة التي سيحصل عليها المتدرب؟" aria-label="إضافة ميزة معرفية لـ ${AdvancedValidator.sanitizeHTML(field)}">
+                        <input type="text" id="knowledgeBenefitInput-${fixedFeaturesManager.sanitizeFieldId(field)}" class="form-input" placeholder="ما هي المهارات والمعرفة التي سيحصل عليها المتدرب؟" aria-label="إضافة ميزة معرفية لـ ${AdvancedValidator.sanitizeHTML(field)}">
                         <div class="input-border"></div>
                     </div>
-                    <button type="button" class="btn-add" onclick="addKnowledgeBenefit('${AdvancedValidator.sanitizeHTML(field)}')">
+                    <button type="button" class="btn-add" onclick="addKnowledgeBenefit('${fixedFeaturesManager.sanitizeFieldId(field)}')">
                         <i class="fas fa-plus"></i>
                         <span>إضافة</span>
                     </button>
                 </div>
-                <div id="knowledgeBenefitsList-${AdvancedValidator.sanitizeHTML(field)}" class="features-list">
+                <div id="knowledgeBenefitsList-${fixedFeaturesManager.sanitizeFieldId(field)}" class="features-list">
                     <div class="empty-features-state">
                         <i class="fas fa-brain"></i>
                         <p>لم تتم إضافة أي ميزة معرفية بعد</p>
@@ -2422,15 +2494,15 @@ function createTrainingDetailItem(field, details) {
                 </label>
                 <div class="features-input-group">
                     <div class="input-wrapper" style="flex: 1;">
-                        <input type="text" id="financialBenefitInput-${AdvancedValidator.sanitizeHTML(field)}" class="form-input" placeholder="هل تقدم مكافآت مالية أو بدائل نقل أو وجبات؟" ${requiredAttribute} aria-label="إضافة ميزة مادية لـ ${AdvancedValidator.sanitizeHTML(field)}">
+                        <input type="text" id="financialBenefitInput-${fixedFeaturesManager.sanitizeFieldId(field)}" class="form-input" placeholder="هل تقدم مكافآت مالية أو بدائل نقل أو وجبات؟" ${requiredAttribute} aria-label="إضافة ميزة مادية لـ ${AdvancedValidator.sanitizeHTML(field)}">
                         <div class="input-border"></div>
                     </div>
-                    <button type="button" class="btn-add" onclick="addFinancialBenefit('${AdvancedValidator.sanitizeHTML(field)}')">
+                    <button type="button" class="btn-add" onclick="addFinancialBenefit('${fixedFeaturesManager.sanitizeFieldId(field)}')">
                         <i class="fas fa-plus"></i>
                         <span>إضافة</span>
                     </button>
                 </div>
-                <div id="financialBenefitsList-${AdvancedValidator.sanitizeHTML(field)}" class="features-list">
+                <div id="financialBenefitsList-${fixedFeaturesManager.sanitizeFieldId(field)}" class="features-list">
                     <div class="empty-features-state">
                         <i class="fas fa-money-bill-wave"></i>
                         <p>لم تتم إضافة أي ميزة مادية بعد</p>
