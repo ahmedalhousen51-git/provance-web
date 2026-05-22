@@ -1714,36 +1714,70 @@
                         <!-- أيام الأسبوع -->
                         <div style="margin-bottom:14px" id="daysSelector">
                             <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
-                                <i class="fas fa-calendar-week" style="color:#f59e0b"></i> أيام التدريب
+                                <i class="fas fa-calendar-week" style="color:#f59e0b"></i> أيام التدريب *
                             </label>
-                            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
-                                ${['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'].map((d, i) => `
-                                    <button type="button" onclick="toggleDay(this)" class="day-btn ${i===0||i===1||i===3 ? 'active-day' : ''}" data-day="${d}" style="padding:8px 4px;background:var(--card);border:2px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.78rem;font-weight:700">${d.slice(0,3)}</button>
+                            
+                            <!-- Presets جاهزة -->
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+                                <button type="button" onclick="selectDaysPreset('weekdays')" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">📅 أيام العمل (أحد-خميس)</button>
+                                <button type="button" onclick="selectDaysPreset('weekend')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">🎉 الويكند (جمعة-سبت)</button>
+                                <button type="button" onclick="selectDaysPreset('all')" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">✅ كل الأيام</button>
+                                <button type="button" onclick="selectDaysPreset('clear')" style="background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.3);padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">❌ مسح</button>
+                            </div>
+                            
+                            <!-- الأيام -->
+                            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+                                ${['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'].map((d, i) => `
+                                    <button type="button" onclick="toggleDay(this)" class="day-btn ${[1,2,4].includes(i) ? 'active-day' : ''}" data-day="${d}" style="padding:12px 6px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">${d}</button>
                                 `).join('')}
                             </div>
-                            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px">اختار الأيام اللي يحضر فيها الطالب</div>
+                            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;text-align:center">اضغط على اليوم لتفعيله/إلغائه</div>
                         </div>
 
-                        <!-- وقت ومدة -->
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-                            <div>
-                                <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
-                                    <i class="fas fa-clock" style="color:#4facfe"></i> وقت البداية
-                                </label>
-                                <input type="time" id="trainStartTime" value="09:00" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.95rem;color-scheme:dark">
+                        <!-- وقت البداية -->
+                        <div style="margin-bottom:14px">
+                            <label style="display:block;font-weight:700;margin-bottom:8px;font-size:0.88rem">
+                                <i class="fas fa-clock" style="color:#4facfe"></i> وقت بداية التدريب *
+                            </label>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                                <div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;text-align:center">الساعة</div>
+                                    <select id="trainHour12" style="padding:12px 8px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;width:100%"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9" selected>9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;text-align:center">الدقيقة</div>
+                                    <select id="trainMinute" style="padding:12px 8px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;width:100%"><option value="00" selected>00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;text-align:center">ص/م</div>
+                                    <select id="trainMeridiem" style="padding:12px 8px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;width:100%">
+                                        <option value="AM" selected>ص</option>
+                                        <option value="PM">م</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div>
-                                <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
-                                    <i class="fas fa-hourglass" style="color:#4facfe"></i> ساعات/يوم
-                                </label>
-                                <select id="trainHours" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.95rem;cursor:pointer">
-                                    <option value="2">2 ساعة</option>
-                                    <option value="3">3 ساعات</option>
-                                    <option value="4" selected>4 ساعات</option>
-                                    <option value="5">5 ساعات</option>
-                                    <option value="6">6 ساعات</option>
-                                    <option value="8">8 ساعات (يوم كامل)</option>
-                                </select>
+                            <!-- أزرار اختصار سريعة -->
+                            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;justify-content:center">
+                                <button type="button" onclick="setTrainTime(8,0,'AM')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:6px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit">8:00 ص</button>
+                                <button type="button" onclick="setTrainTime(9,0,'AM')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:6px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit">9:00 ص</button>
+                                <button type="button" onclick="setTrainTime(10,0,'AM')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:6px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit">10:00 ص</button>
+                                <button type="button" onclick="setTrainTime(1,0,'PM')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:6px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit">1:00 م</button>
+                                <button type="button" onclick="setTrainTime(2,0,'PM')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:6px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit">2:00 م</button>
+                            </div>
+                        </div>
+                        
+                        <!-- مدة الجلسة -->
+                        <div style="margin-bottom:14px">
+                            <label style="display:block;font-weight:700;margin-bottom:8px;font-size:0.88rem">
+                                <i class="fas fa-hourglass-half" style="color:#10b981"></i> مدة الجلسة *
+                            </label>
+                            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+                                <button type="button" onclick="setHours(2, this)" class="hours-btn" data-hours="2" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">2 ساعة</button>
+                                <button type="button" onclick="setHours(3, this)" class="hours-btn" data-hours="3" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">3 ساعات</button>
+                                <button type="button" onclick="setHours(4, this)" class="hours-btn active-hours" data-hours="4" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">4 ساعات</button>
+                                <button type="button" onclick="setHours(5, this)" class="hours-btn" data-hours="5" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">5 ساعات</button>
+                                <button type="button" onclick="setHours(6, this)" class="hours-btn" data-hours="6" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">6 ساعات</button>
+                                <button type="button" onclick="setHours(8, this)" class="hours-btn" data-hours="8" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">يوم كامل</button>
                             </div>
                         </div>
 
@@ -1773,11 +1807,16 @@
                 </div>
 
                 <style>
-                    .freq-btn.active-freq, .day-btn.active-day { 
-                        background: linear-gradient(135deg, var(--primary), var(--primary-dark, #ef4444)) !important; 
+                    .freq-btn.active-freq, .day-btn.active-day, .hours-btn.active-hours { 
+                        background: linear-gradient(135deg, #ef4444, #dc2626) !important; 
                         color: #fff !important; 
-                        border-color: var(--primary) !important; 
+                        border-color: #ef4444 !important; 
                     }
+                    .day-btn:hover, .hours-btn:hover { 
+                        border-color: #ef4444 !important; 
+                        transform: translateY(-1px);
+                    }
+                    .day-btn, .hours-btn { transition: all 0.15s; }
                 </style>
             `;
             renderModal(html);
@@ -1787,13 +1826,17 @@
             document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active-freq'));
             if (btn) btn.classList.add('active-freq');
             
-            // يومي = كل الأيام، أسبوعي = الافتراضي
             const daysSelector = document.getElementById('daysSelector');
             if (freq === 'daily') {
+                // يومي = كل الأيام
                 document.querySelectorAll('.day-btn').forEach(b => b.classList.add('active-day'));
+                if (daysSelector) daysSelector.style.opacity = '1';
             } else if (freq === 'flexible') {
+                // مرن = مفيش أيام محددة
+                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active-day'));
                 if (daysSelector) daysSelector.style.opacity = '0.5';
             } else {
+                // أسبوعي = الإعدادات الافتراضية
                 if (daysSelector) daysSelector.style.opacity = '1';
             }
         };
@@ -1802,11 +1845,71 @@
             btn.classList.toggle('active-day');
         };
 
+        // Helper: ضبط الوقت من زرار الاختصار
+        window.setTrainTime = (hour, minute, meridiem) => {
+            const h = document.getElementById('trainHour12');
+            const m = document.getElementById('trainMinute');
+            const md = document.getElementById('trainMeridiem');
+            if (h) h.value = hour;
+            if (m) m.value = String(minute).padStart(2, '0');
+            if (md) md.value = meridiem;
+        };
+        
+        // Helper: اختيار preset للأيام
+        window.selectDaysPreset = (preset) => {
+            const allDays = document.querySelectorAll('.day-btn');
+            allDays.forEach(b => b.classList.remove('active-day'));
+            
+            if (preset === 'all') {
+                allDays.forEach(b => b.classList.add('active-day'));
+            } else if (preset === 'weekdays') {
+                // الأحد - الإثنين - الثلاثاء - الأربعاء - الخميس
+                allDays.forEach(b => {
+                    const day = b.dataset.day;
+                    if (['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].includes(day)) {
+                        b.classList.add('active-day');
+                    }
+                });
+            } else if (preset === 'weekend') {
+                allDays.forEach(b => {
+                    const day = b.dataset.day;
+                    if (['الجمعة', 'السبت'].includes(day)) {
+                        b.classList.add('active-day');
+                    }
+                });
+            }
+            // 'clear' = لا شيء (يفضل كله مفرَّغ)
+        };
+        
+        // Helper: اختيار ساعات
+        window.setHours = (hours, btn) => {
+            document.querySelectorAll('.hours-btn').forEach(b => b.classList.remove('active-hours'));
+            if (btn) btn.classList.add('active-hours');
+        };
+        
+        // Helper: convert 12h → 24h
+        function to24HourTrain(hour12, meridiem) {
+            let h = parseInt(hour12, 10);
+            if (meridiem === 'AM' && h === 12) h = 0;
+            else if (meridiem === 'PM' && h !== 12) h += 12;
+            return String(h).padStart(2, '0');
+        }
+
         window.submitAcceptForm = async (appId) => {
             const startDate = document.getElementById('trainStartDate').value;
             const endDate = document.getElementById('trainEndDate').value;
-            const startTime = document.getElementById('trainStartTime').value;
-            const hours = parseInt(document.getElementById('trainHours').value);
+            
+            // الوقت من الـ 3 dropdowns
+            const hour12 = document.getElementById('trainHour12').value;
+            const minute = document.getElementById('trainMinute').value;
+            const meridiem = document.getElementById('trainMeridiem').value;
+            const hour24 = to24HourTrain(hour12, meridiem);
+            const startTime = hour24 + ':' + minute;
+            
+            // المدة من الـ buttons
+            const hoursBtn = document.querySelector('.hours-btn.active-hours');
+            const hours = hoursBtn ? parseInt(hoursBtn.dataset.hours) : 4;
+            
             const location = document.getElementById('trainLocation').value.trim();
             const notes = document.getElementById('trainNotes').value.trim();
 
@@ -1817,7 +1920,7 @@
 
             if (!startDate) { window.ProVance.showToast('حدد تاريخ بداية التدريب', 'warning'); return; }
             if (frequency !== 'flexible' && selectedDays.length === 0) {
-                window.ProVance.showToast('اختار يوم واحد على الأقل', 'warning');
+                window.ProVance.showToast('اختار يوم واحد على الأقل من أيام التدريب', 'warning');
                 return;
             }
 
