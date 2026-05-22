@@ -75,9 +75,16 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 <div class="scanner-area" id="scannerArea">
 <div class="scanner-icon"><i class="fas fa-qrcode"></i></div>
 <div class="scanner-msg">اضغط "بدء المسح" وصوّر الـ QR Code اللي عرضته الشركة</div>
+<div style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;padding:10px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:10px;line-height:1.6">
+<i class="fas fa-info-circle" style="color:#4facfe"></i> <strong>ملاحظات مهمة:</strong><br>
+• المتصفح هيطلب إذن للكاميرا - اضغط "السماح"<br>
+• لو ما اشتغلتش، استخدم "ارفع صورة" أو "اكتب الكود"
+</div>
 </div>
 <button class="btn-primary" id="startScanBtn" onclick="startScanner()"><i class="fas fa-camera"></i> بدء المسح</button>
-<video id="qr-video" class="hidden" playsinline></video>
+<video id="qr-video" class="hidden" playsinline autoplay muted></video>
+<input type="file" id="photoInput" accept="image/*" capture="environment" onchange="scanFromImage(event)" style="display:none">
+<button class="btn-secondary" onclick="document.getElementById('photoInput').click()" style="margin-top:8px;background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff;border:none;font-weight:800"><i class="fas fa-image"></i> أو ارفع صورة الـ QR</button>
 <button class="btn-secondary hidden" id="stopScanBtn" onclick="stopScanner()" style="margin-top:10px"><i class="fas fa-times"></i> إيقاف</button>
 </div>
 
@@ -136,12 +143,63 @@ window.switchTab = (tab) => {
 };
 
 window.startScanner = async () => {
+    // 1. تأكد إن الـ navigator.mediaDevices موجود
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showCameraFallback('الـ browser ده مش بيدعم الكاميرا. استخدم Chrome أو Safari.');
+        return;
+    }
+    
+    // 2. تأكد إن الـ site HTTPS (مهم جداً للموبايل)
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        showCameraFallback('الكاميرا محتاجة HTTPS - استخدم الإدخال اليدوي.');
+        return;
+    }
+    
     try {
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        // 3. حاول environment camera الأول (back camera)
+        const constraints = [
+            { video: { facingMode: { exact: 'environment' } } },  // back camera ل forced
+            { video: { facingMode: 'environment' } },              // back camera preferred
+            { video: { facingMode: 'user' } },                     // front camera fallback
+            { video: true }                                         // أي كاميرا
+        ];
+        
+        let lastError = null;
+        for (const c of constraints) {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia(c);
+                if (videoStream) break;
+            } catch (e) {
+                lastError = e;
+                console.warn('Camera attempt failed:', c, e.name);
+            }
+        }
+        
+        if (!videoStream) {
+            throw lastError || new Error('فشل فتح الكاميرا');
+        }
+        
         const video = document.getElementById('qr-video');
         video.srcObject = videoStream;
+        video.setAttribute('playsinline', 'true');  // مهم لـ iOS
+        video.setAttribute('autoplay', 'true');
+        video.setAttribute('muted', 'true');
+        video.muted = true;
         video.classList.remove('hidden');
-        video.play();
+        
+        // Wait للـ video metadata قبل play
+        await new Promise((resolve) => {
+            video.onloadedmetadata = resolve;
+            // Timeout fallback
+            setTimeout(resolve, 2000);
+        });
+        
+        try {
+            await video.play();
+        } catch (playErr) {
+            console.warn('Video play failed:', playErr);
+        }
+        
         document.getElementById('scannerArea').classList.add('hidden');
         document.getElementById('startScanBtn').classList.add('hidden');
         document.getElementById('stopScanBtn').classList.remove('hidden');
@@ -149,8 +207,101 @@ window.startScanner = async () => {
         scanning = true;
         scanLoop(video);
     } catch (err) {
-        console.error('Camera error:', err);
-        showToast('فشل فتح الكاميرا - تأكد من السماح', 'error');
+        console.error('Camera error:', err.name, err.message);
+        
+        let errMsg = 'فشل فتح الكاميرا';
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            errMsg = '🚫 تم رفض إذن الكاميرا. روح Settings → ProVance → السماح بالكاميرا';
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+            errMsg = '📵 مفيش كاميرا في الجهاز';
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+            errMsg = '⚠️ الكاميرا مستخدمة من app تاني - اقفله وحاول تاني';
+        } else if (err.name === 'OverconstrainedError') {
+            errMsg = '⚠️ مشكلة في إعدادات الكاميرا';
+        } else if (err.name === 'SecurityError') {
+            errMsg = '🔒 المتصفح بيمنع الكاميرا - استخدم HTTPS';
+        }
+        
+        showCameraFallback(errMsg);
+    }
+};
+
+// عرض الـ fallback options لما الكاميرا مش شغّالة
+function showCameraFallback(reason) {
+    const scannerArea = document.getElementById('scannerArea');
+    const startBtn = document.getElementById('startScanBtn');
+    
+    if (scannerArea) {
+        scannerArea.innerHTML = `
+            <div class="scanner-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="scanner-msg" style="color:#f59e0b;font-weight:700">${reason}</div>
+            <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px">
+                <button class="btn-secondary" onclick="document.getElementById('photoInput').click()" style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff;border:none;font-weight:800">
+                    <i class="fas fa-image"></i> ارفع صورة من الجهاز
+                </button>
+                <button class="btn-secondary" onclick="switchTab('code')" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;font-weight:800">
+                    <i class="fas fa-keyboard"></i> اكتب الكود يدوياً
+                </button>
+                <button class="btn-secondary" onclick="startScanner()">
+                    <i class="fas fa-redo"></i> حاول الكاميرا تاني
+                </button>
+            </div>
+        `;
+    }
+    if (startBtn) startBtn.classList.add('hidden');
+}
+
+// قراءة QR من صورة مرفوعة (fallback ممتاز للموبايل)
+window.scanFromImage = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    try {
+        const img = new Image();
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // تحجيم الصورة لو كبيرة جداً
+                let w = img.width, h = img.height;
+                const maxDim = 1200;
+                if (w > maxDim || h > maxDim) {
+                    if (w > h) { h = h * maxDim / w; w = maxDim; }
+                    else { w = w * maxDim / h; h = maxDim; }
+                }
+                
+                canvas.width = w;
+                canvas.height = h;
+                ctx.drawImage(img, 0, 0, w, h);
+                
+                const imageData = ctx.getImageData(0, 0, w, h);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'attemptBoth'
+                });
+                
+                if (code && code.data) {
+                    console.log('QR detected from image:', code.data);
+                    processQR(code.data);
+                } else {
+                    showToast('❌ مفيش QR Code في الصورة - جرب صورة أوضح', 'error');
+                }
+            };
+            img.onerror = () => showToast('❌ فشل قراءة الصورة', 'error');
+            img.src = e.target.result;
+        };
+        reader.onerror = () => showToast('❌ فشل قراءة الملف', 'error');
+        reader.readAsDataURL(file);
+    } catch (err) {
+        console.error('Image scan error:', err);
+        showToast('❌ خطأ: ' + err.message, 'error');
+    } finally {
+        // Reset الـ input عشان يقدر يرفع نفس الصورة تاني
+        event.target.value = '';
     }
 };
 
