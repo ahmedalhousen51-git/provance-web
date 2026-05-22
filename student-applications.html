@@ -694,6 +694,57 @@
                         </div>
                     ` : ''}
 
+                    ${(a.status === 'accepted' || a.status === 'in_training' || a.status === 'hired') && a.training_start_date ? (() => {
+                        let days = [];
+                        try { days = typeof a.training_days === 'string' ? JSON.parse(a.training_days) : (a.training_days || []); } catch(e) {}
+                        const freqLabel = a.training_frequency === 'daily' ? 'يومي' : a.training_frequency === 'weekly' ? 'أسبوعي' : 'مرن';
+                        return `
+                        <div class="modal-section" style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(5,150,105,0.04));border:2px solid rgba(16,185,129,0.3);border-radius:14px">
+                            <div class="modal-section-title" style="color:#10b981"><i class="fas fa-graduation-cap"></i> تفاصيل التدريب (تم القبول)</div>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-label"><i class="fas fa-calendar-day" style="color:#10b981"></i> تاريخ البداية</div>
+                                    <div class="info-value" style="font-weight:700">${esc(a.training_start_date)}</div>
+                                </div>
+                                ${a.training_end_date ? `
+                                <div class="info-item">
+                                    <div class="info-label"><i class="fas fa-calendar-check"></i> تاريخ الانتهاء</div>
+                                    <div class="info-value">${esc(a.training_end_date)}</div>
+                                </div>` : ''}
+                                <div class="info-item">
+                                    <div class="info-label"><i class="fas fa-repeat"></i> التكرار</div>
+                                    <div class="info-value">${freqLabel}</div>
+                                </div>
+                                ${a.training_start_time ? `
+                                <div class="info-item">
+                                    <div class="info-label"><i class="fas fa-clock"></i> الوقت</div>
+                                    <div class="info-value">${esc(a.training_start_time)} ${a.training_hours_per_session ? `(${a.training_hours_per_session} ساعات)` : ''}</div>
+                                </div>` : ''}
+                            </div>
+                            ${days.length > 0 ? `
+                                <div style="margin-top:12px">
+                                    <div style="font-size:0.84rem;color:var(--text-muted);margin-bottom:6px"><i class="fas fa-calendar-week" style="color:#f59e0b"></i> أيام التدريب:</div>
+                                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                                        ${days.map(d => `<span style="padding:6px 12px;background:rgba(16,185,129,0.15);color:#10b981;border-radius:8px;font-size:0.82rem;font-weight:700">${esc(d)}</span>`).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${a.training_location ? `
+                                <div style="margin-top:12px;padding:10px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:10px">
+                                    <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:4px"><i class="fas fa-map-marker-alt" style="color:#ef4444"></i> مكان التدريب:</div>
+                                    <div style="font-weight:700">${esc(a.training_location)}</div>
+                                </div>
+                            ` : ''}
+                            ${a.training_notes ? `
+                                <div style="margin-top:12px;padding:10px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:10px">
+                                    <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:4px"><i class="fas fa-sticky-note" style="color:#4facfe"></i> ملاحظات الشركة:</div>
+                                    <div style="line-height:1.6;font-size:0.88rem">${esc(a.training_notes)}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        `;
+                    })() : ''}
+
                     <div style="display:flex;gap:10px;margin-top:14px">
                         ${['pending', 'reviewing'].includes(a.status) ? `
                             <button class="btn btn-danger" onclick="closeModal('detailsModal');withdrawApp('${a.id}')" style="flex:1;justify-content:center">
@@ -915,7 +966,7 @@
             }
             studentUserId = userId;
 
-            const APP_COLS = 'id, student_user_id, company_user_id, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date';
+            const APP_COLS = 'id, student_user_id, company_user_id, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date, interview_location, interview_notes, interview_link, application_message, rejection_reason, training_start_date, training_end_date, training_days, training_frequency, training_hours_per_session, training_start_time, training_location, training_notes, accepted_at';
             const { data } = await sb.from('applications')
                 .select(APP_COLS)
                 .eq('student_user_id', userId)
