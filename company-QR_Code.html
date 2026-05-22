@@ -1,1820 +1,539 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
-    <link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code - ProVance</title>
+<link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root { --primary: #ef4444; --secondary: #dc2626; --gradient: linear-gradient(135deg, #ef4444, #dc2626); --bg: #0a0e27; --bg-card: rgba(255,255,255,0.04); --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --text: #fff; --text-muted: #94a3b8; --error: #ef4444; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe; }
+* { margin:0; padding:0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%), var(--bg); }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
+.sidebar-logo { padding: 8px 4px 18px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.logo-wrapper { display: flex; align-items: center; gap: 10px; padding: 4px; }
+.logo-icon { width: 42px; height: 42px; }
+.logo-icon svg { width: 100%; height: 100%; }
+.logo-text { display: flex; flex-direction: column; gap: 2px; }
+.logo-brand { font-size: 1.15rem; font-weight: 900; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.logo-tagline { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: var(--gradient); color: #fff; }
+.nav-item i { width: 18px; }
+.main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
+.menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
+.topbar-title { font-size: 1.5rem; font-weight: 800; }
 
-    <title>QR الحضور - ProVance</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #ef4444; --secondary: #dc2626;
-            --gradient: linear-gradient(135deg, #ef4444, #dc2626);
-            --bg: #0a0e27; --bg-2: #1a1535;
-            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
-            --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
-            --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
-            --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.btn { padding: 10px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; font-family: inherit; border: 1px solid; display: inline-flex; align-items: center; gap: 8px; font-size: 0.92rem; }
+.btn-primary { background: var(--gradient); color: #fff; border-color: var(--primary); }
+.btn-secondary { background: var(--card); color: var(--text); border-color: var(--border); }
+.btn-danger { background: rgba(239,68,68,0.15); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+.btn-success { background: rgba(16,185,129,0.15); color: #10b981; border-color: rgba(16,185,129,0.3); }
 
-        .bg-anim {
-            position: fixed; inset: 0; z-index: -1;
-            background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%),
-                        radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%),
-                        var(--bg);
-        }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.stat-num { font-size: 1.8rem; font-weight: 800; margin-bottom: 4px; }
+.stat-label { color: var(--text-muted); font-size: 0.82rem; }
 
-        .layout { display: flex; min-height: 100vh; }
-        .sidebar {
-            width: 260px; background: rgba(20,18,40,0.7);
-            backdrop-filter: blur(20px); border-left: 1px solid var(--border);
-            padding: 24px 16px; position: fixed; inset: 0 0 0 auto;
-            z-index: 100; transition: transform .3s;
-            display: flex; flex-direction: column;
-        }
-        .sidebar-logo {
-            padding: 8px 4px 18px;
-            margin-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-        }
-        .logo-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 4px;
-        }
-        .logo-icon {
-            width: 42px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            filter: drop-shadow(0 4px 12px rgba(239,68,68,0.3));
-        }
-        .logo-icon svg {
-            width: 100%;
-            height: 100%;
-        }
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            min-width: 0;
-        }
-        .logo-brand {
-            font-size: 1.15rem;
-            font-weight: 900;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.3px;
-            line-height: 1;
-        }
-        .logo-tagline {
-            font-size: 0.68rem;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px 14px; color: var(--text-muted);
-            text-decoration: none; border-radius: 10px;
-            font-size: 0.92rem; font-weight: 600; margin-bottom: 4px;
-            transition: all .2s;
-        }
-        .nav-item:hover { background: var(--card); color: var(--text); }
-        .nav-item.active { background: var(--gradient); color: #fff; }
-        .nav-item i { width: 18px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 14px; }
+.card-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 
-        .main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
-        .topbar {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 22px; gap: 14px; flex-wrap: wrap;
-        }
-        .menu-toggle {
-            display: none; background: var(--card); border: 1px solid var(--border);
-            color: var(--text); width: 42px; height: 42px;
-            border-radius: 10px; cursor: pointer;
-        }
-        .topbar-title { font-size: 1.5rem; font-weight: 800; }
-        .topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.active-qr-card { background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(220,38,38,0.04)); border: 2px solid rgba(239,68,68,0.3); border-radius: 18px; padding: 24px; margin-bottom: 18px; text-align: center; }
+.qr-display { background: #fff; padding: 20px; border-radius: 14px; display: inline-block; margin: 14px 0; }
+.qr-display canvas { max-width: 100%; height: auto !important; }
+.qr-code-text { background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 10px; font-family: monospace; font-size: 1rem; letter-spacing: 2px; margin: 14px 0; border: 1px dashed var(--border); }
+.qr-countdown { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+.qr-purpose-badge { display: inline-block; padding: 6px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; margin-bottom: 10px; }
 
-        /* Tabs */
-        .tabs-container {
-            display: flex; gap: 8px; margin-bottom: 22px;
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 6px;
-            overflow-x: auto;
-        }
-        .tab-btn {
-            padding: 11px 18px; background: none; border: none;
-            color: var(--text-muted); font-family: inherit;
-            font-size: 0.92rem; font-weight: 700;
-            border-radius: 10px; cursor: pointer;
-            white-space: nowrap;
-            display: flex; align-items: center; gap: 7px;
-            transition: all .2s;
-        }
-        .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-        .tab-btn.active {
-            background: var(--gradient); color: #fff;
-            box-shadow: 0 6px 16px rgba(239,68,68,0.3);
-        }
-        .tab-badge {
-            background: rgba(255,255,255,0.15);
-            padding: 1px 8px; border-radius: 10px;
-            font-size: 0.72rem;
-        }
-        .tab-content { display: none; animation: fadeIn .3s; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-state i { font-size: 5rem; margin-bottom: 14px; opacity: .3; }
 
-        /* Stats */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 12px; margin-bottom: 18px;
-        }
-        .stat-mini {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 12px; padding: 14px;
-            display: flex; align-items: center; gap: 11px;
-            transition: all .2s;
-        }
-        .stat-mini:hover { border-color: var(--primary); }
-        .stat-mini-icon {
-            width: 40px; height: 40px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; color: #fff; flex-shrink: 0;
-        }
-        .stat-mini-icon.purple { background: var(--gradient); }
-        .stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .stat-mini-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-        .stat-mini-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
-        .stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+.scans-list { display: flex; flex-direction: column; gap: 10px; }
+.scan-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+.scan-icon-wrap { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.scan-info { flex: 1; min-width: 0; }
+.scan-name { font-weight: 700; }
+.scan-meta { color: var(--text-muted); font-size: 0.78rem; margin-top: 2px; }
+.scan-result-badge { padding: 4px 10px; border-radius: 8px; font-size: 0.74rem; font-weight: 700; }
+.scan-result-badge.success { background: rgba(16,185,129,0.15); color: #10b981; }
+.scan-result-badge.error { background: rgba(239,68,68,0.15); color: #ef4444; }
 
-        /* QR Generator */
-        .qr-generator-card {
-            background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(220,38,38,0.04));
-            border: 1px solid rgba(239,68,68,0.2);
-            border-radius: 18px;
-            padding: 28px;
-            text-align: center;
-            margin-bottom: 18px;
-        }
-        .qr-generator-card h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 6px; }
-        .qr-generator-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 18px; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal.active { display: flex; }
+.modal-content { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; padding: 24px; }
 
-        .qr-canvas-wrap {
-            background: #fff;
-            padding: 18px;
-            border-radius: 16px;
-            display: inline-block;
-            margin: 14px 0;
-            position: relative;
-        }
-        .qr-canvas-wrap img { display: block; max-width: 280px; width: 100%; height: auto; }
-        .qr-canvas-wrap.expired::after {
-            content: 'انتهت';
-            position: absolute; inset: 0;
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2rem; font-weight: 800;
-            border-radius: 16px;
-        }
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; }
+.loading-overlay { position: fixed; inset: 0; background: rgba(10,14,39,0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .3s; }
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-        .qr-validity-info {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
-            margin-top: 16px;
-            text-align: right;
-        }
-        .qr-validity-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px dashed var(--border);
-        }
-        .qr-validity-row:last-child { border-bottom: none; }
-        .qr-validity-row .label { color: var(--text-muted); font-size: 0.86rem; }
-        .qr-validity-row .value { font-weight: 700; }
+.duration-btn.active-dur { background: var(--gradient) !important; color: #fff !important; border-color: var(--primary) !important; }
+.purpose-active { background: var(--gradient) !important; color: #fff !important; border-color: var(--primary) !important; }
+.purpose-active i { color: #fff !important; }
 
-        .countdown-big {
-            font-size: 2rem; font-weight: 900;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 14px 0;
-        }
-        .countdown-big.danger {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .countdown-big.expired {
-            background: linear-gradient(135deg, #6b7280, #4b5563);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .qr-actions {
-            display: flex; gap: 10px; justify-content: center;
-            flex-wrap: wrap; margin-top: 16px;
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 10px 16px; border: none; border-radius: 10px;
-            font-weight: 700; font-family: inherit; font-size: 0.88rem;
-            cursor: pointer; transition: all .2s; text-decoration: none;
-            white-space: nowrap;
-        }
-        .btn-primary { background: var(--gradient); color: #fff; }
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(239,68,68,0.4);
-        }
-        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
-        .btn-secondary:hover { background: var(--card-hover); }
-        .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
-        .btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
-        .btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
-        .btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
-        .btn-sm { padding: 7px 12px; font-size: 0.8rem; }
-
-        /* Filters */
-        .filters-bar {
-            display: flex; gap: 10px;
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 12px; padding: 12px;
-            margin-bottom: 18px; flex-wrap: wrap;
-        }
-        .filters-bar input, .filters-bar select {
-            padding: 9px 14px; background: rgba(255,255,255,0.04);
-            border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text); font-family: inherit; font-size: 0.9rem;
-        }
-        .filters-bar input { flex: 1; min-width: 200px; }
-        .filters-bar input:focus, .filters-bar select:focus {
-            outline: none; border-color: var(--primary);
-        }
-
-        /* Attendance Cards */
-        .attendance-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-            gap: 14px;
-        }
-        .attendance-card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 16px;
-            display: flex; align-items: center; gap: 12px;
-            transition: all .25s;
-        }
-        .attendance-card:hover { border-color: var(--primary); transform: translateY(-2px); }
-        .attendance-avatar {
-            width: 48px; height: 48px; border-radius: 50%;
-            background: var(--gradient);
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; font-weight: 800; font-size: 1.1rem;
-            flex-shrink: 0; overflow: hidden;
-        }
-        .attendance-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .attendance-body { flex: 1; min-width: 0; }
-        .attendance-name { font-weight: 800; font-size: 0.95rem; }
-        .attendance-pos { color: var(--text-muted); font-size: 0.82rem; margin-top: 2px; }
-        .attendance-meta {
-            display: flex; gap: 10px; margin-top: 6px;
-            font-size: 0.78rem; color: var(--text-muted);
-            flex-wrap: wrap;
-        }
-
-        /* Status Badges */
-        .badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            padding: 3px 10px; border-radius: 14px;
-            font-size: 0.74rem; font-weight: 700;
-            white-space: nowrap;
-        }
-        .badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
-        .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
-        .badge-error { background: rgba(239,68,68,0.15); color: var(--error); }
-        .badge-info { background: rgba(79,172,254,0.15); color: var(--info); }
-
-        /* Empty State */
-        .empty-state {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 50px 20px;
-            color: var(--text-muted);
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 16px;
-        }
-        .empty-state i {
-            font-size: 4rem;
-            color: rgba(148,163,184,0.3);
-            margin-bottom: 16px;
-            display: block;
-        }
-        .empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
-
-        /* Modals */
-        .modal {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.75);
-            backdrop-filter: blur(6px);
-            z-index: 200; display: none;
-            align-items: center; justify-content: center;
-            padding: 20px;
-            animation: fadeIn .25s;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: var(--bg-2); border: 1px solid var(--border);
-            border-radius: 22px;
-            width: 100%; max-width: 600px;
-            max-height: 92vh; overflow-y: auto;
-            padding: 28px; position: relative;
-            animation: slideUp .3s ease-out;
-        }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .modal-content::-webkit-scrollbar { width: 6px; }
-        .modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
-
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 22px; padding-bottom: 14px;
-            border-bottom: 1px solid var(--border);
-        }
-        .modal-title {
-            font-size: 1.2rem; font-weight: 800;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .modal-title i { color: var(--primary); }
-        .modal-close {
-            background: var(--card); border: 1px solid var(--border);
-            color: var(--text); width: 36px; height: 36px;
-            border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: all .2s;
-        }
-        .modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
-
-        .field { margin-bottom: 16px; }
-        .field label {
-            display: block; color: var(--text);
-            font-size: 0.9rem; font-weight: 600; margin-bottom: 8px;
-        }
-        .field label i { color: var(--primary); margin-left: 4px; }
-        .field input, .field select, .field textarea {
-            width: 100%; padding: 12px 14px;
-            background: rgba(255,255,255,0.03);
-            border: 2px solid var(--border);
-            border-radius: 10px; color: var(--text);
-            font-size: 0.95rem; font-family: inherit;
-            transition: all .2s;
-        }
-        .field input:focus, .field select:focus, .field textarea:focus {
-            outline: none; border-color: var(--primary);
-            background: rgba(255,255,255,0.06);
-        }
-
-        /* Days Grid */
-        .days-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 6px;
-        }
-        .day-checkbox {
-            padding: 10px 6px;
-            background: rgba(255,255,255,0.03);
-            border: 1.5px solid var(--border);
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 0.86rem;
-            font-weight: 700;
-            transition: all .2s;
-        }
-        .day-checkbox:hover { background: rgba(255,255,255,0.05); border-color: var(--primary); }
-        .day-checkbox.checked {
-            background: rgba(239,68,68,0.15);
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-        .day-checkbox input { display: none; }
-
-        /* Section */
-        .section {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 18px;
-            margin-bottom: 16px;
-        }
-        .section-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 14px;
-        }
-        .section-title {
-            font-size: 1rem; font-weight: 800;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .section-title i { color: var(--primary); }
-
-        /* Live indicator */
-        .live-indicator {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 5px 12px;
-            background: rgba(16,185,129,0.15);
-            border: 1px solid rgba(16,185,129,0.3);
-            border-radius: 14px;
-            color: var(--success);
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
-        .live-dot {
-            width: 8px; height: 8px;
-            background: var(--success);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        /* Progress Bar */
-        .progress-bar {
-            height: 8px; background: rgba(255,255,255,0.06);
-            border-radius: 4px; overflow: hidden;
-            margin-top: 6px;
-        }
-        .progress-fill {
-            height: 100%; background: var(--gradient);
-            transition: width .4s;
-        }
-        .progress-fill.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .progress-fill.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .progress-fill.danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
-
-        /* Help Modal */
-        .help-section {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 12px;
-        }
-        .help-section h4 {
-            font-size: 0.95rem;
-            display: flex; align-items: center; gap: 8px;
-            margin-bottom: 8px;
-            color: var(--primary);
-        }
-        .help-section ul { list-style: none; padding: 0; }
-        .help-section li {
-            padding: 5px 0;
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            display: flex; align-items: flex-start; gap: 6px;
-        }
-        .help-section li i {
-            color: var(--success);
-            flex-shrink: 0;
-            margin-top: 4px;
-        }
-
-        /* Data Policy */
-        .policy-toggle {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-        .policy-toggle-label {
-            display: flex; flex-direction: column; gap: 3px;
-        }
-        .policy-toggle-label strong { font-size: 0.92rem; }
-        .policy-toggle-label small { color: var(--text-muted); font-size: 0.78rem; }
-        .switch {
-            position: relative;
-            width: 50px; height: 26px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 13px;
-            cursor: pointer;
-            transition: all .3s;
-            flex-shrink: 0;
-        }
-        .switch.active { background: var(--primary); }
-        .switch::before {
-            content: '';
-            position: absolute;
-            right: 3px; top: 3px;
-            width: 20px; height: 20px;
-            background: #fff;
-            border-radius: 50%;
-            transition: all .3s;
-        }
-        .switch.active::before { right: calc(100% - 23px); }
-
-        /* Cleanup logs */
-        .log-card {
-            background: rgba(79,172,254,0.03);
-            border: 1px solid rgba(79,172,254,0.15);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 8px;
-            display: flex; align-items: center; gap: 12px;
-        }
-        .log-card.success { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.2); }
-        .log-card.warning { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.2); }
-        .log-card-icon {
-            width: 38px; height: 38px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            color: #fff;
-        }
-        .log-card-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-        .log-card-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .log-card-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .log-card-body { flex: 1; min-width: 0; }
-        .log-card-title { font-weight: 700; font-size: 0.92rem; }
-        .log-card-meta { color: var(--text-muted); font-size: 0.78rem; margin-top: 3px; }
-
-        @media (max-width: 1024px) {
-            .sidebar { transform: translateX(100%); width: 280px; }
-            .sidebar.open { transform: translateX(0); }
-            .main { margin-right: 0; }
-            .menu-toggle { display: flex; align-items: center; justify-content: center; }
-        }
-        @media (max-width: 600px) {
-            .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
-            .topbar-title { font-size: 1.2rem; }
-            .stats-row { grid-template-columns: 1fr 1fr; }
-            .countdown-big { font-size: 1.5rem; }
-            .qr-canvas-wrap img { max-width: 220px; }
-        }
-    </style>
+@media (max-width: 1024px) {
+.sidebar { transform: translateX(100%); width: 280px; }
+.sidebar.open { transform: translateX(0); }
+.main { margin-right: 0; }
+.menu-toggle { display: flex; align-items: center; justify-content: center; }
+}
+</style>
 </head>
 <body>
-    <div class="bg-anim"></div>
+<div class="bg-anim"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-logo">
+<div class="logo-wrapper">
+<div class="logo-icon">
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ef4444"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs>
+<path d="M16 2 L28 8 V20 Q28 26 16 30 Q4 26 4 20 V8 Z" fill="url(#logoGrad)" stroke="#fff" stroke-width="0.5" opacity="0.95"/>
+<text x="16" y="20" text-anchor="middle" font-family="Cairo, sans-serif" font-size="14" font-weight="900" fill="#fff">P</text>
+</svg>
+</div>
+<div class="logo-text"><div class="logo-brand">ProVance</div><div class="logo-tagline">منصة التدريب</div></div>
+</div>
+</div>
+<a href="company-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
+<a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
+<a href="company-talent-search.html" class="nav-item"><i class="fas fa-search"></i> البحث عن المواهب</a>
+<a href="company-requests-control.html" class="nav-item"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
+<a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم</a>
+<a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
+<a href="company-QR_Code.html" class="nav-item active"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
+<a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
+<a href="company-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
+<a href="company-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+<a href="#" onclick="logoutCompany(event)" class="nav-item" style="margin-top:auto; color:var(--error)"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a>
+</aside>
 
-    <div class="layout">
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-logo">
-                <div class="logo-wrapper">
-                    <div class="logo-icon">
-                        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#ef4444"/>
-                                    <stop offset="100%" stop-color="#dc2626"/>
-                                </linearGradient>
-                            </defs>
-                            <path d="M16 2 L28 8 V20 Q28 26 16 30 Q4 26 4 20 V8 Z" fill="url(#logoGrad)" stroke="#fff" stroke-width="0.5" opacity="0.95"/>
-                            <text x="16" y="20" text-anchor="middle" font-family="Cairo, sans-serif" font-size="14" font-weight="900" fill="#fff">P</text>
-                        </svg>
-                    </div>
-                    <div class="logo-text">
-                        <div class="logo-brand">ProVance</div>
-                        <div class="logo-tagline">منصة التدريب</div>
-                    </div>
-                </div>
-            </div>
-            <a href="company-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
-            <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
-            <a href="company-talent-search.html" class="nav-item"><i class="fas fa-search"></i> البحث عن المواهب</a>
-            <a href="company-requests-control.html" class="nav-item"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
-            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم</a>
-            <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
-            <a href="company-QR_Code.html" class="nav-item active"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
-            <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
-            <a href="company-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
-            <a href="company-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
-            <a href="#" onclick="logoutCompany(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
-                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
-            </a>
-        </aside>
+<main class="main">
+<div class="topbar">
+<button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+<h1 class="topbar-title"><i class="fas fa-qrcode" style="color:var(--primary)"></i> نظام الـ QR</h1>
+<button class="btn btn-primary" onclick="openSmartQRGenerator()"><i class="fas fa-plus"></i> توليد QR جديد</button>
+</div>
 
-        <main class="main">
-            <div class="topbar">
-                <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1 class="topbar-title">
-                    <i class="fas fa-qrcode" style="color:var(--primary)"></i> الحضور اليومي (QR)
-                </h1>
-                <div class="topbar-actions">
-                    <button class="btn btn-secondary btn-sm" onclick="openHelpModal()" title="دليل الاستخدام">
-                        <i class="fas fa-question-circle"></i> مساعدة
-                    </button>
-                    <button class="btn btn-secondary btn-sm" onclick="openHolidaysSettings()">
-                        <i class="fas fa-calendar-times"></i> الإجازات
-                    </button>
-                    <button class="btn btn-secondary btn-sm" onclick="openDataPolicyModal()">
-                        <i class="fas fa-sliders-h"></i> الإعدادات
-                    </button>
-                </div>
-            </div>
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-num" id="statActive">0</div><div class="stat-label">QR Codes نشطة</div></div>
+<div class="stat-card"><div class="stat-num" style="color:#10b981" id="statScansToday">0</div><div class="stat-label">مسحات اليوم</div></div>
+<div class="stat-card"><div class="stat-num" style="color:#4facfe" id="statScansTotal">0</div><div class="stat-label">إجمالي المسحات</div></div>
+<div class="stat-card"><div class="stat-num" style="color:#ef4444" id="statFailedScans">0</div><div class="stat-label">مسحات فاشلة</div></div>
+</div>
 
-            <!-- Tabs -->
-            <div class="tabs-container">
-                <button class="tab-btn active" data-tab="generate" onclick="switchTab(event, 'generate')">
-                    <i class="fas fa-qrcode"></i> توليد QR
-                </button>
-                <button class="tab-btn" data-tab="today-attendance" onclick="switchTab(event, 'today-attendance')">
-                    <i class="fas fa-calendar-day"></i> حضور اليوم
-                    <span class="tab-badge" id="todayCount">0</span>
-                </button>
-                <button class="tab-btn" data-tab="history" onclick="switchTab(event, 'history')">
-                    <i class="fas fa-history"></i> السجل
-                </button>
-                <button class="tab-btn" data-tab="stats" onclick="switchTab(event, 'stats')">
-                    <i class="fas fa-chart-bar"></i> إحصائيات
-                </button>
-                <button class="tab-btn" data-tab="cleanup-logs" onclick="switchTab(event, 'cleanup-logs')">
-                    <i class="fas fa-broom"></i> سجل التنظيف
-                </button>
-            </div>
+<!-- Active QR Codes -->
+<div id="activeQRsContainer">
+<div class="card">
+<div class="card-title"><i class="fas fa-broadcast-tower" style="color:var(--primary)"></i> الأكواد النشطة</div>
+<div id="activeQRsList">
+<div class="empty-state"><i class="fas fa-qrcode"></i><p>لا توجد أكواد نشطة. اضغط "توليد QR جديد" للبدء.</p></div>
+</div>
+</div>
+</div>
 
-            <!-- Tab: Generate QR -->
-            <div id="tab-generate" class="tab-content active">
-                <div class="qr-generator-card">
-                    <h2>QR Code للحضور اليومي</h2>
-                    <p id="qrGenSubtitle">اضغط الزرار لتوليد QR جديد للمتدربين</p>
+<!-- Recent Scans -->
+<div class="card">
+<div class="card-title"><i class="fas fa-history" style="color:var(--info)"></i> آخر المسحات</div>
+<div class="scans-list" id="scansList">
+<div class="empty-state" style="padding:30px"><i class="fas fa-inbox" style="font-size:3rem"></i><p>لا توجد مسحات بعد</p></div>
+</div>
+</div>
+</main>
+</div>
 
-                    <div id="qrDisplay" style="display:none">
-                        <div class="qr-canvas-wrap" id="qrCanvasWrap">
-                            <img id="qrImage" src="" alt="QR Code">
-                        </div>
+<!-- Smart QR Generator Modal -->
+<div class="modal" id="qrGeneratorModal">
+<div class="modal-content">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+<h3 style="font-size:1.2rem;font-weight:800"><i class="fas fa-qrcode" style="color:var(--primary)"></i> توليد QR Code ذكي</h3>
+<button onclick="document.getElementById('qrGeneratorModal').classList.remove('active')" style="background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.2rem">×</button>
+</div>
 
-                        <div class="countdown-big" id="qrCountdown">--:--</div>
+<div style="margin-bottom:16px">
+<label style="display:block;font-weight:700;margin-bottom:8px;font-size:0.92rem"><i class="fas fa-bullseye"></i> غرض الـ QR Code <span style="color:#ef4444">*</span></label>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+<button type="button" id="purposeAttendance" onclick="setPurpose('attendance')" class="purpose-active" style="padding:14px 6px;background:var(--card);border:2px solid var(--border);border-radius:12px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px">
+<i class="fas fa-clipboard-check" style="font-size:1.4rem;color:#10b981"></i>
+<span>حضور تدريب</span>
+</button>
+<button type="button" id="purposeInterview" onclick="setPurpose('interview')" style="padding:14px 6px;background:var(--card);border:2px solid var(--border);border-radius:12px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px">
+<i class="fas fa-handshake" style="font-size:1.4rem;color:#4facfe"></i>
+<span>مقابلة</span>
+</button>
+<button type="button" id="purposeVisit" onclick="setPurpose('visit')" style="padding:14px 6px;background:var(--card);border:2px solid var(--border);border-radius:12px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px">
+<i class="fas fa-user-friends" style="font-size:1.4rem;color:#f59e0b"></i>
+<span>زيارة</span>
+</button>
+</div>
+</div>
 
-                        <div class="live-indicator">
-                            <div class="live-dot"></div>
-                            <span>الـ QR نشط</span>
-                        </div>
+<div style="margin-bottom:16px" id="departmentSection">
+<label style="display:block;font-weight:700;margin-bottom:8px;font-size:0.92rem"><i class="fas fa-sitemap"></i> القسم / المجال</label>
+<select id="qrDepartment" style="width:100%;padding:12px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.95rem;cursor:pointer">
+<option value="">كل الأقسام (عام)</option>
+</select>
+<div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">اختار قسم محدد لو في أكتر من قسم بتدرب فيه</div>
+</div>
 
-                        <div class="qr-validity-info">
-                            <div class="qr-validity-row">
-                                <span class="label">📅 التاريخ:</span>
-                                <span class="value" id="qrDateInfo">-</span>
-                            </div>
-                            <div class="qr-validity-row">
-                                <span class="label">⏰ بدأ في:</span>
-                                <span class="value" id="qrStartInfo">-</span>
-                            </div>
-                            <div class="qr-validity-row">
-                                <span class="label">⏰ ينتهي في:</span>
-                                <span class="value" id="qrEndInfo">-</span>
-                            </div>
-                            <div class="qr-validity-row">
-                                <span class="label">🎯 عدد المسحات:</span>
-                                <span class="value" id="qrScansInfo">0</span>
-                            </div>
-                            <div class="qr-validity-row">
-                                <span class="label">🔑 الكود:</span>
-                                <span class="value" id="qrCodeInfo" style="font-family:'Courier New',monospace;font-size:0.85rem">-</span>
-                            </div>
-                        </div>
+<div style="margin-bottom:16px">
+<label style="display:block;font-weight:700;margin-bottom:8px;font-size:0.92rem"><i class="fas fa-clock"></i> مدة الصلاحية <span style="color:#ef4444">*</span></label>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+<button type="button" onclick="setDuration(15, this)" class="duration-btn" style="padding:10px 4px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:700">15 دقيقة</button>
+<button type="button" onclick="setDuration(30, this)" class="duration-btn active-dur" style="padding:10px 4px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:700">30 دقيقة</button>
+<button type="button" onclick="setDuration(60, this)" class="duration-btn" style="padding:10px 4px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:700">ساعة</button>
+<button type="button" onclick="setDuration(480, this)" class="duration-btn" style="padding:10px 4px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:700">يوم عمل</button>
+</div>
+</div>
 
-                        <div class="qr-actions">
-                            <button class="btn btn-primary" onclick="generateNewQR()">
-                                <i class="fas fa-sync"></i> QR جديد
-                            </button>
-                            <button class="btn btn-secondary" onclick="printQR()">
-                                <i class="fas fa-print"></i> طباعة
-                            </button>
-                            <button class="btn btn-info" onclick="copyQRCode()">
-                                <i class="fas fa-copy"></i> نسخ الكود
-                            </button>
-                        </div>
-                    </div>
+<div style="margin-bottom:16px">
+<label style="display:block;font-weight:700;margin-bottom:8px;font-size:0.92rem"><i class="fas fa-sticky-note"></i> ملاحظات (اختياري)</label>
+<input type="text" id="qrNotes" placeholder="مثال: حضور يوم الأحد 25 مايو" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem">
+</div>
 
-                    <div id="qrPlaceholder">
-                        <div style="padding:40px 20px;color:var(--text-muted);text-align:center">
-                            <i class="fas fa-qrcode" style="font-size:5rem;opacity:0.3;display:block;margin-bottom:14px"></i>
-                            <p style="margin-bottom:18px">مفيش QR Code نشط حالياً</p>
-                            <button class="btn btn-primary" onclick="generateNewQR()">
-                                <i class="fas fa-plus"></i> ولّد QR جديد
-                            </button>
-                        </div>
-                    </div>
-                </div>
+<div style="display:flex;gap:10px;margin-top:16px">
+<button onclick="document.getElementById('qrGeneratorModal').classList.remove('active')" style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>
+<button onclick="generateSmartQR()" style="flex:2;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800;font-family:inherit;cursor:pointer"><i class="fas fa-qrcode"></i> توليد QR</button>
+</div>
+</div>
+</div>
 
-                <!-- Info Card -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3 class="section-title"><i class="fas fa-info-circle"></i> كيف يعمل النظام؟</h3>
-                    </div>
-                    <ul style="list-style:none;color:var(--text-muted);font-size:0.9rem;line-height:2">
-                        <li><i class="fas fa-check-circle" style="color:var(--success);margin-left:8px"></i> ولّد QR Code لكل يوم تدريب</li>
-                        <li><i class="fas fa-check-circle" style="color:var(--success);margin-left:8px"></i> الـ QR صالح لساعة من وقت التوليد</li>
-                        <li><i class="fas fa-check-circle" style="color:var(--success);margin-left:8px"></i> اعرض الـ QR على شاشة كبيرة عشان المتدربين يمسحوه</li>
-                        <li><i class="fas fa-check-circle" style="color:var(--success);margin-left:8px"></i> اتأكد من قائمة الحضور في تاب "حضور اليوم"</li>
-                        <li><i class="fas fa-exclamation-triangle" style="color:var(--warning);margin-left:8px"></i> لما متدرب يحضر 3 أيام، حسابه يقفل تلقائياً للدفع</li>
-                    </ul>
-                </div>
-            </div>
+<div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
 
-            <!-- Tab: Today's Attendance -->
-            <div id="tab-today-attendance" class="tab-content">
-                <div class="stats-row">
-                    <div class="stat-mini">
-                        <div class="stat-mini-icon purple"><i class="fas fa-users"></i></div>
-                        <div>
-                            <div class="stat-mini-num" id="statExpected">0</div>
-                            <div class="stat-mini-label">المتوقع</div>
-                        </div>
-                    </div>
-                    <div class="stat-mini">
-                        <div class="stat-mini-icon success"><i class="fas fa-check"></i></div>
-                        <div>
-                            <div class="stat-mini-num" id="statAttended">0</div>
-                            <div class="stat-mini-label">حضروا</div>
-                        </div>
-                    </div>
-                    <div class="stat-mini">
-                        <div class="stat-mini-icon warning"><i class="fas fa-clock"></i></div>
-                        <div>
-                            <div class="stat-mini-num" id="statLate">0</div>
-                            <div class="stat-mini-label">متأخرين</div>
-                        </div>
-                    </div>
-                    <div class="stat-mini">
-                        <div class="stat-mini-icon error"><i class="fas fa-times"></i></div>
-                        <div>
-                            <div class="stat-mini-num" id="statAbsent">0</div>
-                            <div class="stat-mini-label">غايبين</div>
-                        </div>
-                    </div>
-                </div>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } });
 
-                <div class="filters-bar">
-                    <input type="text" id="searchAttendance" placeholder="🔍 ابحث باسم المتدرب...">
-                    <select id="filterStatus">
-                        <option value="">كل الحالات</option>
-                        <option value="on_time">في الوقت</option>
-                        <option value="late">متأخر</option>
-                        <option value="absent">غائب</option>
-                    </select>
-                </div>
+let companyUserId = null;
+let companyData = null;
+let activeQRs = [];
+let recentScans = [];
+let smartQR_purpose = 'attendance';
+let smartQR_duration = 30;
+let countdownTimer = null;
 
-                <div class="attendance-grid" id="todayAttendanceGrid">
-                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
-                </div>
-            </div>
+function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function getInitial(name) { return (name || '?').charAt(0).toUpperCase(); }
+function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }); }
 
-            <!-- Tab: History -->
-            <div id="tab-history" class="tab-content">
-                <div class="filters-bar">
-                    <input type="text" id="searchHistory" placeholder="🔍 ابحث باسم المتدرب...">
-                    <input type="date" id="filterHistoryDate">
-                </div>
-                <div class="attendance-grid" id="historyGrid">
-                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i></div>
-                </div>
-            </div>
+function showToast(msg, type='info') {
+    const t = document.createElement('div');
+    const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+    t.className = 'toast'; t.style.background = c[type] || c.info; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+}
 
-            <!-- Tab: Stats -->
-            <div id="tab-stats" class="tab-content">
-                <div class="section">
-                    <div class="section-header">
-                        <h3 class="section-title"><i class="fas fa-chart-line"></i> إحصائيات الشهر الحالي</h3>
-                    </div>
-                    <div id="monthStatsContent">
-                        <div class="empty-state"><i class="fas fa-spinner fa-spin"></i></div>
-                    </div>
-                </div>
-                <div class="section">
-                    <div class="section-header">
-                        <h3 class="section-title"><i class="fas fa-trophy"></i> أعلى نسبة حضور</h3>
-                    </div>
-                    <div id="topAttendees">
-                        <div class="empty-state"><i class="fas fa-spinner fa-spin"></i></div>
-                    </div>
-                </div>
-            </div>
+window.logoutCompany = async (e) => {
+    if (e) e.preventDefault();
+    if (!confirm('هل تريد تسجيل الخروج؟')) return;
+    try { await sb.auth.signOut(); } catch {}
+    localStorage.clear();
+    window.location.href = 'company-login.html';
+};
 
-            <!-- Tab: Cleanup Logs -->
-            <div id="tab-cleanup-logs" class="tab-content">
-                <div class="section">
-                    <div class="section-header">
-                        <h3 class="section-title"><i class="fas fa-broom"></i> سجل عمليات التنظيف</h3>
-                        <div style="display:flex;gap:6px">
-                            <button class="btn btn-warning btn-sm" onclick="runManualCleanup()">
-                                <i class="fas fa-broom"></i> تشغيل التنظيف
-                            </button>
-                            <button class="btn btn-info btn-sm" onclick="exportCleanupLog()">
-                                <i class="fas fa-download"></i> تصدير
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick="clearCleanupLogs()">
-                                <i class="fas fa-trash"></i> مسح
-                            </button>
-                        </div>
-                    </div>
-                    <div id="cleanupLogsList">
-                        <div class="empty-state"><i class="fas fa-broom"></i><h3>لا توجد عمليات تنظيف</h3><p>سجل عمليات التنظيف هيظهر هنا</p></div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <div id="modalsContainer"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
-    <script>
-
-        // ============================================================
-        // 🛡️ Resilient Supabase Client + Session
-        // ============================================================
-        if (!window.getSafeSupabase) {
-            window.getSafeSupabase = async function() {
-                if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
-                    try {
-                        const sb = await window.ProVance.waitForSupabaseClient(8000);
-                        if (sb && typeof sb.from === 'function') return sb;
-                    } catch(e) {}
-                }
-                try {
-                    const sb = window.ProVance && window.ProVance.sb;
-                    if (sb && typeof sb.from === 'function') return sb;
-                } catch(e) {}
-                if (typeof supabase !== 'undefined' && supabase.createClient) {
-                    try {
-                        return supabase.createClient(
-                            'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                            { auth: { persistSession: true, storage: window.localStorage } }
-                        );
-                    } catch(e) {}
-                }
-                return null;
-            };
+window.openSmartQRGenerator = async () => {
+    const deptSelect = document.getElementById('qrDepartment');
+    if (deptSelect && companyData) {
+        const trainingFields = (() => {
+            try { return typeof companyData.training_fields === 'string' ? JSON.parse(companyData.training_fields) : (companyData.training_fields || []); } 
+            catch(e) { return []; }
+        })();
+        
+        deptSelect.innerHTML = '<option value="">كل الأقسام (عام)</option>' + 
+            trainingFields.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
+        
+        const deptSection = document.getElementById('departmentSection');
+        if (trainingFields.length <= 1 && deptSection) {
+            deptSection.style.display = 'none';
+        } else if (deptSection) {
+            deptSection.style.display = 'block';
         }
-        async function getResilientSession(sb, maxRetries = 5) {
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const { data: { session } } = await sb.auth.getSession();
-                    if (session && session.user) return session;
-                } catch(e) {}
-                await new Promise(r => setTimeout(r, 500));
-            }
-            return null;
-        }
-// ============================================================
-// ProVance: Daily QR Code & Attendance - Full Featured
-// ============================================================
-(function() {
-    'use strict';
-
-    if (!window.ProVance) {
-        console.error('⚠️ supabase-config.js مش متحمل');
-        window.ProVance = {};
     }
-    if (typeof window.ProVance.escapeHtml !== 'function') {
-        window.ProVance.escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-    if (typeof window.ProVance.showToast !== 'function') {
-        window.ProVance.showToast = (msg, type) => {
-            const t = document.createElement('div');
-            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
-            t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (c[type]||'#4facfe') + ';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
-            t.textContent = msg;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 4000);
-        };
-    }
-    if (typeof window.ProVance.confirmModal !== 'function') {
-        window.ProVance.confirmModal = async ({title, message}) => confirm((title||'') + '\n' + (message||''));
-    }
+    
+    setPurpose('attendance');
+    document.getElementById('qrGeneratorModal').classList.add('active');
+};
 
-    console.log('✅ QR Code app initialized');
+window.setPurpose = (purpose) => {
+    smartQR_purpose = purpose;
+    ['Attendance', 'Interview', 'Visit'].forEach(p => {
+        const btn = document.getElementById('purpose' + p);
+        if (btn) btn.classList.remove('purpose-active');
+    });
+    const map = { attendance: 'Attendance', interview: 'Interview', visit: 'Visit' };
+    const btn = document.getElementById('purpose' + map[purpose]);
+    if (btn) btn.classList.add('purpose-active');
+};
 
-    const esc = window.ProVance.escapeHtml;
+window.setDuration = (minutes, btn) => {
+    smartQR_duration = minutes;
+    document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active-dur'));
+    if (btn) btn.classList.add('active-dur');
+};
 
-    // STATE
-    let companyUserId = null;
-    let companyName = null;
-    let activeTrainees = [];
-    let activeQrCode = null;
-    let allAttendanceLogs = [];
-    let weeklyHolidays = null;
-    let countdownInterval = null;
-    let cleanupLogs = [];
-    let dataPolicy = {
-        autoArchive: true,
-        autoCleanup: true,
-        archiveAfterDays: 90,
-        cleanupAfterDays: 365,
-        notifyOnLate: true,
-        autoExpireQR: true
-    };
-
-    function getInitial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
-    function pad(n) { return String(n).padStart(2, '0'); }
-
-    function renderModal(html) {
-        document.getElementById('modalsContainer').innerHTML = html;
-        document.body.style.overflow = 'hidden';
-    }
-    window.closeModal = (id) => {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-        if (document.querySelectorAll('.modal').length === 0) {
-            document.body.style.overflow = '';
-        }
-    };
-
-    window.logoutCompany = async (e) => {
-        e.preventDefault();
-        const ok = await window.ProVance.confirmModal({title: 'تسجيل الخروج', message: 'هل تريد تسجيل الخروج؟'});
-        if (ok) {
-            if (window.ProVance.logout) await window.ProVance.logout('company-login.html');
-            else window.location.href = 'company-login.html';
-        }
-    };
-
-    function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
-    function formatDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('ar-EG'); }
-    function formatTime(d) { if (!d) return '-'; return new Date(d).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }); }
-
-    function addCleanupLog(action, details, type = 'info') {
-        const log = {
-            id: Date.now() + Math.random(),
-            timestamp: new Date().toISOString(),
-            action, details, type
-        };
-        cleanupLogs.unshift(log);
-        if (cleanupLogs.length > 100) cleanupLogs = cleanupLogs.slice(0, 100);
-        try {
-            localStorage.setItem('provance_cleanup_logs_' + companyUserId, JSON.stringify(cleanupLogs));
-        } catch (e) {}
-        renderCleanupLogs();
-    }
-
-    function loadCleanupLogs() {
-        try {
-            const stored = localStorage.getItem('provance_cleanup_logs_' + companyUserId);
-            if (stored) cleanupLogs = JSON.parse(stored);
-        } catch (e) {}
-    }
-
-    function loadDataPolicy() {
-        try {
-            const stored = localStorage.getItem('provance_qr_policy_' + companyUserId);
-            if (stored) dataPolicy = { ...dataPolicy, ...JSON.parse(stored) };
-        } catch (e) {}
-    }
-
-    window.switchTab = (e, tabName) => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        document.getElementById('tab-' + tabName).classList.add('active');
-
-        if (tabName === 'stats') renderMonthStats();
-        if (tabName === 'cleanup-logs') renderCleanupLogs();
-    };
-
-    window.generateNewQR = async () => {
-        if (activeTrainees.length === 0) {
-            window.ProVance.showToast('⚠️ مفيش متدربين نشطين', 'warning');
-            return;
-        }
-
-        try {
-            const sb = window.ProVance.sb;
-
-            if (activeQrCode && activeQrCode.status === 'active') {
-                await sb.from('qr_codes').update({ status: 'cancelled' }).eq('id', activeQrCode.id);
-                addCleanupLog('إلغاء QR قديم', `تم إلغاء الكود ${activeQrCode.code}`, 'warning');
-            }
-
-            const qrCodeStr = 'DAY-' + Math.random().toString(36).substring(2, 14).toUpperCase();
-            const now = new Date();
-            const validUntil = new Date(now.getTime() + 60 * 60 * 1000);
-
-            const { data: newQr, error } = await sb.from('qr_codes').insert({
-                code: qrCodeStr,
-                qr_type: 'daily_attendance',
-                company_user_id: companyUserId,
-                company_name: companyName,
-                application_id: null,
-                student_user_id: null,
-                metadata: {
-                    training_day: now.toISOString().slice(0, 10),
-                    expected_attendees: activeTrainees.length
-                },
-                valid_from: now.toISOString(),
-                valid_until: validUntil.toISOString(),
-                status: 'active'
-            }).select().single();
-
-            if (error) throw error;
-
-            activeQrCode = newQr;
-            addCleanupLog('توليد QR جديد', `كود: ${qrCodeStr} - صالح لساعة - ${activeTrainees.length} متدرب`, 'success');
-            window.ProVance.showToast('🎉 تم توليد QR جديد!', 'success');
-            renderQR();
-            startCountdown();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-        }
-    };
-
-    function renderQR() {
-        const placeholder = document.getElementById('qrPlaceholder');
-        const display = document.getElementById('qrDisplay');
-
-        if (!activeQrCode || activeQrCode.status !== 'active' || new Date(activeQrCode.valid_until) < new Date()) {
-            placeholder.style.display = 'block';
-            display.style.display = 'none';
-            return;
-        }
-
-        placeholder.style.display = 'none';
-        display.style.display = 'block';
-
-        const qrData = JSON.stringify({
-            type: 'daily_attendance',
-            code: activeQrCode.code,
-            company: activeQrCode.company_name,
-            valid_until: activeQrCode.valid_until
-        });
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}&color=000000&bgcolor=FFFFFF`;
-        document.getElementById('qrImage').src = qrUrl;
-
-        const validFrom = new Date(activeQrCode.valid_from);
-        const validUntil = new Date(activeQrCode.valid_until);
-        document.getElementById('qrDateInfo').textContent = formatDate(validFrom);
-        document.getElementById('qrStartInfo').textContent = formatTime(validFrom);
-        document.getElementById('qrEndInfo').textContent = formatTime(validUntil);
-        document.getElementById('qrScansInfo').textContent = activeQrCode.scans_count || 0;
-        document.getElementById('qrCodeInfo').textContent = activeQrCode.code;
-
-        document.getElementById('qrGenSubtitle').textContent =
-            `الـ QR صالح لساعة كاملة • ${activeTrainees.length} متدرب نشط`;
-    }
-
-    function startCountdown() {
-        if (countdownInterval) clearInterval(countdownInterval);
-
-        const updateCountdown = () => {
-            if (!activeQrCode) return;
-            const validUntil = new Date(activeQrCode.valid_until);
-            const diff = validUntil.getTime() - Date.now();
-
-            const cdEl = document.getElementById('qrCountdown');
-            const wrap = document.getElementById('qrCanvasWrap');
-            if (!cdEl || !wrap) return;
-
-            if (diff <= 0) {
-                cdEl.textContent = '00:00';
-                cdEl.classList.remove('danger');
-                cdEl.classList.add('expired');
-                wrap.classList.add('expired');
-                clearInterval(countdownInterval);
-                if (dataPolicy.autoExpireQR) {
-                    addCleanupLog('انتهاء صلاحية QR تلقائياً', `الكود ${activeQrCode.code} انتهى`, 'warning');
-                }
-                setTimeout(() => loadAll(), 2000);
-                return;
-            }
-
-            const mins = Math.floor(diff / 60000);
-            const secs = Math.floor((diff % 60000) / 1000);
-            cdEl.textContent = `${pad(mins)}:${pad(secs)}`;
-
-            if (diff < 5 * 60 * 1000) cdEl.classList.add('danger');
-            else cdEl.classList.remove('danger');
-            wrap.classList.remove('expired');
-            cdEl.classList.remove('expired');
-        };
-
-        updateCountdown();
-        countdownInterval = setInterval(updateCountdown, 1000);
-    }
-
-    window.copyQRCode = () => {
-        if (!activeQrCode) return;
-        navigator.clipboard.writeText(activeQrCode.code).then(() => {
-            window.ProVance.showToast('تم نسخ الكود ✓', 'success');
-        }).catch(() => window.ProVance.showToast('تعذر النسخ', 'error'));
-    };
-
-    window.printQR = () => {
-        if (!activeQrCode) return;
-        const img = document.getElementById('qrImage');
-        const printWin = window.open('', '_blank', 'width=600,height=700');
-        printWin.document.write(`
-            <html dir="rtl"><head><title>ProVance - QR Code</title>
-            <style>
-                body { font-family: Arial; text-align: center; padding: 40px; }
-                img { max-width: 400px; margin: 20px 0; }
-                h1 { color: #333; }
-                .info { background: #f5f5f5; padding: 20px; border-radius: 12px; margin: 20px 0; }
-                .code { font-family: monospace; font-size: 1.4rem; font-weight: bold; color: #ef4444; }
-            </style>
-            </head><body>
-            <h1>🎫 ProVance - QR Code</h1>
-            <h2>${esc(companyName)}</h2>
-            <img src="${img.src}">
-            <div class="info">
-                <p>📅 ${formatDate(activeQrCode.valid_from)}</p>
-                <p>⏰ صالح من ${formatTime(activeQrCode.valid_from)} إلى ${formatTime(activeQrCode.valid_until)}</p>
-                <p class="code">${activeQrCode.code}</p>
-            </div>
-            </body></html>
-        `);
-        printWin.document.close();
-        setTimeout(() => printWin.print(), 500);
-    };
-
-    function getTodayAttendance() {
-        const today = new Date(); today.setHours(0,0,0,0);
-        const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-        return allAttendanceLogs.filter(a => {
-            if (a.attendance_type !== 'daily_attendance') return false;
-            const d = new Date(a.scanned_at);
-            return d >= today && d < tomorrow;
-        });
-    }
-
-    function renderTodayAttendance() {
-        const search = document.getElementById('searchAttendance').value.toLowerCase().trim();
-        const statusFilter = document.getElementById('filterStatus').value;
-        const todayAtt = getTodayAttendance();
-
-        let combined = activeTrainees.map(t => {
-            const att = todayAtt.find(a => a.student_user_id === t.student_user_id);
-            return {
-                ...t,
-                status: att ? att.status : 'absent',
-                delay_minutes: att ? att.delay_minutes : 0,
-                scanned_at: att ? att.scanned_at : null
-            };
-        });
-
-        if (search) combined = combined.filter(c => (c.student_name || '').toLowerCase().includes(search));
-        if (statusFilter) combined = combined.filter(c => c.status === statusFilter);
-
-        const onTime = todayAtt.filter(a => a.status === 'on_time').length;
-        const late = todayAtt.filter(a => a.status === 'late').length;
-        const absent = activeTrainees.length - todayAtt.length;
-
-        document.getElementById('statExpected').textContent = activeTrainees.length;
-        document.getElementById('statAttended').textContent = onTime;
-        document.getElementById('statLate').textContent = late;
-        document.getElementById('statAbsent').textContent = absent;
-        document.getElementById('todayCount').textContent = todayAtt.length;
-
-        const grid = document.getElementById('todayAttendanceGrid');
-        if (combined.length === 0) {
-            grid.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><h3>مفيش متدربين</h3></div>';
-            return;
-        }
-
-        grid.innerHTML = combined.map(c => {
-            const photo = c.student_photo
-                ? `<img src="${c.student_photo}" alt="${esc(c.student_name)}">`
-                : `<span>${getInitial(c.student_name)}</span>`;
-
-            const statusBadge = {
-                'on_time': '<span class="badge badge-success">✓ في الوقت</span>',
-                'late': `<span class="badge badge-warning">⚠ متأخر ${c.delay_minutes}د</span>`,
-                'early': '<span class="badge badge-info">⚡ مبكراً</span>',
-                'absent': '<span class="badge badge-error">✕ غائب</span>'
-            }[c.status] || '';
-
-            return `
-                <div class="attendance-card">
-                    <div class="attendance-avatar">${photo}</div>
-                    <div class="attendance-body">
-                        <div class="attendance-name">${esc(c.student_name || '-')}</div>
-                        <div class="attendance-pos">${esc(c.internship_title || '')}</div>
-                        <div class="attendance-meta">
-                            ${statusBadge}
-                            ${c.scanned_at ? `<span><i class="fas fa-clock"></i> ${formatTime(c.scanned_at)}</span>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function renderHistory() {
-        const search = document.getElementById('searchHistory').value.toLowerCase().trim();
-        const dateFilter = document.getElementById('filterHistoryDate').value;
-
-        let logs = allAttendanceLogs.filter(a => a.attendance_type === 'daily_attendance');
-
-        if (search) logs = logs.filter(l => (l.student_name || '').toLowerCase().includes(search));
-        if (dateFilter) {
-            const filterDate = new Date(dateFilter); filterDate.setHours(0,0,0,0);
-            const nextDay = new Date(filterDate); nextDay.setDate(nextDay.getDate() + 1);
-            logs = logs.filter(l => {
-                const d = new Date(l.scanned_at);
-                return d >= filterDate && d < nextDay;
-            });
-        }
-
-        const grid = document.getElementById('historyGrid');
-        if (logs.length === 0) {
-            grid.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><h3>لا يوجد سجل</h3></div>';
-            return;
-        }
-
-        grid.innerHTML = logs.slice(0, 100).map(l => {
-            const trainee = activeTrainees.find(t => t.student_user_id === l.student_user_id);
-            const photo = trainee?.student_photo
-                ? `<img src="${trainee.student_photo}" alt="">`
-                : `<span>${getInitial(l.student_name)}</span>`;
-
-            const statusBadge = {
-                'on_time': '<span class="badge badge-success">✓ في الوقت</span>',
-                'late': `<span class="badge badge-warning">⚠ متأخر ${l.delay_minutes}د</span>`,
-                'early': '<span class="badge badge-info">⚡ مبكراً</span>',
-                'absent': '<span class="badge badge-error">✕ غائب</span>'
-            }[l.status] || '';
-
-            return `
-                <div class="attendance-card">
-                    <div class="attendance-avatar">${photo}</div>
-                    <div class="attendance-body">
-                        <div class="attendance-name">${esc(l.student_name || '-')}</div>
-                        <div class="attendance-pos">${formatDate(l.scanned_at)} • ${formatTime(l.scanned_at)}</div>
-                        <div class="attendance-meta">${statusBadge}</div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function renderMonthStats() {
+window.generateSmartQR = async () => {
+    const dept = document.getElementById('qrDepartment').value;
+    const notes = document.getElementById('qrNotes').value.trim();
+    
+    try {
+        const prefixes = { attendance: 'ATT-', interview: 'INT-', visit: 'VIS-' };
+        const code = (prefixes[smartQR_purpose] || 'QR-') + Math.random().toString(36).substring(2, 14).toUpperCase();
         const now = new Date();
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-        const monthLogs = allAttendanceLogs.filter(a => {
-            if (a.attendance_type !== 'daily_attendance') return false;
-            return new Date(a.scanned_at) >= monthStart;
-        });
-
-        const onTime = monthLogs.filter(l => l.status === 'on_time').length;
-        const late = monthLogs.filter(l => l.status === 'late').length;
-        const total = monthLogs.length;
-        const onTimePercent = total ? Math.round(onTime / total * 100) : 0;
-        const latePercent = total ? Math.round(late / total * 100) : 0;
-
-        document.getElementById('monthStatsContent').innerHTML = `
-            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px">
-                <div>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-                        <span style="color:var(--text-muted);font-size:0.86rem">في الوقت</span>
-                        <strong>${onTime} (${onTimePercent}%)</strong>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill success" style="width:${onTimePercent}%"></div>
-                    </div>
-                </div>
-                <div>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-                        <span style="color:var(--text-muted);font-size:0.86rem">متأخرين</span>
-                        <strong>${late} (${latePercent}%)</strong>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill warning" style="width:${latePercent}%"></div>
-                    </div>
-                </div>
-                <div>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-                        <span style="color:var(--text-muted);font-size:0.86rem">إجمالي تسجيلات الشهر</span>
-                        <strong>${total}</strong>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        const studentCounts = {};
-        monthLogs.forEach(l => {
-            if (!studentCounts[l.student_user_id]) {
-                studentCounts[l.student_user_id] = { name: l.student_name, count: 0, onTime: 0, late: 0 };
+        const validUntil = new Date(now.getTime() + smartQR_duration * 60 * 1000);
+        
+        const qrType = smartQR_purpose === 'attendance' ? 'daily_attendance' : 
+                       smartQR_purpose === 'interview' ? 'interview' : 'visit';
+        
+        const insertData = {
+            code: code,
+            qr_type: qrType,
+            company_user_id: companyUserId,
+            company_name: companyData?.company_name || '',
+            valid_from: now.toISOString(),
+            valid_until: validUntil.toISOString(),
+            status: 'active',
+            metadata: {
+                department: dept || null,
+                purpose: smartQR_purpose,
+                duration_minutes: smartQR_duration,
+                notes: notes || null
             }
-            studentCounts[l.student_user_id].count++;
-            if (l.status === 'on_time') studentCounts[l.student_user_id].onTime++;
-            if (l.status === 'late') studentCounts[l.student_user_id].late++;
-        });
-
-        const top = Object.values(studentCounts).sort((a, b) => b.count - a.count).slice(0, 10);
-        const topEl = document.getElementById('topAttendees');
-
-        if (top.length === 0) {
-            topEl.innerHTML = '<div class="empty-state"><i class="fas fa-trophy"></i><p>لا يوجد بيانات بعد</p></div>';
-        } else {
-            topEl.innerHTML = top.map((t, i) => {
-                const medal = ['🥇', '🥈', '🥉'][i] || (i + 1);
-                return `
-                    <div class="attendance-card" style="cursor:default">
-                        <div style="font-size:1.5rem;width:48px;text-align:center;flex-shrink:0">${medal}</div>
-                        <div class="attendance-body">
-                            <div class="attendance-name">${esc(t.name)}</div>
-                            <div class="attendance-meta">
-                                <span><i class="fas fa-check"></i> ${t.count} يوم</span>
-                                <span class="badge badge-success">${t.onTime} في الوقت</span>
-                                ${t.late > 0 ? `<span class="badge badge-warning">${t.late} متأخر</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-    }
-
-    function renderCleanupLogs() {
-        const list = document.getElementById('cleanupLogsList');
-        if (!list) return;
-        if (cleanupLogs.length === 0) {
-            list.innerHTML = '<div class="empty-state"><i class="fas fa-broom"></i><h3>لا توجد عمليات تنظيف</h3><p>سجل عمليات التنظيف هيظهر هنا</p></div>';
-            return;
-        }
-
-        list.innerHTML = cleanupLogs.map(log => {
-            const iconCls = log.type === 'success' ? 'success' : log.type === 'warning' ? 'warning' : 'info';
-            const iconName = log.type === 'success' ? 'check-circle' : log.type === 'warning' ? 'exclamation-triangle' : 'info-circle';
-            return `
-                <div class="log-card ${log.type === 'success' ? 'success' : log.type === 'warning' ? 'warning' : ''}">
-                    <div class="log-card-icon ${iconCls}"><i class="fas fa-${iconName}"></i></div>
-                    <div class="log-card-body">
-                        <div class="log-card-title">${esc(log.action)}</div>
-                        ${log.details ? `<div class="log-card-meta">${esc(log.details)}</div>` : ''}
-                        <div class="log-card-meta">
-                            <i class="fas fa-clock"></i> ${formatDateTime(log.timestamp)}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    window.runManualCleanup = async () => {
-        const ok = await window.ProVance.confirmModal({
-            title: 'تشغيل التنظيف',
-            message: 'هل تريد تشغيل عملية تنظيف يدوية؟'
-        });
-        if (!ok) return;
-
+        };
+        
+        // حاول مع columns جديدة
+        let result;
         try {
-            const sb = window.ProVance.sb;
-            const { data: expiredQrs } = await sb.from('qr_codes').select('id, code')
-                .eq('company_user_id', companyUserId)
-                .eq('status', 'active')
-                .lt('valid_until', new Date().toISOString());
-
-            const count = expiredQrs?.length || 0;
-            if (count > 0) {
-                await sb.from('qr_codes').update({ status: 'expired' })
-                    .eq('company_user_id', companyUserId)
-                    .eq('status', 'active')
-                    .lt('valid_until', new Date().toISOString());
-
-                addCleanupLog('تنظيف يدوي', `تم تنظيف ${count} QR منتهي`, 'success');
-                window.ProVance.showToast(`✓ تم تنظيف ${count} QR`, 'success');
+            const tryData = { ...insertData, department: dept || null, purpose: smartQR_purpose };
+            result = await sb.from('qr_codes').insert(tryData).select().single();
+        } catch(e) { result = { error: e }; }
+        
+        if (result.error) {
+            // fallback بدون department + purpose
+            result = await sb.from('qr_codes').insert(insertData).select().single();
+        }
+        
+        if (result.error) {
+            console.error('QR generation error:', result.error);
+            if (result.error.message && result.error.message.includes('qr_codes')) {
+                showToast('⚠️ شغّل SQL Migration 46 الأول!', 'error');
             } else {
-                addCleanupLog('تنظيف يدوي', 'مفيش QR محتاج تنظيف', 'info');
-                window.ProVance.showToast('مفيش QR محتاج تنظيف', 'info');
+                showToast('خطأ: ' + result.error.message, 'error');
             }
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-        }
-    };
-
-    window.exportCleanupLog = () => {
-        if (cleanupLogs.length === 0) {
-            window.ProVance.showToast('مفيش سجلات للتصدير', 'warning');
             return;
         }
-        const data = JSON.stringify(cleanupLogs, null, 2);
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `provance-cleanup-${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        window.ProVance.showToast('تم التصدير ✓', 'success');
-    };
-
-    window.clearCleanupLogs = async () => {
-        const ok = await window.ProVance.confirmModal({title: 'مسح السجل', message: 'هل تريد مسح كل سجلات التنظيف؟'});
-        if (!ok) return;
-        cleanupLogs = [];
-        try { localStorage.removeItem('provance_cleanup_logs_' + companyUserId); } catch (e) {}
-        renderCleanupLogs();
-        window.ProVance.showToast('تم المسح', 'success');
-    };
-
-    window.openHolidaysSettings = () => {
-        const currentDays = weeklyHolidays?.holiday_days || [5, 6];
-        const workStart = weeklyHolidays?.work_start_time || '09:00:00';
-        const workEnd = weeklyHolidays?.work_end_time || '17:00:00';
-
-        const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-
-        const html = `
-            <div class="modal active" id="holidaysModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-calendar-times"></i><span>إعدادات الإجازات</span></div>
-                        <button class="modal-close" onclick="closeModal('holidaysModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-calendar-week"></i> أيام الإجازة الأسبوعية</label>
-                        <div class="days-grid" id="daysGrid">
-                            ${dayNames.map((name, idx) => `
-                                <label class="day-checkbox ${currentDays.includes(idx) ? 'checked' : ''}" data-day="${idx}">
-                                    <input type="checkbox" value="${idx}" ${currentDays.includes(idx) ? 'checked' : ''}>
-                                    ${name}
-                                </label>
-                            `).join('')}
-                        </div>
-                        <div style="color:var(--text-muted);font-size:0.78rem;margin-top:6px">
-                            <i class="fas fa-info-circle"></i> الأيام دي مش هتتحسب غياب
-                        </div>
-                    </div>
-
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                        <div class="field">
-                            <label><i class="fas fa-sun"></i> بداية العمل</label>
-                            <input type="time" id="workStart" value="${workStart.slice(0,5)}">
-                        </div>
-                        <div class="field">
-                            <label><i class="fas fa-moon"></i> نهاية العمل</label>
-                            <input type="time" id="workEnd" value="${workEnd.slice(0,5)}">
-                        </div>
-                    </div>
-
-                    <div style="display:flex;gap:10px;margin-top:14px">
-                        <button class="btn btn-secondary" onclick="closeModal('holidaysModal')" style="flex:1;justify-content:center">إلغاء</button>
-                        <button class="btn btn-primary" onclick="saveHolidays()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> حفظ</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderModal(html);
-
-        document.querySelectorAll('.day-checkbox').forEach(label => {
-            label.addEventListener('click', (e) => {
-                if (e.target.tagName !== 'INPUT') {
-                    const cb = label.querySelector('input');
-                    cb.checked = !cb.checked;
-                }
-                label.classList.toggle('checked', label.querySelector('input').checked);
-            });
-        });
-    };
-
-    window.saveHolidays = async () => {
-        const checkedDays = Array.from(document.querySelectorAll('#daysGrid input:checked')).map(cb => parseInt(cb.value));
-        const workStart = document.getElementById('workStart').value + ':00';
-        const workEnd = document.getElementById('workEnd').value + ':00';
-
-        try {
-            const sb = window.ProVance.sb;
-            const data = {
-                company_user_id: companyUserId,
-                holiday_days: checkedDays,
-                work_start_time: workStart,
-                work_end_time: workEnd,
-                updated_at: new Date().toISOString()
-            };
-
-            if (weeklyHolidays) {
-                await sb.from('company_weekly_holidays').update(data).eq('company_user_id', companyUserId);
-            } else {
-                await sb.from('company_weekly_holidays').insert(data);
-            }
-
-            addCleanupLog('تحديث الإجازات', `تم تحديث ${checkedDays.length} يوم إجازة`, 'success');
-            window.ProVance.showToast('تم الحفظ ✓', 'success');
-            closeModal('holidaysModal');
-            await loadAll();
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-        }
-    };
-
-    window.openHelpModal = () => {
-        const html = `
-            <div class="modal active" id="helpModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-question-circle"></i><span>دليل الاستخدام</span></div>
-                        <button class="modal-close" onclick="closeModal('helpModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="help-section">
-                        <h4><i class="fas fa-qrcode"></i> توليد QR Code</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> اضغط "ولّد QR جديد" لتوليد كود لكل يوم تدريب</li>
-                            <li><i class="fas fa-check"></i> الـ QR صالح لساعة كاملة من وقت التوليد</li>
-                            <li><i class="fas fa-check"></i> يقدر يطبعه ويعرضه على شاشة كبيرة</li>
-                            <li><i class="fas fa-check"></i> أو ينسخ الكود ويبعته للمتدربين</li>
-                        </ul>
-                    </div>
-
-                    <div class="help-section">
-                        <h4><i class="fas fa-calendar-check"></i> متابعة الحضور</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> تاب "حضور اليوم" - يعرض كل المتدربين وحالتهم اليوم</li>
-                            <li><i class="fas fa-check"></i> فلتر حسب: حاضر/متأخر/غائب</li>
-                            <li><i class="fas fa-check"></i> يحدّث تلقائياً عند كل scan جديد</li>
-                        </ul>
-                    </div>
-
-                    <div class="help-section">
-                        <h4><i class="fas fa-chart-bar"></i> الإحصائيات</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> إحصائيات الشهر (نسبة في الوقت/متأخر)</li>
-                            <li><i class="fas fa-check"></i> Top 10 الأكثر حضوراً</li>
-                            <li><i class="fas fa-check"></i> فلترة حسب التاريخ</li>
-                        </ul>
-                    </div>
-
-                    <div class="help-section">
-                        <h4><i class="fas fa-calendar-times"></i> الإجازات</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> حدد أيام الإجازة الأسبوعية</li>
-                            <li><i class="fas fa-check"></i> الأيام دي مش هتتحسب غياب</li>
-                            <li><i class="fas fa-check"></i> ساعات العمل تتحدد لحساب التأخير</li>
-                        </ul>
-                    </div>
-
-                    <div class="help-section">
-                        <h4><i class="fas fa-broom"></i> سجل التنظيف</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> يسجل كل عمليات التنظيف التلقائية واليدوية</li>
-                            <li><i class="fas fa-check"></i> تنظيف يدوي للـ QR codes المنتهية</li>
-                            <li><i class="fas fa-check"></i> تصدير السجل كـ JSON</li>
-                        </ul>
-                    </div>
-
-                    <div class="help-section">
-                        <h4><i class="fas fa-exclamation-triangle"></i> تنبيهات مهمة</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> لما متدرب يحضر 3 أيام، حسابه يقفل تلقائياً للدفع</li>
-                            <li><i class="fas fa-check"></i> الـ QR ينتهي تلقائياً بعد ساعة</li>
-                            <li><i class="fas fa-check"></i> أي scan جديد يبعت إشعار للشركة</li>
-                        </ul>
-                    </div>
-
-                    <div style="margin-top:14px">
-                        <button class="btn btn-primary" onclick="closeModal('helpModal')" style="width:100%;justify-content:center">
-                            <i class="fas fa-check"></i> فهمت
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    window.openDataPolicyModal = () => {
-        const html = `
-            <div class="modal active" id="dataPolicyModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-sliders-h"></i><span>إعدادات سياسة البيانات</span></div>
-                        <button class="modal-close" onclick="closeModal('dataPolicyModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:14px">
-                        <i class="fas fa-info-circle" style="color:var(--info)"></i>
-                        تحكم في كيفية إدارة البيانات والإشعارات
-                    </p>
-
-                    <div class="policy-toggle">
-                        <div class="policy-toggle-label">
-                            <strong>أرشفة QR codes القديمة تلقائياً</strong>
-                            <small>نقل القديمة للأرشيف بعد ${dataPolicy.archiveAfterDays} يوم</small>
-                        </div>
-                        <div class="switch ${dataPolicy.autoArchive ? 'active' : ''}" onclick="togglePolicy('autoArchive', this)"></div>
-                    </div>
-
-                    <div class="policy-toggle">
-                        <div class="policy-toggle-label">
-                            <strong>تنظيف الأرشيف تلقائياً</strong>
-                            <small>حذف الأرشيف القديم بعد ${dataPolicy.cleanupAfterDays} يوم</small>
-                        </div>
-                        <div class="switch ${dataPolicy.autoCleanup ? 'active' : ''}" onclick="togglePolicy('autoCleanup', this)"></div>
-                    </div>
-
-                    <div class="policy-toggle">
-                        <div class="policy-toggle-label">
-                            <strong>إشعار عند التأخير</strong>
-                            <small>إرسال إشعار لما متدرب يتأخر</small>
-                        </div>
-                        <div class="switch ${dataPolicy.notifyOnLate ? 'active' : ''}" onclick="togglePolicy('notifyOnLate', this)"></div>
-                    </div>
-
-                    <div class="policy-toggle">
-                        <div class="policy-toggle-label">
-                            <strong>إنهاء صلاحية QR تلقائياً</strong>
-                            <small>تحديث الحالة لـ "expired" بعد انتهاء الساعة</small>
-                        </div>
-                        <div class="switch ${dataPolicy.autoExpireQR ? 'active' : ''}" onclick="togglePolicy('autoExpireQR', this)"></div>
-                    </div>
-
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
-                        <div class="field">
-                            <label><i class="fas fa-archive"></i> أرشفة بعد (يوم)</label>
-                            <input type="number" id="archiveAfterDays" min="30" max="365" value="${dataPolicy.archiveAfterDays}">
-                        </div>
-                        <div class="field">
-                            <label><i class="fas fa-trash"></i> حذف بعد (يوم)</label>
-                            <input type="number" id="cleanupAfterDays" min="90" max="3650" value="${dataPolicy.cleanupAfterDays}">
-                        </div>
-                    </div>
-
-                    <div style="display:flex;gap:10px;margin-top:14px">
-                        <button class="btn btn-secondary" onclick="closeModal('dataPolicyModal')" style="flex:1;justify-content:center">إلغاء</button>
-                        <button class="btn btn-primary" onclick="saveDataPolicy()" style="flex:1;justify-content:center">
-                            <i class="fas fa-save"></i> حفظ
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    window.togglePolicy = (key, el) => {
-        dataPolicy[key] = !dataPolicy[key];
-        el.classList.toggle('active');
-    };
-
-    window.saveDataPolicy = () => {
-        dataPolicy.archiveAfterDays = parseInt(document.getElementById('archiveAfterDays').value) || 90;
-        dataPolicy.cleanupAfterDays = parseInt(document.getElementById('cleanupAfterDays').value) || 365;
-
-        try {
-            localStorage.setItem('provance_qr_policy_' + companyUserId, JSON.stringify(dataPolicy));
-        } catch (e) {}
-
-        addCleanupLog('تحديث الإعدادات', 'تم تحديث سياسة إدارة البيانات', 'success');
-        window.ProVance.showToast('تم الحفظ ✓', 'success');
-        closeModal('dataPolicyModal');
-    };
-
-    async function loadAll() {
-        // انتظر sb لو لسه مش جاهز
-        let sb = window.ProVance && window.ProVance.sb;
-        if (!sb) {
-            // محاولة 1: انتظر شوية
-            for (let i = 0; i < 30; i++) {
-                await new Promise(r => setTimeout(r, 200));
-                sb = window.ProVance && window.ProVance.sb;
-                if (sb) break;
-            }
-            // محاولة 2: اعمل client مباشرة
-            if (!sb && typeof supabase !== 'undefined' && supabase.createClient) {
-                sb = supabase.createClient(
-                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                    { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } }
-                );
-                if (window.ProVance) window.ProVance.sb = sb;
-            }
-            if (!sb) {
-                console.error('❌ Supabase not available');
-                return;
-            }
-        }
-
-        try {
-            const results = await Promise.allSettled([
-                sb.from('companies').select('company_name').eq('user_id', companyUserId).maybeSingle(),
-                sb.from('applications').select('*').eq('company_user_id', companyUserId).in('status', ['hired', 'in_training']),
-                sb.from('qr_codes').select('*').eq('company_user_id', companyUserId).eq('qr_type', 'daily_attendance').eq('status', 'active').gt('valid_until', new Date().toISOString()).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-                sb.from('attendance_logs').select('*').eq('company_user_id', companyUserId).order('scanned_at', { ascending: false }).limit(500),
-                sb.from('company_weekly_holidays').select('*').eq('company_user_id', companyUserId).maybeSingle()
-            ]);
-            const companyRes = results[0] && results[0].status === "fulfilled" ? results[0].value : { data: [], error: results[0] && results[0].reason };
-            const traineesRes = results[1] && results[1].status === "fulfilled" ? results[1].value : { data: [], error: results[1] && results[1].reason };
-            const qrRes = results[2] && results[2].status === "fulfilled" ? results[2].value : { data: [], error: results[2] && results[2].reason };
-            const attRes = results[3] && results[3].status === "fulfilled" ? results[3].value : { data: [], error: results[3] && results[3].reason };
-            const holRes = results[4] && results[4].status === "fulfilled" ? results[4].value : { data: [], error: results[4] && results[4].reason };
-
-            companyName = companyRes.data?.company_name || 'الشركة';
-            activeTrainees = traineesRes.data || [];
-            activeQrCode = qrRes.data;
-            allAttendanceLogs = attRes.data || [];
-            weeklyHolidays = holRes.data;
-
-            renderQR();
-            if (activeQrCode) startCountdown();
-            renderTodayAttendance();
-            renderHistory();
-        } catch (err) {
-            console.error('Load error:', err);
-            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
-        }
+        
+        showToast('✅ تم توليد QR Code', 'success');
+        document.getElementById('qrGeneratorModal').classList.remove('active');
+        
+        // ضيف للقايمة وارسم
+        await loadAll();
+    } catch (err) {
+        console.error('Generate QR catch:', err);
+        showToast('خطأ: ' + (err.message || 'فشل التوليد'), 'error');
     }
+};
 
-    async function init() {
-                // محاولة الحصول على Supabase client بطرق متعددة
-        let sb = null;
-        if (window.ProVance?.waitForSupabaseClient) {
-            try { sb = await window.ProVance.waitForSupabaseClient(15000); } catch(e) {}
-        }
-        if (!sb && typeof supabase !== 'undefined' && supabase.createClient) {
-            try {
-                sb = supabase.createClient(
-                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                    { auth: { persistSession: true, storage: window.localStorage } }
-                );
-            } catch(e) { console.error('Direct client creation failed:', e); }
-        }
-        if (!sb) {
-            console.error('❌ Supabase client unavailable');
-            if (!window._pageRetried) {
-                window._pageRetried = true;
-                setTimeout(() => location.reload(), 3000);
-            }
+window.cancelQR = async (qrId) => {
+    if (!confirm('هل تريد إلغاء هذا الكود؟')) return;
+    try {
+        const { error } = await sb.from('qr_codes').update({ status: 'cancelled' }).eq('id', qrId);
+        if (error) {
+            showToast('خطأ: ' + error.message, 'error');
             return;
         }
+        showToast('✅ تم الإلغاء', 'success');
+        await loadAll();
+    } catch (err) {
+        showToast('خطأ في الإلغاء', 'error');
+    }
+};
 
-        const session = await sb.auth.getSession();
-        const userId = session?.data?.session?.user?.id;
-        if (!userId) {
+window.copyCode = (code) => {
+    navigator.clipboard.writeText(code).then(() => {
+        showToast('📋 تم النسخ', 'success');
+    }).catch(() => {
+        showToast('فشل النسخ', 'error');
+    });
+};
+
+function renderActiveQRs() {
+    const container = document.getElementById('activeQRsList');
+    
+    if (activeQRs.length === 0) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-qrcode"></i><p>لا توجد أكواد نشطة. اضغط "توليد QR جديد" للبدء.</p></div>';
+        return;
+    }
+    
+    const purposeLabels = { attendance: 'حضور تدريب', interview: 'مقابلة', visit: 'زيارة', daily_attendance: 'حضور تدريب' };
+    const purposeIcons = { attendance: 'fa-clipboard-check', interview: 'fa-handshake', visit: 'fa-user-friends', daily_attendance: 'fa-clipboard-check' };
+    const purposeColors = { attendance: '#10b981', interview: '#4facfe', visit: '#f59e0b', daily_attendance: '#10b981' };
+    
+    container.innerHTML = activeQRs.map((qr, idx) => {
+        const purpose = qr.metadata?.purpose || qr.purpose || (qr.qr_type === 'interview' ? 'interview' : 'attendance');
+        const dept = qr.metadata?.department || qr.department;
+        const validUntil = new Date(qr.valid_until);
+        const minsLeft = Math.max(0, Math.round((validUntil.getTime() - Date.now()) / 60000));
+        const color = purposeColors[purpose] || '#ef4444';
+        
+        return `
+            <div class="active-qr-card" style="border-color:${color}55">
+                <div class="qr-purpose-badge" style="background:${color}20;color:${color}">
+                    <i class="fas ${purposeIcons[purpose] || 'fa-qrcode'}"></i> ${purposeLabels[purpose] || 'QR'}
+                </div>
+                ${dept ? `<div style="color:var(--text-muted);font-size:0.88rem;margin-bottom:8px"><i class="fas fa-sitemap"></i> ${escapeHtml(dept)}</div>` : ''}
+                <div class="qr-display" id="qrCanvas_${idx}"></div>
+                <div class="qr-code-text">${escapeHtml(qr.code)}</div>
+                <div class="qr-countdown" style="color:${color}"><i class="fas fa-clock"></i> ${minsLeft} دقيقة متبقية</div>
+                ${qr.metadata?.notes ? `<div style="color:var(--text-muted);font-size:0.85rem;margin-top:8px">📝 ${escapeHtml(qr.metadata.notes)}</div>` : ''}
+                <div style="display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap">
+                    <button class="btn btn-secondary" onclick="copyCode('${qr.code}')"><i class="fas fa-copy"></i> نسخ</button>
+                    <button class="btn btn-danger" onclick="cancelQR('${qr.id}')"><i class="fas fa-times"></i> إلغاء</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // رسم الـ QRs
+    setTimeout(() => {
+        activeQRs.forEach((qr, idx) => {
+            const canvas = document.getElementById('qrCanvas_' + idx);
+            if (canvas && typeof QRCode !== 'undefined') {
+                canvas.innerHTML = '';
+                try {
+                    new QRCode(canvas, {
+                        text: qr.code,
+                        width: 220, height: 220,
+                        colorDark: '#000', colorLight: '#fff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } catch(e) { console.warn('QR render fail:', e); }
+            }
+        });
+    }, 50);
+}
+
+function renderRecentScans() {
+    const container = document.getElementById('scansList');
+    
+    if (recentScans.length === 0) {
+        container.innerHTML = '<div class="empty-state" style="padding:30px"><i class="fas fa-inbox" style="font-size:3rem"></i><p>لا توجد مسحات بعد</p></div>';
+        return;
+    }
+    
+    const purposeIcons = { attendance: 'fa-clipboard-check', interview: 'fa-handshake', visit: 'fa-user-friends', daily_attendance: 'fa-clipboard-check' };
+    const purposeLabels = { attendance: 'حضور تدريب', interview: 'مقابلة', visit: 'زيارة', daily_attendance: 'حضور تدريب' };
+    const purposeColors = { attendance: '#10b981', interview: '#4facfe', visit: '#f59e0b', daily_attendance: '#10b981' };
+    
+    container.innerHTML = recentScans.map(s => {
+        const purpose = s.detected_purpose || 'attendance';
+        const color = purposeColors[purpose] || '#94a3b8';
+        const name = s.scanner_name || '(غير معروف)';
+        const dept = s.metadata?.department;
+        return `
+            <div class="scan-item">
+                <div class="scan-icon-wrap" style="background:${color}20;color:${color}">
+                    <i class="fas ${purposeIcons[purpose] || 'fa-qrcode'}"></i>
+                </div>
+                <div class="scan-info">
+                    <div class="scan-name">${escapeHtml(name)}</div>
+                    <div class="scan-meta">${purposeLabels[purpose] || ''}${dept ? ' • ' + escapeHtml(dept) : ''} • ${formatDate(s.scanned_at)}</div>
+                </div>
+                <span class="scan-result-badge ${s.result === 'success' ? 'success' : 'error'}">${s.result === 'success' ? '✓ نجح' : '✗ فشل'}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateStats() {
+    document.getElementById('statActive').textContent = activeQRs.length;
+    
+    const today = new Date().toISOString().slice(0, 10);
+    const scansToday = recentScans.filter(s => s.scanned_at && s.scanned_at.slice(0, 10) === today).length;
+    
+    document.getElementById('statScansToday').textContent = scansToday;
+    document.getElementById('statScansTotal').textContent = recentScans.length;
+    document.getElementById('statFailedScans').textContent = recentScans.filter(s => s.result !== 'success').length;
+}
+
+async function loadAll() {
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
             window.location.href = 'company-login.html';
             return;
         }
-        companyUserId = userId;
-
-        loadCleanupLogs();
-        loadDataPolicy();
-        await loadAll();
-
-        sb.channel('qr-' + userId)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'qr_codes', filter: `company_user_id=eq.${userId}` }, () => loadAll())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs', filter: `company_user_id=eq.${userId}` }, () => loadAll())
-            .subscribe();
-
-        setInterval(() => {
-            if (activeQrCode) {
-                sb.from('qr_codes').select('scans_count, last_scanned_at, status').eq('id', activeQrCode.id).maybeSingle().then(({ data }) => {
-                    if (data) {
-                        activeQrCode.scans_count = data.scans_count;
-                        const scansEl = document.getElementById('qrScansInfo');
-                        if (scansEl) scansEl.textContent = data.scans_count || 0;
-                        if (data.status !== 'active') loadAll();
-                    }
-                });
-            }
-        }, 30000);
-
-        document.getElementById('searchAttendance').addEventListener('input', renderTodayAttendance);
-        document.getElementById('filterStatus').addEventListener('change', renderTodayAttendance);
-        document.getElementById('searchHistory').addEventListener('input', renderHistory);
-        document.getElementById('filterHistoryDate').addEventListener('change', renderHistory);
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const modals = document.querySelectorAll('.modal.active');
-                if (modals.length > 0) closeModal(modals[modals.length - 1].id);
-            }
-        });
+        companyUserId = session.user.id;
+        
+        const [companyRes, qrRes, scansRes] = await Promise.allSettled([
+            sb.from('companies').select('*').eq('user_id', companyUserId).maybeSingle(),
+            sb.from('qr_codes').select('*').eq('company_user_id', companyUserId).eq('status', 'active').gt('valid_until', new Date().toISOString()).order('created_at', { ascending: false }),
+            sb.from('qr_scans').select('*').order('scanned_at', { ascending: false }).limit(20)
+        ]);
+        
+        if (companyRes.status === 'fulfilled') companyData = companyRes.value.data;
+        if (qrRes.status === 'fulfilled') activeQRs = qrRes.value.data || [];
+        if (scansRes.status === 'fulfilled') {
+            // فلتر اللي بس بتاع الـ QRs بتاعنا
+            const myQrIds = activeQRs.map(q => q.id);
+            // برضو نجيب القديمة لو ID موجود
+            const allQrIds = new Set(myQrIds);
+            recentScans = (scansRes.value.data || []).filter(s => 
+                allQrIds.has(s.qr_code_id) || 
+                (s.metadata?.company_name && s.metadata.company_name === companyData?.company_name)
+            );
+        }
+        
+        // تحديث الـ QRs اللي خلصت validity
+        const now = new Date();
+        const expired = activeQRs.filter(q => new Date(q.valid_until) <= now);
+        if (expired.length > 0) {
+            try {
+                await sb.from('qr_codes').update({ status: 'expired' }).in('id', expired.map(q => q.id));
+                activeQRs = activeQRs.filter(q => new Date(q.valid_until) > now);
+            } catch(e) {}
+        }
+        
+        updateStats();
+        renderActiveQRs();
+        renderRecentScans();
+        
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    } catch (err) {
+        console.error('Load error:', err);
+        showToast('خطأ في التحميل', 'error');
+        document.getElementById('loadingOverlay').classList.add('hidden');
     }
+}
 
-    init();
-})();
-    </script>
+// Init
+document.addEventListener('DOMContentLoaded', loadAll);
+
+// Safety timeout
+setTimeout(() => {
+    const el = document.getElementById('loadingOverlay');
+    if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
+}, 10000);
+
+// Auto-refresh كل 15 ثانية
+setInterval(() => {
+    if (document.visibilityState === 'visible') loadAll();
+}, 15000);
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) loadAll();
+});
+</script>
 </body>
 </html>
