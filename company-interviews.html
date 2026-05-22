@@ -1452,7 +1452,8 @@
                 if (error) throw error;
 
                 // أنشئ QR Code
-                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
+                // كود فريد مع شركة + interview ID للتتبع
+                const qrCodeStr = 'PV-INT-' + interviewId.substring(0, 8) + '-' + Date.now().toString(36).toUpperCase();
                 const validUntil = new Date(interviewDate.getTime() + 60 * 60 * 1000);
                 const app = State.allInterviews.find(a => a.id === appId);
 
@@ -1572,7 +1573,8 @@
                 await sb.from('qr_codes').update({ status: 'cancelled' })
                     .eq('application_id', appId).eq('qr_type', 'interview').eq('status', 'active');
 
-                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
+                // كود فريد مع شركة + interview ID للتتبع
+                const qrCodeStr = 'PV-INT-' + interviewId.substring(0, 8) + '-' + Date.now().toString(36).toUpperCase();
                 const validUntil = new Date(newDate.getTime() + 60 * 60 * 1000);
 
                 await sb.from('qr_codes').insert({
@@ -1950,7 +1952,8 @@
             if (!qrCode) {
                 const sb = await window.getSafeSupabase();
             if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
-                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
+                // كود فريد مع شركة + interview ID للتتبع
+                const qrCodeStr = 'PV-INT-' + interviewId.substring(0, 8) + '-' + Date.now().toString(36).toUpperCase();
                 const interviewDate = new Date(interview.interview_date);
                 const validUntil = new Date(interviewDate.getTime() + 60 * 60 * 1000);
 
@@ -1976,14 +1979,8 @@
                 qrCode = newQr;
             }
 
-            const qrData = JSON.stringify({
-                type: 'interview',
-                code: qrCode.code,
-                company: qrCode.company_name,
-                student: qrCode.student_name,
-                valid_until: qrCode.valid_until
-            });
-
+            // الـ QR data = الـ code فقط (متوافق مع الـ scanner)
+            const qrData = qrCode.code;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrData)}&color=000000&bgcolor=FFFFFF`;
             const validUntil = new Date(qrCode.valid_until);
 
