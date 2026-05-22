@@ -1623,7 +1623,7 @@
                         <div class="modal-header">
                             <div class="modal-title">
                                 <i class="fas fa-gavel"></i>
-                                <span>اتخاذ قرار</span>
+                                <span>اتخاذ قرار - ${esc(interview.student_name)}</span>
                             </div>
                             <button class="modal-close" onclick="closeModal('decisionModal')"><i class="fas fa-times"></i></button>
                         </div>
@@ -1641,15 +1641,15 @@
                         </div>
 
                         <div class="decision-buttons">
-                            <div class="decision-btn accept" onclick="confirmDecision('${appId}', 'accept')">
+                            <div class="decision-btn accept" onclick="openAcceptForm('${appId}')">
                                 <div class="decision-btn-icon"><i class="fas fa-check"></i></div>
-                                <div class="decision-btn-title">قبول</div>
-                                <div class="decision-btn-desc">قبول الطالب وبدء التدريب</div>
+                                <div class="decision-btn-title">قبول وبدء التدريب</div>
+                                <div class="decision-btn-desc">حدد مواعيد التدريب</div>
                             </div>
-                            <div class="decision-btn reject" onclick="confirmDecision('${appId}', 'reject')">
+                            <div class="decision-btn reject" onclick="openRejectForm('${appId}')">
                                 <div class="decision-btn-icon"><i class="fas fa-times"></i></div>
                                 <div class="decision-btn-title">رفض</div>
-                                <div class="decision-btn-desc">رفض الطالب مع توضيح السبب</div>
+                                <div class="decision-btn-desc">رفض مع توضيح السبب</div>
                             </div>
                         </div>
                     </div>
@@ -1658,19 +1658,256 @@
             renderModal(html);
         };
 
-        window.confirmDecision = async (appId, decision) => {
+        // ============ ACCEPT FORM (تفاصيل التدريب) ============
+        window.openAcceptForm = (appId) => {
             closeModal('decisionModal');
+            const interview = State.allInterviews.find(i => i.id === appId);
+            if (!interview) return;
 
-            if (decision === 'reject') {
-                const reason = prompt('سبب الرفض (لازم تكتب سبب):');
-                if (!reason || !reason.trim()) {
-                    window.ProVance.showToast('لازم تكتب سبب الرفض', 'warning');
-                    return;
-                }
-                await window.rejectStudent(appId, reason.trim());
+            const today = new Date().toISOString().slice(0, 10);
+            const monthLater = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
+
+            const html = `
+                <div class="modal active" id="acceptFormModal">
+                    <div class="modal-content" style="max-width:560px">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <i class="fas fa-check-circle" style="color:#10b981"></i>
+                                <span>قبول الطالب - تفاصيل التدريب</span>
+                            </div>
+                            <button class="modal-close" onclick="closeModal('acceptFormModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div style="padding:12px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:10px;margin-bottom:14px;font-size:0.88rem">
+                            <i class="fas fa-info-circle" style="color:#10b981"></i> 
+                            ${esc(interview.student_name)} - ${esc(interview.internship_title)}
+                        </div>
+
+                        <!-- تاريخ البداية والنهاية -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+                            <div>
+                                <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
+                                    <i class="fas fa-calendar-day" style="color:#10b981"></i> تاريخ البداية *
+                                </label>
+                                <input type="date" id="trainStartDate" value="${today}" min="${today}" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.95rem;color-scheme:dark">
+                            </div>
+                            <div>
+                                <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
+                                    <i class="fas fa-calendar-check" style="color:#10b981"></i> تاريخ الانتهاء
+                                </label>
+                                <input type="date" id="trainEndDate" value="${monthLater}" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.95rem;color-scheme:dark">
+                            </div>
+                        </div>
+
+                        <!-- التكرار -->
+                        <div style="margin-bottom:14px">
+                            <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
+                                <i class="fas fa-repeat" style="color:#4facfe"></i> التكرار *
+                            </label>
+                            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+                                <button type="button" onclick="setFrequency('daily', this)" class="freq-btn" data-freq="daily" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">يومي</button>
+                                <button type="button" onclick="setFrequency('weekly', this)" class="freq-btn active-freq" data-freq="weekly" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">أسبوعي</button>
+                                <button type="button" onclick="setFrequency('flexible', this)" class="freq-btn" data-freq="flexible" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">مرن</button>
+                            </div>
+                        </div>
+
+                        <!-- أيام الأسبوع -->
+                        <div style="margin-bottom:14px" id="daysSelector">
+                            <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
+                                <i class="fas fa-calendar-week" style="color:#f59e0b"></i> أيام التدريب
+                            </label>
+                            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+                                ${['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'].map((d, i) => `
+                                    <button type="button" onclick="toggleDay(this)" class="day-btn ${i===0||i===1||i===3 ? 'active-day' : ''}" data-day="${d}" style="padding:8px 4px;background:var(--card);border:2px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.78rem;font-weight:700">${d.slice(0,3)}</button>
+                                `).join('')}
+                            </div>
+                            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px">اختار الأيام اللي يحضر فيها الطالب</div>
+                        </div>
+
+                        <!-- وقت ومدة -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+                            <div>
+                                <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
+                                    <i class="fas fa-clock" style="color:#4facfe"></i> وقت البداية
+                                </label>
+                                <input type="time" id="trainStartTime" value="09:00" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.95rem;color-scheme:dark">
+                            </div>
+                            <div>
+                                <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
+                                    <i class="fas fa-hourglass" style="color:#4facfe"></i> ساعات/يوم
+                                </label>
+                                <select id="trainHours" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.95rem;cursor:pointer">
+                                    <option value="2">2 ساعة</option>
+                                    <option value="3">3 ساعات</option>
+                                    <option value="4" selected>4 ساعات</option>
+                                    <option value="5">5 ساعات</option>
+                                    <option value="6">6 ساعات</option>
+                                    <option value="8">8 ساعات (يوم كامل)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- المكان -->
+                        <div style="margin-bottom:14px">
+                            <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
+                                <i class="fas fa-map-marker-alt" style="color:#ef4444"></i> مكان التدريب
+                            </label>
+                            <input type="text" id="trainLocation" placeholder="مثال: مقر الشركة، شارع التحرير، القاهرة" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem">
+                        </div>
+
+                        <!-- ملاحظات -->
+                        <div style="margin-bottom:14px">
+                            <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
+                                <i class="fas fa-sticky-note" style="color:var(--text-muted)"></i> ملاحظات إضافية
+                            </label>
+                            <textarea id="trainNotes" placeholder="مثال: يلبس ملابس رسمية، يحضر laptop..." style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem;min-height:60px;resize:vertical"></textarea>
+                        </div>
+
+                        <div style="display:flex;gap:10px">
+                            <button onclick="closeModal('acceptFormModal')" style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>
+                            <button onclick="submitAcceptForm('${appId}')" style="flex:2;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800;font-family:inherit;cursor:pointer">
+                                <i class="fas fa-check"></i> تأكيد القبول وإرسال للطالب
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                    .freq-btn.active-freq, .day-btn.active-day { 
+                        background: linear-gradient(135deg, var(--primary), var(--primary-dark, #ef4444)) !important; 
+                        color: #fff !important; 
+                        border-color: var(--primary) !important; 
+                    }
+                </style>
+            `;
+            renderModal(html);
+        };
+
+        window.setFrequency = (freq, btn) => {
+            document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active-freq'));
+            if (btn) btn.classList.add('active-freq');
+            
+            // يومي = كل الأيام، أسبوعي = الافتراضي
+            const daysSelector = document.getElementById('daysSelector');
+            if (freq === 'daily') {
+                document.querySelectorAll('.day-btn').forEach(b => b.classList.add('active-day'));
+            } else if (freq === 'flexible') {
+                if (daysSelector) daysSelector.style.opacity = '0.5';
             } else {
-                await window.acceptStudent(appId);
+                if (daysSelector) daysSelector.style.opacity = '1';
             }
+        };
+
+        window.toggleDay = (btn) => {
+            btn.classList.toggle('active-day');
+        };
+
+        window.submitAcceptForm = async (appId) => {
+            const startDate = document.getElementById('trainStartDate').value;
+            const endDate = document.getElementById('trainEndDate').value;
+            const startTime = document.getElementById('trainStartTime').value;
+            const hours = parseInt(document.getElementById('trainHours').value);
+            const location = document.getElementById('trainLocation').value.trim();
+            const notes = document.getElementById('trainNotes').value.trim();
+
+            const freqBtn = document.querySelector('.freq-btn.active-freq');
+            const frequency = freqBtn ? freqBtn.dataset.freq : 'weekly';
+
+            const selectedDays = Array.from(document.querySelectorAll('.day-btn.active-day')).map(b => b.dataset.day);
+
+            if (!startDate) { window.ProVance.showToast('حدد تاريخ بداية التدريب', 'warning'); return; }
+            if (frequency !== 'flexible' && selectedDays.length === 0) {
+                window.ProVance.showToast('اختار يوم واحد على الأقل', 'warning');
+                return;
+            }
+
+            const details = {
+                start_date: startDate,
+                end_date: endDate,
+                days: selectedDays,
+                frequency: frequency,
+                start_time: startTime,
+                hours_per_session: hours,
+                location: location,
+                notes: notes
+            };
+
+            closeModal('acceptFormModal');
+            await window.acceptStudentWithDetails(appId, details);
+        };
+
+        // ============ REJECT FORM ============
+        window.openRejectForm = (appId) => {
+            closeModal('decisionModal');
+            const interview = State.allInterviews.find(i => i.id === appId);
+            if (!interview) return;
+
+            const html = `
+                <div class="modal active" id="rejectFormModal">
+                    <div class="modal-content" style="max-width:480px">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <i class="fas fa-times-circle" style="color:#ef4444"></i>
+                                <span>رفض الطالب</span>
+                            </div>
+                            <button class="modal-close" onclick="closeModal('rejectFormModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div style="padding:12px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:10px;margin-bottom:14px;font-size:0.88rem">
+                            <i class="fas fa-info-circle" style="color:#ef4444"></i> 
+                            ${esc(interview.student_name)} - ${esc(interview.internship_title)}
+                        </div>
+
+                        <!-- أسباب جاهزة -->
+                        <div style="margin-bottom:14px">
+                            <label style="display:block;font-weight:700;margin-bottom:8px;font-size:0.88rem">اختار سبب جاهز:</label>
+                            <div style="display:flex;flex-direction:column;gap:6px">
+                                ${[
+                                    'مستوى الطالب غير مناسب للتدريب',
+                                    'مجال الدراسة غير متوافق مع متطلبات الشركة',
+                                    'الطالب رفض شروط التدريب',
+                                    'تم اختيار مرشحين آخرين أكثر ملاءمة',
+                                    'الطالب لم يستوفي متطلبات المقابلة'
+                                ].map(reason => `
+                                    <button type="button" onclick="document.getElementById('rejectReason').value='${reason.replace(/'/g, '&apos;')}'" style="text-align:right;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.88rem">${reason}</button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom:14px">
+                            <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
+                                <i class="fas fa-pen" style="color:#ef4444"></i> سبب الرفض *
+                            </label>
+                            <textarea id="rejectReason" placeholder="اكتب سبب الرفض هنا أو اختار من الأسباب الجاهزة فوق..." style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem;min-height:90px;resize:vertical"></textarea>
+                            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">السبب هيتبعت للطالب</div>
+                        </div>
+
+                        <div style="display:flex;gap:10px">
+                            <button onclick="closeModal('rejectFormModal')" style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>
+                            <button onclick="submitRejectForm('${appId}')" style="flex:2;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800;font-family:inherit;cursor:pointer">
+                                <i class="fas fa-times"></i> تأكيد الرفض
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+        };
+
+        window.submitRejectForm = async (appId) => {
+            const reason = document.getElementById('rejectReason').value.trim();
+            if (!reason || reason.length < 5) {
+                window.ProVance.showToast('اكتب سبب الرفض (5 حروف على الأقل)', 'warning');
+                return;
+            }
+            closeModal('rejectFormModal');
+            await window.rejectStudent(appId, reason);
+        };
+
+        // Legacy: للتوافق مع الكود القديم
+        window.confirmDecision = async (appId, decision) => {
+            if (decision === 'reject') window.openRejectForm(appId);
+            else window.openAcceptForm(appId);
         };
 
         // إعادة فتح مقابلة (لو الطالب اعتذر أو قرر يحضر)
@@ -1885,6 +2122,96 @@
             } catch (err) {
                 console.error('markMissed catch:', err);
                 window.ProVance.showToast('خطأ: ' + (err.message || 'فشل الاتصال'), 'error');
+            }
+        };
+
+        window.acceptStudentWithDetails = async (id, details) => {
+            try {
+                let sb = window.ProVance?.sb;
+                if (!sb && window.getSafeSupabase) sb = await window.getSafeSupabase();
+                if (!sb && typeof supabase !== 'undefined') {
+                    sb = supabase.createClient(
+                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                        { auth: { persistSession: true, storage: window.localStorage } }
+                    );
+                }
+                if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
+
+                // حضّر البيانات للحفظ
+                const updates = {
+                    status: 'accepted',
+                    accepted_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    training_start_date: details.start_date,
+                    training_end_date: details.end_date || null,
+                    training_days: JSON.stringify(details.days || []),
+                    training_frequency: details.frequency,
+                    training_hours_per_session: details.hours_per_session,
+                    training_start_time: details.start_time,
+                    training_location: details.location || null,
+                    training_notes: details.notes || null
+                };
+
+                let { data, error } = await sb.from('applications').update(updates).eq('id', id).select();
+                
+                // لو error بسبب column مش موجود، حاول بدون التفاصيل
+                if (error && error.message && error.message.includes('column')) {
+                    console.warn('Some columns missing, trying basic update');
+                    const basic = await sb.from('applications').update({ 
+                        status: 'accepted',
+                        updated_at: new Date().toISOString()
+                    }).eq('id', id).select();
+                    data = basic.data;
+                    error = basic.error;
+                    if (!error) {
+                        window.ProVance.showToast('⚠️ تم القبول لكن شغّل SQL 47 لحفظ التفاصيل', 'warning');
+                    }
+                }
+                
+                if (error) {
+                    console.error('accept error:', error);
+                    window.ProVance.showToast('خطأ: ' + error.message, 'error');
+                    return;
+                }
+                if (!data || data.length === 0) {
+                    window.ProVance.showToast('⚠️ مفيش صلاحية', 'error');
+                    return;
+                }
+
+                const interview = State.allInterviews.find(i => i.id === id);
+                
+                // ابعت إشعار للطالب
+                if (interview && window.ProVance.sendNotification) {
+                    const daysStr = (details.days || []).join('، ');
+                    const freqStr = details.frequency === 'daily' ? 'يومي' : details.frequency === 'weekly' ? 'أسبوعي' : 'مرن';
+                    
+                    let detailsMsg = `🎉 مبروك! الشركة قبلتك في تدريب ${interview.internship_title}.\n\n`;
+                    detailsMsg += `📅 يبدأ: ${details.start_date}\n`;
+                    if (details.end_date) detailsMsg += `🏁 ينتهي: ${details.end_date}\n`;
+                    detailsMsg += `🔄 ${freqStr}`;
+                    if (daysStr) detailsMsg += ` - الأيام: ${daysStr}`;
+                    detailsMsg += `\n⏰ ${details.start_time} (${details.hours_per_session} ساعات)`;
+                    if (details.location) detailsMsg += `\n📍 ${details.location}`;
+                    
+                    try {
+                        await window.ProVance.sendNotification({
+                            userId: interview.student_user_id,
+                            userType: 'student',
+                            title: '🎉 تم قبولك في التدريب!',
+                            message: detailsMsg,
+                            type: 'success',
+                            link: 'student-applications.html'
+                        });
+                    } catch(e) { console.warn('notification fail:', e); }
+                }
+
+                addLog('قبول طالب', `تم قبول ${interview?.student_name || 'طالب'} - بداية ${details.start_date}`);
+                window.ProVance.showToast('✅ تم قبول الطالب وإرسال التفاصيل', 'success');
+                window.dispatchEvent(new CustomEvent('reload-interviews'));
+            } catch (err) {
+                console.error('acceptWithDetails catch:', err);
+                window.ProVance.showToast('خطأ: ' + (err.message || 'فشل'), 'error');
             }
         };
 
