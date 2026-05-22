@@ -821,9 +821,12 @@ class FixedFeaturesManager {
         
         this.knowledgeBenefits.get(sanitizedField).push(sanitizedBenefit);
         
-        // 🔧 تحديث الـ state يدوياً فقط
-        if (state.trainingDetails[field]) {
-            state.trainingDetails[field].knowledgeBenefits = this.getKnowledgeBenefitsAsString(field);
+        // 🔧 تحديث الـ state - نلاقي الـ key الصحيح (raw أو sanitized)
+        const stateKey = state.trainingDetails[field] ? field 
+                       : state.trainingDetails[sanitizedField] ? sanitizedField 
+                       : null;
+        if (stateKey) {
+            state.trainingDetails[stateKey].knowledgeBenefits = this.getKnowledgeBenefitsAsString(sanitizedField);
         }
         
         // 🔧 تحديث الواجهة يدوياً فقط
@@ -856,8 +859,12 @@ class FixedFeaturesManager {
         
         this.financialBenefits.get(sanitizedField).push(sanitizedBenefit);
         
-        if (state.trainingDetails[field]) {
-            state.trainingDetails[field].financialBenefits = this.getFinancialBenefitsAsString(field);
+        // نلاقي الـ key الصحيح في state
+        const stateKey = state.trainingDetails[field] ? field 
+                       : state.trainingDetails[sanitizedField] ? sanitizedField 
+                       : null;
+        if (stateKey) {
+            state.trainingDetails[stateKey].financialBenefits = this.getFinancialBenefitsAsString(sanitizedField);
         }
         
         this.updateFinancialBenefitsUI(sanitizedField);
@@ -990,24 +997,35 @@ class FixedFeaturesManager {
     // 🔧 إصلاح: دوال الحذف
     removeKnowledgeBenefit(field, index) {
         console.log(`Removing knowledge benefit from ${field} at index ${index}`);
-        if (this.knowledgeBenefits.has(field)) {
-            this.knowledgeBenefits.get(field).splice(index, 1);
-            if (state.trainingDetails[field]) {
-                state.trainingDetails[field].knowledgeBenefits = this.getKnowledgeBenefitsAsString(field);
+        // جرب raw + sanitized
+        const sanitized = this.sanitizeFieldId(field);
+        const key = this.knowledgeBenefits.has(field) ? field 
+                  : this.knowledgeBenefits.has(sanitized) ? sanitized : null;
+        if (key) {
+            this.knowledgeBenefits.get(key).splice(index, 1);
+            const stateKey = state.trainingDetails[field] ? field 
+                           : state.trainingDetails[sanitized] ? sanitized : null;
+            if (stateKey) {
+                state.trainingDetails[stateKey].knowledgeBenefits = this.getKnowledgeBenefitsAsString(key);
             }
-            this.updateKnowledgeBenefitsUI(field);
+            this.updateKnowledgeBenefitsUI(sanitized);
             saveStateToStorage();
         }
     }
 
     removeFinancialBenefit(field, index) {
         console.log(`Removing financial benefit from ${field} at index ${index}`);
-        if (this.financialBenefits.has(field)) {
-            this.financialBenefits.get(field).splice(index, 1);
-            if (state.trainingDetails[field]) {
-                state.trainingDetails[field].financialBenefits = this.getFinancialBenefitsAsString(field);
+        const sanitized = this.sanitizeFieldId(field);
+        const key = this.financialBenefits.has(field) ? field 
+                  : this.financialBenefits.has(sanitized) ? sanitized : null;
+        if (key) {
+            this.financialBenefits.get(key).splice(index, 1);
+            const stateKey = state.trainingDetails[field] ? field 
+                           : state.trainingDetails[sanitized] ? sanitized : null;
+            if (stateKey) {
+                state.trainingDetails[stateKey].financialBenefits = this.getFinancialBenefitsAsString(key);
             }
-            this.updateFinancialBenefitsUI(field);
+            this.updateFinancialBenefitsUI(sanitized);
             saveStateToStorage();
         }
     }
@@ -1026,12 +1044,19 @@ class FixedFeaturesManager {
 
     // 🔧 دوال الحصول على البيانات
     getKnowledgeBenefitsAsString(field) {
-        const benefits = this.knowledgeBenefits.get(field) || [];
+        // جرب raw الأول، ثم sanitized
+        let benefits = this.knowledgeBenefits.get(field);
+        if (!benefits || !benefits.length) {
+            benefits = this.knowledgeBenefits.get(this.sanitizeFieldId(field)) || [];
+        }
         return benefits.join('\n');
     }
 
     getFinancialBenefitsAsString(field) {
-        const benefits = this.financialBenefits.get(field) || [];
+        let benefits = this.financialBenefits.get(field);
+        if (!benefits || !benefits.length) {
+            benefits = this.financialBenefits.get(this.sanitizeFieldId(field)) || [];
+        }
         return benefits.join('\n');
     }
 
@@ -2252,8 +2277,14 @@ function optimizedUpdateTrainingDetailsSection() {
 
 // إضافة ميزة معرفية
 function addKnowledgeBenefit(field) {
-    const input = document.getElementById(`knowledgeBenefitInput-${field}`);
-    if (!input) return;
+    // field ممكن يكون raw أو sanitized - نحاول الـ 2
+    const sanitized = fixedFeaturesManager.sanitizeFieldId(field);
+    const input = document.getElementById(`knowledgeBenefitInput-${sanitized}`) 
+               || document.getElementById(`knowledgeBenefitInput-${field}`);
+    if (!input) {
+        console.warn('Knowledge input not found for:', field);
+        return;
+    }
 
     const benefit = input.value.trim();
     if (!benefit) {
@@ -2272,8 +2303,14 @@ function addKnowledgeBenefit(field) {
 
 // إضافة ميزة مادية
 function addFinancialBenefit(field) {
-    const input = document.getElementById(`financialBenefitInput-${field}`);
-    if (!input) return;
+    // field ممكن يكون raw أو sanitized - نحاول الـ 2
+    const sanitized = fixedFeaturesManager.sanitizeFieldId(field);
+    const input = document.getElementById(`financialBenefitInput-${sanitized}`) 
+               || document.getElementById(`financialBenefitInput-${field}`);
+    if (!input) {
+        console.warn('Financial input not found for:', field);
+        return;
+    }
 
     const benefit = input.value.trim();
     if (!benefit) {
@@ -2494,7 +2531,7 @@ function createTrainingDetailItem(field, details) {
                 </label>
                 <div class="features-input-group">
                     <div class="input-wrapper" style="flex: 1;">
-                        <input type="text" id="financialBenefitInput-${fixedFeaturesManager.sanitizeFieldId(field)}" class="form-input" placeholder="هل تقدم مكافآت مالية أو بدائل نقل أو وجبات؟" ${requiredAttribute} aria-label="إضافة ميزة مادية لـ ${AdvancedValidator.sanitizeHTML(field)}">
+                        <input type="text" id="financialBenefitInput-${fixedFeaturesManager.sanitizeFieldId(field)}" class="form-input" placeholder="هل تقدم مكافآت مالية أو بدائل نقل أو وجبات؟" aria-label="إضافة ميزة مادية لـ ${AdvancedValidator.sanitizeHTML(field)}">
                         <div class="input-border"></div>
                     </div>
                     <button type="button" class="btn-add" onclick="addFinancialBenefit('${fixedFeaturesManager.sanitizeFieldId(field)}')">
