@@ -1824,7 +1824,33 @@
                     return;
                 }
                 
-                // 2. حاول تسجل late_report (لو فشل، مش مشكلة)
+                // 2. سجّل تجاوز في جدول violations (الأهم - للإدارة)
+                try {
+                    await sb.from('violations').insert({
+                        violator_user_id: interview?.student_user_id,
+                        violator_name: interview?.student_name,
+                        violator_type: 'student',
+                        violation_type: 'no_show',
+                        severity: 'major',
+                        title: 'عدم حضور مقابلة',
+                        description: `الطالب لم يحضر مقابلة "${interview?.internship_title || 'تدريب'}"${interview?.interview_date ? ' الموعد كان: ' + new Date(interview.interview_date).toLocaleString('ar-EG') : ''}`,
+                        affected_user_id: State.companyUserId || window._companyUserId,
+                        affected_name: State.companyName || window._companyName,
+                        affected_type: 'company',
+                        application_id: id,
+                        internship_id: interview?.internship_id,
+                        status: 'pending',
+                        occurred_at: interview?.interview_date || new Date().toISOString(),
+                        reported_at: new Date().toISOString(),
+                        reported_by_user_id: State.companyUserId || window._companyUserId,
+                        reported_by_type: 'company'
+                    });
+                    console.log('✅ Violation recorded');
+                } catch(e) {
+                    console.warn('violation insert failed:', e?.message);
+                }
+                
+                // 3. حاول تسجل late_report (legacy)
                 try {
                     await sb.from('late_reports').insert({
                         application_id: id,
@@ -1835,10 +1861,7 @@
                         expected_time: interview?.interview_date,
                         status: 'pending'
                     });
-                } catch(e) {
-                    console.warn('late_report insert failed (table may not exist):', e?.message);
-                    // مش مشكلة - الـ status اتحدث صح
-                }
+                } catch(e) {}
 
                 // 3. إشعار للطالب
                 if (interview && window.ProVance.sendNotification) {
