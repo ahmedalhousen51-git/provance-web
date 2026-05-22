@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مسح QR - ProVance</title>
+<link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root { --primary: #4facfe; --secondary: #00f2fe; --gradient: linear-gradient(135deg, #4facfe, #00f2fe); --bg: #0a0e27; --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --text: #fff; --text-muted: #94a3b8; --error: #ef4444; --success: #10b981; --warning: #f59e0b; }
+* { margin:0; padding:0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(79,172,254,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(0,242,254,0.06), transparent 45%), var(--bg); }
+.container { max-width: 480px; margin: 0 auto; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; }
+.top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.back-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 44px; height: 44px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; }
+.page-title { font-size: 1.2rem; font-weight: 800; }
+.tab-row { display: flex; gap: 8px; margin-bottom: 20px; background: var(--card); padding: 4px; border-radius: 12px; }
+.tab-btn { flex: 1; padding: 12px 8px; background: transparent; border: none; color: var(--text-muted); font-weight: 700; cursor: pointer; border-radius: 8px; font-family: inherit; font-size: 0.9rem; }
+.tab-btn.active { background: var(--gradient); color: #fff; }
+.scanner-area { background: var(--card); border: 2px dashed var(--border); border-radius: 18px; padding: 40px 20px; text-align: center; margin-bottom: 18px; min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+.scanner-icon { width: 110px; height: 110px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 3rem; }
+.scanner-msg { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; max-width: 320px; }
+.btn-primary { width: 100%; padding: 14px; background: var(--gradient); color: #fff; border: none; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-secondary { width: 100%; padding: 12px; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.code-input { width: 100%; padding: 16px 18px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 12px; color: var(--text); font-family: monospace; font-size: 1.1rem; letter-spacing: 2px; text-align: center; margin-bottom: 14px; text-transform: uppercase; }
+.code-input:focus { outline: none; border-color: var(--primary); }
+#qr-video { width: 100%; border-radius: 14px; background: #000; max-height: 400px; }
+.result-card { background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 14px; }
+.result-card.success { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.05); }
+.result-card.error { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05); }
+.result-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 14px; }
+.result-icon.success { background: rgba(16,185,129,0.2); color: #10b981; }
+.result-icon.error { background: rgba(239,68,68,0.2); color: #ef4444; }
+.result-title { font-size: 1.1rem; font-weight: 800; text-align: center; margin-bottom: 8px; }
+.result-detail { color: var(--text-muted); text-align: center; font-size: 0.92rem; line-height: 1.7; }
+.result-detail strong { color: var(--text); }
+.recent-scans { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-top: 16px; }
+.recent-scans h3 { font-size: 1rem; font-weight: 800; margin-bottom: 10px; }
+.scan-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.scan-item:last-child { border-bottom: none; }
+.scan-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.scan-info { flex: 1; padding: 0 10px; }
+.scan-type { font-weight: 700; font-size: 0.88rem; }
+.scan-time { font-size: 0.74rem; color: var(--text-muted); }
+.scan-result { font-size: 0.78rem; padding: 3px 8px; border-radius: 6px; font-weight: 700; }
+.scan-result.success { background: rgba(16,185,129,0.15); color: #10b981; }
+.scan-result.error { background: rgba(239,68,68,0.15); color: #ef4444; }
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; max-width: 90vw; text-align: center; }
+.loading-overlay { position: fixed; inset: 0; background: rgba(10,14,39,0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .3s; }
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="bg-anim"></div>
+<div class="container">
+<div class="top-bar">
+<button class="back-btn" onclick="history.back()"><i class="fas fa-arrow-right"></i></button>
+<div class="page-title"><i class="fas fa-qrcode" style="color:var(--primary)"></i> مسح QR Code</div>
+<div style="width:44px"></div>
+</div>
+
+<div class="tab-row">
+<button class="tab-btn active" id="tabCamera" onclick="switchTab('camera')"><i class="fas fa-camera"></i> الكاميرا</button>
+<button class="tab-btn" id="tabCode" onclick="switchTab('code')"><i class="fas fa-keyboard"></i> إدخال الكود</button>
+</div>
+
+<!-- Camera Scanner -->
+<div id="cameraSection">
+<div class="scanner-area" id="scannerArea">
+<div class="scanner-icon"><i class="fas fa-qrcode"></i></div>
+<div class="scanner-msg">اضغط "بدء المسح" وصوّر الـ QR Code اللي عرضته الشركة</div>
+</div>
+<button class="btn-primary" id="startScanBtn" onclick="startScanner()"><i class="fas fa-camera"></i> بدء المسح</button>
+<video id="qr-video" class="hidden" playsinline></video>
+<button class="btn-secondary hidden" id="stopScanBtn" onclick="stopScanner()" style="margin-top:10px"><i class="fas fa-times"></i> إيقاف</button>
+</div>
+
+<!-- Code Input -->
+<div id="codeSection" class="hidden">
+<div class="scanner-area" style="padding:30px 20px">
+<div class="scanner-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)"><i class="fas fa-keyboard"></i></div>
+<div class="scanner-msg">اكتب الكود اللي ظهر معاك من الشركة</div>
+</div>
+<input type="text" id="codeInput" class="code-input" placeholder="مثال: ATT-XXXX-XXXX" maxlength="32">
+<button class="btn-primary" onclick="submitCode()"><i class="fas fa-check"></i> تأكيد</button>
+</div>
+
+<!-- Result Area -->
+<div id="resultArea"></div>
+
+<!-- Recent Scans -->
+<div class="recent-scans" id="recentScansContainer">
+<h3><i class="fas fa-history" style="color:var(--primary)"></i> آخر العمليات</h3>
+<div id="recentScansList">
+<div style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.88rem">لا توجد عمليات سابقة</div>
+</div>
+</div>
+</div>
+
+<div class="loading-overlay hidden" id="loadingOverlay"><div class="loading-spinner"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } });
+
+let studentUserId = null;
+let studentData = null;
+let scanning = false;
+let videoStream = null;
+
+function showToast(msg, type='info') {
+    const t = document.createElement('div');
+    const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+    t.className = 'toast'; t.style.background = c[type] || c.info; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+}
+
+function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+window.switchTab = (tab) => {
+    document.getElementById('tabCamera').classList.toggle('active', tab === 'camera');
+    document.getElementById('tabCode').classList.toggle('active', tab === 'code');
+    document.getElementById('cameraSection').classList.toggle('hidden', tab !== 'camera');
+    document.getElementById('codeSection').classList.toggle('hidden', tab !== 'code');
+    if (tab !== 'camera' && scanning) stopScanner();
+};
+
+window.startScanner = async () => {
+    try {
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const video = document.getElementById('qr-video');
+        video.srcObject = videoStream;
+        video.classList.remove('hidden');
+        video.play();
+        document.getElementById('scannerArea').classList.add('hidden');
+        document.getElementById('startScanBtn').classList.add('hidden');
+        document.getElementById('stopScanBtn').classList.remove('hidden');
+        
+        scanning = true;
+        scanLoop(video);
+    } catch (err) {
+        console.error('Camera error:', err);
+        showToast('فشل فتح الكاميرا - تأكد من السماح', 'error');
+    }
+};
+
+window.stopScanner = () => {
+    scanning = false;
+    if (videoStream) {
+        videoStream.getTracks().forEach(t => t.stop());
+        videoStream = null;
+    }
+    document.getElementById('qr-video').classList.add('hidden');
+    document.getElementById('scannerArea').classList.remove('hidden');
+    document.getElementById('startScanBtn').classList.remove('hidden');
+    document.getElementById('stopScanBtn').classList.add('hidden');
+};
+
+function scanLoop(video) {
+    if (!scanning) return;
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const tick = () => {
+        if (!scanning) return;
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            if (code && code.data) {
+                console.log('QR detected:', code.data);
+                stopScanner();
+                processQR(code.data);
+                return;
+            }
+        }
+        requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+}
+
+window.submitCode = () => {
+    const code = document.getElementById('codeInput').value.trim().toUpperCase();
+    if (!code) {
+        showToast('اكتب الكود', 'warning');
+        return;
+    }
+    processQR(code);
+};
+
+async function processQR(qrData) {
+    document.getElementById('loadingOverlay').classList.remove('hidden');
+    
+    try {
+        // الـ QR ممكن يكون JSON أو string مباشر
+        let qrCode = qrData;
+        try {
+            const parsed = JSON.parse(qrData);
+            if (parsed.code) qrCode = parsed.code;
+        } catch(e) {}
+        
+        qrCode = qrCode.trim().toUpperCase();
+        
+        // جيب الـ QR من DB
+        const { data: qr, error: qrError } = await sb.from('qr_codes')
+            .select('*')
+            .eq('code', qrCode)
+            .maybeSingle();
+        
+        if (qrError || !qr) {
+            recordScan(null, qrCode, 'unauthorized', null);
+            showResult('error', '❌ كود غير صحيح', 'الكود ده غير موجود أو غلط');
+            return;
+        }
+        
+        // تأكد من الصلاحية
+        const now = new Date();
+        const validUntil = new Date(qr.valid_until);
+        
+        if (qr.status !== 'active') {
+            await recordScan(qr.id, qrCode, qr.status === 'cancelled' ? 'cancelled' : 'expired', qr);
+            showResult('error', '⏰ كود ' + (qr.status === 'cancelled' ? 'ملغي' : 'منتهي'), 'الكود ده مش صالح للاستخدام دلوقتي');
+            return;
+        }
+        
+        if (now > validUntil) {
+            await recordScan(qr.id, qrCode, 'expired', qr);
+            showResult('error', '⏰ انتهت صلاحية الكود', 'الكود ده انتهت صلاحيته');
+            // مارك Q كـ expired
+            try { await sb.from('qr_codes').update({ status: 'expired' }).eq('id', qr.id); } catch(e) {}
+            return;
+        }
+        
+        // ✅ الـ QR صالح - حدد الـ purpose
+        const purpose = qr.metadata?.purpose || qr.purpose || (qr.qr_type === 'interview' ? 'interview' : 'attendance');
+        const department = qr.metadata?.department || qr.department;
+        
+        // تأكد إن الـ QR للمقابلة بتاع الطالب الصحيح
+        if (qr.qr_type === 'interview' && qr.student_user_id && qr.student_user_id !== studentUserId) {
+            await recordScan(qr.id, qrCode, 'unauthorized', qr);
+            showResult('error', '🚫 الكود ده لطالب آخر', 'الـ QR ده ليس لك');
+            return;
+        }
+        
+        // سجّل الـ scan
+        await recordScan(qr.id, qrCode, 'success', qr);
+        
+        // حدّث scan_count
+        try {
+            await sb.from('qr_codes').update({ 
+                scan_count: (qr.scan_count || 0) + 1, 
+                last_scanned_at: now.toISOString() 
+            }).eq('id', qr.id);
+        } catch(e) {}
+        
+        // عرّض رسالة نجاح حسب الـ purpose
+        const purposeLabels = { attendance: 'حضور التدريب', interview: 'المقابلة', visit: 'الزيارة', daily_attendance: 'حضور التدريب' };
+        const successMsg = purposeLabels[purpose] || 'العملية';
+        
+        let detail = `<strong>الشركة:</strong> ${escapeHtml(qr.company_name || '')}<br>`;
+        if (department) detail += `<strong>القسم:</strong> ${escapeHtml(department)}<br>`;
+        detail += `<strong>الوقت:</strong> ${now.toLocaleString('ar-EG')}`;
+        
+        showResult('success', '✅ تم تسجيل ' + successMsg + ' بنجاح', detail);
+        
+        // لو مقابلة، حدث الـ application status
+        if (purpose === 'interview' && qr.application_id) {
+            try {
+                await sb.from('applications').update({ 
+                    status: 'interview_done',
+                    updated_at: now.toISOString()
+                }).eq('id', qr.application_id).eq('student_user_id', studentUserId);
+            } catch(e) { console.warn('Could not update application:', e); }
+        }
+        
+        loadRecentScans();
+    } catch (err) {
+        console.error('Process QR error:', err);
+        showResult('error', '❌ حدث خطأ', err.message || 'فشل معالجة الكود');
+    } finally {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+}
+
+async function recordScan(qrId, qrCodeText, result, qrData) {
+    try {
+        await sb.from('qr_scans').insert({
+            qr_code_id: qrId,
+            qr_code_text: qrCodeText,
+            scanner_user_id: studentUserId,
+            scanner_type: 'student',
+            scanner_name: studentData?.full_name,
+            scanner_email: studentData?.email,
+            result: result,
+            detected_purpose: qrData?.metadata?.purpose || qrData?.qr_type,
+            application_id: qrData?.application_id,
+            metadata: {
+                department: qrData?.metadata?.department || qrData?.department,
+                company_name: qrData?.company_name
+            }
+        });
+    } catch(e) { console.warn('Scan record failed:', e); }
+}
+
+function showResult(type, title, detail) {
+    const html = `
+        <div class="result-card ${type}">
+            <div class="result-icon ${type}"><i class="fas fa-${type === 'success' ? 'check' : 'times'}"></i></div>
+            <div class="result-title">${title}</div>
+            <div class="result-detail">${detail}</div>
+            <button class="btn-secondary" onclick="document.getElementById('resultArea').innerHTML=''" style="margin-top:14px"><i class="fas fa-times"></i> إغلاق</button>
+        </div>
+    `;
+    document.getElementById('resultArea').innerHTML = html;
+    
+    // امسح كود الإدخال
+    const inp = document.getElementById('codeInput');
+    if (inp) inp.value = '';
+}
+
+async function loadRecentScans() {
+    try {
+        const { data } = await sb.from('qr_scans')
+            .select('*')
+            .eq('scanner_user_id', studentUserId)
+            .order('scanned_at', { ascending: false })
+            .limit(5);
+        
+        const list = document.getElementById('recentScansList');
+        if (!data || data.length === 0) {
+            list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.88rem">لا توجد عمليات سابقة</div>';
+            return;
+        }
+        
+        const purposeIcons = { attendance: 'fa-clipboard-check', interview: 'fa-handshake', visit: 'fa-user-friends', daily_attendance: 'fa-clipboard-check' };
+        const purposeLabels = { attendance: 'حضور تدريب', interview: 'مقابلة', visit: 'زيارة', daily_attendance: 'حضور تدريب' };
+        const purposeColors = { attendance: '#10b981', interview: '#4facfe', visit: '#f59e0b', daily_attendance: '#10b981' };
+        
+        list.innerHTML = data.map(s => {
+            const purpose = s.detected_purpose || 'attendance';
+            const company = s.metadata?.company_name || '';
+            const dept = s.metadata?.department;
+            return `
+                <div class="scan-item">
+                    <div class="scan-icon" style="background:${purposeColors[purpose]}20;color:${purposeColors[purpose]}">
+                        <i class="fas ${purposeIcons[purpose] || 'fa-qrcode'}"></i>
+                    </div>
+                    <div class="scan-info">
+                        <div class="scan-type">${purposeLabels[purpose] || 'مسح'}${dept ? ' - ' + escapeHtml(dept) : ''}</div>
+                        <div class="scan-time">${escapeHtml(company)} • ${new Date(s.scanned_at).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</div>
+                    </div>
+                    <span class="scan-result ${s.result === 'success' ? 'success' : 'error'}">${s.result === 'success' ? '✓' : '✗'}</span>
+                </div>
+            `;
+        }).join('');
+    } catch(e) { console.warn('Could not load scans:', e); }
+}
+
+async function init() {
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+            window.location.href = 'student-login.html';
+            return;
+        }
+        studentUserId = session.user.id;
+        
+        const { data: student } = await sb.from('student').select('full_name, email, photo').eq('user_id', studentUserId).maybeSingle();
+        studentData = student;
+        
+        await loadRecentScans();
+    } catch (err) {
+        console.error(err);
+        showToast('خطأ في التحميل', 'error');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+// لو ضغط Enter في input الكود
+document.getElementById('codeInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') submitCode();
+});
+</script>
+</body>
+</html>
