@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
 <link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
-<title>التواصل مع الإدارة - ProVance</title>
+<link rel="preconnect" href="https://accept.paymob.com" crossorigin>
+<title>المدفوعات - ProVance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -31,36 +32,72 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
 .menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
 .topbar-title { font-size: 1.5rem; font-weight: 800; }
-.chat-container { display: grid; grid-template-columns: 1fr; gap: 14px; max-width: 900px; margin: 0 auto; }
-.info-box { background: rgba(79,172,254,0.05); border: 1px solid rgba(79,172,254,0.2); padding: 14px; border-radius: 12px; font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: start; gap: 10px; }
-.info-box i { color: var(--info); font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
-.chat-area { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; max-height: 500px; overflow-y: auto; min-height: 300px; display: flex; flex-direction: column; gap: 12px; }
-.chat-area::-webkit-scrollbar { width: 6px; }
-.chat-area::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
-.msg { padding: 12px 14px; border-radius: 12px; max-width: 80%; word-wrap: break-word; }
-.msg.outgoing { background: var(--gradient); color: #fff; align-self: flex-start; border-bottom-right-radius: 4px; }
-.msg.incoming { background: rgba(255,255,255,0.05); border: 1px solid var(--border); align-self: flex-end; border-bottom-left-radius: 4px; }
-.msg-sender { font-size: 0.78rem; opacity: 0.85; font-weight: 700; margin-bottom: 4px; }
-.msg-body { line-height: 1.6; white-space: pre-wrap; }
-.msg-time { font-size: 0.7rem; opacity: 0.7; margin-top: 6px; text-align: left; }
-.send-area { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
-.send-form { display: flex; gap: 10px; align-items: flex-end; }
-.send-input { flex: 1; min-height: 48px; max-height: 150px; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 0.92rem; resize: none; }
-.send-input:focus { outline: none; border-color: var(--primary); }
-.send-btn { background: var(--gradient); color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit; }
-.empty-chat { text-align: center; padding: 50px 20px; color: var(--text-muted); }
-.empty-chat i { font-size: 3rem; color: rgba(148,163,184,0.3); margin-bottom: 14px; display: block; }
+.section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 18px; }
+.section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.section-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; }
+.section-title { font-size: 1.15rem; font-weight: 800; margin: 0; }
+.pending-payments-grid { display: grid; gap: 14px; }
+.pay-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px; padding: 18px; transition: all .2s; }
+.pay-card.urgent { border-color: var(--warning); background: rgba(245,158,11,0.05); }
+.pay-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+.pay-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.pay-card-icon { width: 56px; height: 56px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.4rem; flex-shrink: 0; }
+.pay-card-info { flex: 1; min-width: 0; }
+.pay-card-title { font-weight: 800; font-size: 1.05rem; margin-bottom: 3px; }
+.pay-card-subtitle { color: var(--text-muted); font-size: 0.85rem; }
+.pay-card-amount { background: rgba(79,172,254,0.1); border: 1px solid rgba(79,172,254,0.2); border-radius: 10px; padding: 14px; text-align: center; margin: 12px 0; }
+.amount-value { font-size: 1.8rem; font-weight: 900; color: var(--primary); line-height: 1; }
+.amount-currency { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+.pay-btn { width: 100%; background: var(--gradient); color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 800; font-family: inherit; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all .2s; }
+.pay-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(79,172,254,0.4); }
+.pay-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.history-list { display: grid; gap: 10px; }
+.history-item { display: flex; align-items: center; gap: 14px; padding: 14px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; }
+.history-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+.history-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+.history-icon.failed { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.history-icon.pending { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.history-content { flex: 1; min-width: 0; }
+.history-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
+.history-meta { color: var(--text-muted); font-size: 0.8rem; }
+.history-amount { font-weight: 800; }
+.history-amount.success { color: var(--success); }
+.history-amount.failed { color: var(--error); }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal.active { display: flex; }
+.modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; padding: 26px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.modal-title i { color: var(--primary); }
+.modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.method-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.method-card { background: rgba(255,255,255,0.02); border: 2px solid var(--border); border-radius: 14px; padding: 14px; cursor: pointer; text-align: center; transition: all .2s; }
+.method-card:hover { border-color: var(--primary); }
+.method-card.selected { border-color: var(--primary); background: rgba(79,172,254,0.05); }
+.method-icon { font-size: 1.8rem; color: var(--primary); margin-bottom: 8px; }
+.method-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 3px; }
+.method-desc { font-size: 0.74rem; color: var(--text-muted); }
+.field { margin-bottom: 14px; }
+.field label { display: block; color: var(--text); font-size: 0.9rem; font-weight: 600; margin-bottom: 7px; }
+.field input { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.92rem; font-family: inherit; }
+.field input:focus { outline: none; border-color: var(--primary); }
+.summary-row { display: flex; justify-content: space-between; padding: 8px 0; }
+.summary-row.total { padding-top: 14px; border-top: 2px solid var(--border); margin-top: 8px; font-weight: 900; font-size: 1.1rem; color: var(--primary); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 11px 18px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.9rem; cursor: pointer; transition: all .2s; text-decoration: none; }
+.btn-primary { background: var(--gradient); color: #fff; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(79,172,254,0.3); }
+.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+.btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
+.empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
 .loading-overlay { position: fixed; inset: 0; background: rgba(10,14,39,0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .3s; }
 .loading-overlay.hidden { opacity: 0; pointer-events: none; }
 .loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; }
-@media (max-width: 1024px) {
-    .sidebar { transform: translateX(100%); width: 280px; }
-    .sidebar.open { transform: translateX(0); }
-    .main { margin-right: 0; }
-    .menu-toggle { display: flex; align-items: center; justify-content: center; }
-}
+.iframe-container { width: 100%; height: 600px; border: none; background: #fff; border-radius: 12px; }
+@media (max-width: 1024px) { .sidebar { transform: translateX(100%); width: 280px; } .sidebar.open { transform: translateX(0); } .main { margin-right: 0; } .menu-toggle { display: flex; align-items: center; justify-content: center; } }
 </style>
 </head>
 <body>
@@ -89,9 +126,10 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         <a href="student-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
         <a href="student-internship.html" class="nav-item"><i class="fas fa-briefcase"></i> فرص التدريب</a>
         <a href="student-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلباتي</a>
+        <a href="student-scan.html" class="nav-item"><i class="fas fa-qrcode"></i> مسح QR</a>
         <a href="student-profile.html" class="nav-item"><i class="fas fa-user"></i> الملف الشخصي</a>
-        <a href="student-payments.html" class="nav-item"><i class="fas fa-credit-card"></i> المدفوعات</a>
-        <a href="student-support.html" class="nav-item active"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
+        <a href="student-payments.html" class="nav-item active"><i class="fas fa-credit-card"></i> المدفوعات</a>
+        <a href="student-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
         <a href="student-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
         <a href="#" onclick="logoutStudent(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
             <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
@@ -103,54 +141,127 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
             <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
                 <i class="fas fa-bars"></i>
             </button>
-            <h1 class="topbar-title"><i class="fas fa-headset" style="color:var(--primary)"></i> التواصل مع إدارة ProVance</h1>
+            <h1 class="topbar-title"><i class="fas fa-credit-card" style="color:var(--primary)"></i> المدفوعات</h1>
         </div>
 
-        <div class="chat-container">
-            <div class="info-box">
-                <i class="fas fa-info-circle"></i>
+        <!-- Pending Payments (محتاج يدفع) -->
+        <div class="section" id="pendingSection" style="display:none">
+            <div class="section-header">
+                <div class="section-icon"><i class="fas fa-clock"></i></div>
                 <div>
-                    <strong>محادثة مباشرة مع إدارة ProVance</strong><br>
-                    أي رسالة هتبعتها هنا، الإدارة هتشوفها وترد عليك في أقرب وقت.
+                    <h2 class="section-title">مدفوعات مستحقة</h2>
+                    <div style="font-size:0.84rem;color:var(--text-muted);margin-top:3px">رسوم التدريب المطلوب دفعها لاكمال القبول</div>
                 </div>
             </div>
+            <div class="pending-payments-grid" id="pendingGrid"></div>
+        </div>
 
-            <div class="chat-area" id="chatArea">
-                <div class="empty-chat">
-                    <i class="fas fa-comments"></i>
-                    <p>ابدأ محادثة جديدة مع الإدارة</p>
+        <!-- History -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon"><i class="fas fa-history"></i></div>
+                <div>
+                    <h2 class="section-title">سجل المدفوعات</h2>
+                    <div style="font-size:0.84rem;color:var(--text-muted);margin-top:3px">كل عمليات الدفع اللي تمت</div>
                 </div>
             </div>
+            <div class="history-list" id="historyList">
+                <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
+            </div>
+        </div>
 
-            <div class="send-area">
-                <form class="send-form" onsubmit="sendMessage(event)">
-                    <textarea id="messageInput" class="send-input" placeholder="اكتب رسالتك للإدارة..." rows="2"></textarea>
-                    <button type="submit" class="send-btn" id="sendBtn">
-                        <i class="fas fa-paper-plane"></i>
-                        إرسال
-                    </button>
-                </form>
+        <!-- Info -->
+        <div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.2);padding:14px;border-radius:12px;font-size:0.86rem;color:var(--text-muted);display:flex;align-items:start;gap:10px">
+            <i class="fas fa-shield-alt" style="color:var(--primary);font-size:1.2rem;margin-top:2px"></i>
+            <div>
+                <strong>دفع آمن بواسطة Paymob</strong><br>
+                كل المدفوعات تتم من خلال بوابة Paymob المعتمدة. بياناتك محمية ومش بنخزّن أي معلومات كرت بنكي.
             </div>
         </div>
     </main>
 </div>
 
-<div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
+<!-- Payment Modal -->
+<div class="modal" id="payModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fas fa-credit-card"></i> اختر طريقة الدفع</div>
+            <button class="modal-close" onclick="closePayModal()"><i class="fas fa-times"></i></button>
+        </div>
 
+        <div class="summary-row">
+            <span style="color:var(--text-muted)">القسم:</span>
+            <span style="font-weight:700" id="modalInternship">-</span>
+        </div>
+        <div class="summary-row">
+            <span style="color:var(--text-muted)">الشركة:</span>
+            <span style="font-weight:700" id="modalCompany">-</span>
+        </div>
+        <div class="summary-row total">
+            <span>المجموع:</span>
+            <span id="modalAmount">- EGP</span>
+        </div>
+
+        <div style="margin: 20px 0 12px;font-weight:700">طريقة الدفع:</div>
+        <div class="method-options">
+            <div class="method-card selected" data-method="card" onclick="selectMethod('card')">
+                <div class="method-icon"><i class="fas fa-credit-card"></i></div>
+                <div class="method-name">بطاقة بنكية</div>
+                <div class="method-desc">فيزا / ماستر</div>
+            </div>
+            <div class="method-card" data-method="wallet" onclick="selectMethod('wallet')">
+                <div class="method-icon"><i class="fas fa-mobile-alt"></i></div>
+                <div class="method-name">محفظة موبايل</div>
+                <div class="method-desc">فودافون كاش</div>
+            </div>
+        </div>
+
+        <div id="walletNumberField" style="display:none" class="field">
+            <label>رقم المحفظة</label>
+            <input type="tel" id="walletNumber" placeholder="01000000000" maxlength="11">
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:18px">
+            <button class="btn btn-secondary" onclick="closePayModal()" style="flex:1;justify-content:center">إلغاء</button>
+            <button class="btn btn-primary" onclick="processPayment()" id="payBtn" style="flex:2;justify-content:center">
+                <i class="fas fa-lock"></i> ادفع الآن
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Iframe Modal (Paymob iframe) -->
+<div class="modal" id="iframeModal">
+    <div class="modal-content" style="max-width: 700px; padding: 0; overflow: hidden;">
+        <div style="padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; background: var(--card);">
+            <div style="font-weight:800"><i class="fas fa-lock" style="color:var(--success)"></i> دفع آمن - Paymob</div>
+            <button class="modal-close" onclick="closeIframeModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <iframe id="paymobIframe" class="iframe-container" src=""></iframe>
+    </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
 });
 
 let studentUserId = null;
+let studentSession = null;
 let studentData = null;
-let allMessages = [];
+let allPayments = [];
+let pendingPayments = [];
+let selectedPaymentInfo = null;
+let selectedMethod = 'card';
 
 function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }); }
+function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleString('ar-EG', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year: 'numeric' }); }
+function formatAmount(a, c) { return Number(a || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + (c || 'EGP'); }
 
 function showToast(msg, type = 'info') {
     const t = document.createElement('div');
@@ -168,7 +279,7 @@ window.logoutStudent = async (e) => {
     window.location.href = 'student-login.html';
 };
 
-async function loadMessages() {
+async function loadAll() {
     try {
         const { data: sessData } = await sb.auth.getSession();
         if (!sessData || !sessData.session) {
@@ -176,127 +287,235 @@ async function loadMessages() {
             return;
         }
         studentUserId = sessData.session.user.id;
+        studentSession = sessData.session;
 
         const { data: student } = await sb.from('student')
-            .select('user_id, full_name').eq('user_id', studentUserId).maybeSingle();
+            .select('user_id, full_name, email, phone')
+            .eq('user_id', studentUserId).maybeSingle();
         if (!student) {
             window.location.href = 'student-login.html';
             return;
         }
         studentData = student;
 
-        const { data: messages, error } = await sb.from('support_messages')
-            .select('*')
-            .or(`sender_id.eq.${studentUserId},recipient_id.eq.${studentUserId}`)
-            .order('created_at', { ascending: true });
+        // اجلب: المدفوعات + الطلبات المقبولة (اللي محتاجة دفع)
+        const results = await Promise.allSettled([
+            sb.from('payments').select('*').eq('student_user_id', studentUserId).order('created_at', { ascending: false }),
+            sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status').eq('student_user_id', studentUserId).eq('status', 'accepted'),
+        ]);
 
-        if (error) {
-            if (error.message && error.message.includes('support_messages')) {
-                showToast('⚠️ شغّل SQL migration 18', 'warning');
-                allMessages = [];
-            } else throw error;
-        } else {
-            allMessages = messages || [];
+        allPayments = results[0].status === 'fulfilled' ? (results[0].value.data || []) : [];
+        const acceptedApps = results[1].status === 'fulfilled' ? (results[1].value.data || []) : [];
+
+        // pending = طلبات مقبولة لسه ما دفعت لها
+        pendingPayments = [];
+        for (const app of acceptedApps) {
+            const hasPayment = allPayments.find(p => p.application_id === app.id && p.status === 'success');
+            if (!hasPayment) {
+                // اجلب سعر التدريب من الشركة
+                const { data: company } = await sb.from('companies')
+                    .select('training_price, training_currency, company_name')
+                    .eq('user_id', app.company_user_id).maybeSingle();
+                
+                if (company && company.training_price && company.training_price > 0) {
+                    pendingPayments.push({
+                        application_id: app.id,
+                        internship_id: app.internship_id,
+                        company_user_id: app.company_user_id,
+                        company_name: app.company_name || company.company_name || 'شركة',
+                        internship_title: app.internship_title || 'تدريب',
+                        amount: company.training_price,
+                        currency: company.training_currency || 'EGP'
+                    });
+                }
+            }
         }
 
-        renderMessages();
-
-        // علّم الرسائل المقروءة
-        const unreadIds = allMessages.filter(m => m.recipient_id === studentUserId && !m.is_read).map(m => m.id);
-        if (unreadIds.length > 0) {
-            await sb.from('support_messages').update({ is_read: true }).in('id', unreadIds);
-        }
-
+        renderPending();
+        renderHistory();
         document.getElementById('loadingOverlay').classList.add('hidden');
     } catch (err) {
-        console.error(err);
-        showToast('خطأ: ' + err.message, 'error');
+        console.error('Load error:', err);
+        showToast('خطأ في التحميل: ' + err.message, 'error');
         document.getElementById('loadingOverlay').classList.add('hidden');
     }
 }
 
-function renderMessages() {
-    const area = document.getElementById('chatArea');
-    if (allMessages.length === 0) {
-        area.innerHTML = `
-            <div class="empty-chat">
-                <i class="fas fa-comments"></i>
-                <p>ابدأ محادثة جديدة مع الإدارة</p>
-            </div>`;
+function renderPending() {
+    const section = document.getElementById('pendingSection');
+    const grid = document.getElementById('pendingGrid');
+    
+    if (pendingPayments.length === 0) {
+        section.style.display = 'none';
         return;
     }
-    area.innerHTML = allMessages.map(m => {
-        const isMine = m.sender_id === studentUserId;
-        return `
-            <div class="msg ${isMine ? 'outgoing' : 'incoming'}">
-                <div class="msg-sender">
-                    <i class="fas fa-${isMine ? 'user-graduate' : 'user-shield'}"></i>
-                    ${isMine ? 'أنت' : 'إدارة ProVance'}
+    
+    section.style.display = 'block';
+    grid.innerHTML = pendingPayments.map((p, i) => `
+        <div class="pay-card urgent">
+            <div class="pay-card-header">
+                <div class="pay-card-icon"><i class="fas fa-graduation-cap"></i></div>
+                <div class="pay-card-info">
+                    <div class="pay-card-title">${escapeHtml(p.internship_title)}</div>
+                    <div class="pay-card-subtitle">
+                        <i class="fas fa-building"></i> ${escapeHtml(p.company_name)}
+                    </div>
                 </div>
-                <div class="msg-body">${escapeHtml(m.message)}</div>
-                <div class="msg-time">${formatDate(m.created_at)}</div>
-            </div>`;
-    }).join('');
-    area.scrollTop = area.scrollHeight;
+            </div>
+            <div class="pay-card-amount">
+                <div class="amount-value">${formatAmount(p.amount, '').trim()}</div>
+                <div class="amount-currency">${p.currency}</div>
+            </div>
+            <button class="pay-btn" onclick="openPayModal(${i})">
+                <i class="fas fa-lock"></i> ادفع الآن
+            </button>
+        </div>
+    `).join('');
 }
 
-window.sendMessage = async (e) => {
-    e.preventDefault();
-    const input = document.getElementById('messageInput');
-    const btn = document.getElementById('sendBtn');
-    const message = input.value.trim();
-    if (!message) return;
+function renderHistory() {
+    const list = document.getElementById('historyList');
+    if (allPayments.length === 0) {
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><h3>لا توجد مدفوعات سابقة</h3></div>';
+        return;
+    }
+    list.innerHTML = allPayments.map(p => {
+        const statusClass = p.status === 'success' ? 'success' : (p.status === 'failed' || p.status === 'cancelled') ? 'failed' : 'pending';
+        const statusIcon = statusClass === 'success' ? 'check' : statusClass === 'failed' ? 'times' : 'clock';
+        const statusText = { success: 'تم بنجاح', failed: 'فشل', cancelled: 'ملغي', pending: 'قيد المعالجة', processing: 'جاري المعالجة', refunded: 'استرداد' }[p.status] || p.status;
+        
+        return `
+            <div class="history-item">
+                <div class="history-icon ${statusClass}"><i class="fas fa-${statusIcon}"></i></div>
+                <div class="history-content">
+                    <div class="history-title">${escapeHtml(p.description || 'رسوم تدريب')}</div>
+                    <div class="history-meta">
+                        ${formatDate(p.created_at)} • ${statusText}
+                        ${p.failure_reason ? ' • ' + escapeHtml(p.failure_reason.substring(0, 50)) : ''}
+                    </div>
+                </div>
+                <div class="history-amount ${statusClass}">${formatAmount(p.amount, p.currency)}</div>
+            </div>
+        `;
+    }).join('');
+}
 
+window.openPayModal = (index) => {
+    selectedPaymentInfo = pendingPayments[index];
+    if (!selectedPaymentInfo) return;
+    
+    document.getElementById('modalInternship').textContent = selectedPaymentInfo.internship_title;
+    document.getElementById('modalCompany').textContent = selectedPaymentInfo.company_name;
+    document.getElementById('modalAmount').textContent = formatAmount(selectedPaymentInfo.amount, selectedPaymentInfo.currency);
+    
+    selectMethod('card');
+    document.getElementById('payModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closePayModal = () => {
+    document.getElementById('payModal').classList.remove('active');
+    document.body.style.overflow = '';
+    selectedPaymentInfo = null;
+};
+
+window.closeIframeModal = () => {
+    document.getElementById('iframeModal').classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('paymobIframe').src = '';
+    // أعد تحميل للبيانات الجديدة
+    loadAll();
+};
+
+window.selectMethod = (method) => {
+    selectedMethod = method;
+    document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected'));
+    document.querySelector(`[data-method="${method}"]`)?.classList.add('selected');
+    
+    document.getElementById('walletNumberField').style.display = method === 'wallet' ? 'block' : 'none';
+};
+
+window.processPayment = async () => {
+    if (!selectedPaymentInfo) return;
+    
+    const btn = document.getElementById('payBtn');
     btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحضير...';
+    
     try {
-        const { error } = await sb.from('support_messages').insert({
-            sender_id: studentUserId,
-            sender_type: 'student',
-            recipient_type: 'admin',
-            message: message,
-            is_read: false,
-            created_at: new Date().toISOString()
-        });
-
-        if (error) throw error;
-
-        // notification للأدمن
-        try {
-            const { data: admins } = await sb.from('admins').select('user_id');
-            if (admins && admins.length > 0) {
-                const notifs = admins.map(a => ({
-                    user_id: a.user_id,
-                    user_type: 'admin',
-                    type: 'support_message',
-                    title: '💬 رسالة من طالب',
-                    message: `${studentData.full_name}: ${message.substring(0, 80)}${message.length > 80 ? '...' : ''}`,
-                    link: 'admin-student-support.html'
-                }));
-                await sb.from('notifications').insert(notifs);
+        let walletNumber = '';
+        if (selectedMethod === 'wallet') {
+            walletNumber = document.getElementById('walletNumber').value.trim();
+            if (!walletNumber || !/^01\d{9}$/.test(walletNumber)) {
+                showToast('أدخل رقم محفظة صحيح (11 رقم)', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-lock"></i> ادفع الآن';
+                return;
             }
-        } catch(e) {}
-
-        input.value = '';
-        showToast('✅ تم الإرسال', 'success');
-        await loadMessages();
+        }
+        
+        // نادي على Edge Function
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/paymob-create-payment`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${studentSession.access_token}`,
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_KEY
+            },
+            body: JSON.stringify({
+                amount: selectedPaymentInfo.amount,
+                currency: selectedPaymentInfo.currency,
+                paymentMethod: selectedMethod,
+                internshipId: selectedPaymentInfo.internship_id,
+                applicationId: selectedPaymentInfo.application_id,
+                description: `رسوم تدريب: ${selectedPaymentInfo.internship_title}`,
+                walletNumber: walletNumber
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok || !data.success) {
+            console.error('Payment error:', data);
+            showToast('خطأ: ' + (data.error || 'فشل إنشاء الدفع'), 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock"></i> ادفع الآن';
+            return;
+        }
+        
+        // اقفل الـ modal الحالي وافتح الـ iframe
+        closePayModal();
+        
+        if (selectedMethod === 'card' && data.iframeUrl) {
+            document.getElementById('paymobIframe').src = data.iframeUrl;
+            document.getElementById('iframeModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        } else if (selectedMethod === 'wallet' && data.walletRedirectUrl) {
+            // افتح redirect_url في نفس النافذة
+            window.location.href = data.walletRedirectUrl;
+        } else if (selectedMethod === 'wallet') {
+            showToast('تم إرسال طلب الدفع - تحقق من تطبيق المحفظة', 'info');
+            setTimeout(() => loadAll(), 3000);
+        }
     } catch (err) {
         console.error(err);
         showToast('خطأ: ' + err.message, 'error');
-    } finally {
         btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-lock"></i> ادفع الآن';
     }
 };
 
-document.addEventListener('DOMContentLoaded', loadMessages);
+document.addEventListener('DOMContentLoaded', loadAll);
 setTimeout(() => {
     const el = document.getElementById('loadingOverlay');
     if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
 }, 8000);
 
-document.getElementById('messageInput')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        document.querySelector('.send-form').requestSubmit();
+// Listen for paymob iframe success/failure messages
+window.addEventListener('message', (event) => {
+    if (event.origin && event.origin.includes('paymob.com')) {
+        console.log('Paymob message:', event.data);
+        // الـ Paymob بترسل messages مختلفة - الـ webhook هو المصدر الموثوق
     }
 });
 </script>
