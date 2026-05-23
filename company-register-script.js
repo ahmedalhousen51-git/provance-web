@@ -2277,10 +2277,24 @@ function optimizedUpdateTrainingDetailsSection() {
 
 // إضافة ميزة معرفية
 function addKnowledgeBenefit(field) {
-    // field ممكن يكون raw أو sanitized - نحاول الـ 2
+    console.log('🔵 addKnowledgeBenefit called with field:', field);
+    
     const sanitized = fixedFeaturesManager.sanitizeFieldId(field);
-    const input = document.getElementById(`knowledgeBenefitInput-${sanitized}`) 
-               || document.getElementById(`knowledgeBenefitInput-${field}`);
+    
+    let input = document.getElementById(`knowledgeBenefitInput-${sanitized}`);
+    if (!input) input = document.getElementById(`knowledgeBenefitInput-${field}`);
+    
+    if (!input) {
+        const allInputs = document.querySelectorAll('[id^="knowledgeBenefitInput-"]');
+        for (const inp of allInputs) {
+            const inputField = inp.id.replace('knowledgeBenefitInput-', '');
+            if (inputField === field || inputField === sanitized) {
+                input = inp;
+                break;
+            }
+        }
+    }
+    
     if (!input) {
         console.warn('Knowledge input not found for:', field);
         return;
@@ -2297,33 +2311,65 @@ function addKnowledgeBenefit(field) {
         input.value = '';
         input.focus();
         saveStateToStorage();
-        // لا نعرض إشعار نجاح - المستخدم يرى الإضافة مباشرة في القائمة
     }
 }
 
 // إضافة ميزة مادية
 function addFinancialBenefit(field) {
-    // field ممكن يكون raw أو sanitized - نحاول الـ 2
+    console.log('🟢 addFinancialBenefit called with field:', field);
+    
     const sanitized = fixedFeaturesManager.sanitizeFieldId(field);
-    const input = document.getElementById(`financialBenefitInput-${sanitized}`) 
-               || document.getElementById(`financialBenefitInput-${field}`);
+    console.log('🟢 Sanitized field:', sanitized);
+    
+    // جرب كل الـ id formats
+    let input = document.getElementById(`financialBenefitInput-${sanitized}`);
+    if (!input) input = document.getElementById(`financialBenefitInput-${field}`);
+    
+    // fallback: لو لسه مش لاقي، نلاقي أي input بـ id يبدأ بـ financialBenefitInput
     if (!input) {
-        console.warn('Financial input not found for:', field);
+        const allInputs = document.querySelectorAll('[id^="financialBenefitInput-"]');
+        console.warn('🔴 Input not found by exact ID. Available IDs:', 
+            Array.from(allInputs).map(i => i.id));
+        
+        // جرب match by partial
+        for (const inp of allInputs) {
+            const inputField = inp.id.replace('financialBenefitInput-', '');
+            if (inputField === field || inputField === sanitized || 
+                inputField.toLowerCase() === field.toLowerCase()) {
+                input = inp;
+                console.log('🟡 Found by fallback match:', inp.id);
+                break;
+            }
+        }
+    }
+    
+    if (!input) {
+        console.error('🔴 Financial input not found for:', field);
+        if (typeof notificationSystem !== 'undefined') {
+            notificationSystem.show('خطأ', 'لم يتم إيجاد حقل الإدخال', 'error');
+        }
         return;
     }
 
     const benefit = input.value.trim();
+    console.log('🟢 Benefit value:', benefit);
+    
     if (!benefit) {
         notificationSystem.show('الميزة فارغة', 'يرجى كتابة الميزة المادية قبل الإضافة', 'error');
         return;
     }
 
+    console.log('🟢 Calling fixedFeaturesManager.addFinancialBenefit...');
     const success = fixedFeaturesManager.addFinancialBenefit(field, benefit);
+    console.log('🟢 Success:', success);
+    
     if (success) {
         input.value = '';
         input.focus();
         saveStateToStorage();
-        // لا نعرض إشعار نجاح - المستخدم يرى الإضافة مباشرة في القائمة
+        console.log('🟢 ✅ Done!');
+    } else {
+        console.warn('🟡 fixedFeaturesManager returned false (duplicate or empty)');
     }
 }
 
@@ -2492,7 +2538,7 @@ function createTrainingDetailItem(field, details) {
                         <input type="text" id="knowledgeBenefitInput-${fixedFeaturesManager.sanitizeFieldId(field)}" class="form-input" placeholder="ما هي المهارات والمعرفة التي سيحصل عليها المتدرب؟" aria-label="إضافة ميزة معرفية لـ ${AdvancedValidator.sanitizeHTML(field)}">
                         <div class="input-border"></div>
                     </div>
-                    <button type="button" class="btn-add" onclick="addKnowledgeBenefit('${fixedFeaturesManager.sanitizeFieldId(field)}')">
+                    <button type="button" class="btn-add btn-add-knowledge" data-field="${fixedFeaturesManager.sanitizeFieldId(field)}" data-raw-field="${AdvancedValidator.sanitizeHTML(field).replace(/"/g, '&quot;')}">
                         <i class="fas fa-plus"></i>
                         <span>إضافة</span>
                     </button>
@@ -2534,7 +2580,7 @@ function createTrainingDetailItem(field, details) {
                         <input type="text" id="financialBenefitInput-${fixedFeaturesManager.sanitizeFieldId(field)}" class="form-input" placeholder="هل تقدم مكافآت مالية أو بدائل نقل أو وجبات؟" aria-label="إضافة ميزة مادية لـ ${AdvancedValidator.sanitizeHTML(field)}">
                         <div class="input-border"></div>
                     </div>
-                    <button type="button" class="btn-add" onclick="addFinancialBenefit('${fixedFeaturesManager.sanitizeFieldId(field)}')">
+                    <button type="button" class="btn-add btn-add-financial" data-field="${fixedFeaturesManager.sanitizeFieldId(field)}" data-raw-field="${AdvancedValidator.sanitizeHTML(field).replace(/"/g, '&quot;')}">
                         <i class="fas fa-plus"></i>
                         <span>إضافة</span>
                     </button>
@@ -2568,7 +2614,7 @@ function createTrainingDetailItem(field, details) {
                         <input type="text" id="trainingRequirementInput-${AdvancedValidator.sanitizeHTML(field)}" class="form-input" placeholder="ما هي مواصفات المتدرب المطلوبة لهذا المجال؟" aria-label="إضافة متطلب تدريبي لـ ${AdvancedValidator.sanitizeHTML(field)}">
                         <div class="input-border"></div>
                     </div>
-                    <button type="button" class="btn-add" onclick="addTrainingRequirement('${AdvancedValidator.sanitizeHTML(field)}')">
+                    <button type="button" class="btn-add btn-add-requirement" data-field="${fixedFeaturesManager.sanitizeFieldId(field)}" data-raw-field="${AdvancedValidator.sanitizeHTML(field).replace(/"/g, '&quot;')}">
                         <i class="fas fa-plus"></i>
                         <span>إضافة</span>
                     </button>
@@ -4218,3 +4264,53 @@ function generateFinancialBenefits(details, traineeType) {
 }
 
 Logger.info('FIXED VERSION LOADED - All Issues Resolved + Performance + Security + Accessibility + Training Requirements + Dynamic Features System + Enhanced Summary Buttons + New Interview Response Field');
+
+// ============================================
+// 🎯 Event Delegation for Add Buttons (يضمن العمل على الموبايل)
+// ============================================
+(function setupBenefitButtonDelegation() {
+    function handleClick(e) {
+        const btn = e.target.closest('.btn-add-knowledge, .btn-add-financial, .btn-add-requirement');
+        if (!btn) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const field = btn.dataset.field;
+        const rawField = btn.dataset.rawField || field;
+        
+        if (!field) {
+            console.warn('Button has no data-field');
+            return;
+        }
+        
+        console.log('🎯 Button clicked:', btn.className, 'field:', field, 'raw:', rawField);
+        
+        if (btn.classList.contains('btn-add-knowledge')) {
+            if (typeof addKnowledgeBenefit === 'function') {
+                addKnowledgeBenefit(field);
+            }
+        } else if (btn.classList.contains('btn-add-financial')) {
+            if (typeof addFinancialBenefit === 'function') {
+                addFinancialBenefit(field);
+            }
+        } else if (btn.classList.contains('btn-add-requirement')) {
+            if (typeof addTrainingRequirement === 'function') {
+                addTrainingRequirement(field);
+            }
+        }
+    }
+    
+    // ضيف listeners للـ click والـ touchend (الموبايل)
+    document.addEventListener('click', handleClick, true);
+    
+    // Touchend للموبايل (في حالة الـ click ما اشتغلش)
+    document.addEventListener('touchend', function(e) {
+        const btn = e.target.closest('.btn-add-knowledge, .btn-add-financial, .btn-add-requirement');
+        if (btn) {
+            console.log('📱 Touch detected on:', btn.className);
+        }
+    }, { passive: true });
+    
+    console.log('✅ Benefit button delegation setup complete');
+})();
