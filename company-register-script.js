@@ -716,7 +716,18 @@ class TrainingFieldsOptimizer {
     }
 
     sanitizeFieldId(field) {
-        return field.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_');
+        if (!field) return '';
+        // Convert إلى ASCII-safe ID: hex encoding للأحرف غير الـ ASCII
+        // ده يضمن الـ ID متطابق دائماً وبلا أحرف خاصة
+        return 'f_' + String(field).split('').map(c => {
+            const code = c.charCodeAt(0);
+            if ((code >= 48 && code <= 57) ||  // 0-9
+                (code >= 65 && code <= 90) ||  // A-Z
+                (code >= 97 && code <= 122)) { // a-z
+                return c;
+            }
+            return code.toString(16);
+        }).join('');
     }
 }
 
@@ -1087,7 +1098,18 @@ class FixedFeaturesManager {
 
     // تنظيف معرف الحقل للاستخدام في الـ ID
     sanitizeFieldId(field) {
-        return field.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g, '_');
+        if (!field) return '';
+        // Convert إلى ASCII-safe ID: hex encoding للأحرف غير الـ ASCII
+        // ده يضمن الـ ID متطابق دائماً وبلا أحرف خاصة
+        return 'f_' + String(field).split('').map(c => {
+            const code = c.charCodeAt(0);
+            if ((code >= 48 && code <= 57) ||  // 0-9
+                (code >= 65 && code <= 90) ||  // A-Z
+                (code >= 97 && code <= 122)) { // a-z
+                return c;
+            }
+            return code.toString(16);
+        }).join('');
     }
 
     // تنظيف النص من HTML
@@ -2539,7 +2561,7 @@ function createTrainingDetailItem(field, details) {
                         <input type="text" id="knowledgeBenefitInput-${fixedFeaturesManager.sanitizeFieldId(field)}" class="form-input" placeholder="ما هي المهارات والمعرفة التي سيحصل عليها المتدرب؟" aria-label="إضافة ميزة معرفية لـ ${AdvancedValidator.sanitizeHTML(field)}">
                         <div class="input-border"></div>
                     </div>
-                    <button type="button" class="btn-add btn-add-knowledge" data-field="${fixedFeaturesManager.sanitizeFieldId(field)}" data-raw-field="${AdvancedValidator.sanitizeHTML(field).replace(/"/g, '&quot;')}">
+                    <button type="button" class="btn-add btn-add-knowledge" data-field="${fixedFeaturesManager.sanitizeFieldId(field)}">
                         <i class="fas fa-plus"></i>
                         <span>إضافة</span>
                     </button>
@@ -2581,7 +2603,7 @@ function createTrainingDetailItem(field, details) {
                         <input type="text" id="financialBenefitInput-${fixedFeaturesManager.sanitizeFieldId(field)}" class="form-input" placeholder="هل تقدم مكافآت مالية أو بدائل نقل أو وجبات؟" aria-label="إضافة ميزة مادية لـ ${AdvancedValidator.sanitizeHTML(field)}">
                         <div class="input-border"></div>
                     </div>
-                    <button type="button" class="btn-add btn-add-financial" data-field="${fixedFeaturesManager.sanitizeFieldId(field)}" data-raw-field="${AdvancedValidator.sanitizeHTML(field).replace(/"/g, '&quot;')}">
+                    <button type="button" class="btn-add btn-add-financial" data-field="${fixedFeaturesManager.sanitizeFieldId(field)}">
                         <i class="fas fa-plus"></i>
                         <span>إضافة</span>
                     </button>
@@ -2615,7 +2637,7 @@ function createTrainingDetailItem(field, details) {
                         <input type="text" id="trainingRequirementInput-${AdvancedValidator.sanitizeHTML(field)}" class="form-input" placeholder="ما هي مواصفات المتدرب المطلوبة لهذا المجال؟" aria-label="إضافة متطلب تدريبي لـ ${AdvancedValidator.sanitizeHTML(field)}">
                         <div class="input-border"></div>
                     </div>
-                    <button type="button" class="btn-add btn-add-requirement" data-field="${fixedFeaturesManager.sanitizeFieldId(field)}" data-raw-field="${AdvancedValidator.sanitizeHTML(field).replace(/"/g, '&quot;')}">
+                    <button type="button" class="btn-add btn-add-requirement" data-field="${fixedFeaturesManager.sanitizeFieldId(field)}">
                         <i class="fas fa-plus"></i>
                         <span>إضافة</span>
                     </button>
