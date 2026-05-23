@@ -4347,12 +4347,24 @@ Logger.info('FIXED VERSION LOADED - All Issues Resolved + Performance + Security
         }
     }
     
+    let lastClickTime = 0;
+    let lastClickedBtn = null;
+    
     function handleClick(e) {
         const btn = e.target.closest('.btn-add-knowledge, .btn-add-financial, .btn-add-requirement');
         if (!btn) return;
         
         e.preventDefault();
         e.stopPropagation();
+        
+        // 🛡️ Debounce: تجاهل أي ضغطة على نفس الزرار خلال 500ms
+        const now = Date.now();
+        if (btn === lastClickedBtn && (now - lastClickTime) < 500) {
+            console.log('🛡️ Ignored duplicate click within 500ms');
+            return;
+        }
+        lastClickTime = now;
+        lastClickedBtn = btn;
         
         const field = btn.dataset.field;
         if (!field) {
@@ -4400,19 +4412,9 @@ Logger.info('FIXED VERSION LOADED - All Issues Resolved + Performance + Security
     }
     
     document.addEventListener('click', handleClick, true);
-    document.addEventListener('touchend', function(e) {
-        const btn = e.target.closest('.btn-add-knowledge, .btn-add-financial, .btn-add-requirement');
-        if (btn) {
-            // Trigger click manually لو touchend بـ fired لكن click مش
-            setTimeout(() => {
-                if (!btn._clicked) {
-                    btn._clicked = true;
-                    handleClick({ target: btn, preventDefault: () => {}, stopPropagation: () => {} });
-                    setTimeout(() => btn._clicked = false, 500);
-                }
-            }, 100);
-        }
-    }, { passive: true });
+    // ⚠️ شيلنا الـ touchend manual trigger لأن الـ click event بيشتغل بشكل طبيعي على الموبايل
+    // الـ touchend كان بيـ trigger double click → كان بيمسح الـ input ويقول "اكتب الميزة"
+    // دلوقتي بنعتمد على الـ click event فقط (Touch devices يـ fire click بعد touchend تلقائياً)
     
     console.log('✅ Benefit button delegation setup complete v2 - 2026-05-23');
     console.log('📋 Functions available:');
