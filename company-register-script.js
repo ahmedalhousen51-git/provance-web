@@ -784,6 +784,7 @@ class PerformanceOptimizer {
 class FixedFeaturesManager {
     constructor() {
         this.knowledgeBenefits = new Map();
+        console.log('🏗️ FixedFeaturesManager initialized');
         this.financialBenefits = new Map();
         this.trainingRequirements = new Map();
         this.initialized = false;
@@ -4266,9 +4267,64 @@ function generateFinancialBenefits(details, traineeType) {
 Logger.info('FIXED VERSION LOADED - All Issues Resolved + Performance + Security + Accessibility + Training Requirements + Dynamic Features System + Enhanced Summary Buttons + New Interview Response Field');
 
 // ============================================
-// 🎯 Event Delegation for Add Buttons (يضمن العمل على الموبايل)
+// 🎯 Event Delegation for Add Buttons - مع debug visible
 // ============================================
 (function setupBenefitButtonDelegation() {
+    // Visual debug helper
+    function showVisualDebug(msg, color) {
+        try {
+            const existing = document.getElementById('debugToast');
+            if (existing) existing.remove();
+            
+            const t = document.createElement('div');
+            t.id = 'debugToast';
+            t.style.cssText = `
+                position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+                background: ${color || '#4facfe'}; color: white; padding: 12px 20px;
+                border-radius: 10px; font-family: Cairo, sans-serif; font-weight: 700;
+                z-index: 999999; font-size: 14px; max-width: 90vw; text-align: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            `;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3500);
+        } catch(e) {}
+    }
+    
+    function tryAddBenefit(field, type) {
+        try {
+            if (type === 'knowledge') {
+                if (typeof addKnowledgeBenefit === 'function') {
+                    addKnowledgeBenefit(field);
+                    return true;
+                } else {
+                    showVisualDebug('❌ addKnowledgeBenefit function غير موجودة!', '#ef4444');
+                    return false;
+                }
+            } else if (type === 'financial') {
+                if (typeof addFinancialBenefit === 'function') {
+                    addFinancialBenefit(field);
+                    return true;
+                } else {
+                    showVisualDebug('❌ addFinancialBenefit function غير موجودة!', '#ef4444');
+                    return false;
+                }
+            } else if (type === 'requirement') {
+                if (typeof addTrainingRequirement === 'function') {
+                    addTrainingRequirement(field);
+                    return true;
+                } else {
+                    showVisualDebug('❌ addTrainingRequirement function غير موجودة!', '#ef4444');
+                    return false;
+                }
+            }
+        } catch(e) {
+            showVisualDebug('❌ خطأ: ' + e.message, '#ef4444');
+            console.error('tryAddBenefit error:', e);
+            return false;
+        }
+    }
+    
     function handleClick(e) {
         const btn = e.target.closest('.btn-add-knowledge, .btn-add-financial, .btn-add-requirement');
         if (!btn) return;
@@ -4277,40 +4333,69 @@ Logger.info('FIXED VERSION LOADED - All Issues Resolved + Performance + Security
         e.stopPropagation();
         
         const field = btn.dataset.field;
-        const rawField = btn.dataset.rawField || field;
-        
         if (!field) {
-            console.warn('Button has no data-field');
+            showVisualDebug('❌ الزرار مفيهوش data-field!', '#ef4444');
             return;
         }
         
-        console.log('🎯 Button clicked:', btn.className, 'field:', field, 'raw:', rawField);
+        // إيه نوع الزرار؟
+        let type = null;
+        if (btn.classList.contains('btn-add-knowledge')) type = 'knowledge';
+        else if (btn.classList.contains('btn-add-financial')) type = 'financial';
+        else if (btn.classList.contains('btn-add-requirement')) type = 'requirement';
         
-        if (btn.classList.contains('btn-add-knowledge')) {
-            if (typeof addKnowledgeBenefit === 'function') {
-                addKnowledgeBenefit(field);
-            }
-        } else if (btn.classList.contains('btn-add-financial')) {
-            if (typeof addFinancialBenefit === 'function') {
-                addFinancialBenefit(field);
-            }
-        } else if (btn.classList.contains('btn-add-requirement')) {
-            if (typeof addTrainingRequirement === 'function') {
-                addTrainingRequirement(field);
-            }
+        if (!type) {
+            showVisualDebug('❌ نوع الزرار غير معروف!', '#ef4444');
+            return;
+        }
+        
+        // شوف الـ input قيمته إيه
+        const inputId = type === 'knowledge' ? 'knowledgeBenefitInput-' + field :
+                        type === 'financial' ? 'financialBenefitInput-' + field :
+                        'trainingRequirementInput-' + field;
+        const input = document.getElementById(inputId);
+        
+        if (!input) {
+            // جرب نلاقي الـ input بأي طريقة
+            const allInputs = document.querySelectorAll('[id^="' + (type === 'knowledge' ? 'knowledgeBenefitInput-' : type === 'financial' ? 'financialBenefitInput-' : 'trainingRequirementInput-') + '"]');
+            showVisualDebug('❌ الـ input مش لاقيه! Field: ' + field + ' | Available: ' + Array.from(allInputs).map(i => i.id).join(', '), '#ef4444');
+            return;
+        }
+        
+        const value = input.value.trim();
+        if (!value) {
+            showVisualDebug('⚠️ اكتب الميزة الأول', '#f59e0b');
+            input.focus();
+            return;
+        }
+        
+        // كل حاجة تمام - حاول تضيف
+        const result = tryAddBenefit(field, type);
+        
+        if (result) {
+            showVisualDebug('✅ تم إضافة: ' + value, '#10b981');
         }
     }
     
-    // ضيف listeners للـ click والـ touchend (الموبايل)
     document.addEventListener('click', handleClick, true);
-    
-    // Touchend للموبايل (في حالة الـ click ما اشتغلش)
     document.addEventListener('touchend', function(e) {
         const btn = e.target.closest('.btn-add-knowledge, .btn-add-financial, .btn-add-requirement');
         if (btn) {
-            console.log('📱 Touch detected on:', btn.className);
+            // Trigger click manually لو touchend بـ fired لكن click مش
+            setTimeout(() => {
+                if (!btn._clicked) {
+                    btn._clicked = true;
+                    handleClick({ target: btn, preventDefault: () => {}, stopPropagation: () => {} });
+                    setTimeout(() => btn._clicked = false, 500);
+                }
+            }, 100);
         }
     }, { passive: true });
     
-    console.log('✅ Benefit button delegation setup complete');
+    console.log('✅ Benefit button delegation setup complete v2 - 2026-05-23');
+    console.log('📋 Functions available:');
+    console.log('  - addKnowledgeBenefit:', typeof window.addKnowledgeBenefit);
+    console.log('  - addFinancialBenefit:', typeof window.addFinancialBenefit);
+    console.log('  - fixedFeaturesManager:', typeof window.fixedFeaturesManager);
+    console.log('  - state:', typeof window.state);
 })();
