@@ -4349,22 +4349,26 @@ Logger.info('FIXED VERSION LOADED - All Issues Resolved + Performance + Security
     
     let lastClickTime = 0;
     let lastClickedBtn = null;
+    let clickCounter = 0;
     
     function handleClick(e) {
+        clickCounter++;
+        const clickNum = clickCounter;
         const btn = e.target.closest('.btn-add-knowledge, .btn-add-financial, .btn-add-requirement');
         if (!btn) return;
         
         e.preventDefault();
         e.stopPropagation();
         
-        // 🛡️ Debounce: تجاهل أي ضغطة على نفس الزرار خلال 500ms
+        // 🛡️ Debounce قوي: تجاهل أي ضغطة على نفس الزرار خلال 800ms
         const now = Date.now();
-        if (btn === lastClickedBtn && (now - lastClickTime) < 500) {
-            console.log('🛡️ Ignored duplicate click within 500ms');
-            return;
+        const btnId = btn.dataset.field + '_' + (btn.classList.contains('btn-add-financial') ? 'fin' : btn.classList.contains('btn-add-knowledge') ? 'kn' : 'req');
+        if (window._lastBtnClick && window._lastBtnClick[btnId] && (now - window._lastBtnClick[btnId]) < 800) {
+            console.log('🛡️ Ignored duplicate click on', btnId, 'within 800ms');
+            return; // مفيش toast - تجاهل كامل
         }
-        lastClickTime = now;
-        lastClickedBtn = btn;
+        if (!window._lastBtnClick) window._lastBtnClick = {};
+        window._lastBtnClick[btnId] = now;
         
         const field = btn.dataset.field;
         if (!field) {
@@ -4398,7 +4402,8 @@ Logger.info('FIXED VERSION LOADED - All Issues Resolved + Performance + Security
         
         const value = input.value.trim();
         if (!value) {
-            showVisualDebug('⚠️ اكتب الميزة الأول', '#f59e0b');
+            showVisualDebug('⚠️ [Click #' + clickNum + '] الـ input فاضي! Length: ' + value.length + ' | Input ID: ' + input.id, '#f59e0b');
+            console.log('🔍 EMPTY input detected. Click #' + clickNum, 'Input:', input, 'Value:', JSON.stringify(input.value));
             input.focus();
             return;
         }
@@ -4407,7 +4412,8 @@ Logger.info('FIXED VERSION LOADED - All Issues Resolved + Performance + Security
         const result = tryAddBenefit(field, type);
         
         if (result) {
-            showVisualDebug('✅ تم إضافة: ' + value, '#10b981');
+            showVisualDebug('✅ [Click #' + clickNum + '] تم إضافة: ' + value, '#10b981');
+            console.log('✅ ADDED on click #' + clickNum, value);
         }
     }
     
