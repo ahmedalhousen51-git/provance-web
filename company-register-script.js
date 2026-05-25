@@ -717,9 +717,13 @@ class TrainingFieldsOptimizer {
 
     sanitizeFieldId(field) {
         if (!field) return '';
+        const str = String(field);
+        // Idempotent: لو الـ field محول بالفعل (بدأ بـ f_ وكل الباقي ASCII)، نرجعه زي ما هو
+        if (str.startsWith('f_') && /^f_[a-zA-Z0-9]*$/.test(str)) {
+            return str;
+        }
         // Convert إلى ASCII-safe ID: hex encoding للأحرف غير الـ ASCII
-        // ده يضمن الـ ID متطابق دائماً وبلا أحرف خاصة
-        return 'f_' + String(field).split('').map(c => {
+        return 'f_' + str.split('').map(c => {
             const code = c.charCodeAt(0);
             if ((code >= 48 && code <= 57) ||  // 0-9
                 (code >= 65 && code <= 90) ||  // A-Z
@@ -1173,9 +1177,13 @@ class FixedFeaturesManager {
     // تنظيف معرف الحقل للاستخدام في الـ ID
     sanitizeFieldId(field) {
         if (!field) return '';
+        const str = String(field);
+        // Idempotent: لو الـ field محول بالفعل (بدأ بـ f_ وكل الباقي ASCII)، نرجعه زي ما هو
+        if (str.startsWith('f_') && /^f_[a-zA-Z0-9]*$/.test(str)) {
+            return str;
+        }
         // Convert إلى ASCII-safe ID: hex encoding للأحرف غير الـ ASCII
-        // ده يضمن الـ ID متطابق دائماً وبلا أحرف خاصة
-        return 'f_' + String(field).split('').map(c => {
+        return 'f_' + str.split('').map(c => {
             const code = c.charCodeAt(0);
             if ((code >= 48 && code <= 57) ||  // 0-9
                 (code >= 65 && code <= 90) ||  // A-Z
