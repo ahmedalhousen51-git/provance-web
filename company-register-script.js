@@ -1974,6 +1974,23 @@ function validateStep3(silent = false) {
         );
     }
     
+    // 🔍 Debug: شوف بالظبط إيه الناقص
+    const fieldsDebugInfo = state.trainingFields.map(field => {
+        const details = state.trainingDetails[field];
+        return {
+            field: field,
+            exists: !!details,
+            duration: details?.duration || '(فارغ)',
+            count: details?.count || '(فارغ)',
+            minSalary: details?.minSalary || '(فارغ)',
+            maxSalary: details?.maxSalary || '(فارغ)',
+            supervisor: details?.supervisor || '(فارغ)',
+            knowledgeBenefits: details?.knowledgeBenefits ? '✓ (' + details.knowledgeBenefits.length + ' chars)' : '✗ فارغ',
+            trainingRequirements: details?.trainingRequirements ? '✓ (' + details.trainingRequirements.length + ' chars)' : '✗ فارغ'
+        };
+    });
+    console.log('📋 validateStep3 - State Details:', fieldsDebugInfo);
+    
     const incompleteFields = state.trainingFields.filter(field => {
         const details = state.trainingDetails[field];
         const hasSalaryInfo = details && details.minSalary && details.maxSalary;
@@ -1981,13 +1998,43 @@ function validateStep3(silent = false) {
         const hasTrainingRequirements = details && details.trainingRequirements && details.trainingRequirements.trim() !== '';
         const hasBasicInfo = details && details.duration && details.count && details.supervisor;
         
+        const missing = [];
+        if (!details) missing.push('لا توجد تفاصيل');
+        else {
+            if (!details.duration) missing.push('المدة');
+            if (!details.count) missing.push('عدد المتدربين');
+            if (!details.supervisor) missing.push('المشرف');
+            if (!details.minSalary) missing.push('الحد الأدنى للراتب');
+            if (!details.maxSalary) missing.push('الحد الأقصى للراتب');
+            if (!details.knowledgeBenefits || !details.knowledgeBenefits.trim()) missing.push('الميزة المعرفية');
+            if (!details.trainingRequirements || !details.trainingRequirements.trim()) missing.push('متطلبات التدريب');
+        }
+        
+        if (missing.length > 0) {
+            console.warn(`🔴 Field "${field}" - الناقص:`, missing.join(', '));
+        }
+        
         return !hasBasicInfo || !hasSalaryInfo || !hasKnowledgeBenefits || !hasTrainingRequirements;
     });
     
     if (incompleteFields.length > 0) {
+        // 🔥 نلاقي بالظبط إيه الناقص في كل field
+        const detailedMsg = incompleteFields.map(field => {
+            const details = state.trainingDetails[field] || {};
+            const missing = [];
+            if (!details.duration) missing.push('المدة');
+            if (!details.count) missing.push('عدد المتدربين');
+            if (!details.supervisor) missing.push('المشرف');
+            if (!details.minSalary) missing.push('الحد الأدنى للراتب');
+            if (!details.maxSalary) missing.push('الحد الأقصى للراتب');
+            if (!details.knowledgeBenefits || !details.knowledgeBenefits.trim()) missing.push('الميزة المعرفية');
+            if (!details.trainingRequirements || !details.trainingRequirements.trim()) missing.push('متطلبات التدريب');
+            return `${field}: ${missing.join('، ')}`;
+        }).join(' | ');
+        
         return showError(
             'تفاصيل التدريب غير مكتملة',
-            `يجب تحديد جميع الحقول الإلزامية لجميع الأقسام. الأقسام المتبقية: ${incompleteFields.join(', ')}`,
+            `الناقص: ${detailedMsg}`,
             silent
         );
     }
@@ -2834,67 +2881,112 @@ function getDurationOptionsBasedOnType(selectedDuration) {
     `;
 }
 
+// Helper: نلاقي الـ raw key في state.trainingDetails بمقارنة أشكال مختلفة
+function resolveTrainingFieldKey(field) {
+    if (!state.trainingDetails) return null;
+    // 1. raw match
+    if (state.trainingDetails[field]) return field;
+    // 2. decode HTML entities
+    const decoded = (function() {
+        const txt = document.createElement('textarea');
+        txt.innerHTML = field;
+        return txt.value;
+    })();
+    if (decoded !== field && state.trainingDetails[decoded]) return decoded;
+    // 3. sanitized match
+    if (window.fixedFeaturesManager) {
+        const sanitized = window.fixedFeaturesManager.sanitizeFieldId(field);
+        if (state.trainingDetails[sanitized]) return sanitized;
+        // 4. reverse lookup: لأي field في trainingFields، شوف لو sanitized بتاعه يطابق
+        const found = (state.trainingFields || []).find(f => {
+            return window.fixedFeaturesManager.sanitizeFieldId(f) === field
+                || window.fixedFeaturesManager.sanitizeFieldId(f) === sanitized
+                || f === decoded;
+        });
+        if (found) return found;
+    }
+    return null;
+}
+
 function updateFieldDuration(field, duration) {
-    if (state.trainingDetails[field]) {
-        state.trainingDetails[field].duration = duration;
+    const key = resolveTrainingFieldKey(field);
+    if (key && state.trainingDetails[key]) {
+        state.trainingDetails[key].duration = duration;
         optimizedUpdateTrainingDetailsSection();
-        saveStateToStorage(); // حفظ بدون إشعار
+        saveStateToStorage();
+    } else {
+        console.warn('🔴 updateFieldDuration: state key not found for', field);
     }
 }
 
 function updateFieldCount(field, count) {
-    if (state.trainingDetails[field]) {
-        state.trainingDetails[field].count = count;
+    const key = resolveTrainingFieldKey(field);
+    if (key && state.trainingDetails[key]) {
+        state.trainingDetails[key].count = count;
         optimizedUpdateTrainingDetailsSection();
-        saveStateToStorage(); // حفظ بدون إشعار
+        saveStateToStorage();
+    } else {
+        console.warn('🔴 updateFieldCount: state key not found for', field);
     }
 }
 
 function updateFieldSupervisor(field, supervisor) {
-    if (state.trainingDetails[field]) {
-        state.trainingDetails[field].supervisor = AdvancedValidator.sanitize(supervisor);
+    const key = resolveTrainingFieldKey(field);
+    if (key && state.trainingDetails[key]) {
+        state.trainingDetails[key].supervisor = AdvancedValidator.sanitize(supervisor);
         optimizedUpdateTrainingDetailsSection();
-        saveStateToStorage(); // حفظ بدون إشعار
+        saveStateToStorage();
+    } else {
+        console.warn('🔴 updateFieldSupervisor: state key not found for', field);
     }
 }
 
 function updateMinSalary(field, minSalary) {
-    if (state.trainingDetails[field]) {
-        state.trainingDetails[field].minSalary = minSalary;
-        saveStateToStorage(); // حفظ بدون إشعار
+    const key = resolveTrainingFieldKey(field);
+    if (key && state.trainingDetails[key]) {
+        state.trainingDetails[key].minSalary = minSalary;
+        saveStateToStorage();
+    } else {
+        console.warn('🔴 updateMinSalary: state key not found for', field);
     }
 }
 
 function updateMaxSalary(field, maxSalary) {
-    if (state.trainingDetails[field]) {
-        state.trainingDetails[field].maxSalary = maxSalary;
-        saveStateToStorage(); // حفظ بدون إشعار
+    const key = resolveTrainingFieldKey(field);
+    if (key && state.trainingDetails[key]) {
+        state.trainingDetails[key].maxSalary = maxSalary;
+        saveStateToStorage();
+    } else {
+        console.warn('🔴 updateMaxSalary: state key not found for', field);
     }
 }
 
 function updateSalaryCurrency(field, currency) {
-    if (state.trainingDetails[field]) {
-        state.trainingDetails[field].currency = currency;
+    const key = resolveTrainingFieldKey(field);
+    if (key && state.trainingDetails[key]) {
+        state.trainingDetails[key].currency = currency;
         
-        const otherCurrencyGroup = document.getElementById(`otherCurrencyGroup-${field}`);
+        const otherCurrencyGroup = document.getElementById(`otherCurrencyGroup-${field}`)
+                                || document.getElementById(`otherCurrencyGroup-${key}`);
         if (otherCurrencyGroup) {
             if (currency === 'other') {
                 otherCurrencyGroup.classList.remove('hidden');
             } else {
                 otherCurrencyGroup.classList.add('hidden');
-                state.trainingDetails[field].otherCurrency = '';
+                state.trainingDetails[key].otherCurrency = '';
             }
         }
         
         optimizedUpdateTrainingDetailsSection();
-        saveStateToStorage(); // حفظ بدون إشعار
+        saveStateToStorage();
     }
 }
 
 function updateOtherCurrency(field, otherCurrency) {
-    if (state.trainingDetails[field]) {
-        state.trainingDetails[field].otherCurrency = AdvancedValidator.sanitize(otherCurrency);
-        saveStateToStorage(); // حفظ بدون إشعار
+    const key = resolveTrainingFieldKey(field);
+    if (key && state.trainingDetails[key]) {
+        state.trainingDetails[key].otherCurrency = AdvancedValidator.sanitize(otherCurrency);
+        saveStateToStorage();
     }
 }
 
