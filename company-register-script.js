@@ -917,9 +917,20 @@ class FixedFeaturesManager {
 
     // 🔧 إصلاح: تحديث الواجهة فقط عند الطلب
     updateKnowledgeBenefitsUI(field) {
-        const container = document.getElementById(`knowledgeBenefitsList-${field}`);
+        let container = document.getElementById(`knowledgeBenefitsList-${field}`);
         if (!container) {
-            console.log('Container not found for:', field);
+            // fallback: نلاقي أي container يبدأ بالاسم ده
+            const sanitized = this.sanitizeFieldId(field);
+            container = document.getElementById(`knowledgeBenefitsList-${sanitized}`);
+        }
+        if (!container) {
+            // last resort: نلاقي الأول من نوعه
+            const all = document.querySelectorAll('[id^="knowledgeBenefitsList-"]');
+            if (all.length === 1) container = all[0];
+        }
+        if (!container) {
+            console.warn('🔴 Knowledge container not found for:', field, 'Available:', 
+                Array.from(document.querySelectorAll('[id^="knowledgeBenefitsList-"]')).map(c => c.id));
             return;
         }
 
@@ -947,9 +958,18 @@ class FixedFeaturesManager {
     }
 
     updateFinancialBenefitsUI(field) {
-        const container = document.getElementById(`financialBenefitsList-${field}`);
+        let container = document.getElementById(`financialBenefitsList-${field}`);
         if (!container) {
-            console.log('Container not found for:', field);
+            const sanitized = this.sanitizeFieldId(field);
+            container = document.getElementById(`financialBenefitsList-${sanitized}`);
+        }
+        if (!container) {
+            const all = document.querySelectorAll('[id^="financialBenefitsList-"]');
+            if (all.length === 1) container = all[0];
+        }
+        if (!container) {
+            console.warn('🔴 Financial container not found for:', field, 'Available:',
+                Array.from(document.querySelectorAll('[id^="financialBenefitsList-"]')).map(c => c.id));
             return;
         }
 
@@ -977,9 +997,18 @@ class FixedFeaturesManager {
     }
 
     updateTrainingRequirementsUI(field) {
-        const container = document.getElementById(`trainingRequirementsList-${field}`);
+        let container = document.getElementById(`trainingRequirementsList-${field}`);
         if (!container) {
-            console.log('Container not found for:', field);
+            const sanitized = this.sanitizeFieldId(field);
+            container = document.getElementById(`trainingRequirementsList-${sanitized}`);
+        }
+        if (!container) {
+            const all = document.querySelectorAll('[id^="trainingRequirementsList-"]');
+            if (all.length === 1) container = all[0];
+        }
+        if (!container) {
+            console.warn('🔴 Training requirements container not found for:', field, 'Available:',
+                Array.from(document.querySelectorAll('[id^="trainingRequirementsList-"]')).map(c => c.id));
             return;
         }
 
@@ -2398,12 +2427,34 @@ function addFinancialBenefit(field) {
 
 // إضافة متطلب تدريبي
 function addTrainingRequirement(field) {
-    const input = document.getElementById(`trainingRequirementInput-${field}`);
-    if (!input) return;
+    console.log('🟡 addTrainingRequirement called with field:', field);
+    
+    const sanitized = fixedFeaturesManager.sanitizeFieldId(field);
+    
+    let input = document.getElementById(`trainingRequirementInput-${sanitized}`);
+    if (!input) input = document.getElementById(`trainingRequirementInput-${field}`);
+    
+    if (!input) {
+        const allInputs = document.querySelectorAll('[id^="trainingRequirementInput-"]');
+        for (const inp of allInputs) {
+            const inputField = inp.id.replace('trainingRequirementInput-', '');
+            if (inputField === field || inputField === sanitized) {
+                input = inp;
+                break;
+            }
+        }
+    }
+    
+    if (!input) {
+        console.warn('Training requirement input not found for:', field);
+        return;
+    }
 
     const requirement = input.value.trim();
     if (!requirement) {
-        notificationSystem.show('المتطلب فارغ', 'يرجى كتابة متطلب التدريب قبل الإضافة', 'error');
+        if (typeof notificationSystem !== 'undefined') {
+            notificationSystem.show('المتطلب فارغ', 'يرجى كتابة متطلب التدريب قبل الإضافة', 'error');
+        }
         return;
     }
 
@@ -2412,7 +2463,6 @@ function addTrainingRequirement(field) {
         input.value = '';
         input.focus();
         saveStateToStorage();
-        // لا نعرض إشعار نجاح - المستخدم يرى الإضافة مباشرة في القائمة
     }
 }
 
@@ -2554,7 +2604,7 @@ function createTrainingDetailItem(field, details) {
             <div class="detail-control full-width" style="grid-column: 1 / -1;">
                 <label class="detail-label required">
                     <i class="fas fa-brain"></i>
-                    الميزة المعرفية
+                    الميزة المعرفية المكتسبة من التدريب
                 </label>
                 <div class="features-input-group">
                     <div class="input-wrapper" style="flex: 1;">
@@ -2634,7 +2684,7 @@ function createTrainingDetailItem(field, details) {
                 </label>
                 <div class="features-input-group">
                     <div class="input-wrapper" style="flex: 1;">
-                        <input type="text" id="trainingRequirementInput-${AdvancedValidator.sanitizeHTML(field)}" class="form-input" placeholder="ما هي مواصفات المتدرب المطلوبة لهذا المجال؟" aria-label="إضافة متطلب تدريبي لـ ${AdvancedValidator.sanitizeHTML(field)}">
+                        <input type="text" id="trainingRequirementInput-${fixedFeaturesManager.sanitizeFieldId(field)}" class="form-input" placeholder="ما هي مواصفات المتدرب المطلوبة لهذا المجال؟" aria-label="إضافة متطلب تدريبي لـ ${AdvancedValidator.sanitizeHTML(field)}">
                         <div class="input-border"></div>
                     </div>
                     <button type="button" class="btn-add btn-add-requirement" data-field="${fixedFeaturesManager.sanitizeFieldId(field)}">
@@ -2642,7 +2692,7 @@ function createTrainingDetailItem(field, details) {
                         <span>إضافة</span>
                     </button>
                 </div>
-                <div id="trainingRequirementsList-${AdvancedValidator.sanitizeHTML(field)}" class="features-list">
+                <div id="trainingRequirementsList-${fixedFeaturesManager.sanitizeFieldId(field)}" class="features-list">
                     <div class="empty-features-state">
                         <i class="fas fa-user-check"></i>
                         <p>لم تتم إضافة أي متطلب تدريبي بعد</p>
