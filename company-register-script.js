@@ -1435,6 +1435,19 @@ function attachEventListeners() {
         form.addEventListener('submit', handleFormSubmit);
     }
     
+    // 🎯 Backup: click handler مباشر على زرار إتمام التسجيل
+    const submitBtn = document.getElementById('btnSubmit');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function(e) {
+            console.log('🎯 Submit button clicked directly');
+            // الـ form submit handler بـ يشتغل عادي - مش محتاجين preventDefault
+            // ده backup فقط للـ logging
+            if (typeof showValidationDebug === 'function') {
+                showValidationDebug('🎯 جاري إتمام التسجيل...', 'info');
+            }
+        });
+    }
+    
     // Auto-save state on changes
     document.addEventListener('input', debounce(saveStateToStorage, 2000));
 }
@@ -4044,8 +4057,21 @@ async function waitForSB(maxWaitMs) {
 
 async function handleFormSubmit(event) {
     event.preventDefault();
+    
+    console.log('🚀 handleFormSubmit called - current step:', state.currentStep);
+    
+    // Visual confirmation للموبايل
+    if (typeof showValidationDebug === 'function') {
+        showValidationDebug('🚀 جاري التسجيل...', 'info');
+    }
 
-    if (!validateCurrentStep()) return;
+    if (!validateCurrentStep()) {
+        console.log('🔴 validateCurrentStep failed');
+        if (typeof showValidationDebug === 'function') {
+            showValidationDebug('❌ Validation فشلت - شوف الصفحة', 'error');
+        }
+        return;
+    }
 
     const formData = collectFormData();
     if (!formData) {
@@ -4139,7 +4165,31 @@ async function handleFormSubmit(event) {
             agreed_at:         new Date().toISOString()
         };
         
+        console.log('📦 Inserting company data:', insertData);
+        
         const { data: companyInserted, error: dbError } = await sb.from('companies').insert(insertData).select();
+        
+        if (dbError) {
+            console.error('🔴 Company insert error:', dbError);
+            const errMsg = dbError.message || 'فشل حفظ البيانات';
+            const errCode = dbError.code || '';
+            
+            if (typeof showValidationDebug === 'function') {
+                showValidationDebug('❌ خطأ في الحفظ: ' + errMsg + ' (Code: ' + errCode + ')', 'error');
+            }
+            
+            // نوع الخطأ
+            let userMsg = errMsg;
+            if (errMsg.includes('column')) userMsg = '⚠️ شغّل SQL Migration 48 الأول! عمود ناقص: ' + errMsg;
+            else if (errMsg.includes('row-level security') || errMsg.includes('policy')) userMsg = '⚠️ شغّل SQL Migration 48 الأول! مشكلة في RLS';
+            else if (errMsg.includes('duplicate') || errCode === '23505') userMsg = 'هذا الحساب موجود مسبقاً';
+            
+            notificationSystem.show('خطأ في الحفظ', userMsg, 'error');
+            resetBtn();
+            return;
+        }
+        
+        console.log('✅ Company inserted successfully:', companyInserted);
 
         if (dbError) {
             console.error('DB error:', dbError);
