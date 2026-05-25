@@ -833,12 +833,20 @@ class FixedFeaturesManager {
         
         this.knowledgeBenefits.get(sanitizedField).push(sanitizedBenefit);
         
-        // 🔧 تحديث الـ state - نلاقي الـ key الصحيح (raw أو sanitized)
-        const stateKey = state.trainingDetails[field] ? field 
-                       : state.trainingDetails[sanitizedField] ? sanitizedField 
-                       : null;
-        if (stateKey) {
+        // 🔧 تحديث الـ state - نلاقي الـ raw key بمقارنة sanitized values
+        let stateKey = null;
+        if (state.trainingDetails[field]) stateKey = field;
+        else if (state.trainingDetails[sanitizedField]) stateKey = sanitizedField;
+        else {
+            // نلاقي الـ raw field اللي sanitized بتاعه = sanitizedField
+            stateKey = (state.trainingFields || []).find(f => this.sanitizeFieldId(f) === sanitizedField) || null;
+        }
+        console.log('🔑 stateKey found:', stateKey, 'for sanitized:', sanitizedField);
+        if (stateKey && state.trainingDetails[stateKey]) {
             state.trainingDetails[stateKey].knowledgeBenefits = this.getKnowledgeBenefitsAsString(sanitizedField);
+            console.log('✅ Updated state.trainingDetails[' + stateKey + '].knowledgeBenefits');
+        } else {
+            console.warn('⚠️ Could not find stateKey for:', field, sanitizedField);
         }
         
         // 🔧 تحديث الواجهة يدوياً فقط
@@ -871,11 +879,14 @@ class FixedFeaturesManager {
         
         this.financialBenefits.get(sanitizedField).push(sanitizedBenefit);
         
-        // نلاقي الـ key الصحيح في state
-        const stateKey = state.trainingDetails[field] ? field 
-                       : state.trainingDetails[sanitizedField] ? sanitizedField 
-                       : null;
-        if (stateKey) {
+        // نلاقي الـ raw key بمقارنة sanitized values
+        let stateKey = null;
+        if (state.trainingDetails[field]) stateKey = field;
+        else if (state.trainingDetails[sanitizedField]) stateKey = sanitizedField;
+        else {
+            stateKey = (state.trainingFields || []).find(f => this.sanitizeFieldId(f) === sanitizedField) || null;
+        }
+        if (stateKey && state.trainingDetails[stateKey]) {
             state.trainingDetails[stateKey].financialBenefits = this.getFinancialBenefitsAsString(sanitizedField);
         }
         
@@ -907,8 +918,15 @@ class FixedFeaturesManager {
         
         this.trainingRequirements.get(sanitizedField).push(sanitizedRequirement);
         
-        if (state.trainingDetails[field]) {
-            state.trainingDetails[field].trainingRequirements = this.getTrainingRequirementsAsString(field);
+        // نلاقي الـ raw key بمقارنة sanitized values
+        let stateKey = null;
+        if (state.trainingDetails[field]) stateKey = field;
+        else if (state.trainingDetails[sanitizedField]) stateKey = sanitizedField;
+        else {
+            stateKey = (state.trainingFields || []).find(f => this.sanitizeFieldId(f) === sanitizedField) || null;
+        }
+        if (stateKey && state.trainingDetails[stateKey]) {
+            state.trainingDetails[stateKey].trainingRequirements = this.getTrainingRequirementsAsString(sanitizedField);
         }
         
         this.updateTrainingRequirementsUI(sanitizedField);
@@ -1073,12 +1091,21 @@ class FixedFeaturesManager {
 
     removeTrainingRequirement(field, index) {
         console.log(`Removing training requirement from ${field} at index ${index}`);
-        if (this.trainingRequirements.has(field)) {
-            this.trainingRequirements.get(field).splice(index, 1);
-            if (state.trainingDetails[field]) {
-                state.trainingDetails[field].trainingRequirements = this.getTrainingRequirementsAsString(field);
+        const sanitized = this.sanitizeFieldId(field);
+        const key = this.trainingRequirements.has(field) ? field 
+                  : this.trainingRequirements.has(sanitized) ? sanitized : null;
+        if (key) {
+            this.trainingRequirements.get(key).splice(index, 1);
+            let stateKey = null;
+            if (state.trainingDetails[field]) stateKey = field;
+            else if (state.trainingDetails[sanitized]) stateKey = sanitized;
+            else {
+                stateKey = (state.trainingFields || []).find(f => this.sanitizeFieldId(f) === key) || null;
             }
-            this.updateTrainingRequirementsUI(field);
+            if (stateKey && state.trainingDetails[stateKey]) {
+                state.trainingDetails[stateKey].trainingRequirements = this.getTrainingRequirementsAsString(key);
+            }
+            this.updateTrainingRequirementsUI(sanitized);
             saveStateToStorage();
         }
     }
@@ -1102,7 +1129,10 @@ class FixedFeaturesManager {
     }
 
     getTrainingRequirementsAsString(field) {
-        const requirements = this.trainingRequirements.get(field) || [];
+        let requirements = this.trainingRequirements.get(field);
+        if (!requirements || !requirements.length) {
+            requirements = this.trainingRequirements.get(this.sanitizeFieldId(field)) || [];
+        }
         return requirements.join('\n');
     }
 
