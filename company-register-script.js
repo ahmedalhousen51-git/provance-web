@@ -4003,8 +4003,17 @@ async function handleFormSubmit(event) {
 
         const userId = authData.user.id;
 
+        // 🔍 Debug: شوف الـ formData قبل الـ insert
+        console.log('📤 إرسال بيانات الشركة:', {
+            company_name: formData.companyInfo.name,
+            email: email,
+            training_fields: formData.trainingInfo.fields,
+            training_details_keys: Object.keys(formData.trainingInfo.details || {}),
+            training_details_sample: formData.trainingInfo.details
+        });
+
         // 2. حفظ بيانات الشركة في جدول companies (كل الحقول الكاملة)
-        const { error: dbError } = await sb.from('companies').insert({
+        const insertData = {
             user_id:           userId,
             company_name:      formData.companyInfo.name,
             email:             email,
@@ -4026,9 +4035,12 @@ async function handleFormSubmit(event) {
             training_notes:    formData.trainingDetails.requiredItems || '',
             is_startup:        formData.trainingDetails.isStartup || false,
             max_response_days: parseInt(formData.trainingDetails.maxResponseDays) || 7,
+            max_response_after_interview: parseInt(formData.trainingDetails.maxResponseAfterInterview) || 3,
             status:            'pending',
             agreed_at:         new Date().toISOString()
-        });
+        };
+        
+        const { data: companyInserted, error: dbError } = await sb.from('companies').insert(insertData).select();
 
         if (dbError) {
             console.error('DB error:', dbError);
