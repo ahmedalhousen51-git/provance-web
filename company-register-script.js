@@ -2398,6 +2398,11 @@ function optimizedAddTrainingField() {
         return;
     }
     
+    if (field.length < 2) {
+        notificationSystem.show('اسم المجال قصير', 'اسم المجال يجب أن يكون أكثر من حرف واحد', 'error');
+        return;
+    }
+    
     if (state.trainingFields.includes(field)) {
         notificationSystem.show('مجال مكرر', 'هذا المجال التدريبي مضاف مسبقاً. يرجى إضافة مجال مختلف', 'error');
         return;
@@ -2471,7 +2476,11 @@ function optimizedUpdateTrainingDetailsSection() {
     // استخدام DocumentFragment لتقليل reflows
     const fragment = document.createDocumentFragment();
     
+    // 🛡️ فلتر الـ fields الفاضية أو الـ invalid
+    state.trainingFields = state.trainingFields.filter(f => f && typeof f === 'string' && f.trim().length >= 2);
+    
     state.trainingFields.forEach((field) => {
+        if (!field || field.length < 2) return; // safety check
         const details = state.trainingDetails[field] || {};
         const item = createTrainingDetailItem(field, details);
         fragment.appendChild(item);
@@ -4681,6 +4690,12 @@ Logger.info('FIXED VERSION LOADED - All Issues Resolved + Performance + Security
         const field = btn.dataset.field;
         if (!field) {
             showVisualDebug('❌ الزرار مفيهوش data-field!', '#ef4444');
+            return;
+        }
+        
+        // 🛡️ تحقق إن الـ field صحيح
+        if (field === 'f_' || field.length < 4) {
+            showVisualDebug('⚠️ اسم المجال غير صحيح (' + field + '). امسح المجال وضيفه تاني باسم أوضح', '#f59e0b');
             return;
         }
         
