@@ -952,8 +952,13 @@ class FixedFeaturesManager {
             return;
         }
 
-        const benefits = this.knowledgeBenefits.get(field) || [];
-        console.log(`Updating UI for ${field} with ${benefits.length} benefits`);
+        // Map.get مع fallback لو field مش الـ key الصحيح
+        let benefits = this.knowledgeBenefits.get(field);
+        if (!benefits || !benefits.length) {
+            const sanitized = this.sanitizeFieldId(field);
+            benefits = this.knowledgeBenefits.get(sanitized) || [];
+        }
+        console.log(`Updating Knowledge UI for ${field} with ${benefits.length} benefits`);
         
         if (benefits.length === 0) {
             container.innerHTML = `
@@ -991,8 +996,13 @@ class FixedFeaturesManager {
             return;
         }
 
-        const benefits = this.financialBenefits.get(field) || [];
-        console.log(`Updating UI for ${field} with ${benefits.length} benefits`);
+        // Map.get مع fallback
+        let benefits = this.financialBenefits.get(field);
+        if (!benefits || !benefits.length) {
+            const sanitized = this.sanitizeFieldId(field);
+            benefits = this.financialBenefits.get(sanitized) || [];
+        }
+        console.log(`Updating Financial UI for ${field} with ${benefits.length} benefits`);
         
         if (benefits.length === 0) {
             container.innerHTML = `
@@ -1030,8 +1040,13 @@ class FixedFeaturesManager {
             return;
         }
 
-        const requirements = this.trainingRequirements.get(field) || [];
-        console.log(`Updating UI for ${field} with ${requirements.length} requirements`);
+        // Map.get مع fallback
+        let requirements = this.trainingRequirements.get(field);
+        if (!requirements || !requirements.length) {
+            const sanitized = this.sanitizeFieldId(field);
+            requirements = this.trainingRequirements.get(sanitized) || [];
+        }
+        console.log(`Updating Training Req UI for ${field} with ${requirements.length} requirements`);
         
         if (requirements.length === 0) {
             container.innerHTML = `
@@ -2348,6 +2363,17 @@ function optimizedUpdateTrainingDetailsSection() {
     // تحديث DOM مرة واحدة فقط
     detailsList.innerHTML = '';
     detailsList.appendChild(fragment);
+    
+    // 🔥 إعادة عرض الميزات من الـ Maps بعد الـ re-render
+    // لأن الـ HTML الجديد فيه containers فاضية، محتاج نـ re-populate من الـ Maps
+    if (window.fixedFeaturesManager) {
+        state.trainingFields.forEach((field) => {
+            const sanitized = window.fixedFeaturesManager.sanitizeFieldId(field);
+            window.fixedFeaturesManager.updateKnowledgeBenefitsUI(sanitized);
+            window.fixedFeaturesManager.updateFinancialBenefitsUI(sanitized);
+            window.fixedFeaturesManager.updateTrainingRequirementsUI(sanitized);
+        });
+    }
     
     // بدء مراقبة العناصر الجديدة للأداء
     performanceOptimizer.observeTrainingDetails();
