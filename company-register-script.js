@@ -2066,8 +2066,32 @@ function validateStep3(silent = false) {
         );
     }
     
+    // ✅ Fallback: لو state فاضي، حاول تلاقي الـ selected card من الـ DOM
     if (!state.selectedTraineeType) {
-        if (!silent) showValidationDebug('❌ لازم تختار نوع المتدربين (أحد الخيارات الثلاثة)', 'error');
+        const selectedCard = document.querySelector('.trainee-card.selected');
+        if (selectedCard) {
+            const onclick = selectedCard.getAttribute('onclick') || '';
+            const match = onclick.match(/selectTraineeType\('([^']+)'/);
+            if (match && match[1]) {
+                console.log('🔧 Validation: recovered selectedTraineeType from DOM:', match[1]);
+                state.selectedTraineeType = match[1];
+                saveStateToStorage();
+            }
+        }
+    }
+    
+    if (!state.selectedTraineeType) {
+        if (!silent) {
+            // Debug message عشان نعرف الـ state بالظبط
+            const debugInfo = {
+                stateExists: typeof state !== 'undefined',
+                value: state?.selectedTraineeType,
+                cards: document.querySelectorAll('.trainee-card').length,
+                selectedCards: document.querySelectorAll('.trainee-card.selected').length
+            };
+            console.error('🔴 Validation failed - traineeType debug:', debugInfo);
+            showValidationDebug('❌ لازم تختار نوع المتدربين. Debug: ' + JSON.stringify(debugInfo), 'error');
+        }
         return showError(
             'نوع المتدربين غير محدد',
             'يجب اختيار نوع المتدربين',
@@ -3172,21 +3196,49 @@ function updateBranchLocationsList() {
 // Trainee Type Selection - ENHANCED
 // ============================================
 function selectTraineeType(type, element) {
+    console.log('🎯 selectTraineeType called with:', type);
+    
+    // ✅ تأكد إن state موجود
+    if (typeof state === 'undefined') {
+        console.error('🔴 state غير معرّف!');
+        return;
+    }
+    
+    // ✅ حفظ في state
     state.selectedTraineeType = type;
     
+    // ✅ Visual feedback - شيل selected من الكل
     document.querySelectorAll('.trainee-card').forEach(card => {
         card.classList.remove('selected');
     });
     
+    // ✅ ضيف selected للمختار
     if (element) {
         element.classList.add('selected');
+    } else {
+        // fallback: نلاقي الـ card الصحيحة بالـ onclick attribute
+        document.querySelectorAll('.trainee-card').forEach(card => {
+            const onclick = card.getAttribute('onclick') || '';
+            if (onclick.includes(`'${type}'`)) {
+                card.classList.add('selected');
+            }
+        });
     }
     
-    updateTraineeExplanation(type);
-    optimizedUpdateTrainingDetailsSection();
+    // ✅ Update UI
+    try { updateTraineeExplanation(type); } catch(e) { console.warn('updateTraineeExplanation:', e); }
+    try { optimizedUpdateTrainingDetailsSection(); } catch(e) { console.warn('optimizedUpdateTrainingDetailsSection:', e); }
     
-    // لا نعرض إشعار نجاح - المستخدم يرى الاختيار مباشرة
-    saveStateToStorage();
+    // ✅ حفظ
+    try { saveStateToStorage(); } catch(e) { console.warn('saveStateToStorage:', e); }
+    
+    // ✅ Visual confirmation للموبايل
+    if (typeof showValidationDebug === 'function') {
+        const labels = { 'first-time': 'النظام الأول', 'once-trained': 'النظام الثاني', 'twice-trained': 'النظام الثالث' };
+        showValidationDebug('✅ تم اختيار: ' + (labels[type] || type), 'success');
+    }
+    
+    console.log('✅ state.selectedTraineeType =', state.selectedTraineeType);
 }
 
 function showTraineeInfo(type, event) {
@@ -4679,6 +4731,33 @@ Logger.info('FIXED VERSION LOADED - All Issues Resolved + Performance + Security
     // دلوقتي بنعتمد على الـ click event فقط (Touch devices يـ fire click بعد touchend تلقائياً)
     
     console.log('✅ Benefit button delegation setup complete v2 - 2026-05-23');
+    
+    // 🎯 Event Delegation للـ trainee-card كـ backup
+    document.addEventListener('click', function(e) {
+        const card = e.target.closest('.trainee-card');
+        if (!card) return;
+        
+        // تجاهل لو الضغط كان على info button
+        if (e.target.closest('.card-info-btn')) return;
+        
+        // استخراج الـ type من الـ onclick attribute
+        const onclick = card.getAttribute('onclick') || '';
+        const match = onclick.match(/selectTraineeType\('([^']+)'/);
+        if (match && match[1]) {
+            const type = match[1];
+            // تحقق لو state.selectedTraineeType اتحدث بالفعل
+            setTimeout(() => {
+                if (state && state.selectedTraineeType !== type) {
+                    console.log('🔧 Backup: selectTraineeType منفعتش - بـ trigger يدوياً');
+                    if (typeof selectTraineeType === 'function') {
+                        selectTraineeType(type, card);
+                    }
+                }
+            }, 50);
+        }
+    }, false);
+    
+    console.log('✅ Trainee-card backup delegation setup complete');
     console.log('📋 Functions available:');
     console.log('  - addKnowledgeBenefit:', typeof window.addKnowledgeBenefit);
     console.log('  - addFinancialBenefit:', typeof window.addFinancialBenefit);
