@@ -1975,9 +1975,10 @@ function validateStep2(silent = false) {
 
 function validateStep3(silent = false) {
     if (state.trainingFields.length === 0) {
+        if (!silent) showValidationDebug('❌ مفيش مجال تدريبي مضاف. ضيف مجال واحد على الأقل', 'error');
         return showError(
             'المجالات التدريبية مطلوبة',
-            'يجب إضافة مجال تدريبي واحد على الأقل لتحديد مجالات التدريب المتاحة في الشركة',
+            'يجب إضافة مجال تدريبي واحد على الأقل',
             silent
         );
     }
@@ -2040,6 +2041,9 @@ function validateStep3(silent = false) {
             return `${field}: ${missing.join('، ')}`;
         }).join(' | ');
         
+        // 🎨 Visual debug على الموبايل
+        if (!silent) showValidationDebug('❌ ' + detailedMsg, 'error');
+        
         return showError(
             'تفاصيل التدريب غير مكتملة',
             `الناقص: ${detailedMsg}`,
@@ -2053,17 +2057,20 @@ function validateStep3(silent = false) {
     });
     
     if (invalidCountFields.length > 0) {
+        const msg = `❌ عدد المتدربين غير صحيح في: ${invalidCountFields.join('، ')}`;
+        if (!silent) showValidationDebug(msg, 'error');
         return showError(
             'عدد المتدربين غير صحيح',
-            `يجب إدخال عدد صحيح موجب للمتدربين في المجالات: ${invalidCountFields.join(', ')}`,
+            msg,
             silent
         );
     }
     
     if (!state.selectedTraineeType) {
+        if (!silent) showValidationDebug('❌ لازم تختار نوع المتدربين (أحد الخيارات الثلاثة)', 'error');
         return showError(
             'نوع المتدربين غير محدد',
-            'يجب اختيار نوع المتدربين الذي ترغب في استقبالهم (اضغط على أحد الخيارات الثلاثة)',
+            'يجب اختيار نوع المتدربين',
             silent
         );
     }
@@ -2075,9 +2082,11 @@ function validateStep3(silent = false) {
         });
         
         if (fieldsWithoutFinancialBenefits.length > 0) {
+            const msg = `❌ الميزة المادية ناقصة في: ${fieldsWithoutFinancialBenefits.join('، ')}`;
+            if (!silent) showValidationDebug(msg, 'error');
             return showError(
                 'الميزة المادية مطلوبة',
-                `النظام المختار (${state.selectedTraineeType === 'once-trained' ? 'النظام الثاني' : 'النظام الثالث'}) يتطلب تحديد الميزة المادية لكل مجال تدريبي. المجالات التالية تحتاج لإضافة الميزة المادية: ${fieldsWithoutFinancialBenefits.join(', ')}`,
+                `النظام المختار يتطلب تحديد الميزة المادية لكل مجال. الناقص: ${fieldsWithoutFinancialBenefits.join('، ')}`,
                 silent
             );
         }
@@ -2095,9 +2104,11 @@ function validateStep3(silent = false) {
         });
         
         if (fieldsWithInvalidDuration.length > 0) {
+            const msg = `❌ مدة التدريب طويلة (لازم 3 أسابيع كحد أقصى) في: ${fieldsWithInvalidDuration.join('، ')}`;
+            if (!silent) showValidationDebug(msg, 'error');
             return showError(
                 'مدة التدريب غير صحيحة',
-                `النظام الثالث يتطلب أن تكون مدة التدريب حتى 3 أسابيع كحد أقصى. المجالات التالية تحتاج للتعديل: ${fieldsWithInvalidDuration.join(', ')}`,
+                msg,
                 silent
             );
         }
@@ -2183,6 +2194,33 @@ function validateStep6(silent = false) {
         return false;
     }
     return true;
+}
+
+
+// 🎨 Visual debug للـ validation - يظهر toast كبير على الموبايل
+function showValidationDebug(msg, type) {
+    try {
+        const existing = document.getElementById('validationDebugToast');
+        if (existing) existing.remove();
+        
+        const colors = { error: '#ef4444', warning: '#f59e0b', success: '#10b981', info: '#4facfe' };
+        const t = document.createElement('div');
+        t.id = 'validationDebugToast';
+        t.style.cssText = `
+            position: fixed; top: 20px; left: 5%; right: 5%;
+            background: ${colors[type] || '#4facfe'}; color: white; 
+            padding: 16px 20px; border-radius: 12px;
+            font-family: Cairo, sans-serif; font-weight: 700; font-size: 14px;
+            z-index: 999999; text-align: right; line-height: 1.6;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            max-height: 50vh; overflow-y: auto;
+            border: 2px solid rgba(255,255,255,0.3);
+        `;
+        t.innerHTML = msg + '<br><br><small style="opacity:0.8;font-weight:600">اضغط لإغلاق</small>';
+        t.onclick = () => t.remove();
+        document.body.appendChild(t);
+        setTimeout(() => { if (t.parentNode) t.remove(); }, 12000);
+    } catch(e) { console.error('showValidationDebug error:', e); }
 }
 
 function showError(title, details, silent = false) {
