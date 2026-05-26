@@ -4060,21 +4060,31 @@ async function handleFormSubmit(event) {
     
     console.log('🚀 handleFormSubmit called - current step:', state.currentStep);
     
-    // Visual confirmation للموبايل
+    // Step 1: Visual confirmation
     if (typeof showValidationDebug === 'function') {
-        showValidationDebug('🚀 جاري التسجيل...', 'info');
+        showValidationDebug('1️⃣ بدء التسجيل...', 'info');
     }
 
+    // Step 2: Validation
+    console.log('Step 2: Validation');
     if (!validateCurrentStep()) {
         console.log('🔴 validateCurrentStep failed');
         if (typeof showValidationDebug === 'function') {
-            showValidationDebug('❌ Validation فشلت - شوف الصفحة', 'error');
+            showValidationDebug('❌ لازم توافق على الشروط', 'error');
         }
         return;
     }
 
+    // Step 3: Collect form data
+    console.log('Step 3: Collecting form data');
+    if (typeof showValidationDebug === 'function') {
+        showValidationDebug('2️⃣ جمع البيانات...', 'info');
+    }
     const formData = collectFormData();
     if (!formData) {
+        if (typeof showValidationDebug === 'function') {
+            showValidationDebug('❌ فشل جمع البيانات', 'error');
+        }
         notificationSystem.show('خطأ في البيانات', 'تعذر جمع بيانات النموذج', 'error');
         return;
     }
@@ -4093,32 +4103,61 @@ async function handleFormSubmit(event) {
     const password = getValue('password');
 
     if (!email || !password) {
+        if (typeof showValidationDebug === 'function') {
+            showValidationDebug('❌ Email أو كلمة المرور فاضية!', 'error');
+        }
         notificationSystem.show('خطأ', 'البريد الإلكتروني أو كلمة المرور غير موجودة', 'error');
         resetBtn();
         return;
     }
 
     try {
+        // Step 4: Connect to Supabase
+        console.log('Step 4: Connecting to Supabase');
+        if (typeof showValidationDebug === 'function') {
+            showValidationDebug('3️⃣ الاتصال بقاعدة البيانات...', 'info');
+        }
+        
         const sb = await waitForSB();
         if (!sb) {
-            notificationSystem.show('خطأ', 'مشكلة في الاتصال، تأكد من الإنترنت وحاول مرة أخرى', 'error');
+            console.error('🔴 waitForSB returned null');
+            if (typeof showValidationDebug === 'function') {
+                showValidationDebug('❌ فشل الاتصال - تأكد من الإنترنت', 'error');
+            }
+            notificationSystem.show('خطأ', 'مشكلة في الاتصال', 'error');
             resetBtn();
             return;
         }
 
-        // 1. إنشاء حساب في Supabase Auth
-        const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
+        // Step 5: Create auth account
+        console.log('Step 5: Creating auth account');
+        if (typeof showValidationDebug === 'function') {
+            showValidationDebug('4️⃣ إنشاء الحساب...', 'info');
+        }
+        
+        // Timeout protection للـ signUp
+        const signUpPromise = sb.auth.signUp({ email, password });
+        const signUpTimeout = new Promise(resolve => setTimeout(() => resolve({ data: null, error: { message: 'timeout - تأكد من الإنترنت' } }), 20000));
+        const { data: authData, error: authError } = await Promise.race([signUpPromise, signUpTimeout]);
 
         if (authError) {
+            console.error('🔴 signUp error:', authError);
             let msg = 'حدث خطأ أثناء التسجيل';
             if (authError.message.includes('already registered') || authError.message.includes('already been registered'))
                 msg = 'هذا البريد الإلكتروني مسجل مسبقاً، يرجى تسجيل الدخول';
             else if (authError.message.includes('Password'))
                 msg = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+            
+            if (typeof showValidationDebug === 'function') {
+                showValidationDebug('❌ ' + msg + ' (Auth Error)', 'error');
+            }
+            
             notificationSystem.show('خطأ في التسجيل', msg, 'error');
             if (submitBtn) { submitBtn.innerHTML = '<i class="fas fa-check"></i> <span>إتمام التسجيل</span>'; submitBtn.disabled = false; }
             return;
         }
+        
+        console.log('✅ Auth account created');
 
         if (!authData || !authData.user) {
             notificationSystem.show('خطأ في التسجيل', 'حدث خطأ في إنشاء الحساب، حاول مرة أخرى', 'error');
@@ -4190,6 +4229,9 @@ async function handleFormSubmit(event) {
         }
         
         console.log('✅ Company inserted successfully:', companyInserted);
+        if (typeof showValidationDebug === 'function') {
+            showValidationDebug('5️⃣ جاري حفظ التدريبات...', 'info');
+        }
 
         if (dbError) {
             console.error('DB error:', dbError);
@@ -4210,11 +4252,20 @@ async function handleFormSubmit(event) {
             return;
         }
 
-        // 3. حفظ التدريبات في Supabase أيضاً
-        const internshipsResult = await saveInternshipsToSupabase(sb, userId, formData);
-        if (!internshipsResult.success) {
-            console.warn('Internships save warning:', internshipsResult.error);
-            // مش هنوقف العملية، نكمل عادي
+        // 3. حفظ التدريبات في Supabase أيضاً (مع timeout)
+        console.log('Step 6: Saving internships');
+        try {
+            const internshipsPromise = saveInternshipsToSupabase(sb, userId, formData);
+            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ success: false, error: 'timeout' }), 15000));
+            const internshipsResult = await Promise.race([internshipsPromise, timeoutPromise]);
+            if (!internshipsResult.success) {
+                console.warn('Internships save warning:', internshipsResult.error);
+                // مش هنوقف العملية، نكمل عادي
+            } else {
+                console.log('✅ Internships saved:', internshipsResult.count);
+            }
+        } catch(intErr) {
+            console.warn('Internships save error (continuing anyway):', intErr);
         }
 
         // 4. نجاح
@@ -4223,22 +4274,42 @@ async function handleFormSubmit(event) {
             submitBtn.classList.add('success');
         }
 
+        if (typeof showValidationDebug === 'function') {
+            showValidationDebug('✅ تم التسجيل بنجاح! جاري التحويل...', 'success');
+        }
+
         notificationSystem.show(
             'تم التسجيل بنجاح! 🎉',
             'تم تسجيل شركتك في ProVance. سيتم مراجعة طلبكم وتفعيل الحساب قريباً',
             'success'
         );
 
+        // امسح الـ form state من storage بعد النجاح
+        try {
+            if (typeof dataManager !== 'undefined' && dataManager.remove) {
+                dataManager.remove('registration_state');
+            }
+        } catch(e) {}
+        
         localStorage.setItem('pendingCompanyName', formData.companyInfo.name);
         localStorage.setItem('pendingCompanyEmail', email);
         localStorage.setItem('userEmail', email);
         localStorage.setItem('userType', 'company');
 
-        setTimeout(() => { window.location.href = 'Company-pending.html'; }, 2500);
+        console.log('🎉 Redirecting to Company-pending.html in 2s');
+        setTimeout(() => { 
+            console.log('🚀 Redirecting NOW');
+            window.location.href = 'Company-pending.html'; 
+        }, 2000);
 
     } catch (err) {
-        console.error('Registration error:', err);
+        console.error('🔴 Registration error:', err);
         const errMsg = err?.message || JSON.stringify(err) || 'خطأ في الاتصال';
+        
+        if (typeof showValidationDebug === 'function') {
+            showValidationDebug('❌ خطأ: ' + errMsg, 'error');
+        }
+        
         notificationSystem.show('خطأ في التسجيل', errMsg, 'error');
         resetBtn();
     }
