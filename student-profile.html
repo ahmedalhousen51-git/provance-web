@@ -1503,10 +1503,15 @@
                 return;
             }
 
+            console.log('📝 Personal update data:', data);
+            console.log('📝 User ID:', State.studentUserId);
+
             try {
                 const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
-                const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
+                const { data: updated, error } = await sb.from('student').update(data).eq('user_id', State.studentUserId).select();
+                console.log('✅ Update result:', updated);
+                console.log('❌ Update error:', error);
                 if (error) throw error;
                 addEditHistory('تعديل البيانات الشخصية', 'تم تحديث الاسم/الهاتف/التاريخ/النوع/العنوان');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
@@ -1585,10 +1590,14 @@
                 gpa: document.getElementById('ed_gpa').value.trim() || null
             };
 
+            console.log('🎓 Education update data:', data);
+
             try {
                 const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
-                const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
+                const { data: updated, error } = await sb.from('student').update(data).eq('user_id', State.studentUserId).select();
+                console.log('✅ Education update result:', updated);
+                console.log('❌ Education update error:', error);
                 if (error) throw error;
                 addEditHistory('تعديل التعليم', 'تم تحديث بيانات التعليم');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
@@ -1634,7 +1643,8 @@
             try {
                 const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
-                const { error } = await sb.from('student').update({ bio }).eq('user_id', State.studentUserId);
+                const { data: updated, error } = await sb.from('student').update({ bio }).eq('user_id', State.studentUserId).select();
+                console.log('📄 Bio update:', { bio, updated, error });
                 if (error) throw error;
                 addEditHistory('تعديل النبذة', bio ? 'تم تحديث النبذة' : 'تم مسح النبذة');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
