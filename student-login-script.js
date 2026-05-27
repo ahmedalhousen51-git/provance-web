@@ -186,37 +186,41 @@ loginForm.addEventListener('submit', async function(e) {
         // نجاح تسجيل الدخول
         const user = data.user;
 
-        // ✅ لو فيه pending_profile_data من وقت التسجيل → ادفعها للـ DB دلوقتي
-        // (بيحصل لما الـ register_student RPC مش موجودة أو الـ UPSERT فشل كـ anon)
+        // ══════════════════════════════════════════════════════════
+        // 🛡️ LAYER 3: تطبيق البيانات المحفوظة من وقت التسجيل
+        // دلوقتي المستخدم authenticated → UPDATE مضمون
+        // ══════════════════════════════════════════════════════════
         try {
-            const pendingRaw = localStorage.getItem('pending_profile_data');
+            const pendingRaw   = localStorage.getItem('pending_profile_data');
             const pendingEmail = localStorage.getItem('pending_profile_email');
 
-            if (pendingRaw && pendingEmail === email) {
-                const pendingData = JSON.parse(pendingRaw);
-                // بعد الـ login المستخدم بقى authenticated → UPDATE بيشتغل
+            if (pendingRaw && pendingEmail && pendingEmail.toLowerCase() === email.toLowerCase()) {
+                console.log('🔄 Layer 3: Applying pending registration data...');
+                const p = JSON.parse(pendingRaw);
+
                 const { error: syncErr } = await window.supabaseClient
                     .from('student')
                     .update({
-                        phone:            pendingData.phone            || null,
-                        birth_date:       pendingData.birth_date       || null,
-                        gender:           pendingData.gender           || null,
-                        photo:            pendingData.photo            || null,
-                        country:          pendingData.country          || 'مصر',
-                        city:             pendingData.city             || null,
-                        address:          pendingData.address          || null,
-                        education_level:  pendingData.education_level  || null,
-                        university:       pendingData.university       || null,
-                        faculty:          pendingData.faculty          || null,
-                        study_year:       pendingData.study_year       || null,
-                        year_of_study:    pendingData.study_year       || null,
-                        gpa:              pendingData.gpa              || null,
-                        skills:           pendingData.skills           || [],
-                        interested_fields: pendingData.interested_fields || [],
-                        linkedin:         pendingData.linkedin         || null,
-                        github:           pendingData.github           || null,
-                        portfolio:        pendingData.portfolio        || null,
-                        cv_url:           pendingData.cv_url           || null,
+                        full_name:        p.full_name        || null,
+                        phone:            p.phone            || null,
+                        birth_date:       p.birth_date       || null,
+                        gender:           p.gender           || null,
+                        photo:            p.photo            || null,
+                        country:          p.country          || 'مصر',
+                        city:             p.city             || null,
+                        address:          p.address          || null,
+                        education_level:  p.education_level  || null,
+                        university:       p.university       || null,
+                        faculty:          p.faculty          || null,
+                        study_year:       p.study_year       || null,
+                        year_of_study:    p.study_year       || null,
+                        gpa:              p.gpa              || null,
+                        skills:           Array.isArray(p.skills)           ? p.skills           : [],
+                        interested_fields: Array.isArray(p.interested_fields) ? p.interested_fields : [],
+                        linkedin:         p.linkedin         || null,
+                        github:           p.github           || null,
+                        portfolio:        p.portfolio        || null,
+                        cv_url:           p.cv_url           || null,
                         status:           'active',
                         training_status:  'not_started',
                         updated_at:       new Date().toISOString()
@@ -224,20 +228,57 @@ loginForm.addEventListener('submit', async function(e) {
                     .eq('user_id', user.id);
 
                 if (syncErr) {
-                    console.warn('Pending data sync failed:', syncErr.message);
+                    console.warn('Layer 3 sync failed:', syncErr.message);
+                    // لو فشل UPDATE → جرب UPSERT
+                    const { error: upsertErr } = await window.supabaseClient
+                        .from('student')
+                        .upsert({
+                            user_id:          user.id,
+                            full_name:        p.full_name        || email.split('@')[0],
+                            email:            email,
+                            phone:            p.phone            || null,
+                            birth_date:       p.birth_date       || null,
+                            gender:           p.gender           || null,
+                            photo:            p.photo            || null,
+                            country:          p.country          || 'مصر',
+                            city:             p.city             || null,
+                            address:          p.address          || null,
+                            education_level:  p.education_level  || null,
+                            university:       p.university       || null,
+                            faculty:          p.faculty          || null,
+                            study_year:       p.study_year       || null,
+                            year_of_study:    p.study_year       || null,
+                            gpa:              p.gpa              || null,
+                            skills:           Array.isArray(p.skills) ? p.skills : [],
+                            interested_fields: Array.isArray(p.interested_fields) ? p.interested_fields : [],
+                            linkedin:         p.linkedin         || null,
+                            github:           p.github           || null,
+                            portfolio:        p.portfolio        || null,
+                            status:           'active',
+                            training_status:  'not_started',
+                            updated_at:       new Date().toISOString()
+                        }, { onConflict: 'user_id' });
+
+                    if (!upsertErr) {
+                        console.log('✅ Layer 3: UPSERT succeeded');
+                        localStorage.removeItem('pending_profile_data');
+                        localStorage.removeItem('pending_profile_email');
+                    } else {
+                        console.error('Layer 3 UPSERT also failed:', upsertErr.message);
+                    }
                 } else {
-                    console.log('✅ Pending registration data synced successfully');
+                    console.log('✅ Layer 3: Data synced successfully');
                     localStorage.removeItem('pending_profile_data');
                     localStorage.removeItem('pending_profile_email');
                 }
             }
         } catch (syncEx) {
-            console.warn('Pending sync error (non-critical):', syncEx.message);
+            console.warn('Layer 3 sync exception:', syncEx.message);
         }
 
-        // جيب اسم المستخدم من جدول students
+        // جيب اسم المستخدم من جدول student (الاسم الصح)
         const { data: studentData } = await window.supabaseClient
-            .from('students')
+            .from('student')
             .select('full_name')
             .eq('user_id', user.id)
             .single();
