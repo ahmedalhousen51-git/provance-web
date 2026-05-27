@@ -659,7 +659,6 @@
             <a href="student-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
             <a href="student-internship.html" class="nav-item"><i class="fas fa-search"></i> فرص التدريب</a>
             <a href="student-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلباتي</a>
-        <a href="student-scan.html" class="nav-item"><i class="fas fa-qrcode"></i> مسح QR</a>
             <a href="student-profile.html" class="nav-item active"><i class="fas fa-user"></i> ملفي</a>
             <a href="student-payments.html" class="nav-item"><i class="fas fa-credit-card"></i> المدفوعات</a>
             <a href="student-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
@@ -1049,28 +1048,28 @@
     function calculateCompletion() {
         if (!studentData) return 0;
         const fields = [
-            'full_name', 'email', 'phone', 'birth_date', 'gender', 'address',
-            'education_level', 'university', 'faculty', 'year_of_study', 'gpa',
+            'full_name', 'email', 'phone', 'birth_date', 'gender',
+            'city', 'education_level', 'university', 'faculty', 'study_year', 'gpa',
             'photo', 'bio', 'cv_url', 'linkedin'
         ];
         const filled = fields.filter(f => {
             const v = studentData[f];
             return v && String(v).trim() !== '';
         }).length;
-        const skills = Array.isArray(studentData.skills) ? studentData.skills.length : 0;
+        const skills    = Array.isArray(studentData.skills)           ? studentData.skills.length    : 0;
         const interests = Array.isArray(studentData.interested_fields) ? studentData.interested_fields.length : 0;
 
-        let score = (filled / fields.length) * 70;  // 70% للحقول
-        if (skills >= 3) score += 15; else score += (skills / 3) * 15;
+        let score = (filled / fields.length) * 70;
+        if (skills    >= 3) score += 15; else score += (skills    / 3) * 15;
         if (interests >= 2) score += 15; else score += (interests / 2) * 15;
         return Math.min(100, Math.round(score));
     }
 
     function renderCompletion() {
         const percent = calculateCompletion();
-        const circle = document.getElementById('completionCircle');
+        const circle  = document.getElementById('completionCircle');
         const percentEl = document.getElementById('completionPercent');
-        const descEl = document.getElementById('completionDesc');
+        const descEl  = document.getElementById('completionDesc');
 
         circle.style.setProperty('--percent', percent);
         percentEl.textContent = percent + '%';
@@ -1088,43 +1087,71 @@
             descEl.textContent = '❗ بروفايلك ناقص جداً - يرجى إكمال البيانات';
             descEl.style.color = 'var(--error)';
         }
+
+        // ✅ عرض الحقول الناقصة بالاسم بشكل واضح
+        const fieldLabels = {
+            phone:           'الهاتف',
+            birth_date:      'تاريخ الميلاد',
+            gender:          'النوع',
+            city:            'المدينة',
+            address:         'العنوان',
+            education_level: 'المرحلة الدراسية',
+            university:      'الجامعة',
+            faculty:         'الكلية',
+            study_year:      'سنة الدراسة',
+            gpa:             'المعدل',
+            photo:           'الصورة الشخصية',
+            bio:             'نبذة تعريفية',
+            cv_url:          'السيرة الذاتية',
+            linkedin:        'LinkedIn'
+        };
+        const missingFields = Object.keys(fieldLabels).filter(f => {
+            const v = studentData ? studentData[f] : null;
+            return !v || String(v).trim() === '';
+        });
+
+        // إزالة أي banner قديم
+        const oldBanner = document.getElementById('missingFieldsBanner');
+        if (oldBanner) oldBanner.remove();
+
+        if (missingFields.length > 0 && percent < 90) {
+            const banner = document.createElement('div');
+            banner.id = 'missingFieldsBanner';
+            banner.style.cssText = [
+                'background:linear-gradient(135deg,#f59e0b,#f97316)',
+                'border-radius:14px',
+                'padding:14px 18px',
+                'margin-bottom:16px',
+                'color:#fff',
+                'font-size:0.9rem',
+                'line-height:1.6',
+                'box-shadow:0 8px 20px rgba(245,158,11,0.3)'
+            ].join(';');
+
+            const namesStr = missingFields.map(f => fieldLabels[f]).join('، ');
+            banner.innerHTML = `
+                <div style="display:flex;align-items:flex-start;gap:10px">
+                    <i class="fas fa-exclamation-circle" style="font-size:1.3rem;flex-shrink:0;margin-top:2px"></i>
+                    <div style="flex:1">
+                        <strong style="display:block;margin-bottom:4px;font-size:0.95rem">بياناتك ناقصة:</strong>
+                        <span>${namesStr}</span>
+                        <div style="margin-top:8px;font-size:0.82rem;opacity:0.9">
+                            اضغط على "تعديل" في الأقسام أدناه لإكمالها وزيادة فرص قبولك
+                        </div>
+                    </div>
+                </div>`;
+
+            // أضفه بعد completionBanner مباشرة
+            const completionBanner = document.getElementById('completionBanner');
+            if (completionBanner && completionBanner.parentNode) {
+                completionBanner.parentNode.insertBefore(banner, completionBanner.nextSibling);
+            }
+        }
     }
 
     // ============ RENDER PROFILE ============
     function renderProfile() {
         if (!studentData) return;
-        
-        // 🔍 Check لو البيانات الأساسية ناقصة (لـ users اللي اتسجلوا قبل الـ fix)
-        const importantFields = ['phone', 'birth_date', 'university', 'faculty', 'city', 'gender'];
-        const missingFields = importantFields.filter(f => !studentData[f]);
-        
-        if (missingFields.length >= 4 && !window._missingDataShown) {
-            window._missingDataShown = true;
-            setTimeout(() => {
-                const labels = { phone: 'الهاتف', birth_date: 'تاريخ الميلاد', university: 'الجامعة', faculty: 'الكلية', city: 'المدينة', gender: 'النوع' };
-                const missingLabels = missingFields.map(f => labels[f] || f).join('، ');
-                
-                // Toast واضح
-                if (window.ProVance && window.ProVance.showToast) {
-                    window.ProVance.showToast('بياناتك ناقصة: ' + missingLabels + '. اضغط على "تعديل" لإكمالها', 'warning');
-                }
-                
-                // Banner ثابت أعلى الصفحة
-                const existingBanner = document.getElementById('missingDataBanner');
-                if (!existingBanner) {
-                    const banner = document.createElement('div');
-                    banner.id = 'missingDataBanner';
-                    banner.style.cssText = 'background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;padding:14px 20px;border-radius:12px;margin:16px;font-weight:700;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(239,68,68,0.3);';
-                    banner.innerHTML = '<i class="fas fa-exclamation-triangle" style="font-size:1.4rem"></i><div style="flex:1"><div style="margin-bottom:4px">⚠️ بياناتك غير مكتملة!</div><div style="font-weight:500;font-size:0.9rem;opacity:0.95">الناقص: ' + missingLabels + '</div></div><button onclick="window.openEditPersonal && window.openEditPersonal(); this.parentNode.remove();" style="background:white;color:#ef4444;border:none;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit">إكمال الآن</button>';
-                    const mainContent = document.querySelector('.main-content') || document.querySelector('main') || document.body;
-                    if (mainContent.firstChild) {
-                        mainContent.insertBefore(banner, mainContent.firstChild);
-                    } else {
-                        mainContent.appendChild(banner);
-                    }
-                }
-            }, 1000);
-        }
 
         // Sidebar
         document.getElementById('sidebarName').textContent = studentData.full_name || '-';
@@ -1176,7 +1203,7 @@
             ${infoItem('graduation-cap', 'المستوى التعليمي', studentData.education_level ? eduLevels[studentData.education_level] || studentData.education_level : null)}
             ${infoItem('university', 'الجامعة', studentData.university)}
             ${infoItem('book', 'الكلية / التخصص', studentData.faculty)}
-            ${infoItem('calendar', 'سنة الدراسة', studentData.year_of_study === 'graduated' ? 'متخرج' : studentData.year_of_study)}
+            ${infoItem('calendar', 'سنة الدراسة', studentData.study_year === 'graduated' ? 'متخرج' : studentData.study_year)}
             ${infoItem('star', 'المعدل التراكمي', studentData.gpa)}
         `;
 
@@ -1506,9 +1533,20 @@
                             </select>
                         </div>
 
+                        <div class="grid-2">
+                            <div class="field">
+                                <label><i class="fas fa-city"></i> المدينة</label>
+                                <input type="text" id="ep_city" value="${esc(studentData.city || '')}" placeholder="مثال: القاهرة">
+                            </div>
+                            <div class="field">
+                                <label><i class="fas fa-flag"></i> الدولة</label>
+                                <input type="text" id="ep_country" value="${esc(studentData.country || 'مصر')}">
+                            </div>
+                        </div>
+
                         <div class="field">
-                            <label><i class="fas fa-map-marker-alt"></i> العنوان</label>
-                            <textarea id="ep_address" rows="2" placeholder="مثال: القاهرة، مدينة نصر">${esc(studentData.address || '')}</textarea>
+                            <label><i class="fas fa-map-marker-alt"></i> العنوان التفصيلي</label>
+                            <textarea id="ep_address" rows="2" placeholder="مثال: القاهرة، مدينة نصر، شارع...">${esc(studentData.address || '')}</textarea>
                         </div>
 
                         <div style="display:flex;gap:10px;margin-top:14px">
@@ -1523,11 +1561,14 @@
 
         window.savePersonal = async () => {
             const data = {
-                full_name: document.getElementById('ep_full_name').value.trim(),
-                phone: document.getElementById('ep_phone').value.trim() || null,
-                birth_date: document.getElementById('ep_birth_date').value || null,
-                gender: document.getElementById('ep_gender').value || null,
-                address: document.getElementById('ep_address').value.trim() || null
+                full_name:  document.getElementById('ep_full_name').value.trim(),
+                phone:      document.getElementById('ep_phone').value.trim()      || null,
+                birth_date: document.getElementById('ep_birth_date').value        || null,
+                gender:     document.getElementById('ep_gender').value            || null,
+                city:       document.getElementById('ep_city')?.value.trim()      || null,
+                country:    document.getElementById('ep_country')?.value.trim()   || 'مصر',
+                address:    document.getElementById('ep_address').value.trim()    || null,
+                updated_at: new Date().toISOString()
             };
 
             if (!data.full_name) {
@@ -1535,15 +1576,10 @@
                 return;
             }
 
-            console.log('📝 Personal update data:', data);
-            console.log('📝 User ID:', State.studentUserId);
-
             try {
                 const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
-                const { data: updated, error } = await sb.from('student').update(data).eq('user_id', State.studentUserId).select();
-                console.log('✅ Update result:', updated);
-                console.log('❌ Update error:', error);
+                const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
                 if (error) throw error;
                 addEditHistory('تعديل البيانات الشخصية', 'تم تحديث الاسم/الهاتف/التاريخ/النوع/العنوان');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
@@ -1593,8 +1629,8 @@
                                 <label><i class="fas fa-calendar"></i> سنة الدراسة</label>
                                 <select id="ed_year">
                                     <option value="">--</option>
-                                    ${[1,2,3,4,5,6].map(y => `<option value="${y}" ${studentData.year_of_study == y ? 'selected' : ''}>${y}</option>`).join('')}
-                                    <option value="graduated" ${studentData.year_of_study === 'graduated' ? 'selected' : ''}>متخرج</option>
+                                    ${[1,2,3,4,5,6].map(y => `<option value="${y}" ${studentData.study_year == y ? 'selected' : ''}>${y}</option>`).join('')}
+                                    <option value="graduated" ${studentData.study_year === 'graduated' ? 'selected' : ''}>متخرج</option>
                                 </select>
                             </div>
                             <div class="field">
@@ -1614,22 +1650,21 @@
         };
 
         window.saveEducation = async () => {
+            const studyYearVal = document.getElementById('ed_year').value || null;
             const data = {
                 education_level: document.getElementById('ed_level').value || null,
-                university: document.getElementById('ed_university').value.trim() || null,
-                faculty: document.getElementById('ed_faculty').value.trim() || null,
-                year_of_study: document.getElementById('ed_year').value || null,
-                gpa: document.getElementById('ed_gpa').value.trim() || null
+                university:      document.getElementById('ed_university').value.trim() || null,
+                faculty:         document.getElementById('ed_faculty').value.trim() || null,
+                study_year:      studyYearVal,
+                year_of_study:   studyYearVal,   // ✅ حفظ في الاتنين عشان compatibility
+                gpa:             document.getElementById('ed_gpa').value.trim() || null,
+                updated_at:      new Date().toISOString()
             };
-
-            console.log('🎓 Education update data:', data);
 
             try {
                 const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
-                const { data: updated, error } = await sb.from('student').update(data).eq('user_id', State.studentUserId).select();
-                console.log('✅ Education update result:', updated);
-                console.log('❌ Education update error:', error);
+                const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
                 if (error) throw error;
                 addEditHistory('تعديل التعليم', 'تم تحديث بيانات التعليم');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
@@ -1675,8 +1710,7 @@
             try {
                 const sb = await window.getSafeSupabase();
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
-                const { data: updated, error } = await sb.from('student').update({ bio }).eq('user_id', State.studentUserId).select();
-                console.log('📄 Bio update:', { bio, updated, error });
+                const { error } = await sb.from('student').update({ bio }).eq('user_id', State.studentUserId);
                 if (error) throw error;
                 addEditHistory('تعديل النبذة', bio ? 'تم تحديث النبذة' : 'تم مسح النبذة');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
@@ -2348,7 +2382,7 @@
 
             // استخدم Promise.allSettled عشان لو واحد فشل، الباقي يكمل
             const results = await Promise.allSettled([
-                sb.from('student').select('*').eq('user_id', userId).maybeSingle(),
+                sb.from('student').select('user_id, full_name, email, phone, birth_date, gender, national_id, university, faculty, major, gpa, graduation_year, city, address, country, linkedin, github, portfolio, cv_url, skills, languages, bio, education_level, interested_fields, specialization, study_year, year_of_study, photo, status, training_status, created_at, updated_at').eq('user_id', userId).maybeSingle(),
                 sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at, updated_at, interview_date').eq('student_user_id', userId).order('created_at', { ascending: false }),
                 sb.from('performance_evaluations').select('*').eq('student_user_id', userId).eq('status', 'sent'),
                 sb.from('attendance_logs').select('*').eq('student_user_id', userId).order('scanned_at', { ascending: false }).limit(50),
@@ -2362,11 +2396,21 @@
             if (!studentData) {
                 console.warn('Full student query failed, trying with basic columns');
                 const { data: basicData } = await sb.from('student')
-                    .select('user_id, full_name, email, phone, birth_date, gender, national_id, university, faculty, major, gpa, graduation_year, city, address, country, linkedin, github, portfolio, cv_url, skills, languages, status, training_status, created_at, updated_at')
+                    .select('user_id, full_name, email, phone, birth_date, gender, national_id, university, faculty, major, gpa, graduation_year, city, address, country, linkedin, github, portfolio, cv_url, skills, languages, study_year, year_of_study, status, training_status, created_at, updated_at')
                     .eq('user_id', userId).maybeSingle();
                 studentData = basicData;
             }
             
+            // ✅ Normalize: بعض الـ rows بتحفظ في year_of_study والبعض في study_year
+            if (studentData) {
+                if (!studentData.study_year && studentData.year_of_study) {
+                    studentData.study_year = studentData.year_of_study;
+                }
+                // city fallback من address
+                if (!studentData.city && studentData.address) {
+                    studentData.city = studentData.address.split('،')[0] || null;
+                }
+            }
             State.studentData = studentData;
             State.allApplications = results[1].status === 'fulfilled' ? (results[1].value.data || []) : [];
             State.allEvaluations = results[2].status === 'fulfilled' ? (results[2].value.data || []) : [];
