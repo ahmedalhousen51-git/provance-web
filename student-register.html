@@ -1479,13 +1479,44 @@ console.log('✅ Form initialized successfully');
 
         document.getElementById('studentRegisterForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!validateStep(5)) return;
+            
+            // 🛡️ Validate ALL steps before submit
+            for (let s = 1; s <= 5; s++) {
+                if (!validateStep(s)) {
+                    // تأكد إن الـ user يشوف الخطأ في الـ step الصحيحة
+                    if (typeof goToStep === 'function') goToStep(s);
+                    else { currentStep = s; updateUI(); }
+                    
+                    if (window.ProVance && window.ProVance.showToast) {
+                        window.ProVance.showToast(`في حقول ناقصة في الخطوة ${s}، يرجى مراجعتها`, 'warning');
+                    }
+                    return;
+                }
+            }
             const btn = document.getElementById('btnSubmit');
             btn.classList.add('loading');
             btn.disabled = true;
             const v = (id) => document.getElementById(id)?.value?.trim() || null;
             const gender = document.querySelector('input[name="gender"]:checked')?.value;
 
+            // 🔍 Debug: شوف القيم قبل التجميع
+            console.log('🔍 Form values before submit:', {
+                fullName: document.getElementById('fullName')?.value,
+                email: document.getElementById('email')?.value,
+                phone: document.getElementById('phone')?.value,
+                birthDate: document.getElementById('birthDate')?.value,
+                city: document.getElementById('city')?.value,
+                university: document.getElementById('university')?.value,
+                faculty: document.getElementById('faculty')?.value,
+                educationLevel: document.getElementById('educationLevel')?.value,
+                studyYear: document.getElementById('studyYear')?.value,
+                gpa: document.getElementById('gpa')?.value,
+                country: document.getElementById('country')?.value,
+                gender: document.querySelector('input[name="gender"]:checked')?.value,
+                skills: skills,
+                interests: interests
+            });
+            
             const data = {
                 full_name: v('fullName'),
                 email: v('email')?.toLowerCase(),
@@ -1679,6 +1710,87 @@ console.log('✅ Form initialized successfully');
 
         updateProgress();
     })();
+    
+        // 💾 Field Persistence System: حفظ القيم تلقائياً في localStorage
+        (function() {
+            function saveStudentFields() {
+                try {
+                    const inputs = document.querySelectorAll('input, textarea, select');
+                    const values = {};
+                    inputs.forEach(inp => {
+                        if (inp.id && inp.type !== 'password' && inp.type !== 'file') {
+                            if (inp.type === 'checkbox' || inp.type === 'radio') {
+                                if (inp.checked) values[inp.name || inp.id] = inp.value;
+                            } else if (inp.value) {
+                                values[inp.id] = inp.value;
+                            }
+                        }
+                    });
+                    localStorage.setItem('student_register_fields', JSON.stringify(values));
+                    localStorage.setItem('student_register_ts', Date.now().toString());
+                } catch(e) {}
+            }
+            
+            function restoreStudentFields() {
+                try {
+                    const stored = localStorage.getItem('student_register_fields');
+                    const ts = parseInt(localStorage.getItem('student_register_ts') || '0');
+                    if (!stored || (Date.now() - ts) > 24 * 60 * 60 * 1000) return;
+                    
+                    const values = JSON.parse(stored);
+                    let restored = 0;
+                    Object.keys(values).forEach(key => {
+                        const el = document.getElementById(key);
+                        if (el && !el.value && values[key]) {
+                            if (el.type !== 'file' && el.type !== 'password') {
+                                el.value = values[key];
+                                restored++;
+                                try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
+                                try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch(e) {}
+                            }
+                        } else {
+                            // radio/checkbox
+                            const radio = document.querySelector(`input[name="${key}"][value="${values[key]}"]`);
+                            if (radio && !radio.checked) { radio.checked = true; restored++; }
+                        }
+                    });
+                    if (restored) console.log('🔄 Restored', restored, 'student fields');
+                } catch(e) {}
+            }
+            
+            document.addEventListener('input', function(e) {
+                if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+                    clearTimeout(window._studentFieldSave);
+                    window._studentFieldSave = setTimeout(saveStudentFields, 500);
+                }
+            }, true);
+            
+            document.addEventListener('change', function(e) {
+                if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+                    saveStudentFields();
+                }
+            }, true);
+            
+            // Restore on load
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => setTimeout(restoreStudentFields, 500));
+            } else {
+                setTimeout(restoreStudentFields, 500);
+            }
+            
+            window.addEventListener('pageshow', () => setTimeout(restoreStudentFields, 200));
+            
+            // Cleanup بعد التسجيل الناجح
+            window.cleanupStudentFields = function() {
+                try {
+                    localStorage.removeItem('student_register_fields');
+                    localStorage.removeItem('student_register_ts');
+                } catch(e) {}
+            };
+            
+            console.log('✅ Student field persistence initialized');
+        })();
+
     </script>
 </body>
 </html>
