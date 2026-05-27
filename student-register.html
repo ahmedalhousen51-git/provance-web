@@ -1599,45 +1599,72 @@ console.log('✅ Form initialized successfully');
                 if (rpcErr) {
                     const rpcErrMsg = (rpcErr.message || '').toLowerCase();
 
-                    // ✅ RPC مش موجودة (migration لسه ما اتشغلش) → fallback لـ UPSERT
+                    // ✅ RPC مش موجودة (migration لسه ما اتشغلش) → fallback
                     if (rpcErrMsg.includes('register_student') || rpcErrMsg.includes('does not exist') || rpcErrMsg.includes('could not find')) {
-                        console.warn('register_student RPC not found → using direct UPSERT');
+                        console.warn('register_student RPC not found → using direct fallback');
 
-                        const { error: upsertErr } = await sb.from('student')
-                            .upsert(
-                                {
-                                    user_id:          authData.user.id,
-                                    full_name:        data.full_name,
-                                    email:            data.email,
-                                    phone:            data.phone,
-                                    birth_date:       data.birth_date,
-                                    gender:           data.gender,
-                                    photo:            data.photo,
-                                    country:          data.country,
-                                    city:             data.city,
-                                    address:          data.address,
-                                    education_level:  data.education_level,
-                                    university:       data.university,
-                                    faculty:          data.faculty,
-                                    study_year:       data.study_year,
-                                    gpa:              data.gpa,
-                                    skills:           skillsJson,
-                                    interested_fields: interestsJson,
-                                    linkedin:         data.linkedin,
-                                    github:           data.github,
-                                    portfolio:        data.portfolio,
-                                    cv_url:           data.cv_url || null,
-                                    status:           'active',
-                                    training_status:  'not_started',
-                                    updated_at:       new Date().toISOString()
-                                },
-                                { onConflict: 'user_id', ignoreDuplicates: false }
-                            );
+                        // الـ DB trigger بيعمل INSERT بـ full_name + email بس
+                        // محتاجين نعمل UPDATE للـ row الموجودة بكل البيانات
+                        // نستخدم service_role أو SECURITY DEFINER عبر الـ RPC
+                        // لكن لو مش موجودة → نحفظ في localStorage كـ pending
+                        // ونعمل update في أول login
 
-                        if (upsertErr) {
-                            console.error('UPSERT error:', upsertErr);
-                            profileErr = upsertErr;
+                        const fullStudentData = {
+                            full_name:        data.full_name,
+                            email:            data.email,
+                            phone:            data.phone,
+                            birth_date:       data.birth_date,
+                            gender:           data.gender,
+                            photo:            data.photo,
+                            country:          data.country,
+                            city:             data.city,
+                            address:          data.address,
+                            education_level:  data.education_level,
+                            university:       data.university,
+                            faculty:          data.faculty,
+                            study_year:       data.study_year,
+                            year_of_study:    data.study_year,
+                            gpa:              data.gpa,
+                            skills:           skillsJson,
+                            interested_fields: interestsJson,
+                            linkedin:         data.linkedin,
+                            github:           data.github,
+                            portfolio:        data.portfolio,
+                            cv_url:           data.cv_url || null,
+                            status:           'active',
+                            training_status:  'not_started',
+                            updated_at:       new Date().toISOString()
+                        };
+
+                        // أولاً: جرب UPDATE مباشر (يشتغل لو RLS بتسمح)
+                        const { error: updateErr } = await sb.from('student')
+                            .update(fullStudentData)
+                            .eq('user_id', authData.user.id);
+
+                        if (updateErr) {
+                            console.warn('Direct UPDATE failed:', updateErr.message);
+                            // ثانياً: حاول INSERT (لو الـ trigger مش موجود)
+                            const { error: insertErr } = await sb.from('student')
+                                .insert({ user_id: authData.user.id, ...fullStudentData });
+
+                            if (insertErr && !insertErr.message.includes('duplicate') && !insertErr.message.includes('unique')) {
+                                console.error('INSERT also failed:', insertErr.message);
+                                profileErr = insertErr;
+                            }
                         }
+
+                        // ✅ دايماً احفظ البيانات في localStorage كـ backup
+                        // الـ student-login سيقرأها ويعمل UPDATE بعد الـ login
+                        try {
+                            localStorage.setItem('pending_profile_data', JSON.stringify({
+                                user_id: authData.user.id,
+                                ...fullStudentData,
+                                skills:           skillsJson,
+                                interested_fields: interestsJson
+                            }));
+                            localStorage.setItem('pending_profile_email', data.email);
+                            console.log('✅ Saved pending data to localStorage as backup');
+                        } catch(e) { console.warn('localStorage save failed:', e); }
                     } else {
                         // خطأ حقيقي من الـ RPC
                         console.error('RPC error:', rpcErr);
