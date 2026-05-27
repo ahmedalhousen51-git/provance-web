@@ -1039,6 +1039,7 @@ console.log('✅ Form initialized successfully');
         const TOTAL_STEPS = 5;
         const STEP_NAMES = ['', 'المعلومات الشخصية', 'المعلومات الأكاديمية', 'المهارات والاهتمامات', 'الخبرات والروابط', 'الشروط والأحكام'];
         let currentStep = 1;
+        console.log('📄 student-register.html version: 2026-05-27 (multi-step validation fix)');
         let photoBase64 = null;
         let cvFile = null;
         let skills = [];
@@ -1480,6 +1481,15 @@ console.log('✅ Form initialized successfully');
         document.getElementById('studentRegisterForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // 🛡️ Safety: لا يـ submit إلا من Step 5
+            if (currentStep !== TOTAL_STEPS) {
+                console.warn('⚠️ Submit attempted from step', currentStep, '- redirecting to step', currentStep);
+                if (window.ProVance && window.ProVance.showToast) {
+                    window.ProVance.showToast('يرجى إكمال جميع الخطوات الأولى', 'warning');
+                }
+                return;
+            }
+            
             // 🛡️ Validate ALL steps before submit
             for (let s = 1; s <= 5; s++) {
                 if (!validateStep(s)) {
@@ -1790,6 +1800,23 @@ console.log('✅ Form initialized successfully');
             
             console.log('✅ Student field persistence initialized');
         })();
+
+    
+        // 🛡️ منع الـ Enter في الـ inputs من إرسال الـ form قبل step 5
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const target = e.target;
+                if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT') 
+                    && target.type !== 'submit' && target.type !== 'button') {
+                    if (currentStep < TOTAL_STEPS) {
+                        e.preventDefault();
+                        // محاولة الانتقال للـ next step بدل submit
+                        if (typeof nextStep === 'function') nextStep();
+                        return false;
+                    }
+                }
+            }
+        });
 
     </script>
 </body>
