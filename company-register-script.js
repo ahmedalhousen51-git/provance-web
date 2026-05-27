@@ -2263,6 +2263,10 @@ function showValidationDebug(msg, type) {
 function showError(title, details, silent = false) {
     if (!silent) {
         notificationSystem.show(title, details, 'error');
+        // Visual debug على الموبايل أيضاً
+        if (typeof showValidationDebug === 'function') {
+            showValidationDebug('❌ ' + title + ': ' + (details || ''), 'error');
+        }
     }
     return false;
 }
@@ -4289,6 +4293,9 @@ async function handleFormSubmit(event) {
             if (typeof dataManager !== 'undefined' && dataManager.remove) {
                 dataManager.remove('registration_state');
             }
+            // امسح الـ field values backup كمان
+            localStorage.removeItem('company_register_field_values');
+            localStorage.removeItem('company_register_field_timestamp');
         } catch(e) {}
         
         localStorage.setItem('pendingCompanyName', formData.companyInfo.name);
@@ -4725,6 +4732,92 @@ function generateFinancialBenefits(details, traineeType) {
 }
 
 Logger.info('FIXED VERSION LOADED - All Issues Resolved + Performance + Security + Accessibility + Training Requirements + Dynamic Features System + Enhanced Summary Buttons + New Interview Response Field');
+
+
+// 💾 نظام حفظ قوي: يحفظ كل قيمة input مباشرة في localStorage
+function saveAllFieldsToStorage() {
+    try {
+        const allInputs = document.querySelectorAll('input, textarea, select');
+        const values = {};
+        allInputs.forEach(inp => {
+            if (inp.id && inp.value !== undefined && inp.type !== 'password') {
+                if (inp.type === 'checkbox' || inp.type === 'radio') {
+                    values[inp.id] = inp.checked;
+                } else if (inp.type !== 'file') {
+                    values[inp.id] = inp.value;
+                }
+            }
+        });
+        localStorage.setItem('company_register_field_values', JSON.stringify(values));
+        localStorage.setItem('company_register_field_timestamp', Date.now().toString());
+        console.log('💾 Saved', Object.keys(values).length, 'field values to localStorage');
+    } catch(e) {
+        console.warn('saveAllFieldsToStorage error:', e);
+    }
+}
+
+// 🔄 نظام استعادة: يستعيد كل القيم من localStorage
+function restoreAllFieldsFromStorage() {
+    try {
+        const stored = localStorage.getItem('company_register_field_values');
+        const ts = parseInt(localStorage.getItem('company_register_field_timestamp') || '0');
+        
+        // البيانات لمدة 24 ساعة فقط
+        if (!stored || (Date.now() - ts) > 24 * 60 * 60 * 1000) {
+            console.log('No fresh stored field values');
+            return;
+        }
+        
+        const values = JSON.parse(stored);
+        let restored = 0;
+        Object.keys(values).forEach(id => {
+            const inp = document.getElementById(id);
+            if (inp && inp.value === '' && values[id] !== undefined && values[id] !== '') {
+                if (inp.type === 'checkbox' || inp.type === 'radio') {
+                    inp.checked = !!values[id];
+                } else if (inp.type !== 'file') {
+                    inp.value = values[id];
+                    restored++;
+                    // Trigger input event عشان الـ state يـ update
+                    try { inp.dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
+                    try { inp.dispatchEvent(new Event('change', { bubbles: true })); } catch(e) {}
+                }
+            }
+        });
+        console.log('🔄 Restored', restored, 'field values');
+    } catch(e) {
+        console.warn('restoreAllFieldsFromStorage error:', e);
+    }
+}
+
+// Hook: حفظ على كل تغيير
+document.addEventListener('input', function(e) {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+        // debounce بسيط
+        clearTimeout(window._fieldSaveTimer);
+        window._fieldSaveTimer = setTimeout(saveAllFieldsToStorage, 500);
+    }
+}, true);
+
+document.addEventListener('change', function(e) {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+        saveAllFieldsToStorage();
+    }
+}, true);
+
+// Restore عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(restoreAllFieldsFromStorage, 500);
+});
+
+// Restore لو الـ user رجع للصفحة
+window.addEventListener('pageshow', function() {
+    setTimeout(restoreAllFieldsFromStorage, 200);
+});
+
+window.saveAllFieldsToStorage = saveAllFieldsToStorage;
+window.restoreAllFieldsFromStorage = restoreAllFieldsFromStorage;
+
 
 // ============================================
 // 🎯 Event Delegation for Add Buttons - مع debug visible
