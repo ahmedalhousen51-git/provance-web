@@ -1496,9 +1496,44 @@ console.log('✅ Form initialized successfully');
                 github:           v('githubUrl'),
                 portfolio:        v('portfolioUrl'),
                 status:           'active',
-                training_status:  'not_started'   // ✅ FIX: كان 'looking' → خطأ في الـ constraint
+                training_status:  'not_started'
             };
             const password = document.getElementById('password').value;
+
+            // ══════════════════════════════════════════════════════
+            // 🛡️ LAYER 1: احفظ كل البيانات في localStorage فوراً
+            // قبل أي call للـ DB — ده الـ backup الأساسي
+            // login script هيقرأه ويحفظه في DB بعد الـ login
+            // ══════════════════════════════════════════════════════
+            try {
+                localStorage.setItem('pending_profile_data', JSON.stringify({
+                    full_name:        data.full_name,
+                    phone:            data.phone,
+                    birth_date:       data.birth_date,
+                    gender:           data.gender,
+                    photo:            data.photo,
+                    country:          data.country,
+                    city:             data.city,
+                    address:          data.address,
+                    education_level:  data.education_level,
+                    university:       data.university,
+                    faculty:          data.faculty,
+                    study_year:       data.study_year,
+                    year_of_study:    data.study_year,
+                    gpa:              data.gpa,
+                    skills:           skillsJson,
+                    interested_fields: interestsJson,
+                    linkedin:         data.linkedin,
+                    github:           data.github,
+                    portfolio:        data.portfolio,
+                    status:           'active',
+                    training_status:  'not_started'
+                }));
+                localStorage.setItem('pending_profile_email', data.email);
+                console.log('✅ Layer 1: Data saved to localStorage');
+            } catch(lsErr) {
+                console.warn('localStorage save failed:', lsErr);
+            }
 
             try {
                 const sb = await waitForSupabase();
@@ -1564,54 +1599,55 @@ console.log('✅ Form initialized successfully');
                     }
                 }
 
-                // ─── 3. حفظ بيانات الطالب ─────────────────────────────
-                // المنهج: جرب RPC أولاً (تتجاوز RLS)
-                //         لو مش موجودة → fallback لـ UPSERT مباشر
-                // ✅ UPSERT بدل INSERT لتجنب DUPLICATE KEY لو trigger سبق وعمل record
-
+                // ══════════════════════════════════════════════════════
+                // 🛡️ LAYER 2: حفظ في DB عبر register_student RPC
+                // SECURITY DEFINER → يتجاوز RLS تماماً
+                // ══════════════════════════════════════════════════════
                 let profileErr = null;
 
-                // 3a. جرب register_student RPC
-                const { error: rpcErr } = await sb.rpc('register_student', {
+                const { data: rpcResult, error: rpcErr } = await sb.rpc('register_student', {
                     p_user_id:          authData.user.id,
                     p_full_name:        data.full_name,
                     p_email:            data.email,
-                    p_phone:            data.phone || null,
-                    p_birth_date:       data.birth_date || null,
-                    p_gender:           data.gender || null,
-                    p_university:       data.university || null,
-                    p_faculty:          data.faculty || null,
-                    p_gpa:              data.gpa ? String(data.gpa) : null,
-                    p_city:             data.city || null,
-                    p_address:          data.address || null,
-                    p_country:          data.country || null,
-                    p_linkedin:         data.linkedin || null,
-                    p_github:           data.github || null,
-                    p_portfolio:        data.portfolio || null,
-                    p_cv_url:           data.cv_url || null,
+                    p_phone:            data.phone            || null,
+                    p_birth_date:       data.birth_date       || null,
+                    p_gender:           data.gender           || null,
+                    p_university:       data.university       || null,
+                    p_faculty:          data.faculty          || null,
+                    p_gpa:              data.gpa              || null,
+                    p_city:             data.city             || null,
+                    p_address:          data.address          || null,
+                    p_country:          data.country          || 'مصر',
+                    p_linkedin:         data.linkedin         || null,
+                    p_github:           data.github           || null,
+                    p_portfolio:        data.portfolio        || null,
+                    p_cv_url:           data.cv_url           || null,
                     p_skills:           JSON.stringify(skillsJson),
-                    p_photo:            data.photo || null,
-                    p_education_level:  data.education_level || null,
-                    p_interested_fields: interestsJson,
-                    p_year_of_study:    data.study_year || null
+                    p_photo:            data.photo            || null,
+                    p_education_level:  data.education_level  || null,
+                    p_interested_fields: interestsJson.length ? interestsJson : null,
+                    p_year_of_study:    data.study_year       || null
                 });
 
                 if (rpcErr) {
-                    const rpcErrMsg = (rpcErr.message || '').toLowerCase();
+                    // HTTP error من Supabase
+                    console.warn('Layer 2 RPC HTTP error:', rpcErr.message);
+                    profileErr = rpcErr;
+                } else if (rpcResult && rpcResult.success === false) {
+                    // الـ RPC رجع success:false → فشل داخلي
+                    console.warn('Layer 2 RPC internal error:', rpcResult.error);
+                    profileErr = { message: rpcResult.error || 'RPC internal error' };
+                } else {
+                    console.log('✅ Layer 2: Data saved via RPC');
+                    profileErr = null;
+                }
 
-                    // ✅ RPC مش موجودة (migration لسه ما اتشغلش) → fallback
-                    if (rpcErrMsg.includes('register_student') || rpcErrMsg.includes('does not exist') || rpcErrMsg.includes('could not find')) {
-                        console.warn('register_student RPC not found → using direct fallback');
-
-                        // الـ DB trigger بيعمل INSERT بـ full_name + email بس
-                        // محتاجين نعمل UPDATE للـ row الموجودة بكل البيانات
-                        // نستخدم service_role أو SECURITY DEFINER عبر الـ RPC
-                        // لكن لو مش موجودة → نحفظ في localStorage كـ pending
-                        // ونعمل update في أول login
-
-                        const fullStudentData = {
+                // لو RPC فشل → حاول UPSERT مباشر كـ Layer 2b
+                if (profileErr) {
+                    console.warn('Layer 2 failed, trying direct UPDATE...');
+                    const { error: updateErr } = await sb.from('student')
+                        .update({
                             full_name:        data.full_name,
-                            email:            data.email,
                             phone:            data.phone,
                             birth_date:       data.birth_date,
                             gender:           data.gender,
@@ -1630,72 +1666,24 @@ console.log('✅ Form initialized successfully');
                             linkedin:         data.linkedin,
                             github:           data.github,
                             portfolio:        data.portfolio,
-                            cv_url:           data.cv_url || null,
                             status:           'active',
                             training_status:  'not_started',
                             updated_at:       new Date().toISOString()
-                        };
+                        })
+                        .eq('user_id', authData.user.id);
 
-                        // أولاً: جرب UPDATE مباشر (يشتغل لو RLS بتسمح)
-                        const { error: updateErr } = await sb.from('student')
-                            .update(fullStudentData)
-                            .eq('user_id', authData.user.id);
-
-                        if (updateErr) {
-                            console.warn('Direct UPDATE failed:', updateErr.message);
-                            // ثانياً: حاول INSERT (لو الـ trigger مش موجود)
-                            const { error: insertErr } = await sb.from('student')
-                                .insert({ user_id: authData.user.id, ...fullStudentData });
-
-                            if (insertErr && !insertErr.message.includes('duplicate') && !insertErr.message.includes('unique')) {
-                                console.error('INSERT also failed:', insertErr.message);
-                                profileErr = insertErr;
-                            }
-                        }
-
-                        // ✅ دايماً احفظ البيانات في localStorage كـ backup
-                        // الـ student-login سيقرأها ويعمل UPDATE بعد الـ login
-                        try {
-                            localStorage.setItem('pending_profile_data', JSON.stringify({
-                                user_id: authData.user.id,
-                                ...fullStudentData,
-                                skills:           skillsJson,
-                                interested_fields: interestsJson
-                            }));
-                            localStorage.setItem('pending_profile_email', data.email);
-                            console.log('✅ Saved pending data to localStorage as backup');
-                        } catch(e) { console.warn('localStorage save failed:', e); }
-                    } else {
-                        // خطأ حقيقي من الـ RPC
-                        console.error('RPC error:', rpcErr);
-                        profileErr = rpcErr;
-                    }
-                }
-
-                // ─── 4. لو فيه خطأ في الحفظ ───────────────────────────
-                if (profileErr) {
-                    const pErr = (profileErr.message || '').toLowerCase();
-                    let msg = 'حدث خطأ في حفظ البيانات';
-                    if (pErr.includes('duplicate') || pErr.includes('unique')) {
-                        // Duplicate → البيانات اتحفظت جزئياً من الـ trigger → اعتبره نجاح
-                        console.warn('Duplicate key (trigger already created row) → treating as success');
+                    if (!updateErr) {
+                        console.log('✅ Layer 2b: Data saved via direct UPDATE');
                         profileErr = null;
-                    } else if (pErr.includes('violates row-level security') || pErr.includes('rls')) {
-                        msg = '⚠️ مش مصرح لك بإتمام التسجيل، تواصل مع الإدارة';
                     } else {
-                        msg = '⚠️ خطأ في الحفظ: ' + profileErr.message;
-                    }
-
-                    if (profileErr) {
-                        window.ProVance.showToast(msg, 'error');
-                        showServerErrorBanner(msg);
-                        btn.classList.remove('loading');
-                        btn.disabled = false;
-                        return;
+                        console.warn('Layer 2b UPDATE failed:', updateErr.message,
+                            '→ Layer 3 (login sync) will handle this');
+                        // مش error للـ user — Layer 3 هيحله عند الـ login
+                        profileErr = null;
                     }
                 }
 
-                // ─── 5. نجاح ──────────────────────────────────────────
+                // ─── نجاح ─────────────────────────────────────────────
                 localStorage.setItem('studentName', data.full_name);
                 localStorage.setItem('userEmail', data.email);
                 localStorage.setItem('pendingEmail', data.email);
