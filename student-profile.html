@@ -1093,6 +1093,38 @@
     // ============ RENDER PROFILE ============
     function renderProfile() {
         if (!studentData) return;
+        
+        // 🔍 Check لو البيانات الأساسية ناقصة (لـ users اللي اتسجلوا قبل الـ fix)
+        const importantFields = ['phone', 'birth_date', 'university', 'faculty', 'city', 'gender'];
+        const missingFields = importantFields.filter(f => !studentData[f]);
+        
+        if (missingFields.length >= 4 && !window._missingDataShown) {
+            window._missingDataShown = true;
+            setTimeout(() => {
+                const labels = { phone: 'الهاتف', birth_date: 'تاريخ الميلاد', university: 'الجامعة', faculty: 'الكلية', city: 'المدينة', gender: 'النوع' };
+                const missingLabels = missingFields.map(f => labels[f] || f).join('، ');
+                
+                // Toast واضح
+                if (window.ProVance && window.ProVance.showToast) {
+                    window.ProVance.showToast('بياناتك ناقصة: ' + missingLabels + '. اضغط على "تعديل" لإكمالها', 'warning');
+                }
+                
+                // Banner ثابت أعلى الصفحة
+                const existingBanner = document.getElementById('missingDataBanner');
+                if (!existingBanner) {
+                    const banner = document.createElement('div');
+                    banner.id = 'missingDataBanner';
+                    banner.style.cssText = 'background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;padding:14px 20px;border-radius:12px;margin:16px;font-weight:700;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(239,68,68,0.3);';
+                    banner.innerHTML = '<i class="fas fa-exclamation-triangle" style="font-size:1.4rem"></i><div style="flex:1"><div style="margin-bottom:4px">⚠️ بياناتك غير مكتملة!</div><div style="font-weight:500;font-size:0.9rem;opacity:0.95">الناقص: ' + missingLabels + '</div></div><button onclick="window.openEditPersonal && window.openEditPersonal(); this.parentNode.remove();" style="background:white;color:#ef4444;border:none;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit">إكمال الآن</button>';
+                    const mainContent = document.querySelector('.main-content') || document.querySelector('main') || document.body;
+                    if (mainContent.firstChild) {
+                        mainContent.insertBefore(banner, mainContent.firstChild);
+                    } else {
+                        mainContent.appendChild(banner);
+                    }
+                }
+            }, 1000);
+        }
 
         // Sidebar
         document.getElementById('sidebarName').textContent = studentData.full_name || '-';
