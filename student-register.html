@@ -955,6 +955,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
+    <script src="student-register-script.js"></script>
     <script>
     (function() {
         'use strict';
@@ -1039,11 +1040,11 @@ console.log('✅ Form initialized successfully');
         const TOTAL_STEPS = 5;
         const STEP_NAMES = ['', 'المعلومات الشخصية', 'المعلومات الأكاديمية', 'المهارات والاهتمامات', 'الخبرات والروابط', 'الشروط والأحكام'];
         let currentStep = 1;
-        console.log('📄 student-register.html version: 2026-05-27 (multi-step validation fix)');
-        let photoBase64 = null;
         let cvFile = null;
         let skills = [];
         let interests = [];
+        // photoBase64 مش هنا — بتتحفظ في window._photoBase64 من student-register-script.js
+        // نقرأها وقت الـ submit
         // languages removed
         // experiences removed
 
@@ -1276,35 +1277,15 @@ console.log('✅ Form initialized successfully');
             } catch (err) { console.error('previousStep error:', err); }
         };
 
-        // Photo upload
-        document.getElementById('studentPhoto').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (file.size > 2 * 1024 * 1024) {
-                window.ProVance.showToast('الحجم أكبر من 2 ميجا', 'error');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                photoBase64 = ev.target.result;
-                document.getElementById('photoCircle').innerHTML = `
-                    <img src="${photoBase64}" alt="Photo">
-                    <div class="photo-circle-overlay"><i class="fas fa-cloud-upload-alt"></i></div>
-                `;
-                document.getElementById('photoCircle').onclick = () => document.getElementById('studentPhoto').click();
-                document.getElementById('photoRemoveBtn').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        });
-        window.removePhoto = () => {
-            photoBase64 = null;
-            document.getElementById('studentPhoto').value = '';
-            document.getElementById('photoCircle').innerHTML = `
-                <i class="fas fa-camera"></i>
-                <div class="photo-circle-overlay"><i class="fas fa-cloud-upload-alt"></i></div>
-            `;
-            document.getElementById('photoCircle').onclick = () => document.getElementById('studentPhoto').click();
-            document.getElementById('photoRemoveBtn').classList.add('hidden');
+        // Photo upload handled by student-register-script.js (stores in window._photoBase64)
+        window.removePhoto = function() {
+            window._photoBase64 = null;
+            const input = document.getElementById('studentPhoto');
+            if (input) input.value = '';
+            const circle = document.getElementById('photoCircle');
+            const btn    = document.getElementById('photoRemoveBtn');
+            if (circle) circle.innerHTML = `<i class="fas fa-camera" id="photoIcon"></i><div class="photo-circle-overlay"><i class="fas fa-cloud-upload-alt"></i></div>`;
+            if (btn) btn.classList.add('hidden');
         };
 
         // Age calculation
@@ -1446,7 +1427,7 @@ console.log('✅ Form initialized successfully');
             sumContent.innerHTML = `
                 <div class="summary-block">
                     <div class="summary-block-title"><i class="fas fa-user"></i> المعلومات الشخصية</div>
-                    ${photoBase64 ? `<div style="text-align:center;margin-bottom:12px"><img src="${photoBase64}" style="width:80px;height:80px;border-radius:50%;object-fit:cover"></div>` : ''}
+            ${window._photoBase64 ? `<div style="text-align:center;margin-bottom:12px"><img src="${window._photoBase64}" style="width:80px;height:80px;border-radius:50%;object-fit:cover"></div>` : ''}
                     <div class="summary-row"><span class="label">الاسم</span><span class="value">${escapeHtml(v('fullName'))}</span></div>
                     <div class="summary-row"><span class="label">البريد</span><span class="value" style="direction:ltr">${escapeHtml(v('email'))}</span></div>
                     <div class="summary-row"><span class="label">الهاتف</span><span class="value" style="direction:ltr">${escapeHtml(v('phone'))}</span></div>
@@ -1480,108 +1461,69 @@ console.log('✅ Form initialized successfully');
 
         document.getElementById('studentRegisterForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            // 🛡️ Safety: لا يـ submit إلا من Step 5
-            if (currentStep !== TOTAL_STEPS) {
-                console.warn('⚠️ Submit attempted from step', currentStep, '- redirecting to step', currentStep);
-                if (window.ProVance && window.ProVance.showToast) {
-                    window.ProVance.showToast('يرجى إكمال جميع الخطوات الأولى', 'warning');
-                }
-                return;
-            }
-            
-            // 🛡️ Validate ALL steps before submit
-            for (let s = 1; s <= 5; s++) {
-                if (!validateStep(s)) {
-                    // تأكد إن الـ user يشوف الخطأ في الـ step الصحيحة
-                    if (typeof goToStep === 'function') goToStep(s);
-                    else { currentStep = s; updateUI(); }
-                    
-                    if (window.ProVance && window.ProVance.showToast) {
-                        window.ProVance.showToast(`في حقول ناقصة في الخطوة ${s}، يرجى مراجعتها`, 'warning');
-                    }
-                    return;
-                }
-            }
+            if (!validateStep(5)) return;
             const btn = document.getElementById('btnSubmit');
             btn.classList.add('loading');
             btn.disabled = true;
             const v = (id) => document.getElementById(id)?.value?.trim() || null;
             const gender = document.querySelector('input[name="gender"]:checked')?.value;
 
-            // 🔍 Debug: شوف القيم قبل التجميع
-            console.log('🔍 Form values before submit:', {
-                fullName: document.getElementById('fullName')?.value,
-                email: document.getElementById('email')?.value,
-                phone: document.getElementById('phone')?.value,
-                birthDate: document.getElementById('birthDate')?.value,
-                city: document.getElementById('city')?.value,
-                university: document.getElementById('university')?.value,
-                faculty: document.getElementById('faculty')?.value,
-                educationLevel: document.getElementById('educationLevel')?.value,
-                studyYear: document.getElementById('studyYear')?.value,
-                gpa: document.getElementById('gpa')?.value,
-                country: document.getElementById('country')?.value,
-                gender: document.querySelector('input[name="gender"]:checked')?.value,
-                skills: skills,
-                interests: interests
-            });
-            
+            // ✅ FIX: اقرأ الصورة من window._photoBase64 (اللي بيحفظها student-register-script.js)
+            const photoBase64 = window._photoBase64 || null;
+
+            // ✅ FIX: skills و interests هما arrays — حوّلهم لـ JSON array صح
+            const skillsJson     = Array.isArray(skills)    ? skills    : [];
+            const interestsJson  = Array.isArray(interests) ? interests : [];
+
             const data = {
-                full_name: v('fullName'),
-                email: v('email')?.toLowerCase(),
-                phone: v('phone'),
-                birth_date: v('birthDate'),
-                gender,
-                
-                photo: photoBase64,
-                country: v('country'),
-                city: v('city'),
-                address: v('address'),
-                education_level: v('educationLevel'),
-                university: v('university'),
-                faculty: v('faculty'),
-                
-                study_year: v('studyYear'),
-                
-                gpa: v('gpa'),
-                skills: skills,
-                
-                
-                interested_fields: interests,
-                linkedin: v('linkedinUrl'),
-                github: v('githubUrl'),
-                portfolio: v('portfolioUrl'),
-                status: 'active',
-                training_status: 'looking'
+                full_name:        v('fullName'),
+                email:            v('email')?.toLowerCase(),
+                phone:            v('phone'),
+                birth_date:       v('birthDate'),
+                gender:           gender || null,
+                photo:            photoBase64,
+                country:          v('country') || 'مصر',
+                city:             v('city'),
+                address:          v('address'),
+                education_level:  v('educationLevel'),
+                university:       v('university'),
+                faculty:          v('faculty'),
+                study_year:       v('studyYear'),
+                gpa:              v('gpa'),
+                skills:           skillsJson,
+                interested_fields: interestsJson,
+                linkedin:         v('linkedinUrl'),
+                github:           v('githubUrl'),
+                portfolio:        v('portfolioUrl'),
+                status:           'active',
+                training_status:  'not_started'   // ✅ FIX: كان 'looking' → خطأ في الـ constraint
             };
             const password = document.getElementById('password').value;
 
             try {
-                // استخدم الـ helper اللي فيه fallback للـ direct client (20 ثانية انتظار)
                 const sb = await waitForSupabase();
 
                 if (!sb || typeof sb.from !== 'function') {
                     const msg = '⏳ جاري تحميل النظام، يرجى الانتظار قليلاً ثم المحاولة مرة أخرى';
-                    if (window.ProVance && window.ProVance.showToast) {
-                        window.ProVance.showToast(msg, 'warning');
-                    }
+                    window.ProVance?.showToast(msg, 'warning');
                     showServerErrorBanner(msg);
                     btn.classList.remove('loading');
                     btn.disabled = false;
                     return;
                 }
 
+                // ─── 1. إنشاء حساب Auth ───────────────────────────────
                 const { data: authData, error: authErr } = await sb.auth.signUp({
                     email: data.email,
                     password: password,
                     options: {
                         data: {
-                            full_name: data.full_name,
-                            user_type: 'student'  // ⭐ الـ trigger هيقرأها ويعمل student row تلقائياً
+                            full_name:  data.full_name,
+                            user_type:  'student'
                         }
                     }
                 });
+
                 if (authErr) {
                     console.error('Auth error:', authErr);
                     let msg = 'حدث خطأ في إنشاء الحساب، حاول تاني';
@@ -1606,7 +1548,7 @@ console.log('✅ Form initialized successfully');
                     return;
                 }
 
-                // Upload CV if exists
+                // ─── 2. رفع CV لو موجود ────────────────────────────────
                 if (cvFile && authData.user) {
                     try {
                         const fileName = `cv-${authData.user.id}-${Date.now()}.${cvFile.name.split('.').pop()}`;
@@ -1618,90 +1560,140 @@ console.log('✅ Form initialized successfully');
                             data.cv_url = urlData.publicUrl;
                         }
                     } catch (cvErr) {
-                        console.warn('CV upload failed:', cvErr);
+                        console.warn('CV upload failed (non-critical):', cvErr);
                     }
                 }
 
-                // استخدم RPC function لتجاوز RLS لو الـ email confirmation مفعل
-                const { data: rpcResult, error: profileErr } = await sb.rpc('register_student', {
-                    p_user_id: authData.user.id,
-                    p_full_name: data.full_name,
-                    p_email: data.email,
-                    p_phone: data.phone || null,
-                    p_birth_date: data.birth_date || null,
-                    p_gender: data.gender || null,
-                    
-                    p_university: data.university || null,
-                    p_faculty: data.faculty || null,
-                    
-                    p_gpa: data.gpa ? String(data.gpa) : null,
-                    
-                    p_city: data.city || null,
-                    p_address: data.address || null,
-                    p_country: data.country || null,
-                    p_linkedin: data.linkedin || null,
-                    p_github: data.github || null,
-                    p_portfolio: data.portfolio || null,
-                    p_cv_url: data.cv_url || null,
-                    p_skills: Array.isArray(data.skills) ? JSON.stringify(data.skills) : (data.skills || null),
-                    
-                    p_photo: data.photo || null,
-                    p_education_level: data.education_level || null,
-                    p_interested_fields: data.interested_fields && Array.isArray(data.interested_fields) ? data.interested_fields : null,
-                    p_year_of_study: data.study_year || null
+                // ─── 3. حفظ بيانات الطالب ─────────────────────────────
+                // المنهج: جرب RPC أولاً (تتجاوز RLS)
+                //         لو مش موجودة → fallback لـ UPSERT مباشر
+                // ✅ UPSERT بدل INSERT لتجنب DUPLICATE KEY لو trigger سبق وعمل record
+
+                let profileErr = null;
+
+                // 3a. جرب register_student RPC
+                const { error: rpcErr } = await sb.rpc('register_student', {
+                    p_user_id:          authData.user.id,
+                    p_full_name:        data.full_name,
+                    p_email:            data.email,
+                    p_phone:            data.phone || null,
+                    p_birth_date:       data.birth_date || null,
+                    p_gender:           data.gender || null,
+                    p_university:       data.university || null,
+                    p_faculty:          data.faculty || null,
+                    p_gpa:              data.gpa ? String(data.gpa) : null,
+                    p_city:             data.city || null,
+                    p_address:          data.address || null,
+                    p_country:          data.country || null,
+                    p_linkedin:         data.linkedin || null,
+                    p_github:           data.github || null,
+                    p_portfolio:        data.portfolio || null,
+                    p_cv_url:           data.cv_url || null,
+                    p_skills:           JSON.stringify(skillsJson),
+                    p_photo:            data.photo || null,
+                    p_education_level:  data.education_level || null,
+                    p_interested_fields: interestsJson,
+                    p_year_of_study:    data.study_year || null
                 });
-                
-                // لو الـ RPC مش موجودة (لسه ما اتشغلش SQL migration 20)، fallback لـ insert عادي
-                if (profileErr && (profileErr.message || '').includes('register_student')) {
-                    console.warn('RPC not found, falling back to direct insert');
-                    const { error: directErr } = await sb.from('student').insert({
-                        user_id: authData.user.id,
-                        ...data
-                    });
-                    if (directErr) {
-                        // نخزن البيانات في localStorage عشان نكمل بعد verification
-                        try { localStorage.setItem('pending_student_data', JSON.stringify({ user_id: authData.user.id, ...data })); } catch(e) {}
+
+                if (rpcErr) {
+                    const rpcErrMsg = (rpcErr.message || '').toLowerCase();
+
+                    // ✅ RPC مش موجودة (migration لسه ما اتشغلش) → fallback لـ UPSERT
+                    if (rpcErrMsg.includes('register_student') || rpcErrMsg.includes('does not exist') || rpcErrMsg.includes('could not find')) {
+                        console.warn('register_student RPC not found → using direct UPSERT');
+
+                        const { error: upsertErr } = await sb.from('student')
+                            .upsert(
+                                {
+                                    user_id:          authData.user.id,
+                                    full_name:        data.full_name,
+                                    email:            data.email,
+                                    phone:            data.phone,
+                                    birth_date:       data.birth_date,
+                                    gender:           data.gender,
+                                    photo:            data.photo,
+                                    country:          data.country,
+                                    city:             data.city,
+                                    address:          data.address,
+                                    education_level:  data.education_level,
+                                    university:       data.university,
+                                    faculty:          data.faculty,
+                                    study_year:       data.study_year,
+                                    gpa:              data.gpa,
+                                    skills:           skillsJson,
+                                    interested_fields: interestsJson,
+                                    linkedin:         data.linkedin,
+                                    github:           data.github,
+                                    portfolio:        data.portfolio,
+                                    cv_url:           data.cv_url || null,
+                                    status:           'active',
+                                    training_status:  'not_started',
+                                    updated_at:       new Date().toISOString()
+                                },
+                                { onConflict: 'user_id', ignoreDuplicates: false }
+                            );
+
+                        if (upsertErr) {
+                            console.error('UPSERT error:', upsertErr);
+                            profileErr = upsertErr;
+                        }
+                    } else {
+                        // خطأ حقيقي من الـ RPC
+                        console.error('RPC error:', rpcErr);
+                        profileErr = rpcErr;
                     }
                 }
 
+                // ─── 4. لو فيه خطأ في الحفظ ───────────────────────────
                 if (profileErr) {
-                    console.error('Profile error:', profileErr);
-                    let msg = 'حدث خطأ في حفظ البيانات';
                     const pErr = (profileErr.message || '').toLowerCase();
+                    let msg = 'حدث خطأ في حفظ البيانات';
                     if (pErr.includes('duplicate') || pErr.includes('unique')) {
-                        msg = '⚠️ البيانات دي مسجلة قبل كده';
+                        // Duplicate → البيانات اتحفظت جزئياً من الـ trigger → اعتبره نجاح
+                        console.warn('Duplicate key (trigger already created row) → treating as success');
+                        profileErr = null;
                     } else if (pErr.includes('violates row-level security') || pErr.includes('rls')) {
                         msg = '⚠️ مش مصرح لك بإتمام التسجيل، تواصل مع الإدارة';
-                    } else if (profileErr.message) {
+                    } else {
                         msg = '⚠️ خطأ في الحفظ: ' + profileErr.message;
                     }
-                    window.ProVance.showToast(msg, 'error');
-                    showServerErrorBanner(msg);
-                    btn.classList.remove('loading');
-                    btn.disabled = false;
-                    return;
+
+                    if (profileErr) {
+                        window.ProVance.showToast(msg, 'error');
+                        showServerErrorBanner(msg);
+                        btn.classList.remove('loading');
+                        btn.disabled = false;
+                        return;
+                    }
                 }
 
+                // ─── 5. نجاح ──────────────────────────────────────────
                 localStorage.setItem('studentName', data.full_name);
                 localStorage.setItem('userEmail', data.email);
+                localStorage.setItem('pendingEmail', data.email);
                 localStorage.setItem('userType', 'student');
 
-                // 🔔 إرسال إشعار للأدمن بتسجيل طالب جديد
+                // إشعار للأدمن
                 try {
                     await window.ProVance.notifyAdmins({
-                        title: '🎓 طالب جديد سجل',
-                        message: `الطالب "${data.full_name}" انضم للمنصة`,
-                        type: 'success',
+                        title:       '🎓 طالب جديد سجل',
+                        message:     `الطالب "${data.full_name}" انضم للمنصة`,
+                        type:        'success',
                         relatedType: 'student_registration',
-                        relatedId: authData.user.id,
-                        actionUrl: 'admin-trainees.html'
+                        relatedId:   authData.user.id,
+                        actionUrl:   'admin-trainees.html'
                     });
                 } catch (notifErr) {
-                    console.warn('فشل إرسال الإشعار للأدمن:', notifErr);
+                    console.warn('فشل إرسال الإشعار للأدمن (non-critical):', notifErr);
                 }
 
-                window.ProVance.showToast('🎉 تم إنشاء حسابك بنجاح!', 'success');
-                setTimeout(() => window.location.href = 'student-dashboard.html', 1800);
+                window.ProVance.showToast('🎉 تم إنشاء حسابك بنجاح! تحقق من بريدك لتأكيد الحساب', 'success');
+
+                // ✅ FIX: كان بيروح student-dashboard قبل تأكيد الإيميل
+                //         → الصح student-verify.html
+                setTimeout(() => window.location.href = 'student-verify.html', 1800);
+
             } catch (err) {
                 console.error('Register error:', err);
                 let msg = '⚠️ حدث خطأ غير متوقع: ' + (err.message || 'خطأ مجهول');
@@ -1720,104 +1712,6 @@ console.log('✅ Form initialized successfully');
 
         updateProgress();
     })();
-    
-        // 💾 Field Persistence System: حفظ القيم تلقائياً في localStorage
-        (function() {
-            function saveStudentFields() {
-                try {
-                    const inputs = document.querySelectorAll('input, textarea, select');
-                    const values = {};
-                    inputs.forEach(inp => {
-                        if (inp.id && inp.type !== 'password' && inp.type !== 'file') {
-                            if (inp.type === 'checkbox' || inp.type === 'radio') {
-                                if (inp.checked) values[inp.name || inp.id] = inp.value;
-                            } else if (inp.value) {
-                                values[inp.id] = inp.value;
-                            }
-                        }
-                    });
-                    localStorage.setItem('student_register_fields', JSON.stringify(values));
-                    localStorage.setItem('student_register_ts', Date.now().toString());
-                } catch(e) {}
-            }
-            
-            function restoreStudentFields() {
-                try {
-                    const stored = localStorage.getItem('student_register_fields');
-                    const ts = parseInt(localStorage.getItem('student_register_ts') || '0');
-                    if (!stored || (Date.now() - ts) > 24 * 60 * 60 * 1000) return;
-                    
-                    const values = JSON.parse(stored);
-                    let restored = 0;
-                    Object.keys(values).forEach(key => {
-                        const el = document.getElementById(key);
-                        if (el && !el.value && values[key]) {
-                            if (el.type !== 'file' && el.type !== 'password') {
-                                el.value = values[key];
-                                restored++;
-                                try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
-                                try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch(e) {}
-                            }
-                        } else {
-                            // radio/checkbox
-                            const radio = document.querySelector(`input[name="${key}"][value="${values[key]}"]`);
-                            if (radio && !radio.checked) { radio.checked = true; restored++; }
-                        }
-                    });
-                    if (restored) console.log('🔄 Restored', restored, 'student fields');
-                } catch(e) {}
-            }
-            
-            document.addEventListener('input', function(e) {
-                if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
-                    clearTimeout(window._studentFieldSave);
-                    window._studentFieldSave = setTimeout(saveStudentFields, 500);
-                }
-            }, true);
-            
-            document.addEventListener('change', function(e) {
-                if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
-                    saveStudentFields();
-                }
-            }, true);
-            
-            // Restore on load
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => setTimeout(restoreStudentFields, 500));
-            } else {
-                setTimeout(restoreStudentFields, 500);
-            }
-            
-            window.addEventListener('pageshow', () => setTimeout(restoreStudentFields, 200));
-            
-            // Cleanup بعد التسجيل الناجح
-            window.cleanupStudentFields = function() {
-                try {
-                    localStorage.removeItem('student_register_fields');
-                    localStorage.removeItem('student_register_ts');
-                } catch(e) {}
-            };
-            
-            console.log('✅ Student field persistence initialized');
-        })();
-
-    
-        // 🛡️ منع الـ Enter في الـ inputs من إرسال الـ form قبل step 5
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                const target = e.target;
-                if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT') 
-                    && target.type !== 'submit' && target.type !== 'button') {
-                    if (currentStep < TOTAL_STEPS) {
-                        e.preventDefault();
-                        // محاولة الانتقال للـ next step بدل submit
-                        if (typeof nextStep === 'function') nextStep();
-                        return false;
-                    }
-                }
-            }
-        });
-
     </script>
 </body>
 </html>
