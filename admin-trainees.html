@@ -221,11 +221,9 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
             <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
             <a href="admin-campany.html" class="nav-item"><i class="fas fa-building"></i> الشركات <span class="nav-badge" id="pendingBadge" style="display:none">0</span></a>
             <a href="admin-trainees.html" class="nav-item active"><i class="fas fa-users"></i> المتدربين</a>
-            <a href="admin-violations.html" class="nav-item"><i class="fas fa-exclamation-triangle"></i> التجاوزات</a>
             <a href="admin-users.html" class="nav-item"><i class="fas fa-user-shield"></i> الأدمنز</a>
             <a href="admin-approvals.html" class="nav-item"><i class="fas fa-check-double"></i> الموافقات <span class="nav-badge" id="approvalsBadge" style="display:none">0</span></a>
-            <a href="admin-student-support.html" class="nav-item" id="navStudentSupport"><i class="fas fa-user-graduate"></i> دعم الطلاب</a>
-            <a href="admin-company-support.html" class="nav-item" id="navCompanySupport"><i class="fas fa-headset"></i> دعم الشركات</a>
+            <a href="admin-support.html" class="nav-item"><i class="fas fa-headset"></i> دعم الشركات</a>
             <a href="admin-notification.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
             <a href="#" onclick="logoutAdmin(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
@@ -335,21 +333,6 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
 });
 
-
-// إخفاء support links حسب الصلاحيات
-function applyAdminPermissions(adminCheck) {
-    if (!adminCheck) return;
-    const isSuper = adminCheck.role === 'super_admin';
-    const perms = adminCheck.permissions || {};
-    if (!isSuper && !perms.reply_to_students) {
-        document.querySelectorAll('a[href="admin-student-support.html"]').forEach(a => a.style.display = 'none');
-    }
-    if (!isSuper && !perms.reply_to_companies) {
-        document.querySelectorAll('a[href="admin-company-support.html"]').forEach(a => a.style.display = 'none');
-    }
-}
-
-
 let allStudents = [];
 let allViolations = [];
 let strikesMap = {};
@@ -379,23 +362,6 @@ window.closeModal = (id) => {
     if (el) el.remove();
     if (document.querySelectorAll('.modal').length === 0) document.body.style.overflow = '';
 };
-
-
-// إخفاء support links لو الأدمن مفيش عنده صلاحية
-function hideUnauthorizedNavLinks(adminCheck) {
-    if (!adminCheck) return;
-    const isSuper = adminCheck.is_super_admin === true || adminCheck.role === 'super_admin';
-    const perms = adminCheck.permissions || {};
-    
-    if (!isSuper && perms.reply_to_students !== true) {
-        const link = document.getElementById('navStudentSupport');
-        if (link) link.style.display = 'none';
-    }
-    if (!isSuper && perms.reply_to_companies !== true) {
-        const link = document.getElementById('navCompanySupport');
-        if (link) link.style.display = 'none';
-    }
-}
 
 window.logoutAdmin = async (e) => {
     e.preventDefault();
@@ -638,63 +604,22 @@ window.saveViolation = async (userId) => {
             severity: selectedSeverity,
             status: 'active'
         });
-        if (error) {
-            console.error('Penalty save error:', error);
-            if (error.message && (error.message.includes('penalties') || error.message.includes('relation') || error.message.includes('does not exist'))) {
-                showToast('⚠️ شغّل SQL Migration 39 الأول! جدول penalties غير موجود', 'error');
-                return;
-            }
-            throw error;
-        }
-        showToast('✅ تم تسجيل المخالفة', 'success');
+        if (error) throw error;
+        showToast('تم تسجيل المخالفة', 'success');
         closeModal('addViolationModal');
-        // إشعار للطالب
-        try {
-            const severityLabels = {minor:'بسيطة', moderate:'متوسطة', major:'كبيرة', critical:'حرجة'};
-            await sb.from('notifications').insert({
-                user_id: userId,
-                user_type: 'student',
-                type: 'penalty',
-                title: '⚠️ تم تسجيل مخالفة',
-                message: title + ' (' + (severityLabels[selectedSeverity] || selectedSeverity) + ')',
-                link: 'student-profile.html'
-            });
-        } catch(e) {}
         await loadAll();
-        // أعد فتح details modal لعرض المخالفة الجديدة
-        await viewTraineeDetails(userId);
     } catch (err) {
         showToast('حدث خطأ: ' + err.message, 'error');
     }
 };
 
-window.resolveViolation = async (id, userId) => {
-    if (!confirm('هل تريد تعليم هذه المخالفة كمحلولة؟')) return;
+window.resolveViolation = async (id) => {
+    if (!confirm('هل تريد إغلاق هذه المخالفة؟')) return;
     try {
-        const { error } = await sb.from('penalties').update({ 
-            status: 'resolved', 
-            resolved_at: new Date().toISOString() 
-        }).eq('id', id);
-        if (error) throw error;
-        showToast('✅ تم تعليم المخالفة كمحلولة', 'success');
+        await sb.from('penalties').update({ status: 'resolved', resolved_at: new Date().toISOString() }).eq('id', id);
+        showToast('تم الحل', 'success');
         await loadAll();
-        if (userId) await viewTraineeDetails(userId);
-    } catch (err) { 
-        showToast('خطأ: ' + err.message, 'error'); 
-    }
-};
-
-window.deleteViolation = async (id, userId) => {
-    if (!confirm('هل أنت متأكد من حذف هذه المخالفة؟ لا يمكن التراجع.')) return;
-    try {
-        const { error } = await sb.from('penalties').delete().eq('id', id);
-        if (error) throw error;
-        showToast('🗑️ تم الحذف', 'success');
-        await loadAll();
-        if (userId) await viewTraineeDetails(userId);
-    } catch (err) { 
-        showToast('خطأ: ' + err.message, 'error'); 
-    }
+    } catch (err) { showToast('حدث خطأ', 'error'); }
 };
 
 window.viewTraineeDetails = async (userId) => {
@@ -746,7 +671,6 @@ window.viewTraineeDetails = async (userId) => {
                     <div class="info-grid">
                         <div class="info-item"><div class="info-label"><i class="fas fa-envelope"></i> البريد</div><div class="info-value">${escapeHtml(s.email || '-')}</div></div>
                         <div class="info-item"><div class="info-label"><i class="fas fa-phone"></i> الهاتف</div><div class="info-value">${escapeHtml(s.phone || '-')}</div></div>
-                        <div class="info-item"><div class="info-label"><i class="fas fa-id-badge"></i> الرقم القومي</div><div class="info-value">${escapeHtml(s.national_id || '-')}</div></div>
                         <div class="info-item"><div class="info-label"><i class="fas fa-birthday-cake"></i> تاريخ الميلاد</div><div class="info-value">${s.birth_date ? formatDate(s.birth_date) : '-'}</div></div>
                         <div class="info-item"><div class="info-label"><i class="fas fa-venus-mars"></i> النوع</div><div class="info-value">${escapeHtml(s.gender === 'male' ? 'ذكر' : s.gender === 'female' ? 'أنثى' : '-')}</div></div>
                         <div class="info-item"><div class="info-label"><i class="fas fa-city"></i> المدينة</div><div class="info-value">${escapeHtml(s.city || '-')}</div></div>
@@ -760,17 +684,16 @@ window.viewTraineeDetails = async (userId) => {
                     <div class="info-grid">
                         <div class="info-item"><div class="info-label"><i class="fas fa-university"></i> الجامعة</div><div class="info-value">${escapeHtml(s.university || '-')}</div></div>
                         <div class="info-item"><div class="info-label"><i class="fas fa-book"></i> الكلية</div><div class="info-value">${escapeHtml(s.faculty || '-')}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-layer-group"></i> سنة الدراسة</div><div class="info-value">${escapeHtml(s.study_year || s.year_of_study || '-')}</div></div>
                         <div class="info-item"><div class="info-label"><i class="fas fa-star"></i> المعدل (GPA)</div><div class="info-value">${escapeHtml(s.gpa || '-')}</div></div>
-                        <div class="info-item"><div class="info-label"><i class="fas fa-calendar-check"></i> سنة التخرج</div><div class="info-value">${escapeHtml(s.graduation_year || '-')}</div></div>
                     </div>
                 </div>
 
                 <div class="modal-section">
-                    <div class="modal-section-title"><i class="fas fa-tools"></i> المهارات والخبرة</div>
+                    <div class="modal-section-title"><i class="fas fa-tools"></i> المهارات والاهتمامات</div>
                     <div class="info-grid">
-                        <div class="info-item" style="grid-column:1/-1"><div class="info-label"><i class="fas fa-cogs"></i> المهارات</div><div class="info-value">${escapeHtml(s.skills || '-')}</div></div>
-                        <div class="info-item" style="grid-column:1/-1"><div class="info-label"><i class="fas fa-language"></i> اللغات</div><div class="info-value">${escapeHtml(s.languages || '-')}</div></div>
-                        <div class="info-item" style="grid-column:1/-1"><div class="info-label"><i class="fas fa-briefcase"></i> الخبرة</div><div class="info-value">${escapeHtml(s.experience || '-')}</div></div>
+                        <div class="info-item" style="grid-column:1/-1"><div class="info-label"><i class="fas fa-cogs"></i> المهارات</div><div class="info-value">${Array.isArray(s.skills) && s.skills.length ? s.skills.join('، ') : (s.skills || '-')}</div></div>
+                        <div class="info-item" style="grid-column:1/-1"><div class="info-label"><i class="fas fa-heart"></i> مجالات الاهتمام</div><div class="info-value">${Array.isArray(s.interested_fields) && s.interested_fields.length ? s.interested_fields.join('، ') : '-'}</div></div>
                     </div>
                 </div>
 
@@ -786,27 +709,15 @@ window.viewTraineeDetails = async (userId) => {
                     <div class="modal-section-title"><i class="fas fa-clipboard-list"></i> سجل المخالفات (${userViolations.length})</div>
                     ${userViolations.length === 0
                         ? '<div style="text-align:center;color:var(--success);padding:14px"><i class="fas fa-shield-alt"></i> سجل نظيف</div>'
-                        : userViolations.slice(0, 20).map(v => {
-                            const sevClass = v.severity === 'critical' ? 'critical' : v.severity === 'major' ? 'major' : 'minor';
-                            const statusLabels = {active: 'نشطة', resolved: 'محلولة', cancelled: 'ملغية'};
-                            const statusColors = {active: '#ef4444', resolved: '#10b981', cancelled: '#94a3b8'};
-                            return `
-                            <div class="violation-card ${sevClass}" style="margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:10px">
-                                <div class="violation-icon ${sevClass}" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(239,68,68,0.15);color:var(--error)"><i class="fas fa-exclamation-triangle"></i></div>
-                                <div class="violation-body" style="flex:1;min-width:0">
-                                    <div class="violation-title" style="font-weight:800;font-size:0.92rem;margin-bottom:4px">${escapeHtml(v.title)}</div>
-                                    ${v.description ? `<div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:6px;line-height:1.5">${escapeHtml(v.description)}</div>` : ''}
-                                    <div class="violation-meta" style="font-size:0.74rem;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                                        <span><i class="fas fa-clock"></i> ${formatDateTime(v.created_at)}</span>
-                                        <span style="color:${statusColors[v.status] || 'var(--text-muted)'};font-weight:700">● ${statusLabels[v.status] || v.status}</span>
-                                    </div>
-                                </div>
-                                <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-                                    ${v.status === 'active' ? `<button onclick="resolveViolation('${v.id}', '${userId}')" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:5px 10px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap" title="تعليم كمحلولة"><i class="fas fa-check"></i> حل</button>` : ''}
-                                    <button onclick="deleteViolation('${v.id}', '${userId}')" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:5px 10px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap" title="حذف"><i class="fas fa-trash"></i> حذف</button>
+                        : userViolations.slice(0, 10).map(v => `
+                            <div class="violation-card ${v.severity === 'critical' ? 'critical' : v.severity === 'major' ? 'major' : 'minor'}" style="margin-bottom:8px">
+                                <div class="violation-icon ${v.severity === 'critical' ? 'critical' : v.severity === 'major' ? 'major' : 'minor'}"><i class="fas fa-exclamation-triangle"></i></div>
+                                <div class="violation-body">
+                                    <div class="violation-title">${escapeHtml(v.title)}</div>
+                                    <div class="violation-meta">${formatDateTime(v.created_at)} • ${v.status}</div>
                                 </div>
                             </div>
-                        `;}).join('')}
+                        `).join('')}
                 </div>
                 <div style="display:flex;gap:10px;margin-top:14px">
                     <button class="btn btn-secondary" onclick="closeModal('detailsModal')" style="flex:1;justify-content:center">إغلاق</button>
@@ -825,7 +736,6 @@ async function checkAdmin() {
         const { data: { session } } = await sb.auth.getSession();
         if (!session) { window.location.href = 'admin-login.html'; return null; }
         const { data: admin } = await sb.from('admins').select('*').eq('user_id', session.user.id).maybeSingle();
-        applyAdminPermissions(admin);
         if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
         return admin;
     } catch (e) { window.location.href = 'admin-login.html'; return null; }
@@ -840,13 +750,6 @@ async function loadAll() {
             const studentsRes = _results[0].status === 'fulfilled' ? _results[0].value : { data: null, error: _results[0].reason };
             const violationsRes = _results[1].status === 'fulfilled' ? _results[1].value : { data: null, error: _results[1].reason };
             
-            // تحذير لو جدول penalties مش موجود
-            if (violationsRes.error) {
-                const errMsg = violationsRes.error.message || '';
-                if (errMsg.includes('penalties') || errMsg.includes('relation') || errMsg.includes('does not exist')) {
-                    showToast('⚠️ شغّل SQL Migration 39 الأول! جدول penalties غير موجود', 'warning');
-                }
-            }
 
         allStudents = studentsRes.data || [];
         allViolations = violationsRes.data || [];
