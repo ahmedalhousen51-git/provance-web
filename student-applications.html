@@ -160,32 +160,48 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
     </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script>
 (async () => {
-    // ── 1. Auth: استخدم session مباشرة بدون from('student') ──────
-    const sb = window.ProVance.sb;
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = 'student-login.html'; return; }
-    const uid = session.user.id;
+    // ══════════════════════════════════════════════════════════
+    // FAST LOAD: استخدم userId المحفوظ في localStorage فوراً
+    // بدون انتظار auth.getSession() أو CDN
+    // ══════════════════════════════════════════════════════════
+    const cachedUid = localStorage.getItem('userId');
+
+    if (!cachedUid) {
+        window.location.href = 'student-login.html';
+        return;
+    }
 
     let all = [], filter = 'all';
 
     function esc(s) {
-        return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        return String(s||'').replace(/[&<>"']/g, c =>
+            ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
-    // ── 2. جيب الطلبات فوراً ──────────────────────────────────────
+    // ── جيب الطلبات فوراً بدون انتظار ─────────────────────────
     async function load() {
+        const sb = window.ProVance?.sb;
+        if (!sb) { setTimeout(load, 100); return; }
+
         const { data, error } = await sb
             .from('applications')
             .select('id, company_name, company_logo, internship_title, application_message, status, rejection_reason, interview_date, interview_location, interview_notes, created_at')
-            .eq('student_user_id', uid)
+            .eq('student_user_id', cachedUid)
             .order('created_at', { ascending: false });
 
         if (error) {
-            document.getElementById('list').innerHTML = '<div class="empty"><i class="fas fa-exclamation-triangle"></i><h3>حدث خطأ في التحميل</h3><p>' + esc(error.message) + '</p></div>';
+            // لو 401 → session انتهت → redirect للـ login
+            if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
+                localStorage.clear();
+                window.location.href = 'student-login.html';
+                return;
+            }
+            document.getElementById('list').innerHTML =
+                '<div class="empty"><i class="fas fa-exclamation-triangle"></i>' +
+                '<h3>حدث خطأ</h3><p>' + esc(error.message) + '</p></div>';
             return;
         }
         all = data || [];
@@ -266,9 +282,11 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
     window.withdraw = async (id) => {
         if (!confirm('هل تريد سحب هذا الطلب؟')) return;
+        const sb = window.ProVance?.sb;
+        if (!sb) return;
         const { error } = await sb.from('applications')
             .update({ status: 'withdrawn', updated_at: new Date().toISOString() })
-            .eq('id', id).eq('student_user_id', uid);
+            .eq('id', id).eq('student_user_id', cachedUid);
         if (error) { window.ProVance.showToast('خطأ: ' + error.message, 'error'); return; }
         window.ProVance.showToast('تم سحب الطلب', 'success');
         await load();
@@ -288,15 +306,21 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         await window.ProVance.logout('student-login.html');
     };
 
-    // Real-time
-    try {
-        sb.channel('my-apps').on('postgres_changes',
-            { event: '*', schema: 'public', table: 'applications', filter: 'student_user_id=eq.' + uid },
-            () => load()
-        ).subscribe();
-    } catch(e) {}
+    // Real-time — لو الـ sb جاهز
+    const tryRealtime = () => {
+        const sb = window.ProVance?.sb;
+        if (!sb) { setTimeout(tryRealtime, 500); return; }
+        try {
+            sb.channel('my-apps').on('postgres_changes',
+                { event: '*', schema: 'public', table: 'applications', filter: 'student_user_id=eq.' + cachedUid },
+                () => load()
+            ).subscribe();
+        } catch(e) {}
+    };
+    tryRealtime();
 
-    await load();
+    // ── ابدأ التحميل فوراً ─────────────────────────────────────
+    load();
 })();
 </script>
 </body>
