@@ -209,7 +209,7 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
             <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
             <a href="company-talent-search.html" class="nav-item"><i class="fas fa-search"></i> البحث عن المواهب</a>
             <a href="company-requests-control.html" class="nav-item active"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
-            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم</a>
+            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم <span class="nav-badge" id="appsBadge" style="display:none"></span></a>
             <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
             <a href="company-QR_Code.html" class="nav-item"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
             <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
@@ -452,27 +452,19 @@ function getBranchName(branchId) {
 }
 
 // ========== Load Data ==========
-async function loadAll(retryCount = 0) {
-    const MAX_RETRIES = 1;  // قللنا الـ retries عشان السرعة
+async function loadAll() {
     try {
-        // الـ session مرة واحدة بس - مش هنحتاج retries هنا
+        // Make sure sb is ready
         const { data: sessData } = await sb.auth.getSession();
         if (!sessData || !sessData.session) {
-            // لو مفيش session، استنى شوية وحاول تاني
-            await new Promise(r => setTimeout(r, 500));
-            const { data: retrySession } = await sb.auth.getSession();
-            if (!retrySession || !retrySession.session) {
-                window.location.href = 'company-login.html';
-                return;
-            }
-            companyUserId = retrySession.session.user.id;
-        } else {
-            companyUserId = sessData.session.user.id;
+            window.location.href = 'company-login.html';
+            return;
         }
+        companyUserId = sessData.session.user.id;
 
         // Company + Internships + Applications - Promise.allSettled to handle failures gracefully
         const results = await Promise.allSettled([
-            sb.from('companies').select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency, suspended, suspended_until').eq('user_id', companyUserId).maybeSingle(),
+            sb.from('companies').select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency').eq('user_id', companyUserId).maybeSingle(),
             sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, description, duration, max_applicants, current_applicants, trainee_type, requirements, knowledge_benefits, financial_benefits, salary_min, salary_max, salary_currency, status, start_date, end_date, created_at, updated_at').eq('company_user_id', companyUserId).order('created_at', { ascending: false }),
             sb.from('applications').select('id, student_user_id, student_name, student_email, student_photo, student_university, student_cv_url, internship_id, company_name, internship_title, application_message, status, created_at, updated_at, interview_date, rejection_reason').eq('company_user_id', companyUserId).order('created_at', { ascending: false })
         ]);
@@ -480,32 +472,13 @@ async function loadAll(retryCount = 0) {
         const companyRes = results[0].status === 'fulfilled' ? results[0].value : { data: null };
         const internshipsRes = results[1].status === 'fulfilled' ? results[1].value : { data: [] };
         const applicationsRes = results[2].status === 'fulfilled' ? results[2].value : { data: [] };
-        
-        // Debug
-        console.log('Load:', 
-            'company:', companyRes.data ? '✓' : '✗',
-            'internships:', (internshipsRes.data || []).length,
-            'applications:', (applicationsRes.data || []).length
-        );
-        if (results[0].status === 'rejected') console.warn('Company error:', results[0].reason);
-        if (results[1].status === 'rejected') console.warn('Internships error:', results[1].reason);
-        if (results[2].status === 'rejected') console.warn('Applications error:', results[2].reason);
 
         companyData = companyRes.data;
         allInternships = internshipsRes.data || [];
         allApplications = applicationsRes.data || [];
 
         if (!companyData) {
-            // companies query فشلت لكن ممكن internships + applications نجحوا
-            // لو في retries متبقية، نحاول
-            if (retryCount < MAX_RETRIES) {
-                console.log(`Company data missing, retrying ${retryCount + 1}/${MAX_RETRIES}...`);
-                await new Promise(r => setTimeout(r, 1000));
-                return loadAll(retryCount + 1);
-            }
-            
-            showToast('خطأ في تحميل بيانات الشركة - حاول الـ refresh', 'error');
-            document.getElementById('loadingOverlay').classList.add('hidden');
+            showToast('خطأ في تحميل بيانات الشركة', 'error');
             return;
         }
 
@@ -524,39 +497,15 @@ async function loadAll(retryCount = 0) {
         document.getElementById('loadingOverlay').classList.add('hidden');
     } catch (err) {
         console.error('═══════════ LOAD ERROR ═══════════');
-        console.error('Error:', err);
-        console.error('Message:', err?.message);
-        console.error('═════════════════════════════════');
-        
-        // Retry mechanism
-        if (retryCount < MAX_RETRIES) {
-            console.log(`Retry ${retryCount + 1}/${MAX_RETRIES} after ${(retryCount + 1) * 1500}ms...`);
-            await new Promise(r => setTimeout(r, (retryCount + 1) * 1500));
-            return loadAll(retryCount + 1);
-        }
-        
+            console.error('Page:', window.location.pathname);
+            console.error('Error:', err);
+            console.error('Code:', err?.code);
+            console.error('Message:', err?.message);
+            console.error('Details:', err?.details);
+            console.error('Hint:', err?.hint);
+            console.error('═════════════════════════════════');
+        showToast('خطأ في تحميل البيانات', 'error');
         document.getElementById('loadingOverlay').classList.add('hidden');
-        
-        // نعرض error UI واضح مع زرار retry
-        const mainContent = document.querySelector('.main-content') || document.querySelector('main') || document.body;
-        const errorDiv = document.createElement('div');
-        errorDiv.id = 'loadErrorUI';
-        errorDiv.style.cssText = 'text-align:center;padding:60px 20px;max-width:500px;margin:40px auto;background:var(--card);border:1px solid var(--border);border-radius:14px';
-        errorDiv.innerHTML = `
-            <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:#f59e0b;margin-bottom:14px;display:block"></i>
-            <h3 style="color:var(--text);margin-bottom:8px">⚠️ فشل تحميل البيانات</h3>
-            <p style="color:var(--text-muted);margin-bottom:16px">${err?.message || 'مشكلة في الاتصال بالخادم'}</p>
-            <button onclick="document.getElementById('loadErrorUI').remove();document.getElementById('loadingOverlay').classList.remove('hidden');loadAll()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer">
-                <i class="fas fa-sync-alt"></i> إعادة المحاولة
-            </button>
-        `;
-        const existing = document.getElementById('loadErrorUI');
-        if (existing) existing.remove();
-        if (mainContent.firstChild) {
-            mainContent.insertBefore(errorDiv, mainContent.firstChild);
-        } else {
-            mainContent.appendChild(errorDiv);
-        }
     }
 }
 
@@ -570,17 +519,6 @@ function getDepartments() {
     let depts = trainingFields.map(field => {
         const details = trainingDetails[field] || {};
         const existingInt = allInternships.find(i => i.field === field || i.title === field);
-        
-        // نلاقي كل الطلبات المتعلقة بالقسم ده:
-        // 1. اللي عندها internship_id بيتطابق مع الـ internship بتاع القسم
-        // 2. أو اللي عنوان التدريب فيها بيطابق اسم القسم/المجال
-        const apps = allApplications.filter(a => {
-            // التطابق بـ internship_id
-            if (existingInt && a.internship_id === existingInt.id) return true;
-            // التطابق بـ internship_title
-            if (a.internship_title && (a.internship_title === field || a.internship_title.includes(field))) return true;
-            return false;
-        });
 
         return {
             field: field,
@@ -588,7 +526,7 @@ function getDepartments() {
             details: details,
             branchId: details.branchId || '',
             internship: existingInt,
-            apps: apps,
+            apps: allApplications.filter(a => a.internship_id === existingInt?.id || a.field === field),
             active: !existingInt || existingInt.status === 'active'
         };
     });
@@ -597,11 +535,6 @@ function getDepartments() {
     if (currentBranchId) {
         depts = depts.filter(d => d.branchId === currentBranchId);
     }
-    
-    // Debug log
-    console.log('Departments:', depts.length, 
-                'Total apps:', allApplications.length, 
-                'Apps mapped to depts:', depts.reduce((s, d) => s + d.apps.length, 0));
 
     return depts;
 }
@@ -1463,7 +1396,7 @@ setTimeout(() => {
         console.warn('⚠️ Loading timeout');
         el.classList.add('hidden');
     }
-}, 15000);
+}, 12000);
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -1472,5 +1405,23 @@ document.addEventListener('keydown', (e) => {
     }
 });
     </script>
+
+<script>
+    // Pending Applications Badge
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const sb = await window.ProVance.waitForSupabaseClient();
+            if (!sb) return;
+            const session = await window.ProVance.getSession();
+            if (!session) return;
+            const { count } = await sb.from("applications")
+                .select("id", { count: "exact", head: true })
+                .eq("company_user_id", session.user.id)
+                .eq("status", "pending");
+            const badge = document.getElementById("appsBadge");
+            if (badge && count > 0) { badge.textContent = count; badge.style.display = "inline-block"; }
+        } catch(e) {}
+    });
+</script>
 </body>
 </html>
