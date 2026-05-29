@@ -164,11 +164,11 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 <script src="supabase-config.js"></script>
 <script>
 (async () => {
-    // Auth
-    const auth = await window.ProVance.requireStudentAuth();
-    if (!auth) return;
-    const uid = auth.session.user.id;
-    const sb  = window.ProVance.sb;
+    // ── 1. Auth: استخدم session مباشرة بدون from('student') ──────
+    const sb = window.ProVance.sb;
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'student-login.html'; return; }
+    const uid = session.user.id;
 
     let all = [], filter = 'all';
 
@@ -176,6 +176,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
+    // ── 2. جيب الطلبات فوراً ──────────────────────────────────────
     async function load() {
         const { data, error } = await sb
             .from('applications')
