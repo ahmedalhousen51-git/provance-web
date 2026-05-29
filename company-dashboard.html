@@ -1474,23 +1474,22 @@
         }
     })();
     </script>
-
-<script>
-    // Pending Applications Badge
-    document.addEventListener("DOMContentLoaded", async () => {
+    <script>
+    // Badge: pending applications count
+    (async () => {
         try {
-            const sb = await window.ProVance.waitForSupabaseClient();
+            const sb = window.ProVance?.sb || window.getSB?.();
             if (!sb) return;
-            const session = await window.ProVance.getSession();
+            const { data: { session } } = await sb.auth.getSession();
             if (!session) return;
-            const { count } = await sb.from("applications")
-                .select("id", { count: "exact", head: true })
-                .eq("company_user_id", session.user.id)
-                .eq("status", "pending");
-            const badge = document.getElementById("appsBadge");
-            if (badge && count > 0) { badge.textContent = count; badge.style.display = "inline-block"; }
+            const { count } = await sb.from('applications')
+                .select('id', { count: 'exact', head: true })
+                .eq('company_user_id', session.user.id)
+                .eq('status', 'pending');
+            const b = document.getElementById('appsBadge');
+            if (b && count > 0) { b.textContent = count; b.style.display = 'inline-block'; }
         } catch(e) {}
-    });
-</script>
+    })();
+    </script>
 </body>
 </html>
