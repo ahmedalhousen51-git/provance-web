@@ -96,10 +96,14 @@ h1 i{color:var(--primary)}
       <h1><i class="fas fa-file-alt"></i> طلباتي</h1>
     </div>
     <div class="stats">
-      <div class="sc"><div class="sn" id="sT" style="color:var(--primary)">-</div><div class="sl">إجمالي</div></div>
-      <div class="sc"><div class="sn" id="sP" style="color:#fbbf24">-</div><div class="sl">قيد المراجعة</div></div>
+      <div class="sc"><div class="sn" id="sT" style="color:var(--primary)">-</div><div class="sl">إجمالي الطلبات</div></div>
+      <div class="sc" id="scPend"><div class="sn" id="sP" style="color:#fbbf24">-</div><div class="sl">قيد المراجعة <span style="font-size:.7rem;opacity:.7">(الحد 3)</span></div></div>
       <div class="sc"><div class="sn" id="sA" style="color:#34d399">-</div><div class="sl">مقبول / مقابلة</div></div>
       <div class="sc"><div class="sn" id="sR" style="color:#f87171">-</div><div class="sl">مرفوض</div></div>
+    </div>
+    <div id="limitWarn" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:12px;padding:12px 16px;margin-bottom:20px;font-size:.88rem;color:#f87171">
+        <i class="fas fa-exclamation-triangle"></i>
+        وصلت للحد الأقصى (3 طلبات نشطة). اسحب طلباً قبل التقديم على فرصة جديدة.
     </div>
     <div class="tabs">
       <button class="tab on" data-f="all">الكل</button>
@@ -196,10 +200,21 @@ async function loadAll() {
 }
 
 function stats() {
+    const pending = all.filter(a=>a.status==='pending').length;
     document.getElementById('sT').textContent = all.length;
-    document.getElementById('sP').textContent = all.filter(a=>a.status==='pending').length;
+    document.getElementById('sP').textContent = pending;
     document.getElementById('sA').textContent = all.filter(a=>['accepted','interview_scheduled'].includes(a.status)).length;
     document.getElementById('sR').textContent = all.filter(a=>a.status==='rejected').length;
+    // تحذير الحد الأقصى
+    const warn = document.getElementById('limitWarn');
+    const pCard = document.getElementById('scPend');
+    if (pending >= 3) {
+        if (warn) warn.style.display = 'block';
+        if (pCard) pCard.style.background = 'rgba(239,68,68,.1)';
+    } else {
+        if (warn) warn.style.display = 'none';
+        if (pCard) pCard.style.background = '';
+    }
 }
 
 function render() {
