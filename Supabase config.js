@@ -135,26 +135,6 @@
         }
     }
 
-    // Resilient session: محاولات متعددة + لا signOut على network errors
-    async function getResilientSession(maxRetries = 3) {
-        const sb = getSupabase();
-        if (!sb) return null;
-        
-        for (let i = 0; i < maxRetries; i++) {
-            try {
-                const { data: { session } } = await sb.auth.getSession();
-                if (session && session.user) return session;
-            } catch(e) {
-                console.warn('Session attempt', i + 1, 'failed:', e?.message);
-            }
-            if (i < maxRetries - 1) {
-                await new Promise(r => setTimeout(r, 500 * (i + 1)));
-            }
-        }
-        return null;
-    }
-    
-
     async function getUser() {
         const session = await getSession();
         return session ? session.user : null;
@@ -170,48 +150,20 @@
         if (!sb) { redirectTo('company-login.html'); return null; }
         const session = await getSession();
         if (!session) { redirectTo('company-login.html'); return null; }
-        
-        // محاولة جلب الـ company بـ retry للـ network errors
-        let company = null;
-        let networkError = false;
-        for (let i = 0; i < 3; i++) {
-            try {
-                const { data, error } = await sb.from('companies').select('*').eq('user_id', session.user.id).maybeSingle();
-                if (error) {
-                    if (error.message && (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('timeout'))) {
-                        networkError = true;
-                        await new Promise(r => setTimeout(r, 500 * (i + 1)));
-                        continue;
-                    }
-                    break;
-                }
-                company = data;
-                break;
-            } catch (e) {
-                networkError = true;
-                await new Promise(r => setTimeout(r, 500 * (i + 1)));
-            }
-        }
-        
-        // لو network error → ما نـ signOut → ارجع session بدون data
-        if (!company && networkError) {
-            console.warn('Network error fetching company data - continuing with session only');
-            return { session: session, company: null, networkError: true };
-        }
-        
+        const { data: company } = await sb.from('companies').select('*').eq('user_id', session.user.id).maybeSingle();
         if (!company) {
-            await sb.auth.signOut();
+            // لا تعمل signOut — ممكن ده طالب فتح صفحة شركة بالغلط
             redirectTo('company-login.html');
             return null;
         }
-        
         if (company.status === 'pending') {
             redirectTo('Company-pending.html');
             return null;
         }
         if (company.status === 'rejected') {
-            await sb.auth.signOut();
-            localStorage.clear();
+            // رفض حقيقي → signOut للشركة فقط وامسح بياناتها
+            try { await sb.auth.signOut(); } catch(e) {}
+            clearUserData('company');
             redirectTo('company-login.html');
             return null;
         }
@@ -223,45 +175,12 @@
         if (!sb) { redirectTo('student-login.html'); return null; }
         const session = await getSession();
         if (!session) { redirectTo('student-login.html'); return null; }
-        
-        // محاولة جلب الـ student بـ retry
-        let student = null;
-        let networkError = false;
-        for (let i = 0; i < 3; i++) {
-            try {
-                const { data, error } = await sb.from('student').select('*').eq('user_id', session.user.id).maybeSingle();
-                if (error) {
-                    // لو error من نوع network → نعتبره مؤقت
-                    if (error.message && (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('timeout'))) {
-                        networkError = true;
-                        await new Promise(r => setTimeout(r, 500 * (i + 1)));
-                        continue;
-                    }
-                    // أي error آخر = مشكلة دائمة
-                    break;
-                }
-                student = data;
-                break;
-            } catch (e) {
-                networkError = true;
-                await new Promise(r => setTimeout(r, 500 * (i + 1)));
-            }
-        }
-        
-        // لو الـ student فعلاً مش موجود (مش بسبب network) → signOut
-        if (!student && !networkError) {
-            await sb.auth.signOut();
+        const { data: student } = await sb.from('student').select('*').eq('user_id', session.user.id).maybeSingle();
+        if (!student) {
+            // لا تعمل signOut — ممكن ده user شركة فتح صفحة طالب بالغلط
             redirectTo('student-login.html');
             return null;
         }
-        
-        // لو network error بس → ما نـ signOut → نرجع session بدون student data
-        // الكود يقدر يكمّل ويحاول تاني بعدين
-        if (!student && networkError) {
-            console.warn('Network error fetching student data - continuing with session only');
-            return { session: session, student: null, networkError: true };
-        }
-        
         return { session: session, student: student };
     }
 
@@ -270,39 +189,24 @@
         if (!sb) { redirectTo('admin-login.html'); return null; }
         const session = await getSession();
         if (!session) { redirectTo('admin-login.html'); return null; }
-        
-        let admin = null;
-        let networkError = false;
-        for (let i = 0; i < 3; i++) {
-            try {
-                const { data, error } = await sb.from('admins').select('*').eq('user_id', session.user.id).maybeSingle();
-                if (error) {
-                    if (error.message && (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('timeout'))) {
-                        networkError = true;
-                        await new Promise(r => setTimeout(r, 500 * (i + 1)));
-                        continue;
-                    }
-                    break;
-                }
-                admin = data;
-                break;
-            } catch (e) {
-                networkError = true;
-                await new Promise(r => setTimeout(r, 500 * (i + 1)));
-            }
-        }
-        
-        if (!admin && networkError) {
-            console.warn('Network error fetching admin data - continuing with session only');
-            return { session: session, admin: null, networkError: true };
-        }
-        
+        const { data: admin } = await sb.from('admins').select('*').eq('user_id', session.user.id).maybeSingle();
         if (!admin) {
-            await sb.auth.signOut();
+            // لا تعمل signOut — ممكن ده طالب أو شركة فتح صفحة أدمن
             redirectTo('admin-login.html');
             return null;
         }
         return { session: session, admin: admin };
+    }
+
+    // امسح بس بيانات اليوزر الحالي من localStorage
+    function clearUserData(type) {
+        const keysToRemove = [
+            'userType', 'userEmail', 'userName', 'isLoggedIn',
+            'userId', 'rememberMe', 'studentName', 'pendingEmail',
+            'pending_profile_data', 'pending_profile_email',
+            'companyId', 'companyName'
+        ];
+        keysToRemove.forEach(k => { try { localStorage.removeItem(k); } catch(e) {} });
     }
 
     async function logout(redirectUrl) {
@@ -310,7 +214,8 @@
         if (sb) {
             try { await sb.auth.signOut(); } catch (e) {}
         }
-        try { localStorage.clear(); } catch (e) {}
+        // امسح بيانات اليوزر بس مش كل الـ localStorage
+        clearUserData();
         if (redirectUrl) window.location.href = redirectUrl;
     }
 
@@ -454,12 +359,12 @@
         loadSupabaseLibrary: loadSupabaseLibrary,
         get sb() { return getSupabase(); },
         getSession: getSession,
-        getResilientSession: getResilientSession,
         getUser: getUser,
         requireCompanyAuth: requireCompanyAuth,
         requireStudentAuth: requireStudentAuth,
         requireAdminAuth: requireAdminAuth,
         logout: logout,
+        clearUserData: clearUserData,
         showToast: showToast,
         confirmModal: confirmModal,
         escapeHtml: escapeHtml,
