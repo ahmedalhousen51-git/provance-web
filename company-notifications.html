@@ -535,7 +535,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 })();
     </script>
     <script>
-    // Badge: pending applications count
+    // Badge: new applications count (pending + reviewing + interview_scheduled)
     (async () => {
         try {
             const sb = window.ProVance?.sb || window.getSB?.();
@@ -545,9 +545,12 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
             const { count } = await sb.from('applications')
                 .select('id', { count: 'exact', head: true })
                 .eq('company_user_id', session.user.id)
-                .eq('status', 'pending');
+                .in('status', ['pending', 'reviewing', 'interview_scheduled']);
             const b = document.getElementById('appsBadge');
-            if (b && count > 0) { b.textContent = count; b.style.display = 'inline-block'; }
+            if (b) {
+                if (count > 0) { b.textContent = count; b.style.display = 'inline-block'; }
+                else { b.style.display = 'none'; }
+            }
         } catch(e) {}
     })();
     </script>
