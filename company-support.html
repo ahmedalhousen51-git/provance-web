@@ -72,40 +72,39 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 <div class="bg-anim"></div>
 <div class="layout">
     <aside class="sidebar" id="sidebar">
-            <div class="sidebar-logo">
-                <div class="logo-wrapper">
-                    <div class="logo-icon">
-                        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#ef4444"/>
-                                    <stop offset="100%" stop-color="#dc2626"/>
-                                </linearGradient>
-                            </defs>
-                            <path d="M16 2 L28 8 V20 Q28 26 16 30 Q4 26 4 20 V8 Z" fill="url(#logoGrad)" stroke="#fff" stroke-width="0.5" opacity="0.95"/>
-                            <text x="16" y="20" text-anchor="middle" font-family="Cairo, sans-serif" font-size="14" font-weight="900" fill="#fff">P</text>
-                        </svg>
-                    </div>
-                    <div class="logo-text">
-                        <div class="logo-brand">ProVance</div>
-                        <div class="logo-tagline">منصة التدريب</div>
-                    </div>
+        <div class="sidebar-logo">
+            <div class="logo-wrapper">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#ef4444"/><stop offset="100%" stop-color="#dc2626"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M16 2 L28 8 V20 Q28 26 16 30 Q4 26 4 20 V8 Z" fill="url(#logoGrad)" stroke="#fff" stroke-width="0.5" opacity="0.95"/>
+                        <text x="16" y="20" text-anchor="middle" font-family="Cairo, sans-serif" font-size="14" font-weight="900" fill="#fff">P</text>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <div class="logo-brand">ProVance</div>
+                    <div class="logo-tagline">منصة التدريب</div>
                 </div>
             </div>
-            <a href="company-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
-            <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
+        </div>
+        <a href="company-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
+        <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
             <a href="company-talent-search.html" class="nav-item"><i class="fas fa-search"></i> البحث عن المواهب</a>
-            <a href="company-requests-control.html" class="nav-item"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
-            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم</a>
-            <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
-            <a href="company-QR_Code.html" class="nav-item"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
-            <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
-            <a href="company-support.html" class="nav-item active"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
-            <a href="company-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
-            <a href="#" onclick="logoutCompany(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
-                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
-            </a>
-        </aside>
+        <a href="company-requests-control.html" class="nav-item"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
+            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم <span class="nav-badge" id="appsBadge" style="display:none"></span></a>
+        <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
+        <a href="company-QR_Code.html" class="nav-item"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
+        <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
+        <a href="company-support.html" class="nav-item active"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
+        <a href="company-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+        <a href="#" onclick="logoutCompany(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
+            <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+        </a>
+    </aside>
 
     <main class="main">
         <div class="topbar">
@@ -364,6 +363,24 @@ document.getElementById('messageInput')?.addEventListener('keydown', (e) => {
         document.querySelector('.send-form').requestSubmit();
     }
 });
+</script>
+
+<script>
+    // Pending Applications Badge
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const sb = await window.ProVance.waitForSupabaseClient();
+            if (!sb) return;
+            const session = await window.ProVance.getSession();
+            if (!session) return;
+            const { count } = await sb.from("applications")
+                .select("id", { count: "exact", head: true })
+                .eq("company_user_id", session.user.id)
+                .eq("status", "pending");
+            const badge = document.getElementById("appsBadge");
+            if (badge && count > 0) { badge.textContent = count; badge.style.display = "inline-block"; }
+        } catch(e) {}
+    });
 </script>
 </body>
 </html>
