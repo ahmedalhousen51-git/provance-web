@@ -102,7 +102,7 @@ h1 i{color:var(--primary)}
       <div class="sc"><div class="sn" id="sR" style="color:#f87171">-</div><div class="sl">مرفوض</div></div>
     </div>
     <div class="tabs">
-      <button class="tab on"  data-f="all">الكل</button>
+      <button class="tab on" data-f="all">الكل</button>
       <button class="tab" data-f="pending">قيد المراجعة</button>
       <button class="tab" data-f="interview_scheduled">مقابلة</button>
       <button class="tab" data-f="accepted">مقبول</button>
@@ -113,38 +113,57 @@ h1 i{color:var(--primary)}
   </main>
 </div>
 
-<!-- نفس الـ CDN بالظبط زي student-dashboard.html -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script>
-// نفس الـ pattern بالظبط زي student-dashboard.html
-const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
-});
-
-let uid = null, all = [], filter = 'all';
+// ═══════════════════════════════════════════════════════════
+// نفس الـ pattern بالظبط من student-internship.html
+// ═══════════════════════════════════════════════════════════
+let studentUserId = null;
+let all = [], filter = 'all';
 
 function esc(s) {
     return String(s||'').replace(/[&<>"']/g,
         c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-async function init() {
-    const { data: sessData } = await sb.auth.getSession();
-    if (!sessData?.session) {
+async function loadAll() {
+    // نفس منطق الـ client initialization من student-internship
+    let sb = null;
+    if (window.ProVance?.waitForSupabaseClient) {
+        try { sb = await window.ProVance.waitForSupabaseClient(15000); } catch(e) {}
+    }
+    if (!sb && typeof supabase !== 'undefined' && supabase.createClient) {
+        try {
+            sb = supabase.createClient(
+                'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                { auth: { persistSession: true, storage: window.localStorage } }
+            );
+        } catch(e) {}
+    }
+    if (!sb) {
+        if (!window._pageRetried) {
+            window._pageRetried = true;
+            setTimeout(() => location.reload(), 3000);
+        }
+        return;
+    }
+
+    // نفس getSession من student-internship
+    const session = await sb.auth.getSession();
+    const userId = session?.data?.session?.user?.id;
+    if (!userId) {
         window.location.href = 'student-login.html';
         return;
     }
-    uid = sessData.session.user.id;
-    await loadApps();
-}
+    studentUserId = userId;
 
-async function loadApps() {
+    // جيب الطلبات
     const { data, error } = await sb
         .from('applications')
         .select('id,company_name,company_logo,internship_title,application_message,status,rejection_reason,interview_date,interview_location,interview_notes,created_at')
-        .eq('student_user_id', uid)
+        .eq('student_user_id', studentUserId)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -155,21 +174,40 @@ async function loadApps() {
     all = data || [];
     stats();
     render();
+
+    // Withdraw handler
+    window.doWithdraw = async (id) => {
+        if (!confirm('هل تريد سحب هذا الطلب؟')) return;
+        const { error: e } = await sb.from('applications')
+            .update({ status:'withdrawn', updated_at: new Date().toISOString() })
+            .eq('id', id).eq('student_user_id', studentUserId);
+        if (e) { alert('خطأ: ' + e.message); return; }
+        await loadAll();
+    };
+
+    // Logout
+    window.doLogout = async (ev) => {
+        ev.preventDefault();
+        if (!confirm('هل تريد تسجيل الخروج؟')) return;
+        try { await sb.auth.signOut(); } catch {}
+        localStorage.clear();
+        window.location.href = 'student-login.html';
+    };
 }
 
 function stats() {
     document.getElementById('sT').textContent = all.length;
-    document.getElementById('sP').textContent = all.filter(a => a.status === 'pending').length;
-    document.getElementById('sA').textContent = all.filter(a => ['accepted','interview_scheduled'].includes(a.status)).length;
-    document.getElementById('sR').textContent = all.filter(a => a.status === 'rejected').length;
+    document.getElementById('sP').textContent = all.filter(a=>a.status==='pending').length;
+    document.getElementById('sA').textContent = all.filter(a=>['accepted','interview_scheduled'].includes(a.status)).length;
+    document.getElementById('sR').textContent = all.filter(a=>a.status==='rejected').length;
 }
 
 function render() {
-    const items = filter === 'all' ? all : all.filter(a => a.status === filter);
+    const items = filter==='all' ? all : all.filter(a=>a.status===filter);
     const el = document.getElementById('list');
     if (!items.length) {
         el.innerHTML = '<div class="empty"><i class="fas fa-folder-open"></i>' +
-            '<h3>' + (filter==='all' ? 'لم تقدم على أي فرصة بعد' : 'لا توجد طلبات بهذه الحالة') + '</h3>' +
+            '<h3>' + (filter==='all' ? 'لم تقدم على أي فرصة بعد' : 'لا توجد طلبات') + '</h3>' +
             (filter==='all' ? '<a href="student-internship.html" class="btn" style="background:var(--gradient);color:#fff;margin-top:16px;display:inline-flex"><i class="fas fa-search"></i> تصفح الفرص</a>' : '') +
             '</div>';
         return;
@@ -191,8 +229,8 @@ function render() {
             <div class="box bok">
                 <div class="bok-t"><i class="fas fa-calendar-check"></i> تفاصيل المقابلة</div>
                 <div class="row"><i class="fas fa-clock"></i><span>${new Date(a.interview_date).toLocaleString('ar-EG')}</span></div>
-                ${a.interview_location ? '<div class="row"><i class="fas fa-map-marker-alt"></i><span>'+esc(a.interview_location)+'</span></div>' : ''}
-                ${a.interview_notes   ? '<div class="row"><i class="fas fa-sticky-note"></i><span>'  +esc(a.interview_notes)  +'</span></div>' : ''}
+                ${a.interview_location?'<div class="row"><i class="fas fa-map-marker-alt"></i><span>'+esc(a.interview_location)+'</span></div>':''}
+                ${a.interview_notes?'<div class="row"><i class="fas fa-sticky-note"></i><span>'+esc(a.interview_notes)+'</span></div>':''}
             </div>` : '';
         const rj = a.status==='rejected' && a.rejection_reason ? `
             <div class="box berr">
@@ -208,44 +246,27 @@ function render() {
             </div>
             <span class="badge ${cls}"><i class="fas ${ico}"></i> ${lbl}</span>
         </div><div class="cbody">
-            ${a.application_message ? '<div class="row"><i class="fas fa-comment-dots"></i><span>'+esc(a.application_message.substring(0,100))+(a.application_message.length>100?'...':'')+'</span></div>' : ''}
+            ${a.application_message?'<div class="row"><i class="fas fa-comment-dots"></i><span>'+esc(a.application_message.substring(0,100))+(a.application_message.length>100?'...':'')+'</span></div>':''}
             ${iv}${rj}
             <div class="acts">
                 <a href="student-internship.html" class="btn btn-s"><i class="fas fa-search"></i> فرص أخرى</a>
-                ${a.status==='pending' ? '<button class="btn btn-d" onclick="doWithdraw(\''+a.id+'\')"><i class="fas fa-times"></i> سحب الطلب</button>' : ''}
+                ${a.status==='pending'?'<button class="btn btn-d" onclick="doWithdraw(\''+a.id+'\')"><i class="fas fa-times"></i> سحب الطلب</button>':''}
             </div>
         </div></div>`;
     }).join('');
 }
 
-window.doWithdraw = async (id) => {
-    if (!confirm('هل تريد سحب هذا الطلب؟')) return;
-    const { error } = await sb.from('applications')
-        .update({ status: 'withdrawn', updated_at: new Date().toISOString() })
-        .eq('id', id).eq('student_user_id', uid);
-    if (error) { alert('خطأ: ' + error.message); return; }
-    await loadApps();
-};
-
 document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
         t.classList.add('on');
         filter = t.dataset.f;
         render();
     });
 });
 
-window.doLogout = async (e) => {
-    e.preventDefault();
-    if (!confirm('هل تريد تسجيل الخروج؟')) return;
-    try { await sb.auth.signOut(); } catch {}
-    localStorage.clear();
-    window.location.href = 'student-login.html';
-};
-
-// ── ابدأ ──────────────────────────────────────────────────────
-init();
+// ── ابدأ ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', loadAll);
 </script>
 </body>
 </html>
