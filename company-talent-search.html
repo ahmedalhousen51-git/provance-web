@@ -668,7 +668,7 @@
             <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
             <a href="company-talent-search.html" class="nav-item active"><i class="fas fa-search"></i> البحث عن المواهب</a>
             <a href="company-requests-control.html" class="nav-item"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
-            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم</a>
+            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم <span class="nav-badge" id="appsBadge" style="display:none"></span></a>
             <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
             <a href="company-QR_Code.html" class="nav-item"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
             <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
@@ -710,7 +710,7 @@
                 <div style="width:50px;height:50px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#fff;flex-shrink:0"><i class="fas fa-search-plus"></i></div>
                 <div style="flex:1;min-width:200px">
                     <div style="font-weight:800;font-size:1.05rem">ابحث في كل طلاب المنصة 🔍</div>
-                    <div style="color:var(--text-muted);font-size:0.88rem;margin-top:4px">دور بفلاتر ذكية واتواصل مع أي طالب مناسب لشركتك.</div>
+                    <div style="color:var(--text-muted);font-size:0.88rem;margin-top:4px">دور بفلاتر ذكية واتواصل مع أي طالب مناسب لشركتك. بياناتهم محمية (مفيش phone/email).</div>
                 </div>
             </div>
 
@@ -982,22 +982,6 @@ async function loadAll() {
             .select('user_id, full_name, photo, birth_date, gender, university, faculty, major, gpa, study_year, graduation_year, city, country, education_level, interested_fields, skills, languages, bio, linkedin, github, portfolio, cv_url, year_of_study, training_status, status, created_at')
             .eq('status', 'active')
             .order('created_at', { ascending: false });
-
-        // جيب عدد التدريبات المكتملة لكل طالب
-        let completedCountMap = {};
-        try {
-            const { data: appData } = await sb
-                .from('applications')
-                .select('student_id')
-                .eq('status', 'completed');
-            if (appData) {
-                appData.forEach(a => {
-                    completedCountMap[a.student_id] = (completedCountMap[a.student_id] || 0) + 1;
-                });
-            }
-        } catch(e) {
-            console.warn('Could not load completed trainings:', e.message);
-        }
         
         hideLoading();
         
@@ -1007,11 +991,7 @@ async function loadAll() {
             return;
         }
         
-        allStudents = (data || []).map(s => ({
-            ...s,
-            completeness: calculateCompleteness(s),
-            completedTrainings: completedCountMap[s.user_id] || 0
-        }));
+        allStudents = (data || []).map(s => ({ ...s, completeness: calculateCompleteness(s) }));
         console.log('✓ Loaded', allStudents.length, 'students');
         
         populateFilters();
@@ -1202,10 +1182,6 @@ function renderStudents() {
             'in_training': '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 8px;border-radius:12px;font-size:0.72rem;font-weight:700">🎓 يتدرب</span>',
             'completed': '<span style="background:rgba(79,172,254,0.15);color:#4facfe;padding:3px 8px;border-radius:12px;font-size:0.72rem;font-weight:700">✓ أكمل</span>'
         }[s.training_status] || '';
-
-        const completedBadge = s.completedTrainings > 0
-            ? '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 8px;border-radius:12px;font-size:0.72rem;font-weight:700"><i class="fas fa-award"></i> تدرّب ' + s.completedTrainings + (s.completedTrainings === 1 ? ' مرة' : ' مرات') + '</span>'
-            : '';
         
         const interests = Array.isArray(s.interested_fields) ? s.interested_fields.slice(0, 3) : [];
         const skills = Array.isArray(s.skills) ? s.skills.slice(0, 3) : [];
@@ -1237,7 +1213,7 @@ function renderStudents() {
                 '</div>' +
             '</div>' +
             
-            (trainingBadge || completedBadge || s.gpa ? '<div style="display:flex;gap:6px;flex-wrap:wrap">' + trainingBadge + completedBadge +
+            (trainingBadge || s.gpa ? '<div style="display:flex;gap:6px;flex-wrap:wrap">' + trainingBadge + 
                 (s.gpa ? '<span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:3px 8px;border-radius:12px;font-size:0.72rem;font-weight:700"><i class="fas fa-star"></i> GPA: ' + esc(s.gpa) + '</span>' : '') +
             '</div>' : '') +
             
@@ -1291,22 +1267,13 @@ window.viewStudent = (userId) => {
                         (s.training_status === 'looking' ? '<span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:4px 10px;border-radius:14px;font-size:0.78rem;font-weight:700">🔍 يبحث عن تدريب</span>' : '') +
                         (s.training_status === 'in_training' ? '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:4px 10px;border-radius:14px;font-size:0.78rem;font-weight:700">🎓 يتدرب حالياً</span>' : '') +
                         (s.training_status === 'completed' ? '<span style="background:rgba(79,172,254,0.15);color:#4facfe;padding:4px 10px;border-radius:14px;font-size:0.78rem;font-weight:700">✓ أكمل تدريب سابق</span>' : '') +
-                        (s.completedTrainings > 0 ? '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:4px 10px;border-radius:14px;font-size:0.78rem;font-weight:700"><i class="fas fa-award"></i> تدرّب ' + s.completedTrainings + (s.completedTrainings === 1 ? ' مرة' : ' مرات') + '</span>' : '') +
                     '</div>' +
                 '</div>' +
             '</div>' +
             
-            (s.completedTrainings > 0 ?
-                '<div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">' +
-                    '<i class="fas fa-award" style="font-size:1.5rem;color:#10b981"></i>' +
-                    '<div>' +
-                        '<div style="font-weight:800;font-size:0.95rem;color:#10b981">خبرة تدريبية</div>' +
-                        '<div style="color:var(--text-muted);font-size:0.85rem">أتمّ هذا الطالب <strong style="color:#10b981">' + s.completedTrainings + '</strong> ' + (s.completedTrainings === 1 ? 'تدريب' : 'تدريبات') + ' بنجاح</div>' +
-                    '</div>' +
-                '</div>'
-            : '') +
-
             '<!-- Privacy Notice -->' +
+            '<div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:10px;border-radius:8px;margin-bottom:14px;font-size:0.84rem;color:#f59e0b"><i class="fas fa-shield-alt"></i> <strong>للخصوصية:</strong> بيانات التواصل (هاتف، إيميل) مخفية. للتواصل مع الطالب، اعرض فرصة تدريب وانتظره يقدّم.</div>' +
+            
             (s.bio ? '<h4 style="font-size:0.95rem;margin-bottom:8px;color:var(--primary)"><i class="fas fa-pen-fancy"></i> نبذة عني</h4><p style="background:var(--bg-card);padding:12px;border-radius:8px;color:var(--text-muted);line-height:1.7;font-size:0.92rem;margin-bottom:14px">' + esc(s.bio) + '</p>' : '') +
             
             '<h4 style="font-size:0.95rem;margin-bottom:10px;color:var(--primary)"><i class="fas fa-id-card"></i> البيانات الشخصية</h4>' +
@@ -1362,6 +1329,24 @@ window.closeProfileModal = () => {
     renderSkillTags();
 })();
 
+</script>
+
+<script>
+    // Pending Applications Badge
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const sb = await window.ProVance.waitForSupabaseClient();
+            if (!sb) return;
+            const session = await window.ProVance.getSession();
+            if (!session) return;
+            const { count } = await sb.from("applications")
+                .select("id", { count: "exact", head: true })
+                .eq("company_user_id", session.user.id)
+                .eq("status", "pending");
+            const badge = document.getElementById("appsBadge");
+            if (badge && count > 0) { badge.textContent = count; badge.style.display = "inline-block"; }
+        } catch(e) {}
+    });
 </script>
 </body>
 </html>
