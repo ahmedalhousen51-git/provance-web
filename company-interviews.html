@@ -665,7 +665,7 @@
             <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
             <a href="company-talent-search.html" class="nav-item"><i class="fas fa-search"></i> البحث عن المواهب</a>
             <a href="company-requests-control.html" class="nav-item"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
-            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم</a>
+            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم <span class="nav-badge" id="appsBadge" style="display:none"></span></a>
             <a href="company-interviews.html" class="nav-item active"><i class="fas fa-calendar-check"></i> المقابلات</a>
             <a href="company-QR_Code.html" class="nav-item"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
             <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
@@ -984,34 +984,13 @@
     // ============ STATS ============
     function updateStats() {
         const now = Date.now();
-        // استخدم أحدث data من window._state أو fallback للـ local
-        let data;
-        try {
-            data = (window._state && window._state.allInterviews) ? window._state.allInterviews : allInterviews;
-        } catch(e) {
-            data = (window._state && window._state.allInterviews) || [];
-        }
-        
-        // 🔍 Debug: شوف الـ data و الـ dates
-        if (data.length > 0) {
-            console.log('📊 updateStats data:', data.length, 'items');
-            data.forEach((i, idx) => {
-                const d = i.interview_date ? new Date(i.interview_date) : null;
-                console.log(`  ${idx+1}. status=${i.status}, interview_date=${i.interview_date}, parsed=${d}, isFuture=${d && d.getTime() > now}`);
-            });
-        }
-        
-        // ✅ Upcoming = أي مقابلة status='interview_scheduled' (في انتظار التنفيذ)
-        const upcoming = data.filter(i => i.status === 'interview_scheduled');
-        // Past = اللي اتعملت أو اتلغت
-        const past = data.filter(i => i.status !== 'interview_scheduled');
-        console.log('📊 upcoming:', upcoming.length, 'past:', past.length);
+        const upcoming = allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
+        const past = allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
         const attended = past.filter(i => ['interview_done', 'accepted', 'hired', 'in_training', 'completed'].includes(i.status));
-        // Missed = اللي status='rejected' بسبب غياب (محسبية على past)
-        const missed = past.filter(i => i.status === 'rejected' && (i.rejection_reason || '').includes('حضر'));
+        const missed = past.filter(i => i.status === 'interview_scheduled');
         const rate = past.length ? Math.round(attended.length / past.length * 100) : 0;
 
-        document.getElementById('statTotal').textContent = data.length;
+        document.getElementById('statTotal').textContent = allInterviews.length;
         document.getElementById('statUpcoming').textContent = upcoming.length;
         document.getElementById('statAttended').textContent = attended.length;
         document.getElementById('statMissed').textContent = missed.length;
@@ -1019,7 +998,7 @@
 
         const today = new Date(); today.setHours(0,0,0,0);
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-        const todayInts = data.filter(i => {
+        const todayInts = allInterviews.filter(i => {
             if (!i.interview_date) return false;
             const d = new Date(i.interview_date);
             return d >= today && d < tomorrow;
@@ -1028,14 +1007,7 @@
         document.getElementById('upcomingCount').textContent = upcoming.length;
         document.getElementById('todayCount').textContent = todayInts.length;
         document.getElementById('pastCount').textContent = past.length;
-        // استخدم window._state أو local fallback
-        let lateData;
-        try {
-            lateData = (window._state && window._state.allLateReports) ? window._state.allLateReports : (window._allLateReports || allLateReports);
-        } catch(e) {
-            lateData = (window._state && window._state.allLateReports) || window._allLateReports || [];
-        }
-        document.getElementById('lateCount').textContent = lateData.length;
+        document.getElementById('lateCount').textContent = allLateReports.length;
     }
 
     // ============ RENDER INTERVIEW CARD ============
@@ -1096,22 +1068,15 @@
         }
 
         let actions = '';
-        // أزرار للمقابلات المجدولة (في أي وقت)
-        if (i.status === 'interview_scheduled') {
+        if (isUpcoming || qrStillValid) {
+            actions += `<button class="btn btn-primary btn-sm" onclick="generateQRCode('${i.id}')"><i class="fas fa-qrcode"></i> QR Code</button>`;
+            actions += `<button class="btn btn-secondary btn-sm" onclick="openRescheduleModal('${i.id}')"><i class="fas fa-edit"></i> تعديل</button>`;
+        } else if (isPast && i.status === 'interview_scheduled') {
             actions += `<button class="btn btn-success btn-sm" onclick="markAttended('${i.id}')"><i class="fas fa-check"></i> حضر</button>`;
             actions += `<button class="btn btn-danger btn-sm" onclick="markMissed('${i.id}')"><i class="fas fa-times"></i> غاب</button>`;
-            if (isUpcoming || qrStillValid || !i.interview_date) {
-                actions += `<button class="btn btn-primary btn-sm" onclick="generateQRCode('${i.id}')"><i class="fas fa-qrcode"></i> QR Code</button>`;
-            }
-            actions += `<button class="btn btn-secondary btn-sm" onclick="openRescheduleModal('${i.id}')"><i class="fas fa-edit"></i> تعديل المعاد</button>`;
         }
         if (i.status === 'interview_done') {
             actions += `<button class="btn btn-success btn-sm" onclick="openDecisionModal('${i.id}')"><i class="fas fa-gavel"></i> اتخاذ قرار</button>`;
-            actions += `<button class="btn btn-secondary btn-sm" onclick="openRescheduleModal('${i.id}')"><i class="fas fa-redo"></i> مقابلة جديدة</button>`;
-        }
-        // لو مرفوض بسبب غياب - زرار "إعادة الجدولة"
-        if (i.status === 'rejected' && i.rejection_reason && i.rejection_reason.includes('حضر')) {
-            actions += `<button class="btn btn-secondary btn-sm" onclick="reopenInterview('${i.id}')"><i class="fas fa-redo"></i> إعادة جدولة المقابلة</button>`;
         }
         actions += `<button class="btn btn-info btn-sm" onclick="viewInterviewDetails('${i.id}')"><i class="fas fa-eye"></i> التفاصيل</button>`;
 
@@ -1158,14 +1123,7 @@
         const today = new Date(); today.setHours(0,0,0,0);
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
 
-        // استخدم أحدث data من window._state أو fallback
-        let dataSrc;
-        try {
-            dataSrc = (window._state && window._state.allInterviews) ? window._state.allInterviews : allInterviews;
-        } catch(e) {
-            dataSrc = (window._state && window._state.allInterviews) || [];
-        }
-        let filtered = dataSrc.slice();
+        let filtered = allInterviews.slice();
 
         if (search) {
             filtered = filtered.filter(i =>
@@ -1205,18 +1163,13 @@
             filtered.sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
         }
 
-        // ✅ Upcoming = status='interview_scheduled' (في انتظار التنفيذ)
-        const upcoming = filtered.filter(i => i.status === 'interview_scheduled');
-        // Today = upcoming لها date اليوم
+        const upcoming = filtered.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
         const todayInts = filtered.filter(i => {
-            if (i.status !== 'interview_scheduled') return false;
             if (!i.interview_date) return false;
             const d = new Date(i.interview_date);
             return d >= today && d < tomorrow;
         });
-        // Past = اللي اتعملت (interview_done/accepted/rejected/etc)
-        const past = filtered.filter(i => i.status !== 'interview_scheduled');
-        console.log('📋 render upcoming:', upcoming.length, 'today:', todayInts.length, 'past:', past.length);
+        const past = filtered.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
 
         document.getElementById('upcomingGrid').innerHTML = upcoming.length === 0
             ? '<div class="empty-state"><i class="fas fa-calendar-plus"></i><h3>لا توجد مقابلات قادمة</h3><p>اضغط "جدولة مقابلة جديدة" لإضافة مقابلة</p></div>'
@@ -1235,14 +1188,7 @@
 
     function renderLateReports() {
         const list = document.getElementById('lateReportsList');
-        // استخدم window._state أو local fallback
-        let lateData;
-        try {
-            lateData = (window._state && window._state.allLateReports) ? window._state.allLateReports : (window._allLateReports || allLateReports);
-        } catch(e) {
-            lateData = (window._state && window._state.allLateReports) || window._allLateReports || [];
-        }
-        if (lateData.length === 0) {
+        if (allLateReports.length === 0) {
             list.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>لا توجد تقارير تأخير</h3><p>هنا تظهر التقارير لما يحصل تأخير</p></div>';
             return;
         }
@@ -1252,7 +1198,7 @@
             'both': 'الطرفين', 'force_majeure': 'قوة قاهرة'
         };
 
-        list.innerHTML = lateData.map(r => `
+        list.innerHTML = allLateReports.map(r => `
             <div class="late-report-card">
                 <div class="late-icon"><i class="fas fa-exclamation-triangle"></i></div>
                 <div class="late-body">
@@ -1310,11 +1256,10 @@
 
     // Expose state for part 2
     window._interviewsState = {
-        get companyUserId() { return companyUserId || window._companyUserId; },
-        get companyName() { return companyName || window._companyName; },
-        get allInterviews() { if (window._state && window._state.allInterviews) return window._state.allInterviews; try { return allInterviews; } catch(e) { return []; } },
-        get allQrCodes() { if (window._state && window._state.allQrCodes) return window._state.allQrCodes; try { return allQrCodes; } catch(e) { return []; } },
-        get allLateReports() { if (window._state && window._state.allLateReports) return window._state.allLateReports; try { return allLateReports; } catch(e) { return []; } },
+        get companyUserId() { return companyUserId; },
+        get companyName() { return companyName; },
+        get allInterviews() { return allInterviews; },
+        get allQrCodes() { return allQrCodes; },
         get dataPolicy() { return dataPolicy; },
         set dataPolicy(v) { dataPolicy = v; },
         addLog,
@@ -1452,8 +1397,7 @@
                 if (error) throw error;
 
                 // أنشئ QR Code
-                // كود فريد مع شركة + interview ID للتتبع
-                const qrCodeStr = 'PV-INT-' + interviewId.substring(0, 8) + '-' + Date.now().toString(36).toUpperCase();
+                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
                 const validUntil = new Date(interviewDate.getTime() + 60 * 60 * 1000);
                 const app = State.allInterviews.find(a => a.id === appId);
 
@@ -1573,8 +1517,7 @@
                 await sb.from('qr_codes').update({ status: 'cancelled' })
                     .eq('application_id', appId).eq('qr_type', 'interview').eq('status', 'active');
 
-                // كود فريد مع شركة + interview ID للتتبع
-                const qrCodeStr = 'PV-INT-' + interviewId.substring(0, 8) + '-' + Date.now().toString(36).toUpperCase();
+                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
                 const validUntil = new Date(newDate.getTime() + 60 * 60 * 1000);
 
                 await sb.from('qr_codes').insert({
@@ -1623,7 +1566,7 @@
                         <div class="modal-header">
                             <div class="modal-title">
                                 <i class="fas fa-gavel"></i>
-                                <span>اتخاذ قرار - ${esc(interview.student_name)}</span>
+                                <span>اتخاذ قرار</span>
                             </div>
                             <button class="modal-close" onclick="closeModal('decisionModal')"><i class="fas fa-times"></i></button>
                         </div>
@@ -1641,15 +1584,15 @@
                         </div>
 
                         <div class="decision-buttons">
-                            <div class="decision-btn accept" onclick="openAcceptForm('${appId}')">
+                            <div class="decision-btn accept" onclick="confirmDecision('${appId}', 'accept')">
                                 <div class="decision-btn-icon"><i class="fas fa-check"></i></div>
-                                <div class="decision-btn-title">قبول وبدء التدريب</div>
-                                <div class="decision-btn-desc">حدد مواعيد التدريب</div>
+                                <div class="decision-btn-title">قبول</div>
+                                <div class="decision-btn-desc">قبول الطالب وبدء التدريب</div>
                             </div>
-                            <div class="decision-btn reject" onclick="openRejectForm('${appId}')">
+                            <div class="decision-btn reject" onclick="confirmDecision('${appId}', 'reject')">
                                 <div class="decision-btn-icon"><i class="fas fa-times"></i></div>
                                 <div class="decision-btn-title">رفض</div>
-                                <div class="decision-btn-desc">رفض مع توضيح السبب</div>
+                                <div class="decision-btn-desc">رفض الطالب مع توضيح السبب</div>
                             </div>
                         </div>
                     </div>
@@ -1658,416 +1601,18 @@
             renderModal(html);
         };
 
-        // ============ ACCEPT FORM (تفاصيل التدريب) ============
-        window.openAcceptForm = (appId) => {
-            closeModal('decisionModal');
-            const interview = State.allInterviews.find(i => i.id === appId);
-            if (!interview) return;
-
-            const today = new Date().toISOString().slice(0, 10);
-            const monthLater = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
-
-            const html = `
-                <div class="modal active" id="acceptFormModal">
-                    <div class="modal-content" style="max-width:560px">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                <i class="fas fa-check-circle" style="color:#10b981"></i>
-                                <span>قبول الطالب - تفاصيل التدريب</span>
-                            </div>
-                            <button class="modal-close" onclick="closeModal('acceptFormModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div style="padding:12px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:10px;margin-bottom:14px;font-size:0.88rem">
-                            <i class="fas fa-info-circle" style="color:#10b981"></i> 
-                            ${esc(interview.student_name)} - ${esc(interview.internship_title)}
-                        </div>
-
-                        <!-- تاريخ البداية والنهاية -->
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-                            <div>
-                                <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
-                                    <i class="fas fa-calendar-day" style="color:#10b981"></i> تاريخ البداية *
-                                </label>
-                                <input type="date" id="trainStartDate" value="${today}" min="${today}" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.95rem;color-scheme:dark">
-                            </div>
-                            <div>
-                                <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
-                                    <i class="fas fa-calendar-check" style="color:#10b981"></i> تاريخ الانتهاء
-                                </label>
-                                <input type="date" id="trainEndDate" value="${monthLater}" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.95rem;color-scheme:dark">
-                            </div>
-                        </div>
-
-                        <!-- التكرار -->
-                        <div style="margin-bottom:14px">
-                            <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
-                                <i class="fas fa-repeat" style="color:#4facfe"></i> التكرار *
-                            </label>
-                            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-                                <button type="button" onclick="setFrequency('daily', this)" class="freq-btn" data-freq="daily" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">يومي</button>
-                                <button type="button" onclick="setFrequency('weekly', this)" class="freq-btn active-freq" data-freq="weekly" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">أسبوعي</button>
-                                <button type="button" onclick="setFrequency('flexible', this)" class="freq-btn" data-freq="flexible" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">مرن</button>
-                            </div>
-                        </div>
-
-                        <!-- أيام الأسبوع -->
-                        <div style="margin-bottom:14px" id="daysSelector">
-                            <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
-                                <i class="fas fa-calendar-week" style="color:#f59e0b"></i> أيام التدريب *
-                            </label>
-                            
-                            <!-- Presets جاهزة -->
-                            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-                                <button type="button" onclick="selectDaysPreset('weekdays')" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">📅 أيام العمل (أحد-خميس)</button>
-                                <button type="button" onclick="selectDaysPreset('weekend')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">🎉 الويكند (جمعة-سبت)</button>
-                                <button type="button" onclick="selectDaysPreset('all')" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">✅ كل الأيام</button>
-                                <button type="button" onclick="selectDaysPreset('clear')" style="background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.3);padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit">❌ مسح</button>
-                            </div>
-                            
-                            <!-- الأيام -->
-                            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
-                                ${['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'].map((d, i) => `
-                                    <button type="button" onclick="toggleDay(this)" class="day-btn ${[1,2,4].includes(i) ? 'active-day' : ''}" data-day="${d}" style="padding:12px 6px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">${d}</button>
-                                `).join('')}
-                            </div>
-                            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;text-align:center">اضغط على اليوم لتفعيله/إلغائه</div>
-                        </div>
-
-                        <!-- وقت البداية -->
-                        <div style="margin-bottom:14px">
-                            <label style="display:block;font-weight:700;margin-bottom:8px;font-size:0.88rem">
-                                <i class="fas fa-clock" style="color:#4facfe"></i> وقت بداية التدريب *
-                            </label>
-                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-                                <div>
-                                    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;text-align:center">الساعة</div>
-                                    <select id="trainHour12" style="padding:12px 8px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;width:100%"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9" selected>9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
-                                </div>
-                                <div>
-                                    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;text-align:center">الدقيقة</div>
-                                    <select id="trainMinute" style="padding:12px 8px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;width:100%"><option value="00" selected>00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
-                                </div>
-                                <div>
-                                    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px;text-align:center">ص/م</div>
-                                    <select id="trainMeridiem" style="padding:12px 8px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;text-align:center;text-align-last:center;width:100%">
-                                        <option value="AM" selected>ص</option>
-                                        <option value="PM">م</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <!-- أزرار اختصار سريعة -->
-                            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;justify-content:center">
-                                <button type="button" onclick="setTrainTime(8,0,'AM')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:6px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit">8:00 ص</button>
-                                <button type="button" onclick="setTrainTime(9,0,'AM')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:6px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit">9:00 ص</button>
-                                <button type="button" onclick="setTrainTime(10,0,'AM')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:6px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit">10:00 ص</button>
-                                <button type="button" onclick="setTrainTime(1,0,'PM')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:6px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit">1:00 م</button>
-                                <button type="button" onclick="setTrainTime(2,0,'PM')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:6px 10px;border-radius:6px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:inherit">2:00 م</button>
-                            </div>
-                        </div>
-                        
-                        <!-- مدة الجلسة -->
-                        <div style="margin-bottom:14px">
-                            <label style="display:block;font-weight:700;margin-bottom:8px;font-size:0.88rem">
-                                <i class="fas fa-hourglass-half" style="color:#10b981"></i> مدة الجلسة *
-                            </label>
-                            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-                                <button type="button" onclick="setHours(2, this)" class="hours-btn" data-hours="2" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">2 ساعة</button>
-                                <button type="button" onclick="setHours(3, this)" class="hours-btn" data-hours="3" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">3 ساعات</button>
-                                <button type="button" onclick="setHours(4, this)" class="hours-btn active-hours" data-hours="4" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">4 ساعات</button>
-                                <button type="button" onclick="setHours(5, this)" class="hours-btn" data-hours="5" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">5 ساعات</button>
-                                <button type="button" onclick="setHours(6, this)" class="hours-btn" data-hours="6" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">6 ساعات</button>
-                                <button type="button" onclick="setHours(8, this)" class="hours-btn" data-hours="8" style="padding:10px;background:var(--card);border:2px solid var(--border);border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:700">يوم كامل</button>
-                            </div>
-                        </div>
-
-                        <!-- المكان -->
-                        <div style="margin-bottom:14px">
-                            <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
-                                <i class="fas fa-map-marker-alt" style="color:#ef4444"></i> مكان التدريب
-                            </label>
-                            <input type="text" id="trainLocation" placeholder="مثال: مقر الشركة، شارع التحرير، القاهرة" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem">
-                        </div>
-
-                        <!-- ملاحظات -->
-                        <div style="margin-bottom:14px">
-                            <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
-                                <i class="fas fa-sticky-note" style="color:var(--text-muted)"></i> ملاحظات إضافية
-                            </label>
-                            <textarea id="trainNotes" placeholder="مثال: يلبس ملابس رسمية، يحضر laptop..." style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem;min-height:60px;resize:vertical"></textarea>
-                        </div>
-
-                        <div style="display:flex;gap:10px">
-                            <button onclick="closeModal('acceptFormModal')" style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>
-                            <button onclick="submitAcceptForm('${appId}')" style="flex:2;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800;font-family:inherit;cursor:pointer">
-                                <i class="fas fa-check"></i> تأكيد القبول وإرسال للطالب
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <style>
-                    .freq-btn.active-freq, .day-btn.active-day, .hours-btn.active-hours { 
-                        background: linear-gradient(135deg, #ef4444, #dc2626) !important; 
-                        color: #fff !important; 
-                        border-color: #ef4444 !important; 
-                    }
-                    .day-btn:hover, .hours-btn:hover { 
-                        border-color: #ef4444 !important; 
-                        transform: translateY(-1px);
-                    }
-                    .day-btn, .hours-btn { transition: all 0.15s; }
-                </style>
-            `;
-            renderModal(html);
-        };
-
-        window.setFrequency = (freq, btn) => {
-            document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active-freq'));
-            if (btn) btn.classList.add('active-freq');
-            
-            const daysSelector = document.getElementById('daysSelector');
-            if (freq === 'daily') {
-                // يومي = كل الأيام
-                document.querySelectorAll('.day-btn').forEach(b => b.classList.add('active-day'));
-                if (daysSelector) daysSelector.style.opacity = '1';
-            } else if (freq === 'flexible') {
-                // مرن = مفيش أيام محددة
-                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active-day'));
-                if (daysSelector) daysSelector.style.opacity = '0.5';
-            } else {
-                // أسبوعي = الإعدادات الافتراضية
-                if (daysSelector) daysSelector.style.opacity = '1';
-            }
-        };
-
-        window.toggleDay = (btn) => {
-            btn.classList.toggle('active-day');
-        };
-
-        // Helper: ضبط الوقت من زرار الاختصار
-        window.setTrainTime = (hour, minute, meridiem) => {
-            const h = document.getElementById('trainHour12');
-            const m = document.getElementById('trainMinute');
-            const md = document.getElementById('trainMeridiem');
-            if (h) h.value = hour;
-            if (m) m.value = String(minute).padStart(2, '0');
-            if (md) md.value = meridiem;
-        };
-        
-        // Helper: اختيار preset للأيام
-        window.selectDaysPreset = (preset) => {
-            const allDays = document.querySelectorAll('.day-btn');
-            allDays.forEach(b => b.classList.remove('active-day'));
-            
-            if (preset === 'all') {
-                allDays.forEach(b => b.classList.add('active-day'));
-            } else if (preset === 'weekdays') {
-                // الأحد - الإثنين - الثلاثاء - الأربعاء - الخميس
-                allDays.forEach(b => {
-                    const day = b.dataset.day;
-                    if (['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'].includes(day)) {
-                        b.classList.add('active-day');
-                    }
-                });
-            } else if (preset === 'weekend') {
-                allDays.forEach(b => {
-                    const day = b.dataset.day;
-                    if (['الجمعة', 'السبت'].includes(day)) {
-                        b.classList.add('active-day');
-                    }
-                });
-            }
-            // 'clear' = لا شيء (يفضل كله مفرَّغ)
-        };
-        
-        // Helper: اختيار ساعات
-        window.setHours = (hours, btn) => {
-            document.querySelectorAll('.hours-btn').forEach(b => b.classList.remove('active-hours'));
-            if (btn) btn.classList.add('active-hours');
-        };
-        
-        // Helper: convert 12h → 24h
-        function to24HourTrain(hour12, meridiem) {
-            let h = parseInt(hour12, 10);
-            if (meridiem === 'AM' && h === 12) h = 0;
-            else if (meridiem === 'PM' && h !== 12) h += 12;
-            return String(h).padStart(2, '0');
-        }
-
-        window.submitAcceptForm = async (appId) => {
-            const startDate = document.getElementById('trainStartDate').value;
-            const endDate = document.getElementById('trainEndDate').value;
-            
-            // الوقت من الـ 3 dropdowns
-            const hour12 = document.getElementById('trainHour12').value;
-            const minute = document.getElementById('trainMinute').value;
-            const meridiem = document.getElementById('trainMeridiem').value;
-            const hour24 = to24HourTrain(hour12, meridiem);
-            const startTime = hour24 + ':' + minute;
-            
-            // المدة من الـ buttons
-            const hoursBtn = document.querySelector('.hours-btn.active-hours');
-            const hours = hoursBtn ? parseInt(hoursBtn.dataset.hours) : 4;
-            
-            const location = document.getElementById('trainLocation').value.trim();
-            const notes = document.getElementById('trainNotes').value.trim();
-
-            const freqBtn = document.querySelector('.freq-btn.active-freq');
-            const frequency = freqBtn ? freqBtn.dataset.freq : 'weekly';
-
-            const selectedDays = Array.from(document.querySelectorAll('.day-btn.active-day')).map(b => b.dataset.day);
-
-            if (!startDate) { window.ProVance.showToast('حدد تاريخ بداية التدريب', 'warning'); return; }
-            if (frequency !== 'flexible' && selectedDays.length === 0) {
-                window.ProVance.showToast('اختار يوم واحد على الأقل من أيام التدريب', 'warning');
-                return;
-            }
-
-            const details = {
-                start_date: startDate,
-                end_date: endDate,
-                days: selectedDays,
-                frequency: frequency,
-                start_time: startTime,
-                hours_per_session: hours,
-                location: location,
-                notes: notes
-            };
-
-            closeModal('acceptFormModal');
-            await window.acceptStudentWithDetails(appId, details);
-        };
-
-        // ============ REJECT FORM ============
-        window.openRejectForm = (appId) => {
-            closeModal('decisionModal');
-            const interview = State.allInterviews.find(i => i.id === appId);
-            if (!interview) return;
-
-            const html = `
-                <div class="modal active" id="rejectFormModal">
-                    <div class="modal-content" style="max-width:480px">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                <i class="fas fa-times-circle" style="color:#ef4444"></i>
-                                <span>رفض الطالب</span>
-                            </div>
-                            <button class="modal-close" onclick="closeModal('rejectFormModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div style="padding:12px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:10px;margin-bottom:14px;font-size:0.88rem">
-                            <i class="fas fa-info-circle" style="color:#ef4444"></i> 
-                            ${esc(interview.student_name)} - ${esc(interview.internship_title)}
-                        </div>
-
-                        <!-- أسباب جاهزة -->
-                        <div style="margin-bottom:14px">
-                            <label style="display:block;font-weight:700;margin-bottom:8px;font-size:0.88rem">اختار سبب جاهز:</label>
-                            <div style="display:flex;flex-direction:column;gap:6px">
-                                ${[
-                                    'مستوى الطالب غير مناسب للتدريب',
-                                    'مجال الدراسة غير متوافق مع متطلبات الشركة',
-                                    'الطالب رفض شروط التدريب',
-                                    'تم اختيار مرشحين آخرين أكثر ملاءمة',
-                                    'الطالب لم يستوفي متطلبات المقابلة'
-                                ].map(reason => `
-                                    <button type="button" onclick="document.getElementById('rejectReason').value='${reason.replace(/'/g, '&apos;')}'" style="text-align:right;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:0.88rem">${reason}</button>
-                                `).join('')}
-                            </div>
-                        </div>
-
-                        <div style="margin-bottom:14px">
-                            <label style="display:block;font-weight:700;margin-bottom:6px;font-size:0.88rem">
-                                <i class="fas fa-pen" style="color:#ef4444"></i> سبب الرفض *
-                            </label>
-                            <textarea id="rejectReason" placeholder="اكتب سبب الرفض هنا أو اختار من الأسباب الجاهزة فوق..." style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem;min-height:90px;resize:vertical"></textarea>
-                            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">السبب هيتبعت للطالب</div>
-                        </div>
-
-                        <div style="display:flex;gap:10px">
-                            <button onclick="closeModal('rejectFormModal')" style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>
-                            <button onclick="submitRejectForm('${appId}')" style="flex:2;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:800;font-family:inherit;cursor:pointer">
-                                <i class="fas fa-times"></i> تأكيد الرفض
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.submitRejectForm = async (appId) => {
-            const reason = document.getElementById('rejectReason').value.trim();
-            if (!reason || reason.length < 5) {
-                window.ProVance.showToast('اكتب سبب الرفض (5 حروف على الأقل)', 'warning');
-                return;
-            }
-            closeModal('rejectFormModal');
-            await window.rejectStudent(appId, reason);
-        };
-
-        // Legacy: للتوافق مع الكود القديم
         window.confirmDecision = async (appId, decision) => {
-            if (decision === 'reject') window.openRejectForm(appId);
-            else window.openAcceptForm(appId);
-        };
+            closeModal('decisionModal');
 
-        // إعادة فتح مقابلة (لو الطالب اعتذر أو قرر يحضر)
-        window.reopenInterview = async (id) => {
-            const ok = await window.ProVance.confirmModal({
-                title: 'إعادة جدولة المقابلة',
-                message: 'سترجع المقابلة لحالة "مجدولة" وتقدر تعدّل الموعد. هل تريد المتابعة؟'
-            });
-            if (!ok) return;
-
-            try {
-                let sb = window.ProVance?.sb;
-                if (!sb && window.getSafeSupabase) sb = await window.getSafeSupabase();
-                if (!sb && typeof supabase !== 'undefined') {
-                    sb = supabase.createClient(
-                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                        { auth: { persistSession: true, storage: window.localStorage } }
-                    );
-                }
-                if (!sb) {
-                    window.ProVance.showToast('فشل الاتصال', 'error');
+            if (decision === 'reject') {
+                const reason = prompt('سبب الرفض (لازم تكتب سبب):');
+                if (!reason || !reason.trim()) {
+                    window.ProVance.showToast('لازم تكتب سبب الرفض', 'warning');
                     return;
                 }
-                
-                const { data, error } = await sb.from('applications')
-                    .update({ 
-                        status: 'interview_scheduled',
-                        rejection_reason: null,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', id)
-                    .select();
-                
-                if (error) {
-                    console.error('reopenInterview error:', error);
-                    window.ProVance.showToast('خطأ: ' + error.message, 'error');
-                    return;
-                }
-                if (!data || data.length === 0) {
-                    window.ProVance.showToast('⚠️ مفيش صلاحية', 'error');
-                    return;
-                }
-                
-                window.ProVance.showToast('✅ تم إعادة فتح المقابلة', 'success');
-                addLog('إعادة جدولة', 'تم إعادة فتح المقابلة');
-                window.dispatchEvent(new CustomEvent('reload-interviews'));
-                
-                // افتح modal تعديل الموعد
-                setTimeout(() => {
-                    if (typeof window.openRescheduleModal === 'function') {
-                        window.openRescheduleModal(id);
-                    }
-                }, 500);
-            } catch (err) {
-                console.error('reopenInterview catch:', err);
-                window.ProVance.showToast('خطأ: ' + (err.message || 'فشل'), 'error');
+                await window.rejectStudent(appId, reason.trim());
+            } else {
+                await window.acceptStudent(appId);
             }
         };
 
@@ -2079,242 +1624,56 @@
             if (!ok) return;
 
             try {
-                // الحصول على supabase client بطريقة موثوقة
-                let sb = window.ProVance?.sb;
-                if (!sb && window.getSafeSupabase) sb = await window.getSafeSupabase();
-                if (!sb && typeof supabase !== 'undefined') {
-                    sb = supabase.createClient(
-                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                        { auth: { persistSession: true, storage: window.localStorage } }
-                    );
-                }
-                if (!sb) {
-                    window.ProVance.showToast('فشل الاتصال - حاول مرة أخرى', 'error');
-                    return;
-                }
-                
-                const { data, error } = await sb.from('applications')
-                    .update({ status: 'interview_done', updated_at: new Date().toISOString() })
-                    .eq('id', id)
-                    .select();
-                
-                if (error) {
-                    console.error('markAttended error:', error);
-                    window.ProVance.showToast('خطأ: ' + error.message, 'error');
-                    return;
-                }
-                
-                if (!data || data.length === 0) {
-                    window.ProVance.showToast('⚠️ مفيش صلاحية لتسجيل الحضور', 'error');
-                    return;
-                }
-                
+                await window.ProVance.sb.from('applications').update({ status: 'interview_done' }).eq('id', id);
                 const interview = State.allInterviews.find(i => i.id === id);
-                addLog('تسجيل حضور', `${interview?.student_name || ''} حضر المقابلة`);
-                window.ProVance.showToast('✅ تم تسجيل الحضور', 'success');
+                addLog('تسجيل حضور', `${interview?.student_name} حضر المقابلة`);
+                window.ProVance.showToast('تم تسجيل الحضور ✓', 'success');
                 window.dispatchEvent(new CustomEvent('reload-interviews'));
             } catch (err) {
-                console.error('markAttended catch:', err);
-                window.ProVance.showToast('خطأ: ' + (err.message || 'فشل الاتصال'), 'error');
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ', 'error');
             }
         };
 
         window.markMissed = async (id) => {
             const ok = await window.ProVance.confirmModal({
                 title: 'تأكيد الغياب',
-                message: 'هل تريد تسجيل أن الطالب غاب؟'
+                message: 'هل تريد تسجيل أن الطالب غاب؟ هيتم إنشاء تقرير تأخير'
             });
             if (!ok) return;
 
             try {
-                // الحصول على supabase client
-                let sb = window.ProVance?.sb;
-                if (!sb && window.getSafeSupabase) sb = await window.getSafeSupabase();
-                if (!sb && typeof supabase !== 'undefined') {
-                    sb = supabase.createClient(
-                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                        { auth: { persistSession: true, storage: window.localStorage } }
-                    );
-                }
-                if (!sb) {
-                    window.ProVance.showToast('فشل الاتصال', 'error');
-                    return;
-                }
-                
+                const sb = await window.getSafeSupabase();
+            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
                 const interview = State.allInterviews.find(i => i.id === id);
-                
-                // 1. حدّث الـ application status لـ rejected (الطالب غاب)
-                const { data, error: updateError } = await sb.from('applications')
-                    .update({ 
-                        status: 'rejected',
-                        rejection_reason: 'الطالب لم يحضر المقابلة',
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', id)
-                    .select();
-                
-                if (updateError) {
-                    console.error('markMissed update error:', updateError);
-                    window.ProVance.showToast('خطأ: ' + updateError.message, 'error');
-                    return;
-                }
-                
-                if (!data || data.length === 0) {
-                    window.ProVance.showToast('⚠️ مفيش صلاحية لتسجيل الغياب', 'error');
-                    return;
-                }
-                
-                // 2. سجّل تجاوز في جدول violations (الأهم - للإدارة)
-                try {
-                    await sb.from('violations').insert({
-                        violator_user_id: interview?.student_user_id,
-                        violator_name: interview?.student_name,
-                        violator_type: 'student',
-                        violation_type: 'no_show',
-                        severity: 'major',
-                        title: 'عدم حضور مقابلة',
-                        description: `الطالب لم يحضر مقابلة "${interview?.internship_title || 'تدريب'}"${interview?.interview_date ? ' الموعد كان: ' + new Date(interview.interview_date).toLocaleString('ar-EG') : ''}`,
-                        affected_user_id: State.companyUserId || window._companyUserId,
-                        affected_name: State.companyName || window._companyName,
-                        affected_type: 'company',
-                        application_id: id,
-                        internship_id: interview?.internship_id,
-                        status: 'pending',
-                        occurred_at: interview?.interview_date || new Date().toISOString(),
-                        reported_at: new Date().toISOString(),
-                        reported_by_user_id: State.companyUserId || window._companyUserId,
-                        reported_by_type: 'company'
-                    });
-                    console.log('✅ Violation recorded');
-                } catch(e) {
-                    console.warn('violation insert failed:', e?.message);
-                }
-                
-                // 3. حاول تسجل late_report (legacy)
-                try {
-                    await sb.from('late_reports').insert({
-                        application_id: id,
-                        reported_by: 'company',
-                        reporter_user_id: State.companyUserId,
-                        blame_target: 'student',
-                        reason: 'الطالب لم يحضر المقابلة في الوقت المحدد',
-                        expected_time: interview?.interview_date,
-                        status: 'pending'
-                    });
-                } catch(e) {}
 
-                // 3. إشعار للطالب
+                await sb.from('late_reports').insert({
+                    application_id: id,
+                    reported_by: 'company',
+                    reporter_user_id: State.companyUserId,
+                    blame_target: 'student',
+                    reason: 'الطالب لم يحضر المقابلة في الوقت المحدد',
+                    expected_time: interview.interview_date,
+                    status: 'pending'
+                });
+
                 if (interview && window.ProVance.sendNotification) {
-                    try {
-                        await window.ProVance.sendNotification({
-                            userId: interview.student_user_id,
-                            userType: 'student',
-                            title: '⚠️ تم تسجيل غيابك',
-                            message: `الشركة سجلت أنك غبت عن مقابلة ${interview.internship_title || ''}`,
-                            type: 'warning',
-                            link: 'student-applications.html'
-                        });
-                    } catch(e) { console.warn('notification failed:', e); }
+                    await window.ProVance.sendNotification({
+                        userId: interview.student_user_id,
+                        userType: 'student',
+                        title: '⚠️ تم تسجيل غيابك',
+                        message: `الشركة سجلت أنك غبت عن مقابلة ${interview.internship_title}. يرجى إبلاغ سبب الغياب`,
+                        type: 'warning',
+                        link: 'student-applications.html'
+                    });
                 }
 
-                addLog('تسجيل غياب', `${interview?.student_name || ''} غاب عن المقابلة`);
-                window.ProVance.showToast('✅ تم تسجيل الغياب', 'success');
+                addLog('تسجيل غياب', `${interview?.student_name} غاب عن المقابلة`);
+                window.ProVance.showToast('تم تسجيل الغياب', 'warning');
                 window.dispatchEvent(new CustomEvent('reload-interviews'));
             } catch (err) {
-                console.error('markMissed catch:', err);
-                window.ProVance.showToast('خطأ: ' + (err.message || 'فشل الاتصال'), 'error');
-            }
-        };
-
-        window.acceptStudentWithDetails = async (id, details) => {
-            try {
-                let sb = window.ProVance?.sb;
-                if (!sb && window.getSafeSupabase) sb = await window.getSafeSupabase();
-                if (!sb && typeof supabase !== 'undefined') {
-                    sb = supabase.createClient(
-                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                        { auth: { persistSession: true, storage: window.localStorage } }
-                    );
-                }
-                if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
-
-                // حضّر البيانات للحفظ
-                const updates = {
-                    status: 'accepted',
-                    accepted_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                    training_start_date: details.start_date,
-                    training_end_date: details.end_date || null,
-                    training_days: JSON.stringify(details.days || []),
-                    training_frequency: details.frequency,
-                    training_hours_per_session: details.hours_per_session,
-                    training_start_time: details.start_time,
-                    training_location: details.location || null,
-                    training_notes: details.notes || null
-                };
-
-                let { data, error } = await sb.from('applications').update(updates).eq('id', id).select();
-                
-                // لو error بسبب column مش موجود، حاول بدون التفاصيل
-                if (error && error.message && error.message.includes('column')) {
-                    console.warn('Some columns missing, trying basic update');
-                    const basic = await sb.from('applications').update({ 
-                        status: 'accepted',
-                        updated_at: new Date().toISOString()
-                    }).eq('id', id).select();
-                    data = basic.data;
-                    error = basic.error;
-                    if (!error) {
-                        window.ProVance.showToast('⚠️ تم القبول لكن شغّل SQL 47 لحفظ التفاصيل', 'warning');
-                    }
-                }
-                
-                if (error) {
-                    console.error('accept error:', error);
-                    window.ProVance.showToast('خطأ: ' + error.message, 'error');
-                    return;
-                }
-                if (!data || data.length === 0) {
-                    window.ProVance.showToast('⚠️ مفيش صلاحية', 'error');
-                    return;
-                }
-
-                const interview = State.allInterviews.find(i => i.id === id);
-                
-                // ابعت إشعار للطالب
-                if (interview && window.ProVance.sendNotification) {
-                    const daysStr = (details.days || []).join('، ');
-                    const freqStr = details.frequency === 'daily' ? 'يومي' : details.frequency === 'weekly' ? 'أسبوعي' : 'مرن';
-                    
-                    let detailsMsg = `🎉 مبروك! الشركة قبلتك في تدريب ${interview.internship_title}.\n\n`;
-                    detailsMsg += `📅 يبدأ: ${details.start_date}\n`;
-                    if (details.end_date) detailsMsg += `🏁 ينتهي: ${details.end_date}\n`;
-                    detailsMsg += `🔄 ${freqStr}`;
-                    if (daysStr) detailsMsg += ` - الأيام: ${daysStr}`;
-                    detailsMsg += `\n⏰ ${details.start_time} (${details.hours_per_session} ساعات)`;
-                    if (details.location) detailsMsg += `\n📍 ${details.location}`;
-                    
-                    try {
-                        await window.ProVance.sendNotification({
-                            userId: interview.student_user_id,
-                            userType: 'student',
-                            title: '🎉 تم قبولك في التدريب!',
-                            message: detailsMsg,
-                            type: 'success',
-                            link: 'student-applications.html'
-                        });
-                    } catch(e) { console.warn('notification fail:', e); }
-                }
-
-                addLog('قبول طالب', `تم قبول ${interview?.student_name || 'طالب'} - بداية ${details.start_date}`);
-                window.ProVance.showToast('✅ تم قبول الطالب وإرسال التفاصيل', 'success');
-                window.dispatchEvent(new CustomEvent('reload-interviews'));
-            } catch (err) {
-                console.error('acceptWithDetails catch:', err);
-                window.ProVance.showToast('خطأ: ' + (err.message || 'فشل'), 'error');
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ', 'error');
             }
         };
 
@@ -2382,8 +1741,7 @@
             if (!qrCode) {
                 const sb = await window.getSafeSupabase();
             if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
-                // كود فريد مع شركة + interview ID للتتبع
-                const qrCodeStr = 'PV-INT-' + interviewId.substring(0, 8) + '-' + Date.now().toString(36).toUpperCase();
+                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
                 const interviewDate = new Date(interview.interview_date);
                 const validUntil = new Date(interviewDate.getTime() + 60 * 60 * 1000);
 
@@ -2409,8 +1767,14 @@
                 qrCode = newQr;
             }
 
-            // الـ QR data = الـ code فقط (متوافق مع الـ scanner)
-            const qrData = qrCode.code;
+            const qrData = JSON.stringify({
+                type: 'interview',
+                code: qrCode.code,
+                company: qrCode.company_name,
+                student: qrCode.student_name,
+                valid_until: qrCode.valid_until
+            });
+
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrData)}&color=000000&bgcolor=FFFFFF`;
             const validUntil = new Date(qrCode.valid_until);
 
@@ -2783,16 +2147,17 @@
                 return;
             }
 
-            // Set companyUserId - نخزنه في window عشان الـ getter في State يلاقيه
-            window._companyUserId = userId;
-            // ما نلمسش State.companyUserId لأن في getter بالفعل
+            // Set companyUserId on first load
+            if (!State.companyUserId) {
+                State._companyUserId = userId;
+                Object.defineProperty(State, 'companyUserId', { get: () => userId, configurable: true });
+            }
 
             const results = await Promise.allSettled([
                 sb.from('companies').select('company_name').eq('user_id', userId).maybeSingle(),
-                // نجيب كل المقابلات اللي لها interview_date أو status معين
-                // (شيلنا الـ status filter لأن ممكن في statuses غير معروفة)
-                sb.from('applications').select('id, student_user_id, student_name, student_email, student_photo, student_university, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date, interview_location, interview_notes, rejection_reason').eq('company_user_id', userId)
-                    .order('interview_date', { ascending: false, nullsFirst: false }),
+                sb.from('applications').select('id, student_user_id, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date').eq('company_user_id', userId)
+                    .in('status', ['interview_scheduled', 'interview_done', 'accepted', 'rejected', 'hired', 'in_training', 'completed'])
+                    .order('interview_date', { ascending: true }),
                 sb.from('qr_codes').select('*').eq('company_user_id', userId)
                     .eq('qr_type', 'interview').order('created_at', { ascending: false }),
                 sb.from('late_reports').select('*').order('created_at', { ascending: false })
@@ -2803,40 +2168,20 @@
             const lateRes = results[3] && results[3].status === "fulfilled" ? results[3].value : { data: [], error: results[3] && results[3].reason };
 
             const companyName = companyRes.data?.company_name || 'الشركة';
-            // ما نلمسش State.companyName - الـ getter موجود
-            window._companyName = companyName;
+            Object.defineProperty(State, 'companyName', { get: () => companyName, configurable: true });
 
-            // ✅ فلتر: المقابلات = اللي لها interview_date أو status='interview_scheduled' أو 'interview_done'
-            const allApps = appsRes.data || [];
-            const interviews = allApps.filter(a => 
-                a.interview_date || 
-                a.status === 'interview_scheduled' || 
-                a.status === 'interview_done' ||
-                a.status === 'accepted' || 
-                a.status === 'hired' ||
-                a.status === 'in_training'
-            );
-            console.log('📊 Total apps:', allApps.length, 'Interviews:', interviews.length);
+            const interviews = appsRes.data || [];
             const qrCodes = qrRes.data || [];
             const myAppIds = new Set(interviews.map(a => a.id));
             const lateReports = (lateRes.data || []).filter(r => myAppIds.has(r.application_id));
 
-            // ✅ تحديث global state موحد - الـ functions تقرأ من window._state دايماً
-            if (!window._state) window._state = {};
-            window._state.allInterviews = interviews;
-            window._state.allQrCodes = qrCodes;
-            window._state.allLateReports = lateReports;
-            window._state.companyName = companyName;
-            window._state.companyUserId = userId;
-            
-            // ✅ كل البيانات في window._state - مش محتاجين نعدل local arrays
-            // الـ getters الموجودة في State بتقرأ من window._state أوتوماتيكياً
-            
-            // و الـ State object كمان
-            // ما نلمسش State.* لأن الـ getters موجودة بالفعل وبتقرأ من الـ local arrays
-            // والـ local arrays اتحدثت فوق (allInterviews.push, etc)
-            
-            console.log('📊 Loaded:', interviews.length, 'interviews,', qrCodes.length, 'QR codes,', lateReports.length, 'late reports');
+            Object.defineProperty(State, 'allInterviews', { get: () => interviews, configurable: true });
+            Object.defineProperty(State, 'allQrCodes', { get: () => qrCodes, configurable: true });
+            window._allLateReports = lateReports;
+
+            // patch the renderLateReports getter
+            const origLate = State.allLateReports;
+            Object.defineProperty(State, 'allLateReports', { get: () => lateReports, configurable: true });
 
             State.updateStats();
             State.renderAllTabs();
@@ -2854,20 +2199,6 @@
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `company_user_id=eq.${userId}` }, () => loadAll())
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'qr_codes', filter: `company_user_id=eq.${userId}` }, () => loadAll())
                     .subscribe();
-                
-                // Auto-refresh لما المستخدم يرجع للصفحة + polling كل 30s
-                let _focusTimer = null;
-                document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible') {
-                        clearTimeout(_focusTimer);
-                        _focusTimer = setTimeout(() => { if (typeof loadAll === 'function') loadAll(); }, 300);
-                    }
-                });
-                window.addEventListener('focus', () => {
-                    clearTimeout(_focusTimer);
-                    _focusTimer = setTimeout(() => { if (typeof loadAll === 'function') loadAll(); }, 300);
-                });
-                setInterval(() => { if (document.visibilityState === 'visible' && typeof loadAll === 'function') loadAll(); }, 10000);
 
                 // Listeners
                 document.getElementById('searchInterviews').addEventListener('input', () => State.renderAllTabs());
@@ -2885,26 +2216,8 @@
                 });
             }
         } catch (err) {
-            console.error('═══ Load error in company-interviews ═══');
-            console.error('Error:', err);
-            console.error('Message:', err?.message);
-            console.error('Stack:', err?.stack);
-            console.error('═════════════════════════════════════');
-            
-            // ما نظهرش toast لو الخطأ بسيط (مثلاً defineProperty fail)
-            // بس نـ log في الـ console
-            if (err && err.message) {
-                if (err.message.includes('Cannot redefine property')) {
-                    console.warn('Property redefine attempted - ignoring');
-                    return;
-                }
-                if (err.message.includes('network') || err.message.includes('fetch')) {
-                    // Network error - نحاول تاني بعد ثانية
-                    setTimeout(() => loadAll(), 2000);
-                    return;
-                }
-            }
-            window.ProVance.showToast('خطأ في تحميل البيانات: ' + (err?.message || 'unknown'), 'error');
+            console.error('Load error:', err);
+            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
         }
     }
 
@@ -2924,5 +2237,23 @@ Object.defineProperty(window, '_lateReportsAccessor', {
     get: () => window._allLateReports || []
 });
     </script>
+
+<script>
+    // Pending Applications Badge
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const sb = await window.ProVance.waitForSupabaseClient();
+            if (!sb) return;
+            const session = await window.ProVance.getSession();
+            if (!session) return;
+            const { count } = await sb.from("applications")
+                .select("id", { count: "exact", head: true })
+                .eq("company_user_id", session.user.id)
+                .eq("status", "pending");
+            const badge = document.getElementById("appsBadge");
+            if (badge && count > 0) { badge.textContent = count; badge.style.display = "inline-block"; }
+        } catch(e) {}
+    });
+</script>
 </body>
 </html>
