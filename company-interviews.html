@@ -2,44 +2,95 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
     <link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
 
-    <title>المقابلات - ProVance</title>
+    <title>المتدربين - ProVance</title>
+
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
     <style>
         :root {
-            --primary: #ef4444; --secondary: #dc2626;
-            --gradient: linear-gradient(135deg, #ef4444, #dc2626);
-            --bg: #0a0e27; --bg-2: #1a1535;
-            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
-            --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
-            --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
-            --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
+            --primary: #ef4444;
+            --primary-dark: #dc2626;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #ef4444;
+
+            --bg: #0a0e27;
+            --bg-card: rgba(255,255,255,0.04);
+            --bg-hover: rgba(255,255,255,0.08);
+            --border: rgba(255,255,255,0.1);
+
+            --text: #ffffff;
+            --text-muted: #94a3b8;
+
+            --sidebar-w: 260px;
+            --header-h: 72px;
+            --radius: 14px;
         }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-        .bg-anim {
-            position: fixed; inset: 0; z-index: -1;
-            background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%),
-                        radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%),
-                        var(--bg);
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
         }
 
-        /* Layout */
-        .layout { display: flex; min-height: 100vh; }
+        /* ============================================================
+         * Loading Overlay
+         * ============================================================ */
+        #loading {
+            position: fixed; inset: 0;
+            background: var(--bg);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999;
+            transition: opacity .4s, visibility .4s;
+        }
+        #loading.hidden { opacity: 0; visibility: hidden; }
+
+        .spinner-wrap { text-align: center; }
+        .spinner-box {
+            width: 60px; height: 60px;
+            margin: 0 auto 16px;
+            border: 4px solid rgba(239,68,68,0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ============================================================
+         * Sidebar
+         * ============================================================ */
         .sidebar {
-            width: 260px; background: rgba(20,18,40,0.7);
-            backdrop-filter: blur(20px); border-left: 1px solid var(--border);
-            padding: 24px 16px; position: fixed; inset: 0 0 0 auto;
-            z-index: 100; transition: transform .3s;
+            position: fixed; top: 0; right: 0;
+            width: var(--sidebar-w); height: 100vh;
+            background: linear-gradient(180deg, #0f172a, #1e293b);
+            border-left: 1px solid var(--border);
             display: flex; flex-direction: column;
+            transition: transform .3s;
+            z-index: 1000;
         }
+
+        .sidebar-header {
+            padding: 22px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 12px;
+        }
+
         .sidebar-logo {
             padding: 8px 4px 18px;
             margin-bottom: 16px;
@@ -85,561 +136,513 @@
             color: var(--text-muted);
             font-weight: 600;
         }
-        .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px 14px; color: var(--text-muted);
-            text-decoration: none; border-radius: 10px;
-            font-size: 0.92rem; font-weight: 600; margin-bottom: 4px;
-            transition: all .2s;
-        }
-        .nav-item:hover { background: var(--card); color: var(--text); }
-        .nav-item.active { background: var(--gradient); color: #fff; }
-        .nav-item i { width: 18px; }
 
-        .main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
-        .topbar {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 22px; gap: 14px; flex-wrap: wrap;
-        }
-        .menu-toggle {
-            display: none; background: var(--card); border: 1px solid var(--border);
-            color: var(--text); width: 42px; height: 42px;
-            border-radius: 10px; cursor: pointer;
-        }
-        .topbar-title { font-size: 1.5rem; font-weight: 800; }
-        .topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .sidebar-brand { font-weight: 800; font-size: 1.1rem; }
+        .sidebar-brand small { display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
 
-        /* Tabs */
-        .tabs-container {
-            display: flex; gap: 8px; margin-bottom: 22px;
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 6px;
-            overflow-x: auto;
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 12px;
+            overflow-y: auto;
         }
-        .tab-btn {
-            padding: 11px 18px; background: none; border: none;
-            color: var(--text-muted); font-family: inherit;
-            font-size: 0.92rem; font-weight: 700;
-            border-radius: 10px; cursor: pointer;
-            white-space: nowrap;
-            display: flex; align-items: center; gap: 7px;
-            transition: all .2s;
-        }
-        .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-        .tab-btn.active {
-            background: var(--gradient); color: #fff;
-            box-shadow: 0 6px 16px rgba(239,68,68,0.3);
-        }
-        .tab-badge {
-            background: rgba(255,255,255,0.15);
-            padding: 1px 8px; border-radius: 10px;
+
+        .nav-section { margin-bottom: 20px; }
+        .nav-title {
             font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 12px 8px;
         }
-        .tab-content { display: none; animation: fadeIn .3s; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Stats */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 12px; margin-bottom: 18px;
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 3px;
+            transition: all .2s;
+            font-weight: 600;
+            font-size: 0.93rem;
+            position: relative;
         }
-        .stat-mini {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 12px; padding: 14px;
-            display: flex; align-items: center; gap: 11px;
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+        }
+
+        .nav-item i { width: 20px; text-align: center; font-size: 0.95rem; }
+
+        .nav-badge {
+            margin-right: auto;
+            background: var(--danger);
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+        .nav-badge:empty { display: none; }
+
+        .sidebar-footer {
+            padding: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(239,68,68,0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            font-size: 0.93rem;
             transition: all .2s;
         }
-        .stat-mini:hover { border-color: var(--primary); transform: translateY(-2px); }
-        .stat-mini-icon {
-            width: 40px; height: 40px; border-radius: 10px;
+        .logout-btn:hover { background: rgba(239,68,68,0.2); color: #fff; }
+
+        /* ============================================================
+         * Main Content
+         * ============================================================ */
+        .main {
+            margin-right: var(--sidebar-w);
+            min-height: 100vh;
+        }
+
+        .header {
+            height: var(--header-h);
+            background: rgba(10,14,39,0.8);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0;
+            z-index: 100;
+        }
+
+        .header-title {
+            display: flex; align-items: center; gap: 12px;
+            font-size: 1.15rem; font-weight: 700;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .user-box {
+            display: flex; align-items: center; gap: 12px;
+            padding: 6px 10px 6px 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+        }
+
+        .user-avatar {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; color: #fff; flex-shrink: 0;
-        }
-        .stat-mini-icon.purple { background: var(--gradient); }
-        .stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .stat-mini-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-        .stat-mini-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
-        .stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
-
-        /* Filters */
-        .filters-bar {
-            display: flex; gap: 10px;
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 12px; padding: 12px;
-            margin-bottom: 18px; flex-wrap: wrap;
-        }
-        .filters-bar input, .filters-bar select {
-            padding: 9px 14px; background: rgba(255,255,255,0.04);
-            border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text); font-family: inherit; font-size: 0.9rem;
-        }
-        .filters-bar input { flex: 1; min-width: 200px; }
-        .filters-bar input:focus, .filters-bar select:focus {
-            outline: none; border-color: var(--primary);
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 10px 16px; border: none; border-radius: 10px;
-            font-weight: 700; font-family: inherit; font-size: 0.88rem;
-            cursor: pointer; transition: all .2s; text-decoration: none;
-            white-space: nowrap;
-        }
-        .btn-primary { background: var(--gradient); color: #fff; }
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(239,68,68,0.4);
-        }
-        .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
-        .btn-secondary:hover { background: var(--card-hover); }
-        .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
-        .btn-success:hover { background: rgba(16,185,129,0.25); }
-        .btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
-        .btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
-        .btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
-        .btn-sm { padding: 7px 12px; font-size: 0.8rem; }
-
-        /* Interview Cards */
-        .interviews-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-            gap: 14px;
-        }
-        .interview-card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 16px; padding: 18px;
-            display: flex; flex-direction: column; gap: 12px;
-            transition: all .25s;
-            position: relative;
+            font-weight: 700;
+            font-size: 1rem;
             overflow: hidden;
         }
-        .interview-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(239,68,68,0.15);
-        }
-        .interview-card.upcoming { border-color: rgba(79,172,254,0.4); }
-        .interview-card.live::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--success), #34d399);
-            animation: livePulse 2s infinite;
-        }
-        @keyframes livePulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .interview-card.expired { opacity: 0.7; }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-        .interview-card-header {
-            display: flex; align-items: center; gap: 12px;
+        .user-info { line-height: 1.2; }
+        .user-info .name { font-size: 0.87rem; font-weight: 700; }
+        .user-info .role { font-size: 0.72rem; color: var(--text-muted); }
+
+        /* ============================================================
+         * Page Content
+         * ============================================================ */
+        .page { padding: 28px; }
+
+        /* Welcome Card */
+        .welcome {
+            background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(118,75,162,0.08));
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: var(--radius);
+            padding: 26px;
+            margin-bottom: 24px;
+            display: flex; gap: 22px; align-items: center; flex-wrap: wrap;
         }
-        .student-avatar {
-            width: 56px; height: 56px; border-radius: 50%;
-            background: var(--gradient);
+
+        .welcome-icon {
+            width: 72px; height: 72px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 18px;
             display: flex; align-items: center; justify-content: center;
-            color: #fff; font-weight: 800; font-size: 1.3rem;
-            flex-shrink: 0; overflow: hidden;
+            font-size: 2rem;
+            flex-shrink: 0;
         }
-        .student-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .student-info { flex: 1; min-width: 0; }
-        .student-name { font-weight: 800; font-size: 1.05rem; }
-        .student-pos { color: var(--text-muted); font-size: 0.84rem; margin-top: 3px; }
 
-        .interview-meta {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-            padding: 10px 0;
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
+        .welcome-content { flex: 1; min-width: 260px; }
+        .welcome-content h1 {
+            font-size: 1.7rem; font-weight: 900;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .meta-item {
-            display: flex; flex-direction: column; gap: 2px;
-            font-size: 0.84rem;
-        }
-        .meta-item .label {
-            color: var(--text-muted); font-size: 0.74rem;
-        }
-        .meta-item .value {
-            font-weight: 700; color: var(--text);
-        }
-        .meta-item .value i { color: var(--primary); margin-left: 4px; }
+        .welcome-content p { color: var(--text-muted); margin-bottom: 14px; }
 
-        .countdown {
-            background: rgba(79,172,254,0.08);
-            border: 1px solid rgba(79,172,254,0.25);
+        .welcome-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
             border-radius: 10px;
-            padding: 10px 14px;
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 10px;
+            font-weight: 700;
+            font-family: inherit;
+            font-size: 0.92rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+            transition: all .2s;
         }
-        .countdown.danger {
-            background: rgba(239,68,68,0.08);
-            border-color: rgba(239,68,68,0.25);
-        }
-        .countdown.success {
-            background: rgba(16,185,129,0.08);
-            border-color: rgba(16,185,129,0.25);
-        }
-        .countdown-label { font-size: 0.82rem; color: var(--text-muted); }
-        .countdown-time { font-size: 1.05rem; font-weight: 800; color: var(--info); }
-        .countdown.danger .countdown-time { color: var(--error); }
-        .countdown.success .countdown-time { color: var(--success); }
+        .btn:hover { transform: translateY(-1px); }
 
-        .interview-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-        .interview-actions .btn { flex: 1; justify-content: center; padding: 9px; min-width: 100px; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+        .btn-outline { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+        .btn-outline:hover { background: var(--bg-hover); }
+        .btn-small { padding: 8px 14px; font-size: 0.85rem; }
 
-        /* Status Badges */
-        .status-badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            padding: 3px 10px; border-radius: 14px;
-            font-size: 0.74rem; font-weight: 700;
+        /* Stats Grid */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex; gap: 16px; align-items: center;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+
+        .stat-icon {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .stat-icon.primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); }
+        .stat-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .stat-icon.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .stat-icon.info    { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        .stat-value { font-size: 1.9rem; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Sections */
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+            margin-bottom: 24px;
+        }
+
+        .section-head {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 18px; flex-wrap: wrap; gap: 10px;
+        }
+
+        .section-title {
+            font-size: 1.1rem; font-weight: 800;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .section-title i { color: var(--primary); }
+
+        /* Search Bar */
+        .search-bar {
+            position: relative;
+            margin-bottom: 18px;
+        }
+        .search-bar i {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 11px 44px 11px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.93rem;
+        }
+        .search-bar input:focus { outline: none; border-color: var(--primary); }
+
+        /* Applications Grid */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 14px;
+        }
+
+        .app-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            transition: all .2s;
+        }
+        .app-card:hover { border-color: var(--primary); }
+
+        .app-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .app-avatar {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            color: #fff;
+            flex-shrink: 0;
+            overflow: hidden;
+            font-weight: 700;
+        }
+        .app-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .app-name { font-weight: 700; font-size: 0.98rem; }
+        .app-sub  { font-size: 0.83rem; color: var(--text-muted); }
+
+        .app-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 12px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .detail-row { font-size: 0.82rem; }
+        .detail-row .lbl { color: var(--text-muted); }
+        .detail-row .val { font-weight: 600; }
+
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .status-pending  { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .status-accepted { background: rgba(16,185,129,0.15); color: #34d399; }
+        .status-rejected { background: rgba(239,68,68,0.15);  color: #f87171; }
+        .status-interview { background: rgba(239,68,68,0.15); color: #f87171; }
+
+        .app-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .app-actions .btn { flex: 1; justify-content: center; }
+
+        /* Empty States */
+        .empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+        .empty i { font-size: 2.8rem; margin-bottom: 12px; opacity: 0.4; }
+        .empty h3 { font-size: 1.1rem; margin-bottom: 6px; color: var(--text); }
+
+        /* Charts */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .chart-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+        .chart-box h3 {
+            font-size: 1rem; font-weight: 700;
+            margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .chart-box h3 i { color: var(--primary); }
+        .chart-container { position: relative; height: 260px; }
+
+        /* Interviews List */
+        .interview-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .interview-item:last-child { margin-bottom: 0; }
+
+        .interview-avatar {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .interview-info { flex: 1; min-width: 0; }
+        .interview-info .n { font-weight: 700; font-size: 0.92rem; }
+        .interview-info .f { font-size: 0.8rem; color: var(--text-muted); }
+
+        .interview-time {
+            font-size: 0.82rem;
+            color: var(--info);
+            font-weight: 600;
             white-space: nowrap;
-        }
-        .status-badge.scheduled { background: rgba(79,172,254,0.15); color: var(--info); }
-        .status-badge.attended { background: rgba(16,185,129,0.15); color: var(--success); }
-        .status-badge.missed { background: rgba(239,68,68,0.15); color: var(--error); }
-        .status-badge.late { background: rgba(245,158,11,0.15); color: var(--warning); }
-        .status-badge.pending { background: rgba(148,163,184,0.15); color: var(--text-muted); }
-        .status-badge.live {
-            background: rgba(16,185,129,0.2);
-            color: var(--success);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
         }
 
         /* Modals */
-        .modal {
+        .modal-overlay {
             position: fixed; inset: 0;
-            background: rgba(0,0,0,0.75);
+            background: rgba(0,0,0,0.7);
             backdrop-filter: blur(6px);
-            z-index: 200; display: none;
+            display: none;
             align-items: center; justify-content: center;
+            z-index: 9998;
             padding: 20px;
-            animation: fadeIn .25s;
         }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: var(--bg-2); border: 1px solid var(--border);
-            border-radius: 22px;
-            width: 100%; max-width: 700px;
-            max-height: 92vh; overflow-y: auto;
-            padding: 28px; position: relative;
-            animation: slideUp .3s ease-out;
-        }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .modal-content::-webkit-scrollbar { width: 6px; }
-        .modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+        .modal-overlay.active { display: flex; }
 
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 22px; padding-bottom: 14px;
-            border-bottom: 1px solid var(--border);
-        }
-        .modal-title {
-            font-size: 1.2rem; font-weight: 800;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .modal-title i { color: var(--primary); }
-        .modal-close {
-            background: var(--card); border: 1px solid var(--border);
-            color: var(--text); width: 36px; height: 36px;
-            border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: all .2s;
-        }
-        .modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
-
-        /* Form Fields */
-        .field { margin-bottom: 16px; }
-        .field label {
-            display: block; color: var(--text);
-            font-size: 0.9rem; font-weight: 600; margin-bottom: 8px;
-        }
-        .field label i { color: var(--primary); margin-left: 4px; }
-        .field label .req { color: var(--error); }
-        .field input, .field select, .field textarea {
-            width: 100%; padding: 12px 14px;
-            background: rgba(255,255,255,0.03);
-            border: 2px solid var(--border);
-            border-radius: 10px; color: var(--text);
-            font-size: 0.95rem; font-family: inherit;
-            transition: all .2s;
-        }
-        .field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
-        .field input:focus, .field select:focus, .field textarea:focus {
-            outline: none; border-color: var(--primary);
-            background: rgba(255,255,255,0.06);
-            box-shadow: 0 0 0 4px rgba(239,68,68,0.1);
-        }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
-
-        /* QR Display */
-        .qr-display-card {
-            background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(220,38,38,0.04));
-            border: 1px solid rgba(239,68,68,0.2);
-            border-radius: 18px;
-            padding: 24px;
-            text-align: center;
-        }
-        .qr-canvas-wrap {
-            background: #fff;
-            padding: 16px;
-            border-radius: 14px;
-            display: inline-block;
-            margin: 14px 0;
-        }
-        .qr-canvas-wrap img {
-            display: block;
-            max-width: 240px;
-            width: 100%;
-            height: auto;
-        }
-        .qr-info {
-            background: rgba(255,255,255,0.03);
+        .modal {
+            background: #1e293b;
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px;
-            margin-top: 14px;
-            font-size: 0.9rem;
-            text-align: right;
-        }
-        .qr-info-row {
-            display: flex; justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px dashed var(--border);
-        }
-        .qr-info-row:last-child { border-bottom: none; }
-        .qr-info-row .label { color: var(--text-muted); }
-        .qr-info-row .value { font-weight: 700; }
-
-        .qr-validity {
-            margin-top: 12px;
-            padding: 10px 14px;
-            background: rgba(245,158,11,0.08);
-            border: 1px solid rgba(245,158,11,0.25);
-            border-radius: 10px;
-            color: var(--warning);
-            font-size: 0.86rem;
-            font-weight: 700;
-            display: flex; align-items: center; gap: 8px;
-            justify-content: center;
-        }
-
-        .copy-link-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px dashed var(--border);
-            border-radius: 10px;
-            padding: 10px 14px;
-            color: var(--text);
-            font-family: 'Courier New', monospace;
-            font-size: 0.84rem;
-            cursor: pointer;
-            transition: all .2s;
-            display: flex; align-items: center; gap: 8px;
-            margin-top: 10px;
-            width: 100%;
-            text-align: center;
-            justify-content: center;
-        }
-        .copy-link-btn:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: var(--primary);
-        }
-
-        /* Late Reports */
-        .late-report-card {
-            background: rgba(239,68,68,0.05);
-            border: 1px solid rgba(239,68,68,0.2);
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 10px;
-            display: flex; align-items: flex-start; gap: 12px;
-        }
-        .late-icon {
-            width: 38px; height: 38px;
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; flex-shrink: 0;
-        }
-        .late-body { flex: 1; min-width: 0; }
-        .late-title { font-weight: 700; font-size: 0.94rem; }
-        .late-reason { color: var(--text-muted); font-size: 0.86rem; margin-top: 4px; }
-        .late-meta { display: flex; gap: 12px; margin-top: 6px; font-size: 0.78rem; color: var(--text-muted); flex-wrap: wrap; }
-
-        /* Help Modal */
-        .help-section {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 12px;
-        }
-        .help-section h4 {
-            font-size: 0.95rem;
-            display: flex; align-items: center; gap: 8px;
-            margin-bottom: 8px;
-            color: var(--primary);
-        }
-        .help-section ul {
-            list-style: none;
-            padding: 0;
-        }
-        .help-section li {
-            padding: 5px 0;
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            display: flex; align-items: flex-start; gap: 6px;
-        }
-        .help-section li i {
-            color: var(--success);
-            flex-shrink: 0;
-            margin-top: 4px;
-        }
-
-        /* Data Policy */
-        .policy-toggle {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-        .policy-toggle-label {
-            display: flex; flex-direction: column; gap: 3px;
-        }
-        .policy-toggle-label strong { font-size: 0.92rem; }
-        .policy-toggle-label small { color: var(--text-muted); font-size: 0.78rem; }
-        .switch {
-            position: relative;
-            width: 50px; height: 26px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 13px;
-            cursor: pointer;
-            transition: all .3s;
-            flex-shrink: 0;
-        }
-        .switch.active { background: var(--primary); }
-        .switch::before {
-            content: '';
-            position: absolute;
-            right: 3px; top: 3px;
-            width: 20px; height: 20px;
-            background: #fff;
-            border-radius: 50%;
-            transition: all .3s;
-        }
-        .switch.active::before {
-            right: calc(100% - 23px);
-        }
-
-        /* Empty State */
-        .empty-state {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-            background: var(--card); border: 1px solid var(--border);
             border-radius: 16px;
+            max-width: 500px; width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn .3s;
         }
-        .empty-state i {
-            font-size: 4rem;
-            color: rgba(148,163,184,0.3);
-            margin-bottom: 16px;
-            display: block;
-        }
-        .empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
-
-        /* Quick Decision Buttons in Modal */
-        .decision-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 14px 0;
-        }
-        .decision-btn {
-            padding: 16px;
-            border: 2px solid var(--border);
-            border-radius: 14px;
-            background: rgba(255,255,255,0.02);
-            cursor: pointer;
-            text-align: center;
-            transition: all .2s;
-        }
-        .decision-btn:hover {
-            transform: translateY(-2px);
-        }
-        .decision-btn.accept:hover {
-            border-color: var(--success);
-            background: rgba(16,185,129,0.05);
-        }
-        .decision-btn.reject:hover {
-            border-color: var(--error);
-            background: rgba(239,68,68,0.05);
-        }
-        .decision-btn-icon {
-            width: 50px; height: 50px;
-            border-radius: 14px;
-            margin: 0 auto 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem;
-            color: #fff;
-        }
-        .decision-btn.accept .decision-btn-icon {
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-        .decision-btn.reject .decision-btn-icon {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-        }
-        .decision-btn-title {
-            font-weight: 800;
-            font-size: 1rem;
-            margin-bottom: 4px;
-        }
-        .decision-btn-desc {
-            color: var(--text-muted);
-            font-size: 0.82rem;
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* Animations */
-        @keyframes shake {
-            0%,100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+        .modal-head {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .shake { animation: shake .35s; }
+        .modal-head h3 { font-size: 1.1rem; font-weight: 700; }
+        .modal-close {
+            background: none; border: none; color: var(--text-muted);
+            font-size: 1.3rem; cursor: pointer;
+        }
 
-        @media (max-width: 1024px) {
-            .sidebar { transform: translateX(100%); width: 280px; }
+        .modal-body { padding: 22px 24px; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block; font-weight: 600; font-size: 0.9rem;
+            margin-bottom: 6px; color: var(--text-muted);
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.93rem;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus { outline: none; border-color: var(--primary); }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+
+        .modal-foot {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex; gap: 10px; justify-content: flex-end;
+        }
+
+        /* ============================================================
+         * Mobile Responsive
+         * ============================================================ */
+        @media (max-width: 992px) {
+            .charts-row { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(100%);
+                box-shadow: -10px 0 30px rgba(0,0,0,.5);
+            }
             .sidebar.open { transform: translateX(0); }
             .main { margin-right: 0; }
-            .menu-toggle { display: flex; align-items: center; justify-content: center; }
+            .menu-toggle { display: block; }
+            .page { padding: 18px; }
+            .user-info { display: none; }
+            .welcome-content h1 { font-size: 1.4rem; }
+            .stats { grid-template-columns: 1fr 1fr; }
+            .stat-value { font-size: 1.5rem; }
+            .app-details { grid-template-columns: 1fr; }
         }
-        @media (max-width: 600px) {
-            .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
-            .topbar-title { font-size: 1.2rem; }
-            .stats-row { grid-template-columns: 1fr 1fr; }
-            .interview-meta { grid-template-columns: 1fr; }
-            .decision-buttons { grid-template-columns: 1fr; }
+
+        @media (max-width: 480px) {
+            .stats { grid-template-columns: 1fr; }
+            .welcome { padding: 20px; }
+            .welcome-icon { width: 56px; height: 56px; font-size: 1.6rem; }
         }
+
+        /* Backdrop for mobile */
+        .sidebar-backdrop {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        .sidebar-backdrop.show { display: block; }
     </style>
 </head>
 <body>
-    <div class="bg-anim"></div>
+    <!-- Loading -->
+    <div id="loading">
+        <div class="spinner-wrap">
+            <div class="spinner-box"></div>
+            <p style="color: var(--text-muted)">جاري التحميل...</p>
+        </div>
+    </div>
 
-    <div class="layout">
+    <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">
                 <div class="logo-wrapper">
@@ -662,11 +665,11 @@
                 </div>
             </div>
             <a href="company-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
-            <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
+            <a href="company-trainers.html" class="nav-item active"><i class="fas fa-users"></i> المتدربين</a>
             <a href="company-talent-search.html" class="nav-item"><i class="fas fa-search"></i> البحث عن المواهب</a>
             <a href="company-requests-control.html" class="nav-item"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
             <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم <span class="nav-badge" id="appsBadge" style="display:none"></span></a>
-            <a href="company-interviews.html" class="nav-item active"><i class="fas fa-calendar-check"></i> المقابلات</a>
+            <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
             <a href="company-QR_Code.html" class="nav-item"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
             <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
             <a href="company-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
@@ -676,1567 +679,1033 @@
             </a>
         </aside>
 
-        <main class="main">
-            <div class="topbar">
-                <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+    <div class="sidebar-backdrop" id="sbBackdrop" onclick="closeSidebar()"></div>
+
+    <!-- Main Content -->
+    <main class="main">
+        <header class="header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="menu-toggle" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="topbar-title">
-                    <i class="fas fa-calendar-check" style="color:var(--primary)"></i> إدارة المقابلات
-                </h1>
-                <div class="topbar-actions">
-                    <button class="btn btn-secondary btn-sm" onclick="openHelpModal()" title="دليل الاستخدام">
-                        <i class="fas fa-question-circle"></i> مساعدة
-                    </button>
-                    <button class="btn btn-secondary btn-sm" onclick="openDataPolicyModal()" title="إعدادات البيانات">
-                        <i class="fas fa-sliders-h"></i> الإعدادات
-                    </button>
-                    <button class="btn btn-primary" onclick="openScheduleModal()">
-                        <i class="fas fa-plus"></i> جدولة مقابلة جديدة
-                    </button>
+                <div class="header-title">
+                    <i class="fas fa-users" style="color: var(--primary);"></i>
+                    المتدربين
                 </div>
             </div>
 
-            <!-- Tabs -->
-            <div class="tabs-container">
-                <button class="tab-btn active" data-tab="upcoming" onclick="switchTab(event, 'upcoming')">
-                    <i class="fas fa-clock"></i> قادمة
-                    <span class="tab-badge" id="upcomingCount">0</span>
-                </button>
-                <button class="tab-btn" data-tab="today" onclick="switchTab(event, 'today')">
-                    <i class="fas fa-calendar-day"></i> اليوم
-                    <span class="tab-badge" id="todayCount">0</span>
-                </button>
-                <button class="tab-btn" data-tab="past" onclick="switchTab(event, 'past')">
-                    <i class="fas fa-history"></i> سابقة
-                    <span class="tab-badge" id="pastCount">0</span>
-                </button>
-                <button class="tab-btn" data-tab="late-reports" onclick="switchTab(event, 'late-reports')">
-                    <i class="fas fa-exclamation-triangle"></i> تقارير التأخير
-                    <span class="tab-badge" id="lateCount">0</span>
-                </button>
-                <button class="tab-btn" data-tab="logs" onclick="switchTab(event, 'logs')">
-                    <i class="fas fa-list"></i> سجل النشاط
-                </button>
+            <div class="user-box">
+                <div class="user-avatar" id="headerAvatar">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="user-info">
+                    <div class="name" id="headerName">جاري التحميل...</div>
+                    <div class="role">شركة معتمدة</div>
+                </div>
+            </div>
+        </header>
+
+                        <!-- Info Banner -->
+            <div style="margin:0 24px 18px;background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(220,38,38,0.05));border:1px solid rgba(239,68,68,0.25);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+                <div style="width:50px;height:50px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#fff;flex-shrink:0"><i class="fas fa-brain"></i></div>
+                <div style="flex:1;min-width:200px">
+                    <div style="font-weight:800;font-size:1.05rem">إدارة المتدربين بالذكاء الاصطناعي 🤖</div>
+                    <div style="color:var(--text-muted);font-size:0.88rem;margin-top:4px">اضغط على أي متدرب لفتح: تقارير الأداء (AI) - تقارير المهام - الترشيحات الوظيفية (AI)</div>
+                </div>
             </div>
 
             <!-- Stats -->
-            <div class="stats-row">
-                <div class="stat-mini">
-                    <div class="stat-mini-icon purple"><i class="fas fa-calendar"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statTotal">0</div>
-                        <div class="stat-mini-label">إجمالي المقابلات</div>
-                    </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:0 24px 18px">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px">
+                    <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center;color:#fff"><i class="fas fa-users"></i></div>
+                    <div><div id="statTotal" style="font-size:1.5rem;font-weight:800;line-height:1">0</div><div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px">إجمالي المتدربين</div></div>
                 </div>
-                <div class="stat-mini">
-                    <div class="stat-mini-icon info"><i class="fas fa-clock"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statUpcoming">0</div>
-                        <div class="stat-mini-label">قادمة</div>
-                    </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px">
+                    <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;color:#fff"><i class="fas fa-graduation-cap"></i></div>
+                    <div><div id="statActive" style="font-size:1.5rem;font-weight:800;line-height:1">0</div><div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px">قيد التدريب</div></div>
                 </div>
-                <div class="stat-mini">
-                    <div class="stat-mini-icon success"><i class="fas fa-check"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statAttended">0</div>
-                        <div class="stat-mini-label">حضروا</div>
-                    </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px">
+                    <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#f97316);display:flex;align-items:center;justify-content:center;color:#fff"><i class="fas fa-star"></i></div>
+                    <div><div id="statEvaluated" style="font-size:1.5rem;font-weight:800;line-height:1">0</div><div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px">مقيمين</div></div>
                 </div>
-                <div class="stat-mini">
-                    <div class="stat-mini-icon error"><i class="fas fa-times"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statMissed">0</div>
-                        <div class="stat-mini-label">غيابات</div>
-                    </div>
-                </div>
-                <div class="stat-mini">
-                    <div class="stat-mini-icon warning"><i class="fas fa-percentage"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statAttendanceRate">0%</div>
-                        <div class="stat-mini-label">معدل الحضور</div>
-                    </div>
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px">
+                    <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#4facfe,#00f2fe);display:flex;align-items:center;justify-content:center;color:#fff"><i class="fas fa-check-circle"></i></div>
+                    <div><div id="statCompleted" style="font-size:1.5rem;font-weight:800;line-height:1">0</div><div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px">أكملوا</div></div>
                 </div>
             </div>
 
-            <!-- Filters -->
-            <div class="filters-bar">
-                <input type="text" id="searchInterviews" placeholder="🔍 ابحث باسم الطالب أو المنصب...">
-                <select id="filterPeriod">
-                    <option value="">كل الفترات</option>
-                    <option value="today">اليوم</option>
-                    <option value="week">هذا الأسبوع</option>
-                    <option value="month">هذا الشهر</option>
-                </select>
-                <select id="filterSort">
-                    <option value="date_asc">الأقرب أولاً</option>
-                    <option value="date_desc">الأبعد أولاً</option>
-                    <option value="name">حسب الاسم</option>
-                </select>
+            <!-- Search & Filters -->
+            <div style="margin:0 24px 14px">
+                <div style="position:relative;margin-bottom:12px">
+                    <i class="fas fa-search" style="position:absolute;top:50%;right:14px;transform:translateY(-50%);color:var(--text-muted)"></i>
+                    <input type="text" id="trainerSearch" placeholder="ابحث بالاسم، الجامعة، المجال، الكلية..." style="width:100%;padding:14px 42px 14px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:inherit;font-size:0.95rem" oninput="applyTraineeFilters()">
+                </div>
+                
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+                    <button class="trainee-filter active" data-status="all" onclick="setStatusFilter('all')" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;font-size:0.82rem">الكل</button>
+                    <button class="trainee-filter" data-status="in_training" onclick="setStatusFilter('in_training')" style="background:var(--bg-card);color:var(--text-muted);border:1px solid var(--border);padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;font-size:0.82rem"><i class="fas fa-graduation-cap"></i> يتدرب الآن</button>
+                    <button class="trainee-filter" data-status="hired" onclick="setStatusFilter('hired')" style="background:var(--bg-card);color:var(--text-muted);border:1px solid var(--border);padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;font-size:0.82rem"><i class="fas fa-check"></i> مقبول</button>
+                    <button class="trainee-filter" data-status="completed" onclick="setStatusFilter('completed')" style="background:var(--bg-card);color:var(--text-muted);border:1px solid var(--border);padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;font-size:0.82rem"><i class="fas fa-check-double"></i> اللي خلصوا</button>
+                    <button class="trainee-filter" data-status="evaluated" onclick="setStatusFilter('evaluated')" style="background:var(--bg-card);color:var(--text-muted);border:1px solid var(--border);padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;font-size:0.82rem"><i class="fas fa-star"></i> مُقَيَّمين</button>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px">
+                    <select id="filterBatch" onchange="applyTraineeFilters()" style="padding:9px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.85rem">
+                        <option value="">كل الدفعات (سنوياً)</option>
+                    </select>
+                    <select id="filterMonthBatch" onchange="applyTraineeFilters()" style="padding:9px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.85rem">
+                        <option value="">كل الشهور</option>
+                    </select>
+                    <select id="filterField" onchange="applyTraineeFilters()" style="padding:9px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.85rem">
+                        <option value="">كل المجالات</option>
+                    </select>
+                    <select id="filterRating" onchange="applyTraineeFilters()" style="padding:9px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.85rem">
+                        <option value="">كل التقييمات</option>
+                        <option value="excellent">ممتاز (80+)</option>
+                        <option value="good">جيد (60-79)</option>
+                        <option value="needs_improvement">يحتاج تحسين</option>
+                        <option value="not_evaluated">لم يُقَيَّم</option>
+                    </select>
+                </div>
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px">
+                    <div style="color:var(--text-muted);font-size:0.84rem">
+                        <i class="fas fa-info-circle" style="color:var(--primary)"></i> عرض <strong id="resultCount" style="color:var(--text)">0</strong> من أصل <strong id="totalCount" style="color:var(--text)">0</strong> متدرب
+                    </div>
+                    <button onclick="clearTraineeFilters()" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.82rem"><i class="fas fa-redo"></i> مسح الفلاتر</button>
+                </div>
             </div>
 
-            <!-- Tab Contents -->
-            <div id="tab-upcoming" class="tab-content active">
-                <div class="interviews-grid" id="upcomingGrid">
-                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
-                </div>
-            </div>
-            <div id="tab-today" class="tab-content">
-                <div class="interviews-grid" id="todayGrid"></div>
-            </div>
-            <div id="tab-past" class="tab-content">
-                <div class="interviews-grid" id="pastGrid"></div>
-            </div>
-            <div id="tab-late-reports" class="tab-content">
-                <div id="lateReportsList">
-                    <div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>تقارير التأخير</h3><p>هنا تظهر التقارير لما يحصل تأخير</p></div>
-                </div>
-            </div>
-            <div id="tab-logs" class="tab-content">
-                <div id="activityLogs">
-                    <div class="empty-state"><i class="fas fa-list"></i><h3>سجل النشاط</h3><p>كل العمليات اللي بتتم على الصفحة</p></div>
+            <!-- Trainees Cards Grid -->
+            <div id="traineesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:0 24px 24px">
+                <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted)">
+                    <i class="fas fa-spinner fa-spin" style="font-size:3rem;color:var(--primary);margin-bottom:14px;display:block"></i>
+                    <h3 style="color:var(--text);margin-bottom:6px">جاري التحميل...</h3>
                 </div>
             </div>
         </main>
-    </div>
 
-    <div id="modalsContainer"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
-    <script>
-
-    // ============================================================
-    // 🛡️ Resilient Supabase Client - GLOBAL
-    // ============================================================
-    if (!window.getSafeSupabase) {
-        window.getSafeSupabase = async function() {
-            if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
-                try {
-                    const sb = await window.ProVance.waitForSupabaseClient(8000);
-                    if (sb && typeof sb.from === 'function') return sb;
-                } catch(e) {}
-            }
-            try {
-                const sb = window.ProVance && window.ProVance.sb;
-                if (sb && typeof sb.from === 'function') return sb;
-            } catch(e) {}
-            if (typeof supabase !== 'undefined' && supabase.createClient) {
-                try {
-                    return supabase.createClient(
-                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                        { auth: { persistSession: true, storage: window.localStorage } }
-                    );
-                } catch(e) {}
-            }
-            return null;
-        };
-
-        // ============================================================
-        // 🛡️ Resilient session check - ينتظر قبل ما يرجع للـ login
-        // ============================================================
-        async function getResilientSession(sb, maxRetries = 5) {
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const { data: { session } } = await sb.auth.getSession();
-                    if (session && session.user) return session;
-                } catch(e) { console.warn('Session check attempt ' + (i+1) + ' failed:', e); }
-                await new Promise(r => setTimeout(r, 500));
-            }
-            return null;
-        }
-
-    }
-
-// ============================================================
-// ProVance: Interviews Management - Full Featured
-// ============================================================
-(function() {
-    'use strict';
-
-    // Safety Fallbacks
-    if (!window.ProVance) {
-        console.error('⚠️ supabase-config.js مش متحمل');
-        window.ProVance = {};
-    }
-    if (typeof window.ProVance.escapeHtml !== 'function') {
-        window.ProVance.escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-    if (typeof window.ProVance.showToast !== 'function') {
-        window.ProVance.showToast = (msg, type) => {
-            const t = document.createElement('div');
-            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
-            t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (c[type]||'#4facfe') + ';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
-            t.textContent = msg;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 4000);
-        };
-    }
-    if (typeof window.ProVance.confirmModal !== 'function') {
-        window.ProVance.confirmModal = async ({title, message}) => confirm((title||'') + '\n' + (message||''));
-    }
-
-    console.log('✅ Interviews app initialized');
-
-    const esc = window.ProVance.escapeHtml;
-
-    // ============ STATE ============
-    let companyUserId = null;
-    let companyName = null;
-    let allInterviews = [];
-    let allQrCodes = [];
-    let allLateReports = [];
-    let activityLogs = [];
-    let dataPolicy = {
-        autoArchiveOldInterviews: true,
-        autoCleanupArchive: true,
-        archiveAfterDays: 90,
-        cleanupAfterDays: 365
-    };
-
-    // ============ HELPERS ============
-    function getInitial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
-
-    function renderModal(html) {
-        document.getElementById('modalsContainer').innerHTML = html;
-        document.body.style.overflow = 'hidden';
-    }
-    window.closeModal = (id) => {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-        if (document.querySelectorAll('.modal').length === 0) {
-            document.body.style.overflow = '';
-        }
-    };
-
-    function formatDateTimeAr(d) {
-        if (!d) return '-';
-        return new Date(d).toLocaleString('ar-EG', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
-    }
-    function formatTimeAr(d) {
-        if (!d) return '-';
-        return new Date(d).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-    }
-    function formatDateAr(d) {
-        if (!d) return '-';
-        return new Date(d).toLocaleDateString('ar-EG');
-    }
-    function getCountdown(target) {
-        if (!target) return null;
-        const diff = new Date(target).getTime() - Date.now();
-        if (diff < 0) return { expired: true, text: 'انتهى الوقت' };
-        const hours = Math.floor(diff / 3600000);
-        const mins = Math.floor((diff % 3600000) / 60000);
-        const secs = Math.floor((diff % 60000) / 1000);
-        return {
-            expired: false,
-            hours, mins, secs,
-            text: hours > 0 ? `${hours}س ${mins}د` : `${mins}د ${secs}ث`,
-            urgent: diff < 30 * 60 * 1000
-        };
-    }
-
-    // Activity Log
-    function addLog(action, details) {
-        const log = {
-            id: Date.now() + Math.random(),
-            timestamp: new Date().toISOString(),
-            action, details
-        };
-        activityLogs.unshift(log);
-        if (activityLogs.length > 100) activityLogs = activityLogs.slice(0, 100);
-        try {
-            localStorage.setItem('provance_interview_logs', JSON.stringify(activityLogs));
-        } catch (e) {}
-        renderActivityLogs();
-    }
-
-    function loadLogs() {
-        try {
-            const stored = localStorage.getItem('provance_interview_logs');
-            if (stored) activityLogs = JSON.parse(stored);
-        } catch (e) {}
-    }
-
-    // ============ TABS ============
-    window.switchTab = (e, tabName) => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        document.getElementById('tab-' + tabName).classList.add('active');
-
-        if (tabName === 'logs') renderActivityLogs();
-    };
-
-    window.logoutCompany = async (e) => {
-        e.preventDefault();
-        const ok = await window.ProVance.confirmModal({title: 'تسجيل الخروج', message: 'هل تريد تسجيل الخروج؟'});
-        if (ok) {
-            if (window.ProVance.logout) await window.ProVance.logout('company-login.html');
-            else window.location.href = 'company-login.html';
-        }
-    };
-
-    // ============ STATS ============
-    function updateStats() {
-        const now = Date.now();
-        const upcoming = allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
-        const past = allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
-        const attended = past.filter(i => ['interview_done', 'accepted', 'hired', 'in_training', 'completed'].includes(i.status));
-        const missed = past.filter(i => i.status === 'interview_scheduled');
-        const rate = past.length ? Math.round(attended.length / past.length * 100) : 0;
-
-        document.getElementById('statTotal').textContent = allInterviews.length;
-        document.getElementById('statUpcoming').textContent = upcoming.length;
-        document.getElementById('statAttended').textContent = attended.length;
-        document.getElementById('statMissed').textContent = missed.length;
-        document.getElementById('statAttendanceRate').textContent = rate + '%';
-
-        const today = new Date(); today.setHours(0,0,0,0);
-        const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-        const todayInts = allInterviews.filter(i => {
-            if (!i.interview_date) return false;
-            const d = new Date(i.interview_date);
-            return d >= today && d < tomorrow;
-        });
-
-        document.getElementById('upcomingCount').textContent = upcoming.length;
-        document.getElementById('todayCount').textContent = todayInts.length;
-        document.getElementById('pastCount').textContent = past.length;
-        document.getElementById('lateCount').textContent = allLateReports.length;
-    }
-
-    // ============ RENDER INTERVIEW CARD ============
-    function renderInterviewCard(i) {
-        const photo = i.student_photo
-            ? `<img src="${i.student_photo}" alt="${esc(i.student_name)}">`
-            : `<span>${getInitial(i.student_name)}</span>`;
-
-        const interviewDate = i.interview_date ? new Date(i.interview_date) : null;
-        const now = Date.now();
-        const isUpcoming = interviewDate && interviewDate.getTime() > now;
-        const isPast = interviewDate && interviewDate.getTime() <= now;
-
-        const qrValidUntil = interviewDate ? new Date(interviewDate.getTime() + 60 * 60 * 1000) : null;
-        const qrStillValid = qrValidUntil && qrValidUntil.getTime() > now && interviewDate.getTime() <= now;
-
-        let statusBadge = '';
-        let cardClass = '';
-        if (i.status === 'accepted' || i.status === 'hired' || i.status === 'in_training') {
-            statusBadge = '<span class="status-badge attended">✓ قُبل</span>';
-        } else if (i.status === 'interview_done') {
-            statusBadge = '<span class="status-badge attended">✓ تمت المقابلة</span>';
-        } else if (i.status === 'rejected') {
-            statusBadge = '<span class="status-badge missed">✕ مرفوض</span>';
-        } else if (qrStillValid) {
-            statusBadge = '<span class="status-badge live">🔴 جاري الآن</span>';
-            cardClass = 'live';
-        } else if (isUpcoming) {
-            statusBadge = '<span class="status-badge scheduled">📅 مجدولة</span>';
-            cardClass = 'upcoming';
-        } else if (isPast && i.status === 'interview_scheduled') {
-            statusBadge = '<span class="status-badge missed">⏰ فات الموعد</span>';
-            cardClass = 'expired';
-        } else {
-            statusBadge = '<span class="status-badge pending">⏳ في الانتظار</span>';
-        }
-
-        let countdownHtml = '';
-        if (isUpcoming) {
-            const cd = getCountdown(i.interview_date);
-            if (cd && !cd.expired) {
-                const cls = cd.urgent ? 'danger' : (cd.hours < 1 ? 'success' : '');
-                countdownHtml = `
-                    <div class="countdown ${cls}" data-target="${i.interview_date}">
-                        <span class="countdown-label">⏰ يبدأ خلال:</span>
-                        <span class="countdown-time">${cd.text}</span>
-                    </div>
-                `;
-            }
-        } else if (qrStillValid) {
-            const cd = getCountdown(qrValidUntil.toISOString());
-            countdownHtml = `
-                <div class="countdown success" data-target="${qrValidUntil.toISOString()}">
-                    <span class="countdown-label">🔴 الـ QR صالح لـ:</span>
-                    <span class="countdown-time">${cd.text}</span>
-                </div>
-            `;
-        }
-
-        let actions = '';
-        if (isUpcoming || qrStillValid) {
-            actions += `<button class="btn btn-primary btn-sm" onclick="generateQRCode('${i.id}')"><i class="fas fa-qrcode"></i> QR Code</button>`;
-            actions += `<button class="btn btn-secondary btn-sm" onclick="openRescheduleModal('${i.id}')"><i class="fas fa-edit"></i> تعديل</button>`;
-        } else if (isPast && i.status === 'interview_scheduled') {
-            actions += `<button class="btn btn-success btn-sm" onclick="markAttended('${i.id}')"><i class="fas fa-check"></i> حضر</button>`;
-            actions += `<button class="btn btn-danger btn-sm" onclick="markMissed('${i.id}')"><i class="fas fa-times"></i> غاب</button>`;
-        }
-        if (i.status === 'interview_done') {
-            actions += `<button class="btn btn-success btn-sm" onclick="openDecisionModal('${i.id}')"><i class="fas fa-gavel"></i> اتخاذ قرار</button>`;
-        }
-        actions += `<button class="btn btn-info btn-sm" onclick="viewInterviewDetails('${i.id}')"><i class="fas fa-eye"></i> التفاصيل</button>`;
-
-        return `
-            <div class="interview-card ${cardClass}">
-                <div class="interview-card-header">
-                    <div class="student-avatar">${photo}</div>
-                    <div class="student-info">
-                        <div class="student-name">${esc(i.student_name || '-')}</div>
-                        <div class="student-pos">${esc(i.internship_title || '-')}</div>
-                    </div>
-                    ${statusBadge}
-                </div>
-                <div class="interview-meta">
-                    <div class="meta-item">
-                        <span class="label">📅 التاريخ</span>
-                        <span class="value">${interviewDate ? formatDateAr(interviewDate) : '-'}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="label">⏰ الوقت</span>
-                        <span class="value">${interviewDate ? formatTimeAr(interviewDate) : '-'}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="label">📍 المكان</span>
-                        <span class="value">${esc(i.interview_location || 'مقر الشركة')}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="label">🎓 الجامعة</span>
-                        <span class="value">${esc(i.student_university || '-')}</span>
-                    </div>
-                </div>
-                ${countdownHtml}
-                <div class="interview-actions">${actions}</div>
+    <!-- Accept Modal -->
+    <div class="modal-overlay" id="acceptModal">
+        <div class="modal">
+            <div class="modal-head">
+                <h3>قبول الطلب وتحديد موعد المقابلة</h3>
+                <button class="modal-close" onclick="closeModal('acceptModal')">&times;</button>
             </div>
-        `;
-    }
-
-    function renderAllTabs() {
-        const search = document.getElementById('searchInterviews').value.toLowerCase().trim();
-        const period = document.getElementById('filterPeriod').value;
-        const sort = document.getElementById('filterSort').value;
-
-        const now = Date.now();
-        const today = new Date(); today.setHours(0,0,0,0);
-        const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-
-        let filtered = allInterviews.slice();
-
-        if (search) {
-            filtered = filtered.filter(i =>
-                (i.student_name || '').toLowerCase().includes(search) ||
-                (i.internship_title || '').toLowerCase().includes(search)
-            );
-        }
-
-        if (period === 'today') {
-            filtered = filtered.filter(i => {
-                if (!i.interview_date) return false;
-                const d = new Date(i.interview_date);
-                return d >= today && d < tomorrow;
-            });
-        } else if (period === 'week') {
-            const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
-            filtered = filtered.filter(i => {
-                if (!i.interview_date) return false;
-                const d = new Date(i.interview_date);
-                return d >= today && d < weekEnd;
-            });
-        } else if (period === 'month') {
-            const monthEnd = new Date(today); monthEnd.setMonth(monthEnd.getMonth() + 1);
-            filtered = filtered.filter(i => {
-                if (!i.interview_date) return false;
-                const d = new Date(i.interview_date);
-                return d >= today && d < monthEnd;
-            });
-        }
-
-        // Sort
-        if (sort === 'date_asc') {
-            filtered.sort((a, b) => new Date(a.interview_date || 0) - new Date(b.interview_date || 0));
-        } else if (sort === 'date_desc') {
-            filtered.sort((a, b) => new Date(b.interview_date || 0) - new Date(a.interview_date || 0));
-        } else if (sort === 'name') {
-            filtered.sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
-        }
-
-        const upcoming = filtered.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
-        const todayInts = filtered.filter(i => {
-            if (!i.interview_date) return false;
-            const d = new Date(i.interview_date);
-            return d >= today && d < tomorrow;
-        });
-        const past = filtered.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
-
-        document.getElementById('upcomingGrid').innerHTML = upcoming.length === 0
-            ? '<div class="empty-state"><i class="fas fa-calendar-plus"></i><h3>لا توجد مقابلات قادمة</h3><p>اضغط "جدولة مقابلة جديدة" لإضافة مقابلة</p></div>'
-            : upcoming.map(renderInterviewCard).join('');
-
-        document.getElementById('todayGrid').innerHTML = todayInts.length === 0
-            ? '<div class="empty-state"><i class="fas fa-calendar-day"></i><h3>لا توجد مقابلات اليوم</h3></div>'
-            : todayInts.map(renderInterviewCard).join('');
-
-        document.getElementById('pastGrid').innerHTML = past.length === 0
-            ? '<div class="empty-state"><i class="fas fa-history"></i><h3>لا توجد مقابلات سابقة</h3></div>'
-            : past.map(renderInterviewCard).join('');
-
-        renderLateReports();
-    }
-
-    function renderLateReports() {
-        const list = document.getElementById('lateReportsList');
-        if (allLateReports.length === 0) {
-            list.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>لا توجد تقارير تأخير</h3><p>هنا تظهر التقارير لما يحصل تأخير</p></div>';
-            return;
-        }
-
-        const BLAME_LABELS = {
-            'student': 'الطالب', 'company': 'الشركة',
-            'both': 'الطرفين', 'force_majeure': 'قوة قاهرة'
-        };
-
-        list.innerHTML = allLateReports.map(r => `
-            <div class="late-report-card">
-                <div class="late-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                <div class="late-body">
-                    <div class="late-title">تقرير تأخير - ${BLAME_LABELS[r.blame_target] || r.blame_target}</div>
-                    <div class="late-reason">${esc(r.reason)}</div>
-                    <div class="late-meta">
-                        <span><i class="fas fa-calendar"></i> ${formatDateTimeAr(r.created_at)}</span>
-                        <span class="status-badge ${r.status === 'accepted' ? 'attended' : r.status === 'rejected' ? 'missed' : 'pending'}">
-                            ${r.status === 'accepted' ? '✓ مقبول' : r.status === 'rejected' ? '✕ مرفوض' : '⏳ في انتظار المراجعة'}
-                        </span>
-                    </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>اسم المتقدم</label>
+                    <input type="text" id="acceptName" readonly>
+                </div>
+                <div class="form-group">
+                    <label>موعد المقابلة *</label>
+                    <input type="datetime-local" id="acceptDate" required>
+                </div>
+                <div class="form-group">
+                    <label>مكان المقابلة</label>
+                    <input type="text" id="acceptLocation" placeholder="عنوان الشركة أو رابط اجتماع">
+                </div>
+                <div class="form-group">
+                    <label>ملاحظات (اختياري)</label>
+                    <textarea id="acceptNotes" placeholder="أي تعليمات إضافية للمتدرب..."></textarea>
                 </div>
             </div>
-        `).join('');
-    }
-
-    function renderActivityLogs() {
-        const list = document.getElementById('activityLogs');
-        if (!list) return;
-        if (activityLogs.length === 0) {
-            list.innerHTML = '<div class="empty-state"><i class="fas fa-list"></i><h3>سجل النشاط</h3><p>كل العمليات اللي بتتم على الصفحة تظهر هنا</p></div>';
-            return;
-        }
-
-        list.innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-                <h3 style="font-size:1rem;font-weight:800">سجل النشاط (${activityLogs.length})</h3>
-                <button class="btn btn-secondary btn-sm" onclick="clearActivityLogs()">
-                    <i class="fas fa-trash"></i> مسح السجل
+            <div class="modal-foot">
+                <button class="btn btn-outline" onclick="closeModal('acceptModal')">إلغاء</button>
+                <button class="btn btn-success" onclick="confirmAccept()">
+                    <i class="fas fa-check"></i> تأكيد القبول
                 </button>
             </div>
-            ${activityLogs.map(log => `
-                <div class="late-report-card" style="background:rgba(79,172,254,0.05);border-color:rgba(79,172,254,0.2)">
-                    <div class="late-icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"><i class="fas fa-history"></i></div>
-                    <div class="late-body">
-                        <div class="late-title">${esc(log.action)}</div>
-                        ${log.details ? `<div class="late-reason">${esc(log.details)}</div>` : ''}
-                        <div class="late-meta">
-                            <span><i class="fas fa-clock"></i> ${formatDateTimeAr(log.timestamp)}</span>
-                        </div>
-                    </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal-overlay" id="rejectModal">
+        <div class="modal">
+            <div class="modal-head">
+                <h3>رفض الطلب</h3>
+                <button class="modal-close" onclick="closeModal('rejectModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>اسم المتقدم</label>
+                    <input type="text" id="rejectName" readonly>
                 </div>
-            `).join('')}
-        `;
+                <div class="form-group">
+                    <label>سبب الرفض *</label>
+                    <textarea id="rejectReason" placeholder="سيتم إرسال هذا السبب للمتدرب..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-outline" onclick="closeModal('rejectModal')">إلغاء</button>
+                <button class="btn btn-primary" style="background:#ef4444" onclick="confirmReject()">
+                    <i class="fas fa-times"></i> تأكيد الرفض
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+<style>
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+<script>
+window.getSafeSupabase = async function() {
+    if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
+        try {
+            const sb = await window.ProVance.waitForSupabaseClient(5000);
+            if (sb && typeof sb.from === 'function') return sb;
+        } catch(e) {}
     }
-
-    window.clearActivityLogs = async () => {
-        const ok = await window.ProVance.confirmModal({title: 'مسح السجل', message: 'هل تريد مسح كل سجل النشاط؟'});
-        if (!ok) return;
-        activityLogs = [];
-        try { localStorage.removeItem('provance_interview_logs'); } catch (e) {}
-        renderActivityLogs();
-        window.ProVance.showToast('تم مسح السجل', 'success');
-    };
-
-    // Expose state for part 2
-    window._interviewsState = {
-        get companyUserId() { return companyUserId; },
-        get companyName() { return companyName; },
-        get allInterviews() { return allInterviews; },
-        get allQrCodes() { return allQrCodes; },
-        get dataPolicy() { return dataPolicy; },
-        set dataPolicy(v) { dataPolicy = v; },
-        addLog,
-        renderAllTabs,
-        updateStats,
-        renderModal,
-        esc, getInitial,
-        formatDateAr, formatTimeAr, formatDateTimeAr, getCountdown
-    };
-
-    // Continue in part 2...
-})();
-// ============================================================
-// Interviews - Part 2: Modals & Actions
-// ============================================================
-(function() {
-    'use strict';
-
-    function waitForState(cb) {
-        if (window._interviewsState) cb(window._interviewsState);
-        else setTimeout(() => waitForState(cb), 100);
+    try {
+        const sb = window.ProVance && window.ProVance.sb;
+        if (sb && typeof sb.from === 'function') return sb;
+    } catch(e) {}
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+        try {
+            return supabase.createClient(
+                'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                { auth: { persistSession: true, storage: window.localStorage } }
+            );
+        } catch(e) {}
     }
-
-    waitForState((State) => {
-        const { esc, getInitial, formatDateAr, formatTimeAr, formatDateTimeAr, getCountdown, addLog, renderModal } = State;
-
-        // ============ SCHEDULE MODAL ============
-        window.openScheduleModal = async (appId = null) => {
-            const sb = await window.getSafeSupabase();
-            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
-            const { data: pendingApps } = await sb.from('applications')
-                .select('*')
-                .eq('company_user_id', State.companyUserId)
-                .in('status', ['pending', 'reviewing'])
-                .order('created_at', { ascending: false });
-
-            const apps = pendingApps || [];
-            if (apps.length === 0 && !appId) {
-                window.ProVance.showToast('مفيش طلبات جاهزة لجدولة مقابلة', 'warning');
-                return;
-            }
-
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const defaultDate = tomorrow.toISOString().slice(0,10);
-
-            const html = `
-                <div class="modal active" id="scheduleModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                <i class="fas fa-calendar-plus"></i>
-                                <span>جدولة مقابلة جديدة</span>
-                            </div>
-                            <button class="modal-close" onclick="closeModal('scheduleModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div class="field">
-                            <label><i class="fas fa-user-graduate"></i> اختر الطالب <span class="req">*</span></label>
-                            <select id="schApp">
-                                <option value="">-- اختر --</option>
-                                ${apps.map(a => `<option value="${a.id}" ${appId === a.id ? 'selected' : ''}>${esc(a.student_name)} - ${esc(a.internship_title)}</option>`).join('')}
-                            </select>
-                        </div>
-
-                        <div class="grid-2">
-                            <div class="field">
-                                <label><i class="fas fa-calendar"></i> التاريخ <span class="req">*</span></label>
-                                <input type="date" id="schDate" value="${defaultDate}" min="${new Date().toISOString().slice(0,10)}">
-                            </div>
-                            <div class="field">
-                                <label><i class="fas fa-clock"></i> الوقت <span class="req">*</span></label>
-                                <input type="time" id="schTime" value="10:00">
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label><i class="fas fa-map-marker-alt"></i> المكان</label>
-                            <input type="text" id="schLocation" placeholder="مثال: مقر الشركة، القاهرة">
-                        </div>
-
-                        <div class="field">
-                            <label><i class="fas fa-link"></i> رابط المقابلة (اختياري - Zoom/Meet)</label>
-                            <input type="text" id="schLink" placeholder="https://zoom.us/..." style="direction:ltr;text-align:right">
-                        </div>
-
-                        <div class="field">
-                            <label><i class="fas fa-sticky-note"></i> ملاحظات للطالب</label>
-                            <textarea id="schNotes" rows="3" placeholder="مثال: احضر CV ورقي، البس رسمي..."></textarea>
-                        </div>
-
-                        <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:12px;border-radius:10px;margin-bottom:14px;font-size:0.86rem">
-                            <strong style="color:var(--warning)"><i class="fas fa-info-circle"></i> ملاحظة:</strong>
-                            <span style="color:var(--text-muted)"> سيتم توليد QR Code تلقائياً للمقابلة. الـ QR صالح لساعة بعد الموعد. لو الطالب ما حضرش، هيتم إرسال إشعار للطرفين لإبلاغ السبب.</span>
-                        </div>
-
-                        <div style="display:flex;gap:10px">
-                            <button class="btn btn-secondary" onclick="closeModal('scheduleModal')" style="flex:1;justify-content:center">إلغاء</button>
-                            <button class="btn btn-primary" onclick="saveSchedule()" style="flex:1;justify-content:center">
-                                <i class="fas fa-save"></i> جدولة
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.saveSchedule = async () => {
-            const appId = document.getElementById('schApp').value;
-            const date = document.getElementById('schDate').value;
-            const time = document.getElementById('schTime').value;
-            const location = document.getElementById('schLocation').value.trim();
-            const link = document.getElementById('schLink').value.trim();
-            const notes = document.getElementById('schNotes').value.trim();
-
-            if (!appId || !date || !time) {
-                window.ProVance.showToast('املأ الحقول الأساسية', 'warning');
-                return;
-            }
-
-            const interviewDate = new Date(`${date}T${time}:00`);
-
-            try {
-                const sb = await window.getSafeSupabase();
-            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
-                const { error } = await sb.from('applications').update({
-                    status: 'interview_scheduled',
-                    interview_date: interviewDate.toISOString(),
-                    interview_location: location || null,
-                    interview_link: link || null,
-                    interview_notes: notes || null
-                }).eq('id', appId);
-
-                if (error) throw error;
-
-                // أنشئ QR Code
-                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
-                const validUntil = new Date(interviewDate.getTime() + 60 * 60 * 1000);
-                const app = State.allInterviews.find(a => a.id === appId);
-
-                await sb.from('qr_codes').insert({
-                    code: qrCodeStr,
-                    qr_type: 'interview',
-                    company_user_id: State.companyUserId,
-                    company_name: State.companyName,
-                    application_id: appId,
-                    student_user_id: app?.student_user_id,
-                    student_name: app?.student_name,
-                    metadata: {
-                        interview_time: interviewDate.toISOString(),
-                        interview_location: location,
-                        interview_link: link,
-                        interview_notes: notes
-                    },
-                    valid_from: interviewDate.toISOString(),
-                    valid_until: validUntil.toISOString(),
-                    status: 'active'
-                });
-
-                if (app && window.ProVance.sendNotification) {
-                    await window.ProVance.sendNotification({
-                        userId: app.student_user_id,
-                        userType: 'student',
-                        title: '📅 موعد مقابلة جديد',
-                        message: `تم تحديد موعد مقابلتك مع ${app.company_name} يوم ${interviewDate.toLocaleString('ar-EG')}`,
-                        type: 'info',
-                        link: 'student-applications.html'
-                    });
-                }
-
-                addLog('جدولة مقابلة', `تم جدولة مقابلة مع ${app?.student_name || 'طالب'} يوم ${formatDateAr(interviewDate)}`);
-                window.ProVance.showToast('تم جدولة المقابلة ✓', 'success');
-                closeModal('scheduleModal');
-                window.dispatchEvent(new CustomEvent('reload-interviews'));
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-            }
-        };
-
-        // ============ RESCHEDULE MODAL ============
-        window.openRescheduleModal = (appId) => {
-            const interview = State.allInterviews.find(i => i.id === appId);
-            if (!interview) return;
-
-            const date = interview.interview_date ? interview.interview_date.slice(0, 10) : '';
-            const time = interview.interview_date ? interview.interview_date.slice(11, 16) : '10:00';
-
-            const html = `
-                <div class="modal active" id="rescheduleModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                <i class="fas fa-calendar-alt"></i>
-                                <span>إعادة جدولة المقابلة</span>
-                            </div>
-                            <button class="modal-close" onclick="closeModal('rescheduleModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div style="padding:14px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.2);border-radius:12px;margin-bottom:16px">
-                            <strong>${esc(interview.student_name)}</strong>
-                            <div style="color:var(--text-muted);font-size:0.86rem">${esc(interview.internship_title)}</div>
-                        </div>
-
-                        <div class="grid-2">
-                            <div class="field">
-                                <label><i class="fas fa-calendar"></i> التاريخ الجديد</label>
-                                <input type="date" id="rsDate" value="${date}" min="${new Date().toISOString().slice(0,10)}">
-                            </div>
-                            <div class="field">
-                                <label><i class="fas fa-clock"></i> الوقت الجديد</label>
-                                <input type="time" id="rsTime" value="${time}">
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label><i class="fas fa-comment-alt"></i> سبب التعديل (اختياري)</label>
-                            <textarea id="rsReason" rows="2" placeholder="مثال: المسؤول مش متاح في الموعد الأصلي"></textarea>
-                        </div>
-
-                        <div style="display:flex;gap:10px">
-                            <button class="btn btn-secondary" onclick="closeModal('rescheduleModal')" style="flex:1;justify-content:center">إلغاء</button>
-                            <button class="btn btn-primary" onclick="saveReschedule('${appId}')" style="flex:1;justify-content:center">
-                                <i class="fas fa-save"></i> حفظ التعديل
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.saveReschedule = async (appId) => {
-            const date = document.getElementById('rsDate').value;
-            const time = document.getElementById('rsTime').value;
-            const reason = document.getElementById('rsReason').value.trim();
-
-            if (!date || !time) {
-                window.ProVance.showToast('املأ التاريخ والوقت', 'warning');
-                return;
-            }
-
-            const newDate = new Date(`${date}T${time}:00`);
-            const interview = State.allInterviews.find(i => i.id === appId);
-
-            try {
-                const sb = await window.getSafeSupabase();
-            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
-                await sb.from('applications').update({
-                    interview_date: newDate.toISOString()
-                }).eq('id', appId);
-
-                // إلغاء الـ QR القديم وإنشاء جديد
-                await sb.from('qr_codes').update({ status: 'cancelled' })
-                    .eq('application_id', appId).eq('qr_type', 'interview').eq('status', 'active');
-
-                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
-                const validUntil = new Date(newDate.getTime() + 60 * 60 * 1000);
-
-                await sb.from('qr_codes').insert({
-                    code: qrCodeStr,
-                    qr_type: 'interview',
-                    company_user_id: State.companyUserId,
-                    company_name: State.companyName,
-                    application_id: appId,
-                    student_user_id: interview.student_user_id,
-                    student_name: interview.student_name,
-                    metadata: { interview_time: newDate.toISOString() },
-                    valid_from: newDate.toISOString(),
-                    valid_until: validUntil.toISOString(),
-                    status: 'active'
-                });
-
-                // إشعار للطالب
-                if (interview && window.ProVance.sendNotification) {
-                    await window.ProVance.sendNotification({
-                        userId: interview.student_user_id,
-                        userType: 'student',
-                        title: '📅 تم تعديل موعد المقابلة',
-                        message: `الموعد الجديد: ${newDate.toLocaleString('ar-EG')}${reason ? '. السبب: ' + reason : ''}`,
-                        type: 'info'
-                    });
-                }
-
-                addLog('تعديل مقابلة', `تم تعديل موعد ${interview?.student_name} ل${formatDateAr(newDate)}`);
-                window.ProVance.showToast('تم التعديل ✓', 'success');
-                closeModal('rescheduleModal');
-                window.dispatchEvent(new CustomEvent('reload-interviews'));
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-            }
-        };
-
-        // ============ DECISION MODAL (قبول/رفض) ============
-        window.openDecisionModal = (appId) => {
-            const interview = State.allInterviews.find(i => i.id === appId);
-            if (!interview) return;
-
-            const html = `
-                <div class="modal active" id="decisionModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                <i class="fas fa-gavel"></i>
-                                <span>اتخاذ قرار</span>
-                            </div>
-                            <button class="modal-close" onclick="closeModal('decisionModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div style="padding:14px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:12px;margin-bottom:18px">
-                            <div style="display:flex;align-items:center;gap:12px">
-                                <div class="student-avatar" style="width:50px;height:50px;font-size:1.2rem">
-                                    ${interview.student_photo ? `<img src="${interview.student_photo}">` : `<span>${getInitial(interview.student_name)}</span>`}
-                                </div>
-                                <div>
-                                    <strong>${esc(interview.student_name)}</strong>
-                                    <div style="color:var(--text-muted);font-size:0.86rem">${esc(interview.internship_title)}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="decision-buttons">
-                            <div class="decision-btn accept" onclick="confirmDecision('${appId}', 'accept')">
-                                <div class="decision-btn-icon"><i class="fas fa-check"></i></div>
-                                <div class="decision-btn-title">قبول</div>
-                                <div class="decision-btn-desc">قبول الطالب وبدء التدريب</div>
-                            </div>
-                            <div class="decision-btn reject" onclick="confirmDecision('${appId}', 'reject')">
-                                <div class="decision-btn-icon"><i class="fas fa-times"></i></div>
-                                <div class="decision-btn-title">رفض</div>
-                                <div class="decision-btn-desc">رفض الطالب مع توضيح السبب</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.confirmDecision = async (appId, decision) => {
-            closeModal('decisionModal');
-
-            if (decision === 'reject') {
-                const reason = prompt('سبب الرفض (لازم تكتب سبب):');
-                if (!reason || !reason.trim()) {
-                    window.ProVance.showToast('لازم تكتب سبب الرفض', 'warning');
-                    return;
-                }
-                await window.rejectStudent(appId, reason.trim());
-            } else {
-                await window.acceptStudent(appId);
-            }
-        };
-
-        window.markAttended = async (id) => {
-            const ok = await window.ProVance.confirmModal({
-                title: 'تأكيد الحضور',
-                message: 'هل تريد تسجيل أن الطالب حضر المقابلة؟'
-            });
-            if (!ok) return;
-
-            try {
-                await window.ProVance.sb.from('applications').update({ status: 'interview_done' }).eq('id', id);
-                const interview = State.allInterviews.find(i => i.id === id);
-                addLog('تسجيل حضور', `${interview?.student_name} حضر المقابلة`);
-                window.ProVance.showToast('تم تسجيل الحضور ✓', 'success');
-                window.dispatchEvent(new CustomEvent('reload-interviews'));
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        window.markMissed = async (id) => {
-            const ok = await window.ProVance.confirmModal({
-                title: 'تأكيد الغياب',
-                message: 'هل تريد تسجيل أن الطالب غاب؟ هيتم إنشاء تقرير تأخير'
-            });
-            if (!ok) return;
-
-            try {
-                const sb = await window.getSafeSupabase();
-            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
-                const interview = State.allInterviews.find(i => i.id === id);
-
-                await sb.from('late_reports').insert({
-                    application_id: id,
-                    reported_by: 'company',
-                    reporter_user_id: State.companyUserId,
-                    blame_target: 'student',
-                    reason: 'الطالب لم يحضر المقابلة في الوقت المحدد',
-                    expected_time: interview.interview_date,
-                    status: 'pending'
-                });
-
-                if (interview && window.ProVance.sendNotification) {
-                    await window.ProVance.sendNotification({
-                        userId: interview.student_user_id,
-                        userType: 'student',
-                        title: '⚠️ تم تسجيل غيابك',
-                        message: `الشركة سجلت أنك غبت عن مقابلة ${interview.internship_title}. يرجى إبلاغ سبب الغياب`,
-                        type: 'warning',
-                        link: 'student-applications.html'
-                    });
-                }
-
-                addLog('تسجيل غياب', `${interview?.student_name} غاب عن المقابلة`);
-                window.ProVance.showToast('تم تسجيل الغياب', 'warning');
-                window.dispatchEvent(new CustomEvent('reload-interviews'));
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        window.acceptStudent = async (id) => {
-            try {
-                const sb = await window.getSafeSupabase();
-            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
-                await sb.from('applications').update({ status: 'accepted' }).eq('id', id);
-
-                const interview = State.allInterviews.find(i => i.id === id);
-                if (interview && window.ProVance.sendNotification) {
-                    await window.ProVance.sendNotification({
-                        userId: interview.student_user_id,
-                        userType: 'student',
-                        title: '🎉 مبروك! تم قبولك',
-                        message: `الشركة قبلتك في تدريب ${interview.internship_title}`,
-                        type: 'success'
-                    });
-                }
-
-                addLog('قبول طالب', `تم قبول ${interview?.student_name}`);
-                window.ProVance.showToast('تم قبول الطالب 🎉', 'success');
-                window.dispatchEvent(new CustomEvent('reload-interviews'));
-            } catch (err) {
-                console.error(err);
-                window.ProVance.showToast('حدث خطأ', 'error');
-            }
-        };
-
-        window.rejectStudent = async (id, reason) => {
-            try {
-                const sb = await window.getSafeSupabase();
-            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
-                await sb.from('applications').update({
-                    status: 'rejected',
-                    rejection_reason: reason
-                }).eq('id', id);
-
-                const interview = State.allInterviews.find(i => i.id === id);
-                if (interview && window.ProVance.sendNotification) {
-                    await window.ProVance.sendNotification({
-                        userId: interview.student_user_id,
-                        userType: 'student',
-                        title: 'تحديث على طلبك',
-                        message: `للأسف لم يتم قبولك في ${interview.internship_title}. السبب: ${reason}`,
-                        type: 'warning'
-                    });
-                }
-
-                addLog('رفض طالب', `تم رفض ${interview?.student_name} - السبب: ${reason}`);
-                window.ProVance.showToast('تم الرفض', 'success');
-                window.dispatchEvent(new CustomEvent('reload-interviews'));
-            } catch (err) {
-                console.error(err);
-            }
-        };
-
-        // ============ GENERATE QR ============
-        window.generateQRCode = async (interviewId) => {
-            const interview = State.allInterviews.find(i => i.id === interviewId);
-            if (!interview) return;
-
-            let qrCode = State.allQrCodes.find(q => q.application_id === interviewId && q.qr_type === 'interview' && q.status === 'active');
-
-            if (!qrCode) {
-                const sb = await window.getSafeSupabase();
-            if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
-                const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 18).toUpperCase();
-                const interviewDate = new Date(interview.interview_date);
-                const validUntil = new Date(interviewDate.getTime() + 60 * 60 * 1000);
-
-                const { data: newQr, error } = await sb.from('qr_codes').insert({
-                    code: qrCodeStr,
-                    qr_type: 'interview',
-                    company_user_id: State.companyUserId,
-                    company_name: State.companyName,
-                    application_id: interviewId,
-                    student_user_id: interview.student_user_id,
-                    student_name: interview.student_name,
-                    metadata: { interview_time: interview.interview_date },
-                    valid_from: interviewDate.toISOString(),
-                    valid_until: validUntil.toISOString(),
-                    status: 'active'
-                }).select().single();
-
-                if (error) {
-                    console.error(error);
-                    window.ProVance.showToast('حدث خطأ في إنشاء الـ QR', 'error');
-                    return;
-                }
-                qrCode = newQr;
-            }
-
-            const qrData = JSON.stringify({
-                type: 'interview',
-                code: qrCode.code,
-                company: qrCode.company_name,
-                student: qrCode.student_name,
-                valid_until: qrCode.valid_until
-            });
-
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrData)}&color=000000&bgcolor=FFFFFF`;
-            const validUntil = new Date(qrCode.valid_until);
-
-            const html = `
-                <div class="modal active" id="qrModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                <i class="fas fa-qrcode"></i>
-                                <span>QR Code للمقابلة</span>
-                            </div>
-                            <button class="modal-close" onclick="closeModal('qrModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div class="qr-display-card">
-                            <h3 style="font-size:1.05rem;margin-bottom:6px">${esc(interview.student_name)}</h3>
-                            <p style="color:var(--text-muted);font-size:0.86rem">${esc(interview.internship_title)}</p>
-
-                            <div class="qr-canvas-wrap">
-                                <img src="${qrUrl}" alt="QR Code" id="qrImg" onerror="this.style.background='#fff';this.style.padding='30px';this.alt='تعذر تحميل الـ QR'">
-                            </div>
-
-                            <div class="qr-validity">
-                                <i class="fas fa-clock"></i>
-                                <span>صالح حتى: ${formatDateTimeAr(validUntil)}</span>
-                            </div>
-
-                            <button class="copy-link-btn" onclick="copyQRCode('${qrCode.code}')">
-                                <i class="fas fa-copy"></i>
-                                <span>الكود: ${qrCode.code}</span>
-                            </button>
-
-                            <div class="qr-info">
-                                <div class="qr-info-row">
-                                    <span class="label">📅 التاريخ:</span>
-                                    <span class="value">${formatDateTimeAr(interview.interview_date)}</span>
-                                </div>
-                                <div class="qr-info-row">
-                                    <span class="label">📍 المكان:</span>
-                                    <span class="value">${esc(interview.interview_location || '-')}</span>
-                                </div>
-                                <div class="qr-info-row">
-                                    <span class="label">⏱️ المدة:</span>
-                                    <span class="value">ساعة كاملة</span>
-                                </div>
-                                <div class="qr-info-row">
-                                    <span class="label">🎯 الحالة:</span>
-                                    <span class="value">${qrCode.status === 'active' ? '✓ نشط' : '⏸ ' + qrCode.status}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="display:flex;gap:10px;margin-top:14px">
-                            <button class="btn btn-secondary" onclick="closeModal('qrModal')" style="flex:1;justify-content:center">إغلاق</button>
-                            <button class="btn btn-primary" onclick="printQR()" style="flex:1;justify-content:center">
-                                <i class="fas fa-print"></i> طباعة
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.copyQRCode = (code) => {
-            navigator.clipboard.writeText(code).then(() => {
-                window.ProVance.showToast('تم نسخ الكود ✓', 'success');
-            }).catch(() => {
-                window.ProVance.showToast('تعذر النسخ', 'error');
-            });
-        };
-
-        window.printQR = () => {
-            const img = document.getElementById('qrImg');
-            if (!img) return;
-            const printWin = window.open('', '_blank', 'width=600,height=600');
-            printWin.document.write(`
-                <html dir="rtl"><head><title>QR Code</title>
-                <style>
-                    body { font-family: Arial; text-align: center; padding: 40px; }
-                    img { max-width: 400px; }
-                    h2 { margin-bottom: 20px; }
-                </style>
-                </head><body>
-                <h2>ProVance - QR Code للمقابلة</h2>
-                <img src="${img.src}">
-                <p>اطبع هذه الصفحة واعرضها للطالب لمسح الـ QR</p>
-                </body></html>
-            `);
-            printWin.document.close();
-            setTimeout(() => printWin.print(), 500);
-        };
-
-        // ============ INTERVIEW DETAILS ============
-        window.viewInterviewDetails = (id) => {
-            const i = State.allInterviews.find(x => x.id === id);
-            if (!i) return;
-
-            const html = `
-                <div class="modal active" id="detailsModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                <i class="fas fa-info-circle"></i>
-                                <span>تفاصيل المقابلة</span>
-                            </div>
-                            <button class="modal-close" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div style="display:flex;align-items:center;gap:14px;padding:14px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:14px;margin-bottom:14px">
-                            <div class="student-avatar" style="width:60px;height:60px;font-size:1.4rem">
-                                ${i.student_photo ? `<img src="${i.student_photo}">` : `<span>${getInitial(i.student_name)}</span>`}
-                            </div>
-                            <div style="flex:1">
-                                <h3 style="font-size:1.1rem;font-weight:800">${esc(i.student_name)}</h3>
-                                <div style="color:var(--text-muted);font-size:0.86rem">${esc(i.student_email || '-')}</div>
-                                <div style="color:var(--primary);font-size:0.84rem;margin-top:3px;font-weight:600">${esc(i.internship_title)}</div>
-                            </div>
-                        </div>
-
-                        <div class="qr-info">
-                            <div class="qr-info-row"><span class="label">📞 الهاتف:</span><span class="value">${esc(i.student_phone || '-')}</span></div>
-                            <div class="qr-info-row"><span class="label">🎓 الجامعة:</span><span class="value">${esc(i.student_university || '-')}</span></div>
-                            <div class="qr-info-row"><span class="label">📅 التاريخ:</span><span class="value">${formatDateTimeAr(i.interview_date)}</span></div>
-                            <div class="qr-info-row"><span class="label">📍 المكان:</span><span class="value">${esc(i.interview_location || '-')}</span></div>
-                            ${i.interview_link ? `<div class="qr-info-row"><span class="label">🔗 الرابط:</span><span class="value"><a href="${esc(i.interview_link)}" target="_blank" style="color:var(--primary)">فتح</a></span></div>` : ''}
-                            <div class="qr-info-row"><span class="label">📝 الحالة:</span><span class="value">${esc(i.status)}</span></div>
-                        </div>
-
-                        ${i.interview_notes ? `
-                            <div style="margin-top:14px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px">
-                                <strong>📋 ملاحظات:</strong>
-                                <p style="margin-top:6px;color:var(--text-muted)">${esc(i.interview_notes)}</p>
-                            </div>
-                        ` : ''}
-
-                        ${i.application_message ? `
-                            <div style="margin-top:14px;padding:12px;background:rgba(79,172,254,0.05);border-radius:10px;border:1px solid rgba(79,172,254,0.2)">
-                                <strong>💬 رسالة الطالب:</strong>
-                                <p style="margin-top:6px;color:var(--text-muted)">${esc(i.application_message)}</p>
-                            </div>
-                        ` : ''}
-
-                        <div style="display:flex;gap:10px;margin-top:18px">
-                            ${i.student_cv_url ? `<a href="${esc(i.student_cv_url)}" target="_blank" class="btn btn-info" style="flex:1;justify-content:center"><i class="fas fa-file-pdf"></i> فتح CV</a>` : ''}
-                            <button class="btn btn-secondary" onclick="closeModal('detailsModal')" style="flex:1;justify-content:center">إغلاق</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        // ============ HELP MODAL ============
-        window.openHelpModal = () => {
-            const html = `
-                <div class="modal active" id="helpModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                <i class="fas fa-question-circle"></i>
-                                <span>دليل الاستخدام</span>
-                            </div>
-                            <button class="modal-close" onclick="closeModal('helpModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <div class="help-section">
-                            <h4><i class="fas fa-calendar-plus"></i> جدولة مقابلة</h4>
-                            <ul>
-                                <li><i class="fas fa-check"></i> اختار الطالب من قائمة الطلبات الـ pending</li>
-                                <li><i class="fas fa-check"></i> حدد التاريخ والوقت والمكان</li>
-                                <li><i class="fas fa-check"></i> ضع رابط Zoom/Meet (اختياري)</li>
-                                <li><i class="fas fa-check"></i> سيتم إرسال إشعار للطالب تلقائياً</li>
-                            </ul>
-                        </div>
-
-                        <div class="help-section">
-                            <h4><i class="fas fa-qrcode"></i> QR Code للمقابلة</h4>
-                            <ul>
-                                <li><i class="fas fa-check"></i> الـ QR صالح لساعة بعد موعد المقابلة</li>
-                                <li><i class="fas fa-check"></i> الطالب يمسحه من تطبيقه عند الحضور</li>
-                                <li><i class="fas fa-check"></i> يقدر يطبعه ويعرضه للطالب</li>
-                                <li><i class="fas fa-check"></i> يقدر ينسخ الكود ويبعته</li>
-                            </ul>
-                        </div>
-
-                        <div class="help-section">
-                            <h4><i class="fas fa-gavel"></i> اتخاذ القرار</h4>
-                            <ul>
-                                <li><i class="fas fa-check"></i> بعد المقابلة، اضغط "اتخاذ قرار"</li>
-                                <li><i class="fas fa-check"></i> قبول → الطالب ينتقل لمرحلة التدريب</li>
-                                <li><i class="fas fa-check"></i> رفض → لازم تكتب سبب الرفض</li>
-                                <li><i class="fas fa-check"></i> الطالب يستلم إشعار بالنتيجة</li>
-                            </ul>
-                        </div>
-
-                        <div class="help-section">
-                            <h4><i class="fas fa-exclamation-triangle"></i> تقارير التأخير</h4>
-                            <ul>
-                                <li><i class="fas fa-check"></i> لو الطالب غاب → اضغط "غاب" لتسجيل التقرير</li>
-                                <li><i class="fas fa-check"></i> الإدارة تراجع التقرير وتقرر العقوبة</li>
-                                <li><i class="fas fa-check"></i> 3 غيابات متتالية = تحذير من الإدارة</li>
-                            </ul>
-                        </div>
-
-                        <div class="help-section">
-                            <h4><i class="fas fa-keyboard"></i> اختصارات مفيدة</h4>
-                            <ul>
-                                <li><i class="fas fa-check"></i> ESC = إغلاق المودال</li>
-                                <li><i class="fas fa-check"></i> Ctrl+R = تحديث البيانات</li>
-                                <li><i class="fas fa-check"></i> الصفحة تتحدث تلقائياً عند أي تغيير</li>
-                            </ul>
-                        </div>
-
-                        <div style="margin-top:14px">
-                            <button class="btn btn-primary" onclick="closeModal('helpModal')" style="width:100%;justify-content:center">
-                                <i class="fas fa-check"></i> فهمت
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        // ============ DATA POLICY MODAL ============
-        window.openDataPolicyModal = () => {
-            const policy = State.dataPolicy;
-            const html = `
-                <div class="modal active" id="dataPolicyModal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                <i class="fas fa-sliders-h"></i>
-                                <span>إعدادات سياسة البيانات</span>
-                            </div>
-                            <button class="modal-close" onclick="closeModal('dataPolicyModal')"><i class="fas fa-times"></i></button>
-                        </div>
-
-                        <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:14px">
-                            <i class="fas fa-info-circle" style="color:var(--info)"></i>
-                            تحكم في كيفية إدارة البيانات القديمة والأرشفة
-                        </p>
-
-                        <div class="policy-toggle">
-                            <div class="policy-toggle-label">
-                                <strong>أرشفة المقابلات القديمة تلقائياً</strong>
-                                <small>المقابلات اللي عدا عليها أكتر من ${policy.archiveAfterDays} يوم</small>
-                            </div>
-                            <div class="switch ${policy.autoArchiveOldInterviews ? 'active' : ''}" onclick="togglePolicy('autoArchiveOldInterviews', this)"></div>
-                        </div>
-
-                        <div class="policy-toggle">
-                            <div class="policy-toggle-label">
-                                <strong>تنظيف الأرشيف تلقائياً</strong>
-                                <small>حذف الأرشيف اللي عدا عليه أكتر من ${policy.cleanupAfterDays} يوم</small>
-                            </div>
-                            <div class="switch ${policy.autoCleanupArchive ? 'active' : ''}" onclick="togglePolicy('autoCleanupArchive', this)"></div>
-                        </div>
-
-                        <div class="grid-2" style="margin-top:14px">
-                            <div class="field">
-                                <label><i class="fas fa-archive"></i> أرشفة بعد (يوم)</label>
-                                <input type="number" id="archiveAfterDays" min="30" max="365" value="${policy.archiveAfterDays}">
-                            </div>
-                            <div class="field">
-                                <label><i class="fas fa-trash"></i> حذف بعد (يوم)</label>
-                                <input type="number" id="cleanupAfterDays" min="90" max="3650" value="${policy.cleanupAfterDays}">
-                            </div>
-                        </div>
-
-                        <div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);padding:12px;border-radius:10px;margin:14px 0;font-size:0.84rem">
-                            <strong style="color:var(--warning)"><i class="fas fa-exclamation-triangle"></i> تنبيه:</strong>
-                            <span style="color:var(--text-muted)"> الإعدادات دي بتتطبق على بياناتك المخزّنة محلياً فقط، البيانات في الـ DB محفوظة بسياسة الإدارة العامة.</span>
-                        </div>
-
-                        <div style="display:flex;gap:10px">
-                            <button class="btn btn-secondary" onclick="closeModal('dataPolicyModal')" style="flex:1;justify-content:center">إلغاء</button>
-                            <button class="btn btn-primary" onclick="saveDataPolicy()" style="flex:1;justify-content:center">
-                                <i class="fas fa-save"></i> حفظ
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderModal(html);
-        };
-
-        window.togglePolicy = (key, el) => {
-            State.dataPolicy[key] = !State.dataPolicy[key];
-            el.classList.toggle('active');
-        };
-
-        window.saveDataPolicy = () => {
-            const archiveAfterDays = parseInt(document.getElementById('archiveAfterDays').value) || 90;
-            const cleanupAfterDays = parseInt(document.getElementById('cleanupAfterDays').value) || 365;
-
-            State.dataPolicy = {
-                ...State.dataPolicy,
-                archiveAfterDays,
-                cleanupAfterDays
-            };
-
-            try {
-                localStorage.setItem('provance_data_policy', JSON.stringify(State.dataPolicy));
-            } catch (e) {}
-
-            addLog('تحديث الإعدادات', 'تم تحديث سياسة إدارة البيانات');
-            window.ProVance.showToast('تم الحفظ ✓', 'success');
-            closeModal('dataPolicyModal');
-        };
-
-        // Update countdowns every second
-        setInterval(() => {
-            document.querySelectorAll('.countdown[data-target]').forEach(el => {
-                const target = el.getAttribute('data-target');
-                const cd = getCountdown(target);
-                if (!cd) return;
-                const timeEl = el.querySelector('.countdown-time');
-                if (cd.expired) {
-                    el.classList.add('danger');
-                    timeEl.textContent = 'انتهى الوقت';
-                } else {
-                    if (cd.urgent) el.classList.add('danger');
-                    timeEl.textContent = cd.text;
-                }
-            });
-        }, 1000);
-
-        console.log('✅ Modals & actions registered');
-    });
-
-    // ============ MAIN INIT ============
-    let isInitialized = false;
-    async function loadAll() {
-        if (!window._interviewsState) {
-            setTimeout(loadAll, 100);
+    return null;
+};
+
+const esc = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const showToast = (m, t) => window.ProVance && window.ProVance.showToast ? window.ProVance.showToast(m, t) : console.log('toast:', m);
+
+let companyUserId = null;
+let allTrainees = [];
+let filteredTrainees = [];
+let currentTraineeId = null;
+let currentStatusFilter = 'all';
+
+window.logoutCompany = async (e) => {
+    e && e.preventDefault && e.preventDefault();
+    if (!confirm('تسجيل الخروج؟')) return;
+    const sb = await window.getSafeSupabase();
+    if (sb) try { await sb.auth.signOut(); } catch(err){}
+    window.location.href = 'company-login.html';
+};
+
+window.toggleSidebar = () => {
+    document.getElementById('sidebar').classList.toggle('open');
+    const bd = document.getElementById('sbBackdrop');
+    if (bd) bd.classList.toggle('active');
+};
+window.closeSidebar = () => {
+    document.getElementById('sidebar').classList.remove('open');
+    const bd = document.getElementById('sbBackdrop');
+    if (bd) bd.classList.remove('active');
+};
+
+function hideLoading() {
+    const l = document.getElementById('loading');
+    if (l) l.classList.add('hidden');
+}
+
+async function loadAll() {
+    const sb = await window.getSafeSupabase();
+    if (!sb) { hideLoading(); return; }
+    
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+            hideLoading();
+            document.getElementById('traineesGrid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted)"><i class="fas fa-lock" style="font-size:3rem;color:var(--warning);margin-bottom:14px;display:block"></i><h3 style="color:var(--text)">يرجى تسجيل الدخول</h3><a href="company-login.html" style="display:inline-block;margin-top:14px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;text-decoration:none;padding:10px 20px;border-radius:10px;font-weight:700">تسجيل الدخول</a></div>';
             return;
         }
-        const State = window._interviewsState;
-        // انتظر sb لو لسه مش جاهز
-        let sb = window.ProVance && window.ProVance.sb;
-        if (!sb) {
-            // محاولة 1: انتظر شوية
-            for (let i = 0; i < 30; i++) {
-                await new Promise(r => setTimeout(r, 200));
-                sb = window.ProVance && window.ProVance.sb;
-                if (sb) break;
-            }
-            // محاولة 2: اعمل client مباشرة
-            if (!sb && typeof supabase !== 'undefined' && supabase.createClient) {
-                sb = supabase.createClient(
-                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                    { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } }
-                );
-                if (window.ProVance) window.ProVance.sb = sb;
-            }
-            if (!sb) {
-                console.error('❌ Supabase not available');
-                return;
-            }
+        
+        companyUserId = session.user.id;
+        
+        const { data: apps, error } = await sb.from('applications')
+            .select('id, student_user_id, student_name, student_email, student_university, student_photo, internship_id, internship_title, status, created_at, updated_at')
+            .eq('company_user_id', companyUserId)
+            .in('status', ['hired', 'in_training', 'completed'])
+            .order('updated_at', { ascending: false });
+        
+        hideLoading();
+        
+        if (error) {
+            showToast('خطأ: ' + error.message, 'error');
+            return;
         }
-
-        try {
-            const session = await sb.auth.getSession();
-            const userId = session?.data?.session?.user?.id;
-            if (!userId) {
-                window.location.href = 'company-login.html';
-                return;
-            }
-
-            // Set companyUserId on first load
-            if (!State.companyUserId) {
-                State._companyUserId = userId;
-                Object.defineProperty(State, 'companyUserId', { get: () => userId, configurable: true });
-            }
-
-            const results = await Promise.allSettled([
-                sb.from('companies').select('company_name').eq('user_id', userId).maybeSingle(),
-                sb.from('applications').select('id, student_user_id, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date').eq('company_user_id', userId)
-                    .in('status', ['interview_scheduled', 'interview_done', 'accepted', 'rejected', 'hired', 'in_training', 'completed'])
-                    .order('interview_date', { ascending: true }),
-                sb.from('qr_codes').select('*').eq('company_user_id', userId)
-                    .eq('qr_type', 'interview').order('created_at', { ascending: false }),
-                sb.from('late_reports').select('*').order('created_at', { ascending: false })
-            ]);
-            const companyRes = results[0] && results[0].status === "fulfilled" ? results[0].value : { data: [], error: results[0] && results[0].reason };
-            const appsRes = results[1] && results[1].status === "fulfilled" ? results[1].value : { data: [], error: results[1] && results[1].reason };
-            const qrRes = results[2] && results[2].status === "fulfilled" ? results[2].value : { data: [], error: results[2] && results[2].reason };
-            const lateRes = results[3] && results[3].status === "fulfilled" ? results[3].value : { data: [], error: results[3] && results[3].reason };
-
-            const companyName = companyRes.data?.company_name || 'الشركة';
-            Object.defineProperty(State, 'companyName', { get: () => companyName, configurable: true });
-
-            const interviews = appsRes.data || [];
-            const qrCodes = qrRes.data || [];
-            const myAppIds = new Set(interviews.map(a => a.id));
-            const lateReports = (lateRes.data || []).filter(r => myAppIds.has(r.application_id));
-
-            Object.defineProperty(State, 'allInterviews', { get: () => interviews, configurable: true });
-            Object.defineProperty(State, 'allQrCodes', { get: () => qrCodes, configurable: true });
-            window._allLateReports = lateReports;
-
-            // patch the renderLateReports getter
-            const origLate = State.allLateReports;
-            Object.defineProperty(State, 'allLateReports', { get: () => lateReports, configurable: true });
-
-            State.updateStats();
-            State.renderAllTabs();
-
-            if (!isInitialized) {
-                isInitialized = true;
-                // Load data policy from localStorage
-                try {
-                    const stored = localStorage.getItem('provance_data_policy');
-                    if (stored) State.dataPolicy = JSON.parse(stored);
-                } catch (e) {}
-
-                // Realtime
-                sb.channel('interviews-' + userId)
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `company_user_id=eq.${userId}` }, () => loadAll())
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'qr_codes', filter: `company_user_id=eq.${userId}` }, () => loadAll())
-                    .subscribe();
-
-                // Listeners
-                document.getElementById('searchInterviews').addEventListener('input', () => State.renderAllTabs());
-                document.getElementById('filterPeriod').addEventListener('change', () => State.renderAllTabs());
-                document.getElementById('filterSort').addEventListener('change', () => State.renderAllTabs());
-
-                window.addEventListener('reload-interviews', loadAll);
-
-                // ESC closes modals
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        const modals = document.querySelectorAll('.modal.active');
-                        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
-                    }
-                });
-            }
-        } catch (err) {
-            console.error('Load error:', err);
-            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
+        
+        const intIds = [...new Set((apps || []).map(a => a.internship_id).filter(Boolean))];
+        let internships = {};
+        if (intIds.length > 0) {
+            const { data: intData } = await sb.from('internships').select('id, field').in('id', intIds);
+            (intData || []).forEach(i => { internships[i.id] = i; });
         }
+        
+        const { data: evals } = await sb.from('ai_evaluations')
+            .select('id, application_id, overall_score, category_scores, summary_feedback, status')
+            .eq('company_user_id', companyUserId);
+        const evalsByApp = {};
+        (evals || []).forEach(e => { evalsByApp[e.application_id] = e; });
+        
+        const { data: tasks } = await sb.from('task_reports')
+            .select('id, application_id, rating')
+            .eq('company_user_id', companyUserId);
+        const tasksByApp = {};
+        (tasks || []).forEach(t => {
+            if (!tasksByApp[t.application_id]) tasksByApp[t.application_id] = [];
+            tasksByApp[t.application_id].push(t);
+        });
+        
+        const { data: recs } = await sb.from('career_recommendations')
+            .select('id, application_id, sent_to_student')
+            .eq('company_user_id', companyUserId);
+        const recsByApp = {};
+        (recs || []).forEach(r => { recsByApp[r.application_id] = r; });
+        
+        allTrainees = (apps || []).map(a => ({
+            ...a,
+            field: internships[a.internship_id] && internships[a.internship_id].field || a.internship_title || 'عام',
+            evaluation: evalsByApp[a.id],
+            tasks: tasksByApp[a.id] || [],
+            recommendation: recsByApp[a.id]
+        }));
+        
+        updateStats();
+        populateFilters();
+        applyTraineeFilters();
+    } catch(err) {
+        hideLoading();
+        console.error(err);
+        showToast('خطأ: ' + err.message, 'error');
     }
+}
 
-    // Wait for state then load
-    function init() {
-        if (window._interviewsState) {
-            loadAll();
+function updateStats() {
+    document.getElementById('statTotal').textContent = allTrainees.length;
+    document.getElementById('statActive').textContent = allTrainees.filter(t => t.status === 'in_training' || t.status === 'hired').length;
+    document.getElementById('statEvaluated').textContent = allTrainees.filter(t => t.evaluation).length;
+    document.getElementById('statCompleted').textContent = allTrainees.filter(t => t.status === 'completed').length;
+}
+
+function populateFilters() {
+    const years = new Set();
+    const months = new Set();
+    const fields = new Set();
+    const monthNames = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    
+    allTrainees.forEach(t => {
+        if (t.created_at) {
+            const d = new Date(t.created_at);
+            years.add(d.getFullYear());
+            months.add(d.getMonth());
+        }
+        if (t.field) fields.add(t.field);
+    });
+    
+    const batchSel = document.getElementById('filterBatch');
+    if (batchSel) {
+        const currentVal = batchSel.value;
+        batchSel.innerHTML = '<option value="">كل الدفعات (سنوياً)</option>' +
+            [...years].sort((a,b) => b-a).map(y => '<option value="' + y + '">دفعة ' + y + '</option>').join('');
+        batchSel.value = currentVal;
+    }
+    
+    const monthSel = document.getElementById('filterMonthBatch');
+    if (monthSel) {
+        const currentVal = monthSel.value;
+        monthSel.innerHTML = '<option value="">كل الشهور</option>' +
+            [...months].sort((a,b) => a-b).map(m => '<option value="' + m + '">' + monthNames[m] + '</option>').join('');
+        monthSel.value = currentVal;
+    }
+    
+    const fieldSel = document.getElementById('filterField');
+    if (fieldSel) {
+        const currentVal = fieldSel.value;
+        fieldSel.innerHTML = '<option value="">كل المجالات</option>' +
+            [...fields].sort().map(f => '<option value="' + f.replace(/"/g, '&quot;') + '">' + f + '</option>').join('');
+        fieldSel.value = currentVal;
+    }
+}
+
+window.setStatusFilter = (status) => {
+    currentStatusFilter = status;
+    document.querySelectorAll('.trainee-filter').forEach(b => {
+        if (b.dataset.status === status) {
+            b.style.background = 'linear-gradient(135deg,#ef4444,#dc2626)';
+            b.style.color = '#fff';
+            b.style.border = 'none';
+            b.classList.add('active');
         } else {
-            setTimeout(init, 100);
+            b.style.background = 'var(--bg-card)';
+            b.style.color = 'var(--text-muted)';
+            b.style.border = '1px solid var(--border)';
+            b.classList.remove('active');
+        }
+    });
+    applyTraineeFilters();
+};
+
+window.clearTraineeFilters = () => {
+    document.getElementById('trainerSearch').value = '';
+    document.getElementById('filterBatch').value = '';
+    document.getElementById('filterMonthBatch').value = '';
+    document.getElementById('filterField').value = '';
+    document.getElementById('filterRating').value = '';
+    setStatusFilter('all');
+};
+
+window.applyTraineeFilters = () => {
+    const search = (document.getElementById('trainerSearch') || {}).value || '';
+    const searchLower = search.trim().toLowerCase();
+    const batchYear = (document.getElementById('filterBatch') || {}).value || '';
+    const batchMonth = (document.getElementById('filterMonthBatch') || {}).value || '';
+    const fieldFilter = (document.getElementById('filterField') || {}).value || '';
+    const ratingFilter = (document.getElementById('filterRating') || {}).value || '';
+    
+    filteredTrainees = allTrainees.filter(t => {
+        if (currentStatusFilter !== 'all') {
+            if (currentStatusFilter === 'evaluated') {
+                if (!t.evaluation) return false;
+            } else if (t.status !== currentStatusFilter) return false;
+        }
+        
+        if (searchLower) {
+            const searchable = [t.student_name, t.student_email, t.student_university, t.field, t.internship_title].filter(Boolean).join(' ').toLowerCase();
+            if (!searchable.includes(searchLower)) return false;
+        }
+        
+        if (batchYear && t.created_at) {
+            const year = new Date(t.created_at).getFullYear();
+            if (String(year) !== batchYear) return false;
+        }
+        
+        if (batchMonth !== '' && t.created_at) {
+            const month = new Date(t.created_at).getMonth();
+            if (String(month) !== batchMonth) return false;
+        }
+        
+        if (fieldFilter && t.field !== fieldFilter) return false;
+        
+        if (ratingFilter) {
+            const score = t.evaluation && t.evaluation.overall_score;
+            if (ratingFilter === 'excellent' && (!score || score < 80)) return false;
+            if (ratingFilter === 'good' && (!score || score < 60 || score >= 80)) return false;
+            if (ratingFilter === 'needs_improvement' && (!score || score >= 60)) return false;
+            if (ratingFilter === 'not_evaluated' && t.evaluation) return false;
+        }
+        
+        return true;
+    });
+    
+    const rc = document.getElementById('resultCount');
+    const tc = document.getElementById('totalCount');
+    if (rc) rc.textContent = filteredTrainees.length;
+    if (tc) tc.textContent = allTrainees.length;
+    
+    renderTrainees();
+};
+
+function renderTrainees() {
+    const grid = document.getElementById('traineesGrid');
+    
+    if (allTrainees.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted)"><i class="fas fa-users" style="font-size:4rem;color:rgba(148,163,184,0.3);margin-bottom:14px;display:block"></i><h3 style="color:var(--text);margin-bottom:6px">لا يوجد متدربين</h3><p>المتدربين المقبولين هيظهروا هنا</p></div>';
+        return;
+    }
+    
+    if (filteredTrainees.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted)"><i class="fas fa-search" style="font-size:4rem;color:rgba(148,163,184,0.3);margin-bottom:14px;display:block"></i><h3 style="color:var(--text);margin-bottom:6px">لا توجد نتائج</h3><p>جرّب تعديل الفلاتر</p><button onclick="clearTraineeFilters()" style="margin-top:14px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer">مسح الفلاتر</button></div>';
+        return;
+    }
+    
+    grid.innerHTML = filteredTrainees.map(t => {
+        const initial = (t.student_name || '?').trim().charAt(0).toUpperCase();
+        const avatar = t.student_photo 
+            ? '<img src="' + esc(t.student_photo) + '" alt="" style="width:100%;height:100%;object-fit:cover">'
+            : '<span>' + initial + '</span>';
+        
+        const STATUS_BADGES = {
+            'hired': '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 8px;border-radius:12px;font-size:0.72rem;font-weight:700">✓ مقبول</span>',
+            'in_training': '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 8px;border-radius:12px;font-size:0.72rem;font-weight:700">🎓 يتدرب</span>',
+            'completed': '<span style="background:rgba(79,172,254,0.15);color:#4facfe;padding:3px 8px;border-radius:12px;font-size:0.72rem;font-weight:700">✓ أكمل</span>'
+        };
+        const statusBadge = STATUS_BADGES[t.status] || '';
+        
+        const score = t.evaluation && t.evaluation.overall_score;
+        const scoreDisplay = score 
+            ? '<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(239,68,68,0.1);color:#ef4444;padding:3px 8px;border-radius:12px;font-size:0.78rem;font-weight:800"><i class="fas fa-star"></i> ' + Number(score).toFixed(1) + '</div>'
+            : '<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(148,163,184,0.1);color:#94a3b8;padding:3px 8px;border-radius:12px;font-size:0.75rem;font-weight:700">لم يُقَيَّم</div>';
+        
+        const tasksCount = t.tasks.length;
+        const hasRec = !!t.recommendation;
+        
+        return '<div onclick="openTrainee(&apos;' + t.id + '&apos;)" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:12px">' +
+            '<div style="display:flex;align-items:center;gap:12px">' +
+                '<div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.5rem;overflow:hidden;flex-shrink:0">' + avatar + '</div>' +
+                '<div style="flex:1;min-width:0">' +
+                    '<div style="font-weight:800;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(t.student_name || 'بدون اسم') + '</div>' +
+                    '<div style="color:var(--text-muted);font-size:0.78rem;margin-top:3px">' + esc(t.field) + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div style="display:flex;gap:6px;flex-wrap:wrap">' + statusBadge + scoreDisplay + '</div>' +
+            '<div style="display:flex;gap:10px;padding-top:10px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--text-muted)">' +
+                '<span><i class="fas fa-clipboard-list" style="color:var(--primary)"></i> ' + tasksCount + ' مهمة</span>' +
+                '<span><i class="fas fa-' + (hasRec ? 'check-circle' : 'magic') + '" style="color:' + (hasRec ? '#10b981' : 'var(--primary)') + '"></i> ' + (hasRec ? 'رشحت' : 'لم ترشح') + '</span>' +
+            '</div>' +
+            '<button style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:8px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer;width:100%"><i class="fas fa-arrow-left"></i> فتح الملف</button>' +
+        '</div>';
+    }).join('');
+}
+
+window.openTrainee = (appId) => {
+    const t = allTrainees.find(x => x.id === appId);
+    if (!t) return;
+    currentTraineeId = appId;
+    
+    const initial = (t.student_name || '?').charAt(0).toUpperCase();
+    const avatar = t.student_photo 
+        ? '<img src="' + esc(t.student_photo) + '" alt="" style="width:100%;height:100%;object-fit:cover">'
+        : '<span>' + initial + '</span>';
+    
+    const html = '<div id="traineeModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this)closeTraineeModal()">' +
+        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:20px;width:100%;max-width:800px;min-height:400px;padding:24px;margin:auto">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">' +
+                '<div style="display:flex;align-items:center;gap:14px">' +
+                    '<div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.4rem;overflow:hidden">' + avatar + '</div>' +
+                    '<div><div style="font-size:1.15rem;font-weight:800">' + esc(t.student_name || '-') + '</div>' +
+                    '<div style="color:var(--text-muted);font-size:0.85rem;margin-top:3px">' + esc(t.field) + '</div></div>' +
+                '</div>' +
+                '<button onclick="closeTraineeModal()" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>' +
+            '</div>' +
+            '<div style="display:flex;gap:4px;background:var(--bg-card);padding:4px;border-radius:12px;margin-bottom:18px">' +
+                '<button id="tab-eval" onclick="switchTab(&apos;eval&apos;)" style="flex:1;padding:10px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem"><i class="fas fa-chart-line"></i> تقارير الأداء</button>' +
+                '<button id="tab-tasks" onclick="switchTab(&apos;tasks&apos;)" style="flex:1;padding:10px;background:transparent;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem"><i class="fas fa-clipboard-list"></i> تقارير المهام</button>' +
+                '<button id="tab-rec" onclick="switchTab(&apos;rec&apos;)" style="flex:1;padding:10px;background:transparent;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem"><i class="fas fa-bullseye"></i> الترشيحات</button>' +
+            '</div>' +
+            '<div id="tabContent" style="min-height:300px"></div>' +
+        '</div>' +
+    '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', html);
+    document.body.style.overflow = 'hidden';
+    switchTab('eval');
+};
+
+window.closeTraineeModal = () => {
+    const m = document.getElementById('traineeModal');
+    if (m) m.remove();
+    document.body.style.overflow = '';
+    currentTraineeId = null;
+};
+
+window.switchTab = (tab) => {
+    ['eval', 'tasks', 'rec'].forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        if (!btn) return;
+        if (t === tab) {
+            btn.style.background = 'linear-gradient(135deg,#ef4444,#dc2626)';
+            btn.style.color = '#fff';
+        } else {
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--text-muted)';
+        }
+    });
+    
+    if (tab === 'eval') renderEvalTab();
+    else if (tab === 'tasks') renderTasksTab();
+    else if (tab === 'rec') renderRecTab();
+};
+
+async function renderEvalTab() {
+    const t = allTrainees.find(x => x.id === currentTraineeId);
+    if (!t) return;
+    
+    const content = document.getElementById('tabContent');
+    
+    if (t.evaluation) {
+        const e = t.evaluation;
+        const cats = e.category_scores || {};
+        const catLabels = {technical:'🛠️ مهارات تقنية', soft_skills:'💼 مهارات شخصية', performance:'📊 الأداء', growth:'🌱 التطور'};
+        
+        content.innerHTML = '<div style="text-align:center;background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(220,38,38,0.05));border:1px solid rgba(239,68,68,0.25);border-radius:14px;padding:24px;margin-bottom:14px">' +
+            '<div style="font-size:3.5rem;font-weight:800;background:linear-gradient(135deg,#ef4444,#dc2626);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1">' + Number(e.overall_score || 0).toFixed(1) + '<span style="font-size:1.2rem">/100</span></div>' +
+            '<div style="color:var(--text-muted);margin-top:6px">النتيجة الإجمالية</div>' +
+        '</div>' +
+        (Object.keys(cats).length > 0 ? '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px">' +
+            Object.entries(cats).map(([cat, score]) => 
+                '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center"><div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px">' + esc(catLabels[cat] || cat) + '</div><div style="font-size:1.5rem;font-weight:800;color:var(--primary)">' + Number(score).toFixed(0) + '</div></div>'
+            ).join('') +
+        '</div>' : '') +
+        (e.summary_feedback ? '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px"><div style="font-weight:700;margin-bottom:8px;color:var(--primary)"><i class="fas fa-comment"></i> الملخص</div><div style="line-height:1.7;color:var(--text-muted);font-size:0.92rem">' + esc(e.summary_feedback) + '</div></div>' : '') +
+        '<button onclick="startNewEval()" style="width:100%;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-redo"></i> إعادة التقييم بأسئلة جديدة من AI</button>';
+    } else {
+        content.innerHTML = '<div style="text-align:center;padding:40px 20px">' +
+            '<div style="width:80px;height:80px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:#fff;margin:0 auto 18px"><i class="fas fa-brain"></i></div>' +
+            '<h3 style="font-size:1.2rem;font-weight:800;margin-bottom:6px">تقييم بالذكاء الاصطناعي</h3>' +
+            '<p style="color:var(--text-muted);margin-bottom:24px;line-height:1.6">الـ AI هيولّد أسئلة مخصصة لمجال "' + esc(t.field) + '". قيّم الطالب بـ 5 نجوم لكل سؤال.</p>' +
+            '<button onclick="startNewEval()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:14px 28px;border-radius:12px;font-weight:700;font-family:inherit;font-size:1rem;cursor:pointer"><i class="fas fa-magic"></i> توليد أسئلة التقييم</button>' +
+        '</div>';
+    }
+}
+
+window.startNewEval = async () => {
+    const t = allTrainees.find(x => x.id === currentTraineeId);
+    if (!t) return;
+    
+    const content = document.getElementById('tabContent');
+    content.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="width:80px;height:80px;border:5px solid rgba(239,68,68,0.2);border-top-color:#ef4444;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px"></div><h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px">🤖 الـ AI بيولّد الأسئلة</h3><p style="color:var(--text-muted)">5-15 ثانية</p></div>';
+    
+    try {
+        const sb = await window.getSafeSupabase();
+        
+        let template = null;
+        const { data: existing } = await sb.from('ai_evaluation_templates').select('*').eq('field', t.field).maybeSingle();
+        
+        if (existing) {
+            template = existing;
+        } else {
+            const { data: { session } } = await sb.auth.getSession();
+            const resp = await fetch('https://jrwazyrdzmbcnddpxxrf.supabase.co/functions/v1/ai-evaluation', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + (session && session.access_token || ''),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ field: t.field, language: 'ar' })
+            });
+            
+            if (!resp.ok) throw new Error('فشل Edge Function');
+            
+            const result = await resp.json();
+            if (!result.success) throw new Error(result.error || 'فشل التوليد');
+            
+            const { data: inserted } = await sb.from('ai_evaluation_templates').insert({
+                field: t.field,
+                questions: result.questions,
+                summary_question: result.summary_question,
+                use_count: 1,
+                last_used_at: new Date().toISOString()
+            }).select().single();
+            
+            template = inserted || { questions: result.questions, summary_question: result.summary_question };
+        }
+        
+        renderEvalQuestions(template);
+    } catch(err) {
+        console.error(err);
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--warning);margin-bottom:14px;display:block"></i><h3 style="color:var(--text)">فشل توليد الأسئلة</h3><p style="margin-bottom:14px">' + esc(err.message) + '</p><button onclick="renderEvalTab()" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer">العودة</button></div>';
+    }
+};
+
+function renderEvalQuestions(template) {
+    const questions = template.questions || [];
+    const content = document.getElementById('tabContent');
+    const catLabels = {technical:'🛠️ مهارات تقنية', soft_skills:'💼 مهارات شخصية', performance:'📊 الأداء', growth:'🌱 التطور'};
+    
+    const questionsHtml = questions.map((q, idx) => {
+        const starsHtml = '<div style="display:flex;gap:6px;margin-top:10px" data-question="' + q.id + '">' +
+            [1,2,3,4,5].map(n => 
+                '<button type="button" onclick="setStar(&apos;' + q.id + '&apos;,' + n + ')" data-star="' + n + '" style="background:transparent;border:none;color:rgba(148,163,184,0.4);font-size:2rem;cursor:pointer;padding:0;transition:transform .15s">★</button>'
+            ).join('') +
+        '</div>';
+        
+        return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+                '<span style="font-size:0.75rem;color:var(--primary);font-weight:700">' + (catLabels[q.category] || q.category) + '</span>' +
+                '<span style="font-size:0.72rem;color:var(--text-muted)">سؤال ' + (idx+1) + '/' + questions.length + '</span>' +
+            '</div>' +
+            '<div style="font-weight:600;line-height:1.5">' + esc(q.question) + '</div>' +
+            starsHtml +
+        '</div>';
+    }).join('');
+    
+    content.innerHTML = questionsHtml +
+        '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px">' +
+            '<div style="font-weight:700;margin-bottom:8px;color:var(--primary)"><i class="fas fa-comment"></i> ملخص الأداء (اختياري)</div>' +
+            '<textarea id="summaryFeedback" rows="4" placeholder="نقاط القوة، نقاط الضعف، التوصيات..." style="width:100%;padding:11px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.92rem;resize:vertical"></textarea>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px">' +
+            '<button onclick="renderEvalTab()" style="flex:1;background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>' +
+            '<button onclick="submitEvaluation(&apos;' + (template.id || '') + '&apos;)" style="flex:1;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-paper-plane"></i> حفظ وإرسال</button>' +
+        '</div>';
+    
+    window._evalAnswers = {};
+    window._evalTemplate = template;
+}
+
+window.setStar = (qId, value) => {
+    window._evalAnswers = window._evalAnswers || {};
+    window._evalAnswers[qId] = value;
+    const wrapper = document.querySelector('[data-question="' + qId + '"]');
+    if (wrapper) {
+        wrapper.querySelectorAll('button').forEach(b => {
+            const v = parseInt(b.dataset.star);
+            if (v <= value) {
+                b.style.color = '#fbbf24';
+                b.style.transform = 'scale(1.1)';
+            } else {
+                b.style.color = 'rgba(148,163,184,0.4)';
+                b.style.transform = 'scale(1)';
+            }
+        });
+    }
+};
+
+window.submitEvaluation = async (templateId) => {
+    const answers = window._evalAnswers || {};
+    const template = window._evalTemplate;
+    
+    if (!template || !template.questions) { showToast('خطأ في الأسئلة', 'error'); return; }
+    if (Object.keys(answers).length < template.questions.length) {
+        showToast('يجب تقييم كل الأسئلة', 'warning');
+        return;
+    }
+    
+    const summary = (document.getElementById('summaryFeedback') || {}).value || '';
+    
+    let totalScore = 0, count = 0;
+    let categoryScores = {};
+    
+    template.questions.forEach(q => {
+        const ans = answers[q.id];
+        if (ans === undefined) return;
+        const score = (ans / 5) * 100;
+        const weight = q.weight || 10;
+        totalScore += score * weight;
+        count += weight;
+        
+        if (!categoryScores[q.category]) categoryScores[q.category] = { sum: 0, count: 0 };
+        categoryScores[q.category].sum += score;
+        categoryScores[q.category].count++;
+    });
+    
+    const overallScore = count > 0 ? (totalScore / count) : 0;
+    const categoryFinal = {};
+    Object.keys(categoryScores).forEach(c => {
+        categoryFinal[c] = categoryScores[c].count > 0 ? (categoryScores[c].sum / categoryScores[c].count) : 0;
+    });
+    
+    try {
+        const sb = await window.getSafeSupabase();
+        const t = allTrainees.find(x => x.id === currentTraineeId);
+        
+        if (t.evaluation) {
+            await sb.from('ai_evaluations').delete().eq('id', t.evaluation.id);
+        }
+        
+        const { error } = await sb.from('ai_evaluations').insert({
+            application_id: currentTraineeId,
+            student_user_id: t.student_user_id,
+            company_user_id: companyUserId,
+            internship_id: t.internship_id,
+            field: t.field,
+            template_id: templateId || null,
+            answers: answers,
+            overall_score: overallScore,
+            category_scores: categoryFinal,
+            summary_feedback: summary,
+            status: 'sent',
+            submitted_at: new Date().toISOString(),
+            sent_to_student_at: new Date().toISOString()
+        });
+        
+        if (error) throw error;
+        
+        if (window.ProVance && window.ProVance.sendNotification) {
+            try {
+                await window.ProVance.sendNotification({
+                    userId: t.student_user_id,
+                    userType: 'student',
+                    title: '⭐ تم تقييمك',
+                    message: 'نتيجتك: ' + overallScore.toFixed(1) + '/100',
+                    type: overallScore >= 70 ? 'success' : 'info',
+                    link: 'student-profile.html'
+                });
+            } catch(e){}
+        }
+        
+        showToast('✅ تم حفظ التقييم', 'success');
+        await loadAll();
+        openTrainee(currentTraineeId);
+    } catch(err) {
+        console.error(err);
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
+async function renderTasksTab() {
+    const t = allTrainees.find(x => x.id === currentTraineeId);
+    if (!t) return;
+    
+    const sb = await window.getSafeSupabase();
+    const { data: tasks } = await sb.from('task_reports').select('*').eq('application_id', currentTraineeId).order('created_at', { ascending: false });
+    
+    const content = document.getElementById('tabContent');
+    
+    const tasksHtml = (tasks || []).length === 0 
+        ? '<div style="text-align:center;padding:30px 20px;color:var(--text-muted)"><i class="fas fa-clipboard-list" style="font-size:3rem;color:rgba(148,163,184,0.3);margin-bottom:10px;display:block"></i><p>لا توجد مهام بعد</p></div>'
+        : (tasks || []).map(task => {
+            const stars = task.rating ? [1,2,3,4,5].map(n => '<span style="color:' + (n <= task.rating ? '#fbbf24' : 'rgba(148,163,184,0.3)') + '">★</span>').join('') : '';
+            return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">' +
+                '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;gap:10px;flex-wrap:wrap">' +
+                    '<div style="flex:1;min-width:0"><div style="font-weight:800">' + esc(task.task_title) + '</div>' +
+                    '<div style="color:var(--text-muted);font-size:0.78rem;margin-top:3px">' + (task.task_date ? new Date(task.task_date).toLocaleDateString('ar-EG') : '-') + ' ' + (task.task_time || '') + '</div></div>' +
+                    (stars ? '<div style="font-size:1.1rem">' + stars + '</div>' : '') +
+                '</div>' +
+                (task.task_description ? '<div style="color:var(--text-muted);font-size:0.88rem;margin-top:8px;line-height:1.6">' + esc(task.task_description) + '</div>' : '') +
+                (task.report_text ? '<div style="background:rgba(239,68,68,0.05);padding:10px;border-radius:8px;margin-top:10px;font-size:0.88rem;line-height:1.6;color:var(--text-muted)"><strong style="color:var(--primary)">التقرير:</strong> ' + esc(task.report_text) + '</div>' : '') +
+                (task.file_url ? '<a href="' + esc(task.file_url) + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;color:var(--primary);font-size:0.85rem;text-decoration:none"><i class="fas fa-file"></i> ' + esc(task.file_name || 'ملف') + '</a>' : '') +
+                '<button onclick="deleteTask(&apos;' + task.id + '&apos;)" style="margin-top:10px;background:transparent;border:none;color:#ef4444;cursor:pointer;font-size:0.8rem"><i class="fas fa-trash"></i> حذف</button>' +
+            '</div>';
+        }).join('');
+    
+    content.innerHTML = '<button onclick="showAddTaskForm()" style="width:100%;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:12px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:14px"><i class="fas fa-plus"></i> إضافة مهمة / تقرير جديد</button>' + tasksHtml;
+}
+
+window.showAddTaskForm = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toTimeString().slice(0, 5);
+    
+    const content = document.getElementById('tabContent');
+    content.innerHTML = '<button onclick="renderTasksTab()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;margin-bottom:14px"><i class="fas fa-arrow-right"></i> رجوع</button>' +
+        '<h3 style="margin-bottom:14px"><i class="fas fa-plus-circle" style="color:var(--primary)"></i> إضافة مهمة جديدة</h3>' +
+        '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem">عنوان المهمة *</label>' +
+        '<input type="text" id="taskTitle" placeholder="مثال: تطوير صفحة Login" style="width:100%;padding:11px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem"></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">' +
+            '<div><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem">التاريخ</label>' +
+            '<input type="date" id="taskDate" value="' + today + '" style="width:100%;padding:11px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem"></div>' +
+            '<div><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem">الوقت</label>' +
+            '<input type="time" id="taskTime" value="' + now + '" style="width:100%;padding:11px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem"></div>' +
+        '</div>' +
+        '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem">وصف المهمة</label>' +
+        '<textarea id="taskDescription" rows="3" placeholder="إيه المطلوب من الطالب..." style="width:100%;padding:11px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem;resize:vertical"></textarea></div>' +
+        '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem">تقرير الأداء على المهمة</label>' +
+        '<textarea id="taskReport" rows="4" placeholder="إيه قام بيه الطالب، نقاط القوة والضعف..." style="width:100%;padding:11px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem;resize:vertical"></textarea></div>' +
+        '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:8px;font-size:0.9rem">التقييم على المهمة (1-5 نجوم)</label>' +
+        '<div id="taskRatingStars" style="display:flex;gap:8px">' +
+            [1,2,3,4,5].map(n => '<button type="button" onclick="setTaskRating(' + n + ')" data-task-star="' + n + '" style="background:transparent;border:none;color:rgba(148,163,184,0.4);font-size:2.5rem;cursor:pointer;padding:0">★</button>').join('') +
+        '</div></div>' +
+        '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem">رفع ملف (اختياري)</label>' +
+        '<input type="file" id="taskFile" style="width:100%;padding:11px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.85rem"></div>' +
+        '<div style="display:flex;gap:10px">' +
+            '<button onclick="renderTasksTab()" style="flex:1;background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>' +
+            '<button onclick="saveTask()" style="flex:1;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-save"></i> حفظ</button>' +
+        '</div>';
+    
+    window._taskRating = 0;
+};
+
+window.setTaskRating = (n) => {
+    window._taskRating = n;
+    document.querySelectorAll('[data-task-star]').forEach(b => {
+        const v = parseInt(b.dataset.taskStar);
+        b.style.color = v <= n ? '#fbbf24' : 'rgba(148,163,184,0.4)';
+    });
+};
+
+window.saveTask = async () => {
+    const title = (document.getElementById('taskTitle') || {}).value || '';
+    if (!title.trim()) { showToast('عنوان المهمة مطلوب', 'warning'); return; }
+    
+    try {
+        const sb = await window.getSafeSupabase();
+        const t = allTrainees.find(x => x.id === currentTraineeId);
+        
+        let fileUrl = null, fileName = null, fileType = null;
+        const fileInput = document.getElementById('taskFile');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            const ext = file.name.split('.').pop();
+            const path = 'task-files/' + companyUserId + '/' + Date.now() + '.' + ext;
+            const { data: upload, error: upErr } = await sb.storage.from('uploads').upload(path, file);
+            if (!upErr) {
+                const { data: { publicUrl } } = sb.storage.from('uploads').getPublicUrl(path);
+                fileUrl = publicUrl;
+                fileName = file.name;
+                fileType = file.type;
+            }
+        }
+        
+        const { error } = await sb.from('task_reports').insert({
+            application_id: currentTraineeId,
+            student_user_id: t.student_user_id,
+            company_user_id: companyUserId,
+            task_title: title.trim(),
+            task_description: (document.getElementById('taskDescription') || {}).value || null,
+            report_text: (document.getElementById('taskReport') || {}).value || null,
+            task_date: (document.getElementById('taskDate') || {}).value || null,
+            task_time: (document.getElementById('taskTime') || {}).value || null,
+            rating: window._taskRating || null,
+            file_url: fileUrl,
+            file_name: fileName,
+            file_type: fileType
+        });
+        
+        if (error) throw error;
+        
+        showToast('✅ تم حفظ التقرير', 'success');
+        await loadAll();
+        renderTasksTab();
+    } catch(err) {
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
+window.deleteTask = async (taskId) => {
+    if (!confirm('حذف التقرير؟')) return;
+    const sb = await window.getSafeSupabase();
+    const { error } = await sb.from('task_reports').delete().eq('id', taskId);
+    if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
+    showToast('تم الحذف', 'success');
+    await loadAll();
+    renderTasksTab();
+};
+
+async function renderRecTab() {
+    const t = allTrainees.find(x => x.id === currentTraineeId);
+    if (!t) return;
+    
+    const sb = await window.getSafeSupabase();
+    const { data: rec } = await sb.from('career_recommendations').select('*').eq('application_id', currentTraineeId).maybeSingle();
+    
+    const content = document.getElementById('tabContent');
+    
+    if (rec && rec.recommendations) {
+        const recs = rec.recommendations || [];
+        content.innerHTML = (rec.career_assessment ? '<div style="background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(220,38,38,0.05));border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:14px;margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px;color:var(--primary)"><i class="fas fa-user-tie"></i> تقييم الشخصية المهنية</div><div style="line-height:1.7;color:var(--text-muted);font-size:0.92rem">' + esc(rec.career_assessment) + '</div></div>' : '') +
+            recs.map(r => {
+                const levelLabels = {entry:'مبتدئ', mid:'متوسط', senior:'متقدم'};
+                return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap;margin-bottom:10px">' +
+                        '<div style="flex:1;min-width:200px">' +
+                            '<div style="font-size:1.05rem;font-weight:800">' + esc(r.job_title) + '</div>' +
+                            '<div style="color:var(--text-muted);font-size:0.82rem;margin-top:3px">' + esc(r.field) + ' • ' + esc(levelLabels[r.level] || r.level || '') + '</div>' +
+                        '</div>' +
+                        '<div style="display:inline-flex;align-items:center;gap:4px;background:rgba(16,185,129,0.1);color:#10b981;padding:4px 10px;border-radius:12px;font-size:0.8rem;font-weight:800"><i class="fas fa-star"></i> ' + (r.match_score || '-') + '%</div>' +
+                    '</div>' +
+                    '<div style="color:var(--text-muted);font-size:0.88rem;line-height:1.6;margin-bottom:10px">' + esc(r.reason) + '</div>' +
+                    (r.key_skills && r.key_skills.length ? '<div style="margin-bottom:8px"><strong style="font-size:0.85rem">المهارات: </strong>' + r.key_skills.map(s => '<span style="background:rgba(239,68,68,0.1);color:#ef4444;padding:3px 8px;border-radius:10px;font-size:0.78rem;margin-left:5px">' + esc(s) + '</span>').join('') + '</div>' : '') +
+                    (r.growth_path ? '<div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px"><strong style="color:var(--text)">المسار: </strong>' + esc(r.growth_path) + '</div>' : '') +
+                    (r.salary_range_egp ? '<div style="font-size:0.85rem;color:#10b981"><i class="fas fa-money-bill"></i> ' + esc(r.salary_range_egp) + '</div>' : '') +
+                '</div>';
+            }).join('') +
+            (rec.improvement_areas && rec.improvement_areas.length ? '<div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:14px;margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px;color:var(--warning)"><i class="fas fa-arrow-up"></i> مجالات للتطوير</div><ul style="padding-right:20px;color:var(--text-muted);font-size:0.88rem;line-height:1.8">' + rec.improvement_areas.map(a => '<li>' + esc(a) + '</li>').join('') + '</ul></div>' : '') +
+            (rec.sent_to_student ? '<div style="text-align:center;padding:12px;background:rgba(16,185,129,0.05);border-radius:10px;color:#10b981;font-weight:700"><i class="fas fa-check-circle"></i> تم إرسال الترشيحات للطالب</div>' : '<button onclick="sendRecToStudent(&apos;' + rec.id + '&apos;)" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-paper-plane"></i> إرسال الترشيحات للطالب</button>') +
+            '<button onclick="regenerateRec()" style="width:100%;margin-top:10px;background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:10px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-redo"></i> إعادة التوليد</button>';
+    } else {
+        if (!t.evaluation) {
+            content.innerHTML = '<div style="text-align:center;padding:40px 20px"><i class="fas fa-exclamation-circle" style="font-size:3rem;color:var(--warning);margin-bottom:14px;display:block"></i><h3 style="font-weight:800;margin-bottom:8px">قيّم الأداء أولاً</h3><p style="color:var(--text-muted);margin-bottom:18px;line-height:1.6">الترشيحات تحتاج تقييم الأداء عشان تكون دقيقة.</p><button onclick="switchTab(&apos;eval&apos;)" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-arrow-left"></i> الذهاب للتقييم</button></div>';
+        } else {
+            content.innerHTML = '<div style="text-align:center;padding:40px 20px">' +
+                '<div style="width:80px;height:80px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:#fff;margin:0 auto 18px"><i class="fas fa-bullseye"></i></div>' +
+                '<h3 style="font-size:1.2rem;font-weight:800;margin-bottom:6px">ترشيحات وظيفية بالذكاء الاصطناعي</h3>' +
+                '<p style="color:var(--text-muted);margin-bottom:24px;line-height:1.6">الـ AI هيقترح 5 وظائف مناسبة للطالب.</p>' +
+                '<button onclick="generateRec()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:14px 28px;border-radius:12px;font-weight:700;font-family:inherit;font-size:1rem;cursor:pointer"><i class="fas fa-magic"></i> توليد الترشيحات</button>' +
+            '</div>';
         }
     }
-    init();
+}
+
+window.generateRec = async () => {
+    const t = allTrainees.find(x => x.id === currentTraineeId);
+    if (!t || !t.evaluation) { showToast('قيّم الأداء أولاً', 'warning'); return; }
+    
+    const content = document.getElementById('tabContent');
+    content.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="width:80px;height:80px;border:5px solid rgba(239,68,68,0.2);border-top-color:#ef4444;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px"></div><h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px">🤖 الـ AI بيحلل ويرشّح</h3><p style="color:var(--text-muted)">10-20 ثانية</p></div>';
+    
+    try {
+        const sb = await window.getSafeSupabase();
+        const { data: tasks } = await sb.from('task_reports').select('task_title, report_text, rating').eq('application_id', currentTraineeId);
+        const tasksSummary = (tasks || []).map(t => t.task_title + (t.rating ? ' (تقييم: ' + t.rating + '/5)' : '') + (t.report_text ? ' - ' + t.report_text.substring(0, 100) : '')).join('\n');
+        
+        const { data: { session } } = await sb.auth.getSession();
+        const resp = await fetch('https://jrwazyrdzmbcnddpxxrf.supabase.co/functions/v1/ai-job-recommendations', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + (session && session.access_token || ''),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                student_name: t.student_name,
+                field: t.field,
+                overall_score: t.evaluation.overall_score,
+                category_scores: t.evaluation.category_scores || {},
+                evaluation_summary: t.evaluation.summary_feedback || '',
+                task_reports_summary: tasksSummary.substring(0, 1000)
+            })
+        });
+        
+        if (!resp.ok) throw new Error('فشل Edge Function');
+        const result = await resp.json();
+        if (!result.success) throw new Error(result.error || 'فشل التوليد');
+        
+        const { data: existing } = await sb.from('career_recommendations').select('id').eq('application_id', currentTraineeId).maybeSingle();
+        const recData = {
+            application_id: currentTraineeId,
+            student_user_id: t.student_user_id,
+            company_user_id: companyUserId,
+            career_assessment: result.career_assessment,
+            recommendations: result.recommendations,
+            improvement_areas: result.improvement_areas,
+            evaluation_score: t.evaluation.overall_score
+        };
+        
+        if (existing) {
+            await sb.from('career_recommendations').update(recData).eq('id', existing.id);
+        } else {
+            await sb.from('career_recommendations').insert(recData);
+        }
+        
+        await loadAll();
+        renderRecTab();
+        showToast('✅ تم توليد الترشيحات', 'success');
+    } catch(err) {
+        console.error(err);
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--warning);margin-bottom:14px;display:block"></i><h3 style="color:var(--text)">فشل التوليد</h3><p style="margin-bottom:14px">' + esc(err.message) + '</p><button onclick="renderRecTab()" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer">العودة</button></div>';
+    }
+};
+
+window.regenerateRec = async () => {
+    if (!confirm('إعادة توليد الترشيحات؟')) return;
+    generateRec();
+};
+
+window.sendRecToStudent = async (recId) => {
+    const sb = await window.getSafeSupabase();
+    const t = allTrainees.find(x => x.id === currentTraineeId);
+    
+    const { error } = await sb.from('career_recommendations').update({
+        sent_to_student: true,
+        sent_at: new Date().toISOString()
+    }).eq('id', recId);
+    
+    if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
+    
+    if (window.ProVance && window.ProVance.sendNotification && t) {
+        try {
+            await window.ProVance.sendNotification({
+                userId: t.student_user_id,
+                userType: 'student',
+                title: '🎯 ترشيحات وظيفية',
+                message: 'الشركة أرسلت لك 5 ترشيحات وظيفية',
+                type: 'success',
+                link: 'student-profile.html'
+            });
+        } catch(e){}
+    }
+    
+    showToast('✅ تم الإرسال للطالب', 'success');
+    renderRecTab();
+};
+
+(async () => {
+    await loadAll();
+    setInterval(loadAll, 60000);
+    window.addEventListener('focus', loadAll);
 })();
 
-// لتسهيل الـ allLateReports (helper for late reports access)
-Object.defineProperty(window, '_lateReportsAccessor', {
-    get: () => window._allLateReports || []
-});
-    </script>
+</script>
     <script>
     // Badge: pending applications count
     (async () => {
