@@ -305,7 +305,7 @@ async function loadAll() {
 
     const { data, error } = await sb
         .from('applications')
-        .select('id, company_name, company_logo, internship_id, internship_title, application_message, status, rejection_reason, interview_date, interview_location, interview_notes, created_at, updated_at')
+        .select('id, company_user_id, company_name, company_logo, internship_id, internship_title, application_message, status, rejection_reason, interview_date, interview_location, interview_notes, created_at, updated_at')
         .eq('student_user_id', studentUserId)
         .order('created_at', { ascending: false });
 
@@ -329,10 +329,29 @@ async function loadAll() {
 
     window.doWithdraw = async (id, title) => {
         if (!confirm(`هل تريد سحب طلبك على "${title}"?`)) return;
+
+        // اجيب بيانات الطلب عشان نعرف الشركة
+        const app = allApps.find(a => a.id === id);
+
         const { error: e } = await sb.from('applications')
             .update({ status: 'withdrawn', updated_at: new Date().toISOString() })
             .eq('id', id).eq('student_user_id', studentUserId);
         if (e) { window.ProVance?.showToast('خطأ: ' + e.message, 'error'); return; }
+
+        // إشعار للشركة
+        if (app && window.ProVance?.sendNotification) {
+            try {
+                await window.ProVance.sendNotification({
+                    userId:   app.company_user_id || null,
+                    userType: 'company',
+                    title:    '↩️ سحب طلب تقديم',
+                    message:  `الطالب سحب طلبه على فرصة "${esc(app.internship_title || title)}"`,
+                    type:     'warning',
+                    link:     'company-applications.html'
+                });
+            } catch(ne) { console.warn('notification error:', ne); }
+        }
+
         window.ProVance?.showToast('تم سحب الطلب بنجاح', 'success');
         await loadAll();
     };
