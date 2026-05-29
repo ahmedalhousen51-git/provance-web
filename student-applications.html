@@ -234,7 +234,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
             <!-- Stats Bar -->
             <div class="stats-bar" style="margin-bottom:18px">
                 <div class="stats-bar-item"><i class="fas fa-paper-plane"></i><span><strong id="statTotal">-</strong> إجمالي</span></div>
-                <div class="stats-bar-item"><i class="fas fa-clock" style="color:var(--warning)"></i><span><strong id="statPending">-</strong> قيد المراجعة</span></div>
+                <div class="stats-bar-item"><i class="fas fa-clock" style="color:var(--warning)"></i><span><strong id="statPending">-</strong> / 3 نشطة</span></div>
                 <div class="stats-bar-item"><i class="fas fa-check-circle" style="color:var(--success)"></i><span><strong id="statAccepted">-</strong> مقبول / مقابلة</span></div>
                 <div class="stats-bar-item"><i class="fas fa-times-circle" style="color:var(--error)"></i><span><strong id="statRejected">-</strong> مرفوض</span></div>
                 <div class="stats-bar-item"><i class="fas fa-award" style="color:var(--info)"></i><span><strong id="statCompleted">-</strong> مكتمل</span></div>
@@ -244,7 +244,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
             <!-- Limit Warning -->
             <div id="limitWarn" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:0.88rem;color:#f87171">
                 <i class="fas fa-exclamation-triangle"></i>
-                وصلت للحد الأقصى (3 طلبات نشطة). اسحب طلباً أو انتظر الرد قبل التقديم على فرصة جديدة.
+                وصلت للحد الأقصى (3 طلبات نشطة في مرحلة المراجعة). لازم تسحب طلب أو تنتظر قرار رفض/قبول قبل التقديم على فرصة جديدة.
             </div>
 
             <!-- Filter Tabs -->
@@ -346,20 +346,31 @@ async function loadAll() {
     };
 }
 
+// نفس الـ logic بالظبط من student-internship.html
+const MAX_ACTIVE = 3;
+function isActiveStatus(s) {
+    return ['pending','reviewing','interview_scheduled','interview_done','accepted'].includes(s);
+}
+function getActiveCount() {
+    return allApps.filter(a => isActiveStatus(a.status)).length;
+}
+
 function updateStats() {
+    const active    = getActiveCount();
     const pending   = allApps.filter(a => a.status === 'pending').length;
-    const accepted  = allApps.filter(a => ['accepted','interview_scheduled'].includes(a.status)).length;
+    const reviewing = allApps.filter(a => ['reviewing','interview_scheduled','interview_done','accepted'].includes(a.status)).length;
     const rejected  = allApps.filter(a => a.status === 'rejected').length;
     const completed = allApps.filter(a => a.status === 'completed').length;
 
     document.getElementById('statTotal').textContent     = allApps.length;
-    document.getElementById('statPending').textContent   = pending;
-    document.getElementById('statAccepted').textContent  = accepted;
+    document.getElementById('statPending').textContent   = active;   // الطلبات النشطة (من الـ 3)
+    document.getElementById('statAccepted').textContent  = reviewing;
     document.getElementById('statRejected').textContent  = rejected;
     document.getElementById('statCompleted').textContent = completed;
 
+    // تحذير لو وصل للحد
     const warn = document.getElementById('limitWarn');
-    if (warn) warn.style.display = pending >= 3 ? 'block' : 'none';
+    if (warn) warn.style.display = active >= MAX_ACTIVE ? 'block' : 'none';
 }
 
 function renderApps() {
@@ -429,7 +440,7 @@ function renderApps() {
             ${rejectionHtml}
             <div class="internship-actions">
                 <a href="student-internship.html" class="btn btn-secondary btn-sm"><i class="fas fa-search"></i> فرص أخرى</a>
-                ${a.status === 'pending' ? `<button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171" onclick="doWithdraw('${a.id}','${esc(a.internship_title||'الفرصة')}')"><i class="fas fa-times"></i> سحب الطلب</button>` : ''}
+                ${isActiveStatus(a.status) && a.status !== 'accepted' ? `<button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171" onclick="doWithdraw('${a.id}','${esc(a.internship_title||'الفرصة')}')"><i class="fas fa-times"></i> سحب الطلب</button>` : ''}
             </div>
         </div>`;
     }).join('');
