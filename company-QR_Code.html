@@ -604,7 +604,7 @@
             <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
             <a href="company-talent-search.html" class="nav-item"><i class="fas fa-search"></i> البحث عن المواهب</a>
             <a href="company-requests-control.html" class="nav-item"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
-            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم <span class="nav-badge" id="appsBadge" style="display:none"></span></a>
+            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم</a>
             <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
             <a href="company-QR_Code.html" class="nav-item active"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
             <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
@@ -656,11 +656,28 @@
                 </button>
             </div>
 
-            <!-- Tab: Generate QR -->
+            <!-- Tab: Generate QR --><br>
             <div id="tab-generate" class="tab-content active">
                 <div class="qr-generator-card">
-                    <h2>QR Code للحضور اليومي</h2>
-                    <p id="qrGenSubtitle">اضغط الزرار لتوليد QR جديد للمتدربين</p>
+                    <h2>QR Code - حضور أو مقابلة</h2>
+                    <p id="qrGenSubtitle">حدد الغرض والقسم ثم ولّد الـ QR</p>
+
+                    <!-- QR Options -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px" id="qrOptionsPanel">
+                        <div>
+                            <label style="font-size:.85rem;font-weight:700;display:block;margin-bottom:6px;color:var(--text-muted)"><i class="fas fa-tag" style="color:var(--primary)"></i> غرض الـ QR</label>
+                            <select id="qrPurpose" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit">
+                                <option value="attendance">📋 حضور يومي</option>
+                                <option value="interview">🎯 مقابلة</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:.85rem;font-weight:700;display:block;margin-bottom:6px;color:var(--text-muted)"><i class="fas fa-building" style="color:var(--primary)"></i> القسم</label>
+                            <select id="qrDepartment" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit">
+                                <option value="">كل الأقسام</option>
+                            </select>
+                        </div>
+                    </div>
 
                     <div id="qrDisplay" style="display:none">
                         <div class="qr-canvas-wrap" id="qrCanvasWrap">
@@ -1016,18 +1033,25 @@
             const now = new Date();
             const validUntil = new Date(now.getTime() + 60 * 60 * 1000);
 
+            const purpose    = document.getElementById('qrPurpose')?.value || 'attendance';
+            const department = document.getElementById('qrDepartment')?.value || '';
+            const qrTypeMap  = { attendance: 'daily_attendance', interview: 'interview_checkin' };
+
             const { data: newQr, error } = await sb.from('qr_codes').insert({
                 code: qrCodeStr,
-                qr_type: 'daily_attendance',
+                qr_type: qrTypeMap[purpose] || 'daily_attendance',
                 company_user_id: companyUserId,
                 company_name: companyName,
                 application_id: null,
                 student_user_id: null,
                 metadata: {
-                    training_day: now.toISOString().slice(0, 10),
-                    expected_attendees: activeTrainees.length
+                    training_day:      now.toISOString().slice(0, 10),
+                    expected_attendees: activeTrainees.length,
+                    purpose:           purpose,
+                    department:        department || null,
+                    purpose_label:     purpose === 'interview' ? 'مقابلة' : 'حضور يومي'
                 },
-                valid_from: now.toISOString(),
+                valid_from:  now.toISOString(),
                 valid_until: validUntil.toISOString(),
                 status: 'active'
             }).select().single();
@@ -1730,11 +1754,32 @@
             const attRes = results[3] && results[3].status === "fulfilled" ? results[3].value : { data: [], error: results[3] && results[3].reason };
             const holRes = results[4] && results[4].status === "fulfilled" ? results[4].value : { data: [], error: results[4] && results[4].reason };
 
-            companyName = companyRes.data?.company_name || 'الشركة';
+            companyName    = companyRes.data?.company_name || 'الشركة';
             activeTrainees = traineesRes.data || [];
-            activeQrCode = qrRes.data;
+            activeQrCode   = qrRes.data;
             allAttendanceLogs = attRes.data || [];
-            weeklyHolidays = holRes.data;
+            weeklyHolidays    = holRes.data;
+
+            // تعبئة الأقسام من training_fields أو branch_locations
+            const deptSelect = document.getElementById('qrDepartment');
+            if (deptSelect) {
+                const fields  = companyRes.data?.training_fields || [];
+                const branches = companyRes.data?.branch_locations || [];
+                const depts = [...new Set([
+                    ...(Array.isArray(fields)  ? fields  : []),
+                    ...(Array.isArray(branches) ? branches.map(b => b.name || b) : [])
+                ])].filter(Boolean);
+                if (depts.length > 1) {
+                    depts.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d; opt.textContent = d;
+                        deptSelect.appendChild(opt);
+                    });
+                } else {
+                    // مقسم واحد → أخفي الـ select
+                    deptSelect.closest('div').style.display = 'none';
+                }
+            }
 
             renderQR();
             if (activeQrCode) startCountdown();
@@ -1815,26 +1860,6 @@
 
     init();
 })();
-    </script>
-    <script>
-    // Badge: new applications count (pending + reviewing + interview_scheduled)
-    (async () => {
-        try {
-            const sb = window.ProVance?.sb || window.getSB?.();
-            if (!sb) return;
-            const { data: { session } } = await sb.auth.getSession();
-            if (!session) return;
-            const { count } = await sb.from('applications')
-                .select('id', { count: 'exact', head: true })
-                .eq('company_user_id', session.user.id)
-                .in('status', ['pending', 'reviewing', 'interview_scheduled']);
-            const b = document.getElementById('appsBadge');
-            if (b) {
-                if (count > 0) { b.textContent = count; b.style.display = 'inline-block'; }
-                else { b.style.display = 'none'; }
-            }
-        } catch(e) {}
-    })();
     </script>
 </body>
 </html>
