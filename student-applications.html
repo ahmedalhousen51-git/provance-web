@@ -305,7 +305,7 @@ async function loadAll() {
 
     const { data, error } = await sb
         .from('applications')
-        .select('id, company_user_id, company_name, company_logo, internship_id, internship_title, application_message, status, rejection_reason, interview_date, interview_location, interview_notes, created_at, updated_at')
+        .select('id, company_user_id, company_name, company_logo, internship_id, internship_title, application_message, status, rejection_reason, interview_date, interview_location, interview_notes, training_schedule, created_at, updated_at')
         .eq('student_user_id', studentUserId)
         .order('created_at', { ascending: false });
 
@@ -438,6 +438,21 @@ function renderApps() {
                 <p style="color:var(--text-muted);font-size:0.88rem;line-height:1.7">${esc(a.rejection_reason)}</p>
             </div>` : '';
 
+        // جدول التدريب لما يتقبل الطالب
+        const ts = a.training_schedule;
+        const scheduleHtml = a.status === 'accepted' && ts ? `
+            <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:14px;margin-top:10px">
+                <div style="font-weight:800;color:var(--success);margin-bottom:10px"><i class="fas fa-calendar-check"></i> جدول التدريب</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.86rem">
+                    ${ts.start_date ? `<div><span style="color:var(--text-muted)">البداية: </span><strong>${ts.start_date}</strong></div>` : ''}
+                    ${ts.end_date   ? `<div><span style="color:var(--text-muted)">النهاية: </span><strong>${ts.end_date}</strong></div>` : ''}
+                    ${ts.daily_time ? `<div><span style="color:var(--text-muted)">وقت الحضور: </span><strong>${ts.daily_time}</strong></div>` : ''}
+                    ${ts.days_per_week ? `<div><span style="color:var(--text-muted)">أيام/أسبوع: </span><strong>${ts.days_per_week} أيام</strong></div>` : ''}
+                    ${ts.training_days?.length ? `<div style="grid-column:1/-1"><span style="color:var(--text-muted)">أيام التدريب: </span><strong>${ts.training_days.join('، ')}</strong></div>` : ''}
+                    ${ts.notes ? `<div style="grid-column:1/-1"><span style="color:var(--text-muted)">ملاحظات: </span><strong>${esc(ts.notes)}</strong></div>` : ''}
+                </div>
+            </div>` : '';
+
         return `
         <div class="internship-card" style="margin-bottom:14px">
             <div class="internship-header">
@@ -457,6 +472,7 @@ function renderApps() {
             ${a.application_message ? `<p class="internship-description"><i class="fas fa-comment-dots" style="color:var(--primary);margin-left:6px"></i>${esc(a.application_message.substring(0,150))}${a.application_message.length > 150 ? '...' : ''}</p>` : ''}
             ${interviewHtml}
             ${rejectionHtml}
+            ${scheduleHtml}
             <div class="internship-actions">
                 <a href="student-internship.html" class="btn btn-secondary btn-sm"><i class="fas fa-search"></i> فرص أخرى</a>
                 ${isActiveStatus(a.status) && a.status !== 'accepted' ? `<button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171" onclick="doWithdraw('${a.id}','${esc(a.internship_title||'الفرصة')}')"><i class="fas fa-times"></i> سحب الطلب</button>` : ''}
