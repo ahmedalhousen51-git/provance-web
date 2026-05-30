@@ -980,6 +980,10 @@ function renderApps() {
         const actions = a.status === 'pending' ? 
             '<button onclick="acceptApp(\''+a.id+'\')" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer"><i class="fas fa-check"></i> قبول وجدولة المقابلة</button>' +
             '<button onclick="rejectApp(\''+a.id+'\')" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer"><i class="fas fa-times"></i> رفض</button>'
+            : a.status === 'interview_scheduled' ?
+            '<button onclick="editInterview(\''+a.id+'\')" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer"><i class="fas fa-edit"></i> تعديل الموعد</button>'
+            : a.status === 'accepted' ?
+            '<button onclick="editTrainingSchedule(\''+a.id+'\')" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer"><i class="fas fa-calendar-alt"></i> تعديل جدول التدريب</button>'
             : '';
         
         return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px">' +
@@ -1148,6 +1152,166 @@ window.confirmAccept = async (appId) => {
         console.error('Accept error:', err);
         showToast('خطأ: ' + err.message, 'error');
     }
+};
+
+// ── تعديل موعد المقابلة ────────────────────────────────────────
+window.editInterview = (appId) => {
+    const app = allApplications.find(a => a.id === appId);
+    if (!app) return;
+    const ivDate = app.interview_date ? new Date(app.interview_date).toISOString().slice(0,16) : '';
+    const html = `<div class="modal active" id="editInterviewModal">
+        <div class="modal-overlay" onclick="closeModal('editInterviewModal')"></div>
+        <div class="modal-content" style="max-width:480px">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit" style="color:var(--primary)"></i> تعديل موعد المقابلة</h3>
+                <button class="modal-close" onclick="closeModal('editInterviewModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="padding:20px">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:16px;font-size:.88rem;color:var(--text-muted)">
+                    <strong style="color:var(--text)">${esc(app.student_name)}</strong> — ${esc(app.internship_title)}
+                </div>
+                <div style="margin-bottom:12px">
+                    <label style="font-weight:700;font-size:.88rem;display:block;margin-bottom:6px">موعد المقابلة الجديد</label>
+                    <input type="datetime-local" id="editIvDate" value="${ivDate}" style="width:100%;padding:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text)">
+                </div>
+                <div style="margin-bottom:12px">
+                    <label style="font-weight:700;font-size:.88rem;display:block;margin-bottom:6px">المكان (اختياري)</label>
+                    <input type="text" id="editIvLocation" value="${esc(app.interview_location||'')}" placeholder="مثال: مقر الشركة - الدور الثالث" style="width:100%;padding:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit">
+                </div>
+                <div style="margin-bottom:16px">
+                    <label style="font-weight:700;font-size:.88rem;display:block;margin-bottom:6px">ملاحظات</label>
+                    <textarea id="editIvNotes" rows="2" placeholder="أي تعليمات للطالب..." style="width:100%;padding:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;resize:vertical">${esc(app.interview_notes||'')}</textarea>
+                </div>
+                <div style="display:flex;gap:10px">
+                    <button onclick="closeModal('editInterviewModal')" class="btn btn-secondary" style="flex:1">إلغاء</button>
+                    <button onclick="saveEditInterview('${appId}')" class="btn btn-primary" style="flex:1"><i class="fas fa-save"></i> حفظ التعديل</button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    renderModal(html);
+};
+
+window.saveEditInterview = async (appId) => {
+    const date     = document.getElementById('editIvDate')?.value;
+    const location = document.getElementById('editIvLocation')?.value?.trim();
+    const notes    = document.getElementById('editIvNotes')?.value?.trim();
+    if (!date) { showToast('حدد موعد المقابلة', 'warning'); return; }
+    closeModal('editInterviewModal');
+    try {
+        const sb = await window.getSafeSupabase();
+        if (!sb) { showToast('فشل الاتصال', 'error'); return; }
+        await sb.from('applications').update({
+            interview_date:     date,
+            interview_location: location || null,
+            interview_notes:    notes    || null,
+            updated_at:         new Date().toISOString()
+        }).eq('id', appId);
+        const app = allApplications.find(a => a.id === appId);
+        if (app && window.ProVance.sendNotification) {
+            await window.ProVance.sendNotification({
+                userId:   app.student_user_id,
+                userType: 'student',
+                title:    '📅 تم تعديل موعد المقابلة',
+                message:  `تم تحديث موعد مقابلتك على "${esc(app.internship_title)}" إلى ${new Date(date).toLocaleString('ar-EG')}`,
+                type:     'info',
+                link:     'student-applications.html'
+            });
+        }
+        showToast('✅ تم تعديل الموعد وإرسال إشعار للطالب', 'success');
+        await loadAll();
+    } catch(e) { showToast('خطأ: ' + e.message, 'error'); }
+};
+
+// ── تعديل جدول التدريب ────────────────────────────────────────
+window.editTrainingSchedule = (appId) => {
+    const app = allApplications.find(a => a.id === appId);
+    if (!app) return;
+    const ts = app.training_schedule || {};
+    const daysOfWeek = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+    const html = `<div class="modal active" id="editScheduleModal">
+        <div class="modal-overlay" onclick="closeModal('editScheduleModal')"></div>
+        <div class="modal-content" style="max-width:520px">
+            <div class="modal-header">
+                <h3><i class="fas fa-calendar-alt" style="color:var(--success)"></i> تعديل جدول التدريب</h3>
+                <button class="modal-close" onclick="closeModal('editScheduleModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="padding:20px">
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:16px;font-size:.88rem;color:var(--text-muted)">
+                    <strong style="color:var(--text)">${esc(app.student_name)}</strong> — ${esc(app.internship_title)}
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+                    <div>
+                        <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px">تاريخ البداية</label>
+                        <input type="date" id="esStartDate" value="${ts.start_date||''}" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text)">
+                    </div>
+                    <div>
+                        <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px">تاريخ النهاية</label>
+                        <input type="date" id="esEndDate" value="${ts.end_date||''}" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text)">
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+                    <div>
+                        <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px">وقت الحضور</label>
+                        <input type="time" id="esDailyTime" value="${ts.daily_time||'09:00'}" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text)">
+                    </div>
+                    <div>
+                        <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px">أيام/أسبوع</label>
+                        <select id="esDaysPerWeek" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit">
+                            ${[1,2,3,4,5].map(n=>`<option value="${n}" ${ts.days_per_week==n?'selected':''}>${n} ${n===1?'يوم':'أيام'}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-bottom:12px">
+                    <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:8px">أيام التدريب</label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        ${daysOfWeek.map(d=>`<label style="display:flex;align-items:center;gap:5px;background:var(--bg-card);border:1px solid var(--border);padding:6px 10px;border-radius:16px;cursor:pointer;font-size:.82rem">
+                            <input type="checkbox" value="${d}" name="esDays" ${(ts.training_days||[]).includes(d)?'checked':''} style="accent-color:var(--success)"> ${d}
+                        </label>`).join('')}
+                    </div>
+                </div>
+                <div style="margin-bottom:16px">
+                    <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px">ملاحظات</label>
+                    <textarea id="esNotes" rows="2" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;resize:vertical">${esc(ts.notes||'')}</textarea>
+                </div>
+                <div style="display:flex;gap:10px">
+                    <button onclick="closeModal('editScheduleModal')" class="btn btn-secondary" style="flex:1">إلغاء</button>
+                    <button onclick="saveTrainingSchedule('${appId}')" class="btn btn-primary" style="flex:1"><i class="fas fa-save"></i> حفظ وإرسال للطالب</button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    renderModal(html);
+};
+
+window.saveTrainingSchedule = async (appId) => {
+    const startDate  = document.getElementById('esStartDate')?.value;
+    const endDate    = document.getElementById('esEndDate')?.value;
+    const dailyTime  = document.getElementById('esDailyTime')?.value;
+    const daysPerWeek = document.getElementById('esDaysPerWeek')?.value;
+    const notes      = document.getElementById('esNotes')?.value?.trim();
+    const trainingDays = [...document.querySelectorAll('input[name="esDays"]:checked')].map(c=>c.value);
+    if (!startDate) { showToast('حدد تاريخ بداية التدريب', 'warning'); return; }
+    closeModal('editScheduleModal');
+    try {
+        const sb = await window.getSafeSupabase();
+        if (!sb) { showToast('فشل الاتصال', 'error'); return; }
+        const schedule = { start_date: startDate, end_date: endDate||null, daily_time: dailyTime, days_per_week: parseInt(daysPerWeek), training_days: trainingDays, notes: notes||null };
+        await sb.from('applications').update({ training_schedule: schedule, updated_at: new Date().toISOString() }).eq('id', appId);
+        const app = allApplications.find(a => a.id === appId);
+        if (app && window.ProVance.sendNotification) {
+            await window.ProVance.sendNotification({
+                userId:   app.student_user_id,
+                userType: 'student',
+                title:    '📅 تم تحديث جدول التدريب',
+                message:  `تم تحديث جدول تدريبك في "${esc(app.internship_title)}". البداية: ${startDate} — الأيام: ${trainingDays.join('، ')} — الوقت: ${dailyTime}`,
+                type:     'info',
+                link:     'student-applications.html'
+            });
+        }
+        showToast('✅ تم تحديث الجدول وإرسال إشعار للطالب', 'success');
+        await loadAll();
+    } catch(e) { showToast('خطأ: ' + e.message, 'error'); }
 };
 
 window.rejectApp = (appId) => {
