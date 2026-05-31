@@ -1871,7 +1871,7 @@
 
         try {
             const results = await Promise.allSettled([
-                sb.from('companies').select('company_name').eq('user_id', companyUserId).maybeSingle(),
+                sb.from('companies').select('company_name, training_details, branch_locations, training_fields').eq('user_id', companyUserId).maybeSingle(),
                 sb.from('applications').select('*').eq('company_user_id', companyUserId).in('status', ['hired', 'in_training']),
                 sb.from('qr_codes').select('*').eq('company_user_id', companyUserId).eq('qr_type', 'daily_attendance').eq('status', 'active').gt('valid_until', new Date().toISOString()).order('created_at', { ascending: false }).limit(1).maybeSingle(),
                 sb.from('attendance_logs').select('*').eq('company_user_id', companyUserId).order('scanned_at', { ascending: false }).limit(500),
@@ -1889,25 +1889,35 @@
             allAttendanceLogs = attRes.data || [];
             weeklyHolidays    = holRes.data;
 
-            // تعبئة الأقسام من training_fields أو branch_locations
+            // تعبئة الأقسام من training_details (نفس مصدر إدارة الأقسام والفروع)
             const deptSelect = document.getElementById('qrDepartment');
             if (deptSelect) {
-                const fields  = companyRes.data?.training_fields || [];
-                const branches = companyRes.data?.branch_locations || [];
-                const depts = [...new Set([
-                    ...(Array.isArray(fields)  ? fields  : []),
-                    ...(Array.isArray(branches) ? branches.map(b => b.name || b) : [])
-                ])].filter(Boolean);
-                if (depts.length > 1) {
-                    depts.forEach(d => {
-                        const opt = document.createElement('option');
-                        opt.value = d; opt.textContent = d;
-                        deptSelect.appendChild(opt);
-                    });
-                } else {
-                    // مقسم واحد → أخفي الـ select
-                    deptSelect.closest('div').style.display = 'none';
+                // أولاً من training_details (الأقسام المفصلة)
+                let depts = [];
+                try {
+                    const trainingDetails = companyRes.data?.training_details;
+                    const parsed = typeof trainingDetails === 'string'
+                        ? JSON.parse(trainingDetails)
+                        : (Array.isArray(trainingDetails) ? trainingDetails : []);
+                    depts = parsed.map(d => d.field || d.name || d).filter(Boolean);
+                } catch(e) {}
+
+                // fallback من training_fields لو training_details فارغ
+                if (!depts.length) {
+                    const tf = companyRes.data?.training_fields || [];
+                    depts = Array.isArray(tf) ? tf : [];
                 }
+
+                // دايماً أظهر الـ dropdown سواء فيه قسم واحد أو أكتر
+                deptSelect.innerHTML = '<option value="">كل الأقسام</option>';
+                depts.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d; opt.textContent = d;
+                    deptSelect.appendChild(opt);
+                });
+                // أظهر الـ select دايماً
+                const wrap = deptSelect.closest('div');
+                if (wrap) wrap.style.display = '';
             }
 
             renderQR();
