@@ -679,6 +679,20 @@
                         </div>
                     </div>
 
+                    <!-- مدة صلاحية الـ QR -->
+                    <div style="margin-bottom:16px;text-align:right">
+                        <label style="font-size:.85rem;font-weight:700;display:block;margin-bottom:6px;color:var(--text-muted)"><i class="fas fa-hourglass-half" style="color:var(--primary)"></i> مدة صلاحية الـ QR</label>
+                        <select id="qrDuration" style="width:100%;padding:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:.92rem">
+                            <option value="15">15 دقيقة</option>
+                            <option value="30">30 دقيقة</option>
+                            <option value="60" selected>ساعة واحدة</option>
+                            <option value="120">ساعتين</option>
+                            <option value="240">4 ساعات</option>
+                            <option value="480">8 ساعات (يوم عمل)</option>
+                            <option value="1440">24 ساعة</option>
+                        </select>
+                    </div>
+
                     <div id="qrDisplay" style="display:none">
                         <div class="qr-canvas-wrap" id="qrCanvasWrap">
                             <img id="qrImage" src="" alt="QR Code">
@@ -723,6 +737,9 @@
                             </button>
                             <button class="btn btn-info" onclick="copyQRCode()">
                                 <i class="fas fa-copy"></i> نسخ الكود
+                            </button>
+                            <button class="btn btn-danger" onclick="endQR()" style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)">
+                                <i class="fas fa-stop-circle"></i> إنهاء الـ QR
                             </button>
                         </div>
                     </div>
@@ -1019,6 +1036,7 @@
         // الشركة تقدر تعمل QR في أي وقت — مفيش شرط متدربين
         const purpose    = document.getElementById('qrPurpose')?.value || 'attendance';
         const department = document.getElementById('qrDepartment')?.value || '';
+        const duration   = parseInt(document.getElementById('qrDuration')?.value || '60');
 
         try {
             const sb = window.ProVance.sb;
@@ -1033,7 +1051,7 @@
             const prefix     = purpose === 'interview' ? 'INT-' : 'DAY-';
             const qrCodeStr  = prefix + Math.random().toString(36).substring(2, 14).toUpperCase();
             const now        = new Date();
-            const validUntil = new Date(now.getTime() + 60 * 60 * 1000);
+            const validUntil = new Date(now.getTime() + duration * 60 * 1000);
 
             const { data: newQr, error } = await sb.from('qr_codes').insert({
                 code: qrCodeStr,
@@ -1149,6 +1167,27 @@
         }).catch(() => window.ProVance.showToast('تعذر النسخ', 'error'));
     };
 
+    window.endQR = async () => {
+        if (!activeQrCode) { window.ProVance.showToast('مفيش QR نشط', 'warning'); return; }
+        const ok = confirm('هل تريد إنهاء الـ QR الحالي؟ لن يتمكن الطلاب من المسح بعد ذلك.');
+        if (!ok) return;
+        try {
+            const sb = window.ProVance.sb;
+            await sb.from('qr_codes').update({ status: 'cancelled' }).eq('id', activeQrCode.id);
+            addCleanupLog('إنهاء QR يدوي', `تم إنهاء الكود ${activeQrCode.code}`, 'warning');
+            window.ProVance.showToast('✅ تم إنهاء الـ QR', 'success');
+            activeQrCode = null;
+            // أوقف العداد وأظهر الـ placeholder
+            if (typeof countdownInterval !== 'undefined' && countdownInterval) clearInterval(countdownInterval);
+            const display = document.getElementById('qrDisplay');
+            const placeholder = document.getElementById('qrPlaceholder');
+            if (display) display.style.display = 'none';
+            if (placeholder) placeholder.style.display = 'block';
+        } catch (err) {
+            window.ProVance.showToast('خطأ: ' + err.message, 'error');
+        }
+    };
+
     window.printQR = () => {
         if (!activeQrCode) return;
         const img = document.getElementById('qrImage');
@@ -1181,7 +1220,6 @@
         const today = new Date(); today.setHours(0,0,0,0);
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
         return allAttendanceLogs.filter(a => {
-            if (a.attendance_type !== 'daily_attendance') return false;
             const d = new Date(a.scanned_at);
             return d >= today && d < tomorrow;
         });
@@ -1192,14 +1230,34 @@
         const statusFilter = document.getElementById('filterStatus').value;
         const todayAtt = getTodayAttendance();
 
+        // ابدأ بالمتدربين النشطين
         let combined = activeTrainees.map(t => {
             const att = todayAtt.find(a => a.student_user_id === t.student_user_id);
             return {
                 ...t,
                 status: att ? att.status : 'absent',
                 delay_minutes: att ? att.delay_minutes : 0,
-                scanned_at: att ? att.scanned_at : null
+                scanned_at: att ? att.scanned_at : null,
+                _scanned: !!att
             };
+        });
+
+        // أضف أي طالب عمل scan وهو مش في قائمة المتدربين النشطين (مقابلة/زائر)
+        const knownIds = new Set(activeTrainees.map(t => t.student_user_id));
+        todayAtt.forEach(att => {
+            if (!knownIds.has(att.student_user_id)) {
+                combined.push({
+                    student_user_id: att.student_user_id,
+                    student_name:    att.student_name,
+                    student_photo:   att.student_photo,
+                    internship_title: att.purpose === 'interview' ? 'مقابلة' : 'زائر',
+                    status:          att.status,
+                    delay_minutes:   att.delay_minutes,
+                    scanned_at:      att.scanned_at,
+                    _scanned:        true,
+                    _guest:          true
+                });
+            }
         });
 
         if (search) combined = combined.filter(c => (c.student_name || '').toLowerCase().includes(search));
@@ -1207,7 +1265,7 @@
 
         const onTime = todayAtt.filter(a => a.status === 'on_time').length;
         const late = todayAtt.filter(a => a.status === 'late').length;
-        const absent = activeTrainees.length - todayAtt.length;
+        const absent = Math.max(0, activeTrainees.length - todayAtt.filter(a => knownIds.has(a.student_user_id)).length);
 
         document.getElementById('statExpected').textContent = activeTrainees.length;
         document.getElementById('statAttended').textContent = onTime;
@@ -1217,7 +1275,7 @@
 
         const grid = document.getElementById('todayAttendanceGrid');
         if (combined.length === 0) {
-            grid.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><h3>مفيش متدربين</h3></div>';
+            grid.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><h3>مفيش حضور لسه</h3></div>';
             return;
         }
 
@@ -1233,6 +1291,8 @@
                 'absent': '<span class="badge badge-error">✕ غائب</span>'
             }[c.status] || '';
 
+            const guestBadge = c._guest ? '<span class="badge badge-info" style="background:rgba(79,172,254,.15);color:#4facfe">👤 غير مسجّل كمتدرب</span>' : '';
+
             return `
                 <div class="attendance-card">
                     <div class="attendance-avatar">${photo}</div>
@@ -1241,6 +1301,7 @@
                         <div class="attendance-pos">${esc(c.internship_title || '')}</div>
                         <div class="attendance-meta">
                             ${statusBadge}
+                            ${guestBadge}
                             ${c.scanned_at ? `<span><i class="fas fa-clock"></i> ${formatTime(c.scanned_at)}</span>` : ''}
                         </div>
                     </div>
