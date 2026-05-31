@@ -1159,7 +1159,15 @@ window.confirmAccept = async (appId) => {
 window.editInterview = (appId) => {
     const app = allApplications.find(a => a.id === appId);
     if (!app) return;
-    const ivDate = app.interview_date ? new Date(app.interview_date).toISOString().slice(0,16) : '';
+
+    // فصل التاريخ والوقت من interview_date الموجود
+    let ivDay = '', ivTime = '';
+    if (app.interview_date) {
+        const d = new Date(app.interview_date);
+        ivDay  = d.toISOString().slice(0, 10);
+        ivTime = d.toTimeString().slice(0, 5);
+    }
+
     const html = `
     <div class="modal-overlay active" id="editInterviewModal" onclick="if(event.target===this)closeModal('editInterviewModal')">
         <div class="modal">
@@ -1172,22 +1180,41 @@ window.editInterview = (appId) => {
                     <strong>${esc(app.student_name)}</strong>
                     <span style="color:var(--text-muted);margin-right:8px">${esc(app.internship_title)}</span>
                 </div>
-                <div class="form-group">
-                    <label>موعد المقابلة الجديد</label>
-                    <input type="datetime-local" id="editIvDate" value="${ivDate}">
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar" style="color:var(--primary)"></i> تاريخ المقابلة</label>
+                        <input type="date" id="editIvDay" value="${ivDay}" min="${new Date().toISOString().slice(0,10)}">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-clock" style="color:var(--primary)"></i> وقت المقابلة</label>
+                        <select id="editIvTime" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;width:100%;font-family:inherit">
+                            ${Array.from({length: 24}, (_,h) =>
+                                ['00','30'].map(m => {
+                                    const val = `${String(h).padStart(2,'0')}:${m}`;
+                                    const label = `${String(h).padStart(2,'0')}:${m} ${h < 12 ? 'ص' : 'م'}`;
+                                    return `<option value="${val}" ${ivTime===val?'selected':''}>${label}</option>`;
+                                }).join('')
+                            ).join('')}
+                        </select>
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label>المكان (اختياري)</label>
+                    <label><i class="fas fa-map-marker-alt" style="color:var(--primary)"></i> المكان (اختياري)</label>
                     <input type="text" id="editIvLocation" value="${esc(app.interview_location||'')}" placeholder="مثال: مقر الشركة - الدور الثالث">
                 </div>
+
                 <div class="form-group">
-                    <label>ملاحظات</label>
+                    <label><i class="fas fa-sticky-note" style="color:var(--primary)"></i> ملاحظات</label>
                     <textarea id="editIvNotes" rows="2" placeholder="أي تعليمات للطالب...">${esc(app.interview_notes||'')}</textarea>
                 </div>
             </div>
             <div class="modal-foot">
                 <button onclick="closeModal('editInterviewModal')" class="btn btn-outline">إلغاء</button>
-                <button onclick="saveEditInterview('${appId}')" class="btn btn-primary"><i class="fas fa-save"></i> حفظ وإرسال إشعار</button>
+                <button onclick="saveEditInterview('${appId}')" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> حفظ وإرسال إشعار
+                </button>
             </div>
         </div>
     </div>`;
@@ -1195,16 +1222,22 @@ window.editInterview = (appId) => {
 };
 
 window.saveEditInterview = async (appId) => {
-    const date     = document.getElementById('editIvDate')?.value;
+    const day      = document.getElementById('editIvDay')?.value;
+    const time     = document.getElementById('editIvTime')?.value || '09:00';
     const location = document.getElementById('editIvLocation')?.value?.trim();
     const notes    = document.getElementById('editIvNotes')?.value?.trim();
-    if (!date) { showToast('حدد موعد المقابلة', 'warning'); return; }
+
+    if (!day) { showToast('حدد تاريخ المقابلة', 'warning'); return; }
+
+    // دمج التاريخ + الوقت في ISO string
+    const isoDate = new Date(`${day}T${time}:00`).toISOString();
+
     closeModal('editInterviewModal');
     try {
         const sb = await window.getSafeSupabase();
         if (!sb) { showToast('فشل الاتصال', 'error'); return; }
         await sb.from('applications').update({
-            interview_date:     date,
+            interview_date:     isoDate,
             interview_location: location || null,
             interview_notes:    notes    || null,
             updated_at:         new Date().toISOString()
@@ -1215,7 +1248,7 @@ window.saveEditInterview = async (appId) => {
                 userId:   app.student_user_id,
                 userType: 'student',
                 title:    '📅 تم تعديل موعد المقابلة',
-                message:  `تم تحديث موعد مقابلتك على "${esc(app.internship_title)}" إلى ${new Date(date).toLocaleString('ar-EG')}`,
+                message:  `تم تحديث موعد مقابلتك على "${esc(app.internship_title)}" إلى ${new Date(isoDate).toLocaleString('ar-EG')}`,
                 type:     'info',
                 link:     'student-applications.html'
             });
@@ -1245,21 +1278,30 @@ window.editTrainingSchedule = (appId) => {
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                     <div class="form-group">
-                        <label>تاريخ البداية</label>
-                        <input type="date" id="esStartDate" value="${ts.start_date||''}">
+                        <label><i class="fas fa-calendar-check" style="color:var(--success)"></i> تاريخ البداية</label>
+                        <input type="date" id="esStartDate" value="${ts.start_date||''}" min="${new Date().toISOString().slice(0,10)}">
                     </div>
                     <div class="form-group">
-                        <label>تاريخ النهاية</label>
+                        <label><i class="fas fa-calendar-times" style="color:var(--text-muted)"></i> تاريخ النهاية</label>
                         <input type="date" id="esEndDate" value="${ts.end_date||''}">
                     </div>
                     <div class="form-group">
-                        <label>وقت الحضور</label>
-                        <input type="time" id="esDailyTime" value="${ts.daily_time||'09:00'}">
+                        <label><i class="fas fa-clock" style="color:var(--success)"></i> وقت الحضور اليومي</label>
+                        <select id="esDailyTime" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;width:100%;font-family:inherit">
+                            ${Array.from({length: 24}, (_,h) =>
+                                ['00','30'].map(m => {
+                                    const val   = `${String(h).padStart(2,'0')}:${m}`;
+                                    const label = `${String(h).padStart(2,'0')}:${m} ${h < 12 ? 'ص' : 'م'}`;
+                                    const sel   = (ts.daily_time||'09:00') === val ? 'selected' : '';
+                                    return `<option value="${val}" ${sel}>${label}</option>`;
+                                }).join('')
+                            ).join('')}
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label>أيام/أسبوع</label>
-                        <select id="esDaysPerWeek" style="background:var(--bg-input,rgba(255,255,255,.04));border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;width:100%;font-family:inherit">
-                            ${[1,2,3,4,5].map(n=>`<option value="${n}" ${ts.days_per_week==n?'selected':''}>${n} ${n===1?'يوم':'أيام'}</option>`).join('')}
+                        <label><i class="fas fa-calendar-week" style="color:var(--success)"></i> أيام/أسبوع</label>
+                        <select id="esDaysPerWeek" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;width:100%;font-family:inherit">
+                            ${[1,2,3,4,5].map(n=>`<option value="${n}" ${ts.days_per_week==n?'selected':''}>${n} ${n===1?'يوم':'أيام'} في الأسبوع</option>`).join('')}
                         </select>
                     </div>
                 </div>
