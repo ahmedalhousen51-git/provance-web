@@ -668,7 +668,7 @@
             <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
             <a href="company-talent-search.html" class="nav-item"><i class="fas fa-search"></i> البحث عن المواهب</a>
             <a href="company-requests-control.html" class="nav-item"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
-            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم <span class="nav-badge" id="appsBadge" style="display:none"></span></a>
+            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم</a>
             <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
             <a href="company-QR_Code.html" class="nav-item"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
             <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
@@ -916,12 +916,34 @@
         // ========================================================
         async function init() {
             try {
-                const auth = await window.ProVance.requireCompanyAuth();
-                if (!auth) return;
+                // auth pattern مرن - مايعتمدش على requireCompanyAuth اللي بيعلّق
+                let sb = null;
+                if (window.ProVance?.waitForSupabaseClient) {
+                    try { sb = await window.ProVance.waitForSupabaseClient(15000); } catch(e) {}
+                }
+                if (!sb && typeof supabase !== 'undefined' && supabase.createClient) {
+                    sb = supabase.createClient(
+                        'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                        { auth: { persistSession: true, storage: window.localStorage } }
+                    );
+                }
+                if (!sb) {
+                    hideLoading();
+                    if (!window._dashRetried) { window._dashRetried = true; setTimeout(() => location.reload(), 3000); }
+                    return;
+                }
 
-                state.sb      = window.ProVance.sb;
-                state.session = auth.session;
-                state.company = auth.company;
+                const { data: { session } } = await sb.auth.getSession();
+                if (!session) { window.location.href = 'company-login.html'; return; }
+
+                // جيب بيانات الشركة
+                const { data: company } = await sb.from('companies')
+                    .select('*').eq('user_id', session.user.id).maybeSingle();
+
+                state.sb      = sb;
+                state.session = session;
+                state.company = company || { company_name: 'شركة' };
 
                 try { renderCompanyHeader(); } catch(e) { console.error('renderCompanyHeader:', e); }
 
@@ -962,18 +984,23 @@
         // Render Company in Header
         // ========================================================
         function renderCompanyHeader() {
-            const c = state.company;
+            const c = state.company || {};
+            const name = c.company_name || 'شركة';
             const nameEl = document.getElementById('headerName');
             const avatarEl = document.getElementById('headerAvatar');
             const welcomeEl = document.getElementById('welcomeMsg');
 
-            nameEl.textContent = c.company_name || 'شركة';
-            welcomeEl.textContent = `مرحباً، ${c.company_name || 'شركة'}`;
+            if (nameEl) nameEl.textContent = name;
+            if (welcomeEl) welcomeEl.textContent = `مرحباً، ${name}`;
 
-            if (c.logo) {
-                avatarEl.innerHTML = `<img src="${window.ProVance.escapeHtml(c.logo)}" alt="logo">`;
-            } else {
-                avatarEl.textContent = (c.company_name || 'C').charAt(0);
+            if (avatarEl) {
+                const logo = c.logo || c.company_logo;
+                if (logo) {
+                    const safe = String(logo).replace(/"/g, '&quot;');
+                    avatarEl.innerHTML = `<img src="${safe}" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
+                } else {
+                    avatarEl.textContent = name.charAt(0).toUpperCase();
+                }
             }
         }
 
@@ -996,7 +1023,7 @@
 
                 if (error) {
                     console.error(error);
-                    window.ProVance.showToast('خطأ في تحميل الطلبات', 'error');
+                    window.ProVance?.showToast?.('خطأ في تحميل الطلبات', 'error');
                     return;
                 }
 
@@ -1244,10 +1271,22 @@
         // Notifications
         // ========================================================
         async function loadNotificationsCount() {
-            const count = await window.ProVance.getUnreadNotificationsCount(state.session.user.id);
-            document.getElementById('statNotifs').textContent = count;
+            let count = 0;
+            try {
+                if (window.ProVance?.getUnreadNotificationsCount) {
+                    count = await window.ProVance.getUnreadNotificationsCount(state.session.user.id);
+                } else {
+                    const { data } = await state.sb.from('notifications')
+                        .select('id', { count: 'exact' })
+                        .eq('user_id', state.session.user.id)
+                        .eq('read', false);
+                    count = (data || []).length;
+                }
+            } catch(e) { console.warn('notif count:', e); }
+            const el = document.getElementById('statNotifs');
+            if (el) el.textContent = count;
             const badge = document.getElementById('notifBadge');
-            badge.textContent = count > 0 ? count : '';
+            if (badge) badge.textContent = count > 0 ? count : '';
         }
 
         // ========================================================
@@ -1453,16 +1492,18 @@
         // ========================================================
         // Logout
         // ========================================================
-        window.handleLogout = async function () {
-            const ok = await window.ProVance.confirmModal({
-                title: 'تسجيل الخروج',
-                message: 'هل تريد الخروج من حسابك؟',
-                confirmText: 'خروج',
-                cancelText: 'إلغاء',
-                type: 'warning'
-            });
-            if (ok) await window.ProVance.logout('company-login.html');
+        window.logoutCompany = async function (e) {
+            if (e) e.preventDefault();
+            const ok = confirm('هل تريد الخروج من حسابك؟');
+            if (!ok) return;
+            try {
+                if (state.sb) { await state.sb.auth.signOut(); }
+                else if (window.ProVance?.logout) { return window.ProVance.logout('company-login.html'); }
+            } catch(err) {}
+            localStorage.clear();
+            window.location.href = 'company-login.html';
         };
+        window.handleLogout = window.logoutCompany;
 
         // ========================================================
         // Start
@@ -1472,26 +1513,6 @@
         } else {
             init();
         }
-    })();
-    </script>
-    <script>
-    // Badge: new applications count (pending + reviewing + interview_scheduled)
-    (async () => {
-        try {
-            const sb = window.ProVance?.sb || window.getSB?.();
-            if (!sb) return;
-            const { data: { session } } = await sb.auth.getSession();
-            if (!session) return;
-            const { count } = await sb.from('applications')
-                .select('id', { count: 'exact', head: true })
-                .eq('company_user_id', session.user.id)
-                .in('status', ['pending', 'reviewing', 'interview_scheduled']);
-            const b = document.getElementById('appsBadge');
-            if (b) {
-                if (count > 0) { b.textContent = count; b.style.display = 'inline-block'; }
-                else { b.style.display = 'none'; }
-            }
-        } catch(e) {}
     })();
     </script>
 </body>
