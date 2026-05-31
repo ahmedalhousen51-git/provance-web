@@ -1145,25 +1145,23 @@
     };
 
     window.generateNewQR = async () => {
-        if (activeTrainees.length === 0) {
-            window.ProVance.showToast('⚠️ مفيش متدربين نشطين', 'warning');
-            return;
-        }
+        const purpose    = document.getElementById('qrPurpose')?.value || 'attendance';
+        const department = document.getElementById('qrDepartment')?.value || '';
 
         try {
-            const sb = window.ProVance.sb;
+            const sb = await window.getSafeSupabase ? await window.getSafeSupabase() : window.ProVance.sb;
+            if (!sb) { window.ProVance.showToast('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
 
+            // ألغِ الـ QR النشط القديم (لو موجود) قبل توليد واحد جديد
             if (activeQrCode && activeQrCode.status === 'active') {
                 await sb.from('qr_codes').update({ status: 'cancelled' }).eq('id', activeQrCode.id);
                 addCleanupLog('إلغاء QR قديم', `تم إلغاء الكود ${activeQrCode.code}`, 'warning');
             }
 
-            const qrCodeStr = 'DAY-' + Math.random().toString(36).substring(2, 14).toUpperCase();
-            const now = new Date();
+            const prefix     = purpose === 'interview' ? 'INT-' : 'DAY-';
+            const qrCodeStr  = prefix + Math.random().toString(36).substring(2, 14).toUpperCase();
+            const now        = new Date();
             const validUntil = new Date(now.getTime() + 60 * 60 * 1000);
-
-            const purpose    = document.getElementById('qrPurpose')?.value || 'attendance';
-            const department = document.getElementById('qrDepartment')?.value || '';
             const qrTypeMap  = { attendance: 'daily_attendance', interview: 'interview_checkin' };
 
             const { data: newQr, error } = await sb.from('qr_codes').insert({
@@ -1174,11 +1172,11 @@
                 application_id: null,
                 student_user_id: null,
                 metadata: {
-                    training_day:      now.toISOString().slice(0, 10),
+                    training_day:       now.toISOString().slice(0, 10),
                     expected_attendees: activeTrainees.length,
-                    purpose:           purpose,
-                    department:        department || null,
-                    purpose_label:     purpose === 'interview' ? 'مقابلة' : 'حضور يومي'
+                    purpose:            purpose,
+                    department:         department || null,
+                    purpose_label:      purpose === 'interview' ? 'مقابلة' : 'حضور يومي'
                 },
                 valid_from:  now.toISOString(),
                 valid_until: validUntil.toISOString(),
@@ -1188,8 +1186,10 @@
             if (error) throw error;
 
             activeQrCode = newQr;
-            addCleanupLog('توليد QR جديد', `كود: ${qrCodeStr} - صالح لساعة - ${activeTrainees.length} متدرب`, 'success');
-            window.ProVance.showToast('🎉 تم توليد QR جديد!', 'success');
+            const purposeTxt = purpose === 'interview' ? 'مقابلة' : 'حضور يومي';
+            const deptTxt = department ? ` - قسم: ${department}` : '';
+            addCleanupLog('توليد QR جديد', `كود: ${qrCodeStr} - ${purposeTxt}${deptTxt} - صالح لساعة`, 'success');
+            window.ProVance.showToast(`🎉 تم توليد QR لـ ${purposeTxt}${deptTxt}!`, 'success');
             renderQR();
             startCountdown();
         } catch (err) {
@@ -1228,8 +1228,10 @@
         document.getElementById('qrScansInfo').textContent = activeQrCode.scans_count || 0;
         document.getElementById('qrCodeInfo').textContent = activeQrCode.code;
 
+        const pLabel = activeQrCode.metadata?.purpose_label || 'حضور يومي';
+        const dept = activeQrCode.metadata?.department;
         document.getElementById('qrGenSubtitle').textContent =
-            `الـ QR صالح لساعة كاملة • ${activeTrainees.length} متدرب نشط`;
+            `QR لـ ${pLabel}${dept ? ' - قسم ' + dept : ''} • صالح لساعة كاملة`;
     }
 
     function startCountdown() {
