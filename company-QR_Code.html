@@ -1889,33 +1889,26 @@
             allAttendanceLogs = attRes.data || [];
             weeklyHolidays    = holRes.data;
 
-            // تعبئة الأقسام من training_details (نفس مصدر إدارة الأقسام والفروع)
+            // تعبئة الأقسام — نفس المصدر بالظبط من إدارة الأقسام والفروع
+            // training_fields = array of strings (أسماء الأقسام)
             const deptSelect = document.getElementById('qrDepartment');
             if (deptSelect) {
-                // أولاً من training_details (الأقسام المفصلة)
                 let depts = [];
                 try {
-                    const trainingDetails = companyRes.data?.training_details;
-                    const parsed = typeof trainingDetails === 'string'
-                        ? JSON.parse(trainingDetails)
-                        : (Array.isArray(trainingDetails) ? trainingDetails : []);
-                    depts = parsed.map(d => d.field || d.name || d).filter(Boolean);
-                } catch(e) {}
+                    const raw = companyRes.data?.training_fields;
+                    if (typeof raw === 'string') depts = JSON.parse(raw);
+                    else if (Array.isArray(raw)) depts = raw;
+                } catch(e) { depts = []; }
 
-                // fallback من training_fields لو training_details فارغ
-                if (!depts.length) {
-                    const tf = companyRes.data?.training_fields || [];
-                    depts = Array.isArray(tf) ? tf : [];
-                }
-
-                // دايماً أظهر الـ dropdown سواء فيه قسم واحد أو أكتر
                 deptSelect.innerHTML = '<option value="">كل الأقسام</option>';
-                depts.forEach(d => {
+                depts.filter(Boolean).forEach(d => {
                     const opt = document.createElement('option');
-                    opt.value = d; opt.textContent = d;
+                    opt.value = d;
+                    opt.textContent = d;
                     deptSelect.appendChild(opt);
                 });
-                // أظهر الـ select دايماً
+
+                // أظهر الـ dropdown دايماً
                 const wrap = deptSelect.closest('div');
                 if (wrap) wrap.style.display = '';
             }
