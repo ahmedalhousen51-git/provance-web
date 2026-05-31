@@ -335,7 +335,7 @@ async function processQR(qrData) {
         const status = delayMinutes <= 15 ? 'on_time' : 'late';
 
         // 5. سجّل في attendance_logs (نفس الجدول اللي الشركة بتقرأ منه)
-        const { error: insErr } = await sb.from('attendance_logs').insert({
+        const fullRow = {
             qr_code_id:      qr.id,
             company_user_id: qr.company_user_id,
             student_user_id: studentUserId,
@@ -347,8 +347,32 @@ async function processQR(qrData) {
             status:          status,
             delay_minutes:   delayMinutes,
             scanned_at:      now.toISOString()
-        });
-        if (insErr) { showResult('error', '❌ خطأ في التسجيل', insErr.message); return; }
+        };
+
+        let { error: insErr } = await sb.from('attendance_logs').insert(fullRow);
+
+        // لو فشل بسبب عمود ناقص، جرّب بالأعمدة الأساسية بس
+        if (insErr) {
+            console.warn('Full insert failed, trying minimal:', insErr.message);
+            const minimalRow = {
+                qr_code_id:      qr.id,
+                company_user_id: qr.company_user_id,
+                student_user_id: studentUserId,
+                student_name:    studentData?.full_name || null,
+                attendance_type: attendanceType,
+                status:          status,
+                delay_minutes:   delayMinutes,
+                scanned_at:      now.toISOString()
+            };
+            const retry = await sb.from('attendance_logs').insert(minimalRow);
+            insErr = retry.error;
+        }
+
+        if (insErr) {
+            console.error('Insert failed:', insErr);
+            showResult('error', '❌ خطأ في التسجيل', insErr.message + ' — صوّر الشاشة وابعتها للدعم');
+            return;
+        }
 
         // 6. حدّث عداد المسحات
         try {
