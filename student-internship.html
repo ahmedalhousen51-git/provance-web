@@ -214,7 +214,6 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
             <a href="student-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
             <a href="student-internship.html" class="nav-item active"><i class="fas fa-search"></i> فرص التدريب</a>
             <a href="student-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلباتي</a>
-        <a href="student-scan.html" class="nav-item"><i class="fas fa-qrcode"></i> مسح QR</a>
             <a href="student-profile.html" class="nav-item"><i class="fas fa-user"></i> ملفي</a>
             <a href="student-payments.html" class="nav-item"><i class="fas fa-credit-card"></i> المدفوعات</a>
             <a href="student-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
@@ -251,6 +250,10 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
                 <div class="stats-bar-item">
                     <i class="fas fa-info-circle" style="color:var(--info)"></i>
                     <span>الحد الأقصى: <strong>3 طلبات</strong></span>
+                </div>
+                <div class="stats-bar-item">
+                    <i class="fas fa-layer-group" style="color:var(--primary)"></i>
+                    <span>مستواك: <strong id="myLevelLabel">-</strong></span>
                 </div>
             </div>
             <div class="filters-section">
@@ -378,6 +381,34 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         return ['pending', 'reviewing', 'interview_scheduled', 'interview_done', 'accepted'].includes(s);
     }
 
+    // ── مستوى الطالب = عدد التدريبات المكتملة ──────────────────
+    // 0 = أول مرة → يقدّم على النظام الأول (first-time)
+    // 1 = اتمرّن مرة → النظام الثاني (once-trained)
+    // 2+ = متمرس → النظام الثالث (twice-trained)
+    function getStudentLevel() {
+        return myApplications.filter(a => a.status === 'completed').length;
+    }
+
+    // النظام المطلوب لكل مستوى
+    function systemForLevel(level) {
+        if (level <= 0) return 'first-time';
+        if (level === 1) return 'once-trained';
+        return 'twice-trained';
+    }
+
+    // هل الطالب مؤهّل يقدّم على فرصة بنظام معيّن؟
+    function canApplyToSystem(traineeType) {
+        const level = getStudentLevel();
+        const required = systemForLevel(level);
+        // لو الفرصة مفيهاش نوع محدد، اسمح
+        if (!traineeType || traineeType === 'all') return true;
+        return traineeType === required;
+    }
+
+    function systemLabel(t) {
+        return { 'first-time': 'متدرب لأول مرة', 'once-trained': 'متدرب ذو خبرة (تدريب واحد سابق)', 'twice-trained': 'متدرب متمرس (تدريبان أو أكثر)' }[t] || t;
+    }
+
     function getMyActiveCount() {
         return myApplications.filter(a => isActiveStatus(a.status)).length;
     }
@@ -476,6 +507,8 @@ function renderInternshipCard(i) {
                         ? `<a href="student-applications.html" class="btn btn-success btn-sm" style="flex:1;justify-content:center"><i class="fas fa-check"></i> قدمت</a>`
                         : isFull
                         ? `<button class="btn btn-secondary btn-sm" disabled style="flex:1;justify-content:center"><i class="fas fa-ban"></i> ممتلئة</button>`
+                        : !canApplyToSystem(i.trainee_type)
+                        ? `<button class="btn btn-secondary btn-sm" onclick="openApplyModal('${i.id}')" style="flex:1;justify-content:center;opacity:.7" title="غير متاح لمستواك الحالي"><i class="fas fa-lock"></i> مستوى أعلى</button>`
                         : `<button class="btn btn-primary btn-sm" onclick="openApplyModal('${i.id}')" style="flex:1;justify-content:center"><i class="fas fa-paper-plane"></i> قدم</button>`
                     }
                 </div>
@@ -522,6 +555,11 @@ function renderInternshipCard(i) {
 
         document.getElementById('totalCount').textContent = filtered.length;
         document.getElementById('myActiveCount').textContent = getMyActiveCount();
+        const lvlEl = document.getElementById('myLevelLabel');
+        if (lvlEl) {
+            const lvl = getStudentLevel();
+            lvlEl.textContent = systemLabel(systemForLevel(lvl)) + ` (${lvl} مكتمل)`;
+        }
 
         const grid = document.getElementById('internshipsGrid');
         if (filtered.length === 0) {
@@ -737,6 +775,17 @@ function renderInternshipCard(i) {
             return;
         }
 
+        // Check level matching - مستوى الطالب لازم يطابق نظام التدريب
+        if (!canApplyToSystem(i.trainee_type)) {
+            const level = getStudentLevel();
+            const required = systemForLevel(level);
+            window.ProVance.showToast(
+                `⚠️ الفرصة دي لـ "${systemLabel(i.trainee_type)}". مستواك الحالي: "${systemLabel(required)}" (${level} تدريب مكتمل). كمّل تدريبك الحالي عشان ترتقي للمستوى الأعلى.`,
+                'warning'
+            );
+            return;
+        }
+
         // Check profile completeness (الاسم فقط مطلوب، الباقي اختياري)
         if (!studentData?.full_name || !studentData.full_name.trim()) {
             window.ProVance.showToast('⚠️ أضف اسمك الكامل في البروفايل أولاً', 'warning');
@@ -819,6 +868,13 @@ function renderInternshipCard(i) {
         const internship = allInternships.find(x => x.id === id);
         if (!internship) return;
 
+        // أمان إضافي: تأكد من تطابق المستوى قبل الإرسال
+        if (!canApplyToSystem(internship.trainee_type)) {
+            window.ProVance?.showToast?.('⚠️ الفرصة دي مش متاحة لمستواك الحالي', 'warning');
+            closeModal('applyModal');
+            return;
+        }
+
         const message = document.getElementById('applyMessage').value.trim();
 
         try {
@@ -829,38 +885,22 @@ function renderInternshipCard(i) {
             }
             const company = allCompanies[internship.company_user_id] || {};
 
-            // جرب أول application_message، لو ما اشتغلش جرب message
-            const applicationData = {
+            const { error } = await sb.from('applications').insert({
                 student_user_id: studentUserId,
                 student_name: studentData.full_name,
                 student_email: studentData.email,
-                student_phone: studentData.phone || null,
-                student_photo: studentData.photo || null,
-                student_university: studentData.university || null,
-                student_cv_url: studentData.cv_url || null,
+                student_phone: studentData.phone,
+                student_photo: studentData.photo,
+                student_university: studentData.university,
+                student_cv_url: studentData.cv_url,
                 company_user_id: internship.company_user_id,
                 company_name: internship.company_name || company.company_name,
-                company_logo: company.logo || null,
+                company_logo: company.logo,
                 internship_id: id,
                 internship_title: internship.title,
+                application_message: message || null,
                 status: 'pending'
-            };
-            
-            // ضيف الرسالة (نجرب الاسمين بحسب الـ schema)
-            if (message) {
-                applicationData.application_message = message;
-            }
-            
-            let { error } = await sb.from('applications').insert(applicationData);
-            
-            // لو الخطأ في application_message، جرب message
-            if (error && error.message && error.message.includes('application_message')) {
-                console.log('🔄 application_message column missing, trying message instead');
-                delete applicationData.application_message;
-                if (message) applicationData.message = message;
-                const retry = await sb.from('applications').insert(applicationData);
-                error = retry.error;
-            }
+            });
 
             if (error) throw error;
 
@@ -963,43 +1003,25 @@ function renderInternshipCard(i) {
             } catch(e) { console.error('Direct client creation failed:', e); }
         }
         if (!sb) {
-            console.error('❌ Supabase client unavailable - will retry in 3s');
-            // نحاول مرة تانية بعد 3 ثواني (بدون reload للصفحة)
-            if (!window._sbRetryCount) window._sbRetryCount = 0;
-            if (window._sbRetryCount < 3) {
-                window._sbRetryCount++;
-                setTimeout(() => loadAll(), 3000);
+            console.error('❌ Supabase client unavailable');
+            if (!window._pageRetried) {
+                window._pageRetried = true;
+                setTimeout(() => location.reload(), 3000);
             }
             return;
         }
 
         try {
-            // Get session بـ retry للـ resilience
-            let userId = null;
-            for (let i = 0; i < 3; i++) {
-                try {
-                    const session = await sb.auth.getSession();
-                    userId = session?.data?.session?.user?.id;
-                    if (userId) break;
-                } catch(e) {}
-                if (i < 2) await new Promise(r => setTimeout(r, 500));
-            }
-            
+            const session = await sb.auth.getSession();
+            const userId = session?.data?.session?.user?.id;
             if (!userId) {
-                // محاولة أخيرة بعد ثانية
-                await new Promise(r => setTimeout(r, 1000));
-                const finalCheck = await sb.auth.getSession();
-                userId = finalCheck?.data?.session?.user?.id;
-                if (!userId) {
-                    console.error('No session after retries - redirecting to login');
-                    window.location.href = 'student-login.html';
-                    return;
-                }
+                window.location.href = 'student-login.html';
+                return;
             }
             studentUserId = userId;
 
             const results = await Promise.allSettled([
-                sb.from('student').select('*').eq('user_id', userId).maybeSingle(),
+                sb.from('student').select('user_id, full_name, email, phone, university, faculty, major, gpa, city, country, national_id, birth_date, gender, bio, education_level, cv_url, linkedin, github, portfolio, skills, languages, interested_fields, year_of_study, photo, status, training_status').eq('user_id', userId).maybeSingle(),
                 sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, duration, max_applicants, current_applicants, trainee_type, salary_min, salary_max, salary_currency, training_price, training_currency, status, created_at').eq('status', 'active').order('created_at', { ascending: false }),
                 sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at').eq('student_user_id', userId),
                 sb.from('companies').select('user_id, company_name, training_price, training_currency, provides_certificate, provides_meals, provides_transport')
@@ -1048,37 +1070,26 @@ function renderInternshipCard(i) {
 
             if (!isInitialized) {
                 isInitialized = true;
-                // 🚀 Debounced reload: لو حصل تغيير، استنى 1 ثانية قبل reload
-                // ده يمنع الـ reload المتكرر لو في تغييرات كتير في وقت قصير
-                let _reloadTimer = null;
-                const debouncedLoad = () => {
-                    if (_reloadTimer) clearTimeout(_reloadTimer);
-                    _reloadTimer = setTimeout(() => {
-                        console.log('🔄 Debounced reload');
-                        loadAll();
-                    }, 1000);
-                };
-                
-                sb.channel('student-gallery-' + userId)
+                sb.channel('internships-gallery')
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'internships' }, () => {
                         console.log('🔄 Realtime: internships changed');
-                        debouncedLoad();
+                        loadAll();
                     })
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `student_user_id=eq.${userId}` }, () => {
-                        console.log('🔄 Realtime: applications changed (mine)');
-                        debouncedLoad();
+                        console.log('🔄 Realtime: applications changed');
+                        loadAll();
                     })
-                    // تجاهل الـ companies changes - مش لازم نـ reload عند كل تعديل في الشركة
-                    // (لو الشركة معاقَبة، الـ internships هتترفع status فيها وده هيـ trigger reload)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => {
+                        console.log('🔄 Realtime: companies changed');
+                        loadAll();
+                    })
                     .subscribe();
                 
-                // Fallback: auto-refresh كل 60 ثانية (الـ realtime + visibility هما الأساس)
+                // Fallback: auto-refresh كل 30 ثانية (لو الـ realtime مش شغّال)
                 setInterval(() => {
-                    if (document.visibilityState === 'visible') {
-                        console.log('⏱️ Auto-refresh');
-                        loadAll();
-                    }
-                }, 60000);
+                    console.log('⏱️ Auto-refresh internships');
+                    loadAll();
+                }, 30000);
                 
                 // Refresh on focus (لو رجع للصفحة بعد ما اتعدلت)
                 window.addEventListener('focus', () => {
