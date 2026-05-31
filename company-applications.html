@@ -1160,33 +1160,34 @@ window.editInterview = (appId) => {
     const app = allApplications.find(a => a.id === appId);
     if (!app) return;
     const ivDate = app.interview_date ? new Date(app.interview_date).toISOString().slice(0,16) : '';
-    const html = `<div class="modal active" id="editInterviewModal">
-        <div class="modal-overlay" onclick="closeModal('editInterviewModal')"></div>
-        <div class="modal-content" style="max-width:480px">
-            <div class="modal-header">
+    const html = `
+    <div class="modal-overlay active" id="editInterviewModal" onclick="if(event.target===this)closeModal('editInterviewModal')">
+        <div class="modal">
+            <div class="modal-head">
                 <h3><i class="fas fa-edit" style="color:var(--primary)"></i> تعديل موعد المقابلة</h3>
-                <button class="modal-close" onclick="closeModal('editInterviewModal')"><i class="fas fa-times"></i></button>
+                <button class="modal-close" onclick="closeModal('editInterviewModal')">&times;</button>
             </div>
-            <div style="padding:20px">
-                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:16px;font-size:.88rem;color:var(--text-muted)">
-                    <strong style="color:var(--text)">${esc(app.student_name)}</strong> — ${esc(app.internship_title)}
+            <div class="modal-body">
+                <div style="background:rgba(79,172,254,0.08);border:1px solid rgba(79,172,254,0.2);border-radius:10px;padding:10px;margin-bottom:16px;font-size:.88rem">
+                    <strong>${esc(app.student_name)}</strong>
+                    <span style="color:var(--text-muted);margin-right:8px">${esc(app.internship_title)}</span>
                 </div>
-                <div style="margin-bottom:12px">
-                    <label style="font-weight:700;font-size:.88rem;display:block;margin-bottom:6px">موعد المقابلة الجديد</label>
-                    <input type="datetime-local" id="editIvDate" value="${ivDate}" style="width:100%;padding:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text)">
+                <div class="form-group">
+                    <label>موعد المقابلة الجديد</label>
+                    <input type="datetime-local" id="editIvDate" value="${ivDate}">
                 </div>
-                <div style="margin-bottom:12px">
-                    <label style="font-weight:700;font-size:.88rem;display:block;margin-bottom:6px">المكان (اختياري)</label>
-                    <input type="text" id="editIvLocation" value="${esc(app.interview_location||'')}" placeholder="مثال: مقر الشركة - الدور الثالث" style="width:100%;padding:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit">
+                <div class="form-group">
+                    <label>المكان (اختياري)</label>
+                    <input type="text" id="editIvLocation" value="${esc(app.interview_location||'')}" placeholder="مثال: مقر الشركة - الدور الثالث">
                 </div>
-                <div style="margin-bottom:16px">
-                    <label style="font-weight:700;font-size:.88rem;display:block;margin-bottom:6px">ملاحظات</label>
-                    <textarea id="editIvNotes" rows="2" placeholder="أي تعليمات للطالب..." style="width:100%;padding:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;resize:vertical">${esc(app.interview_notes||'')}</textarea>
+                <div class="form-group">
+                    <label>ملاحظات</label>
+                    <textarea id="editIvNotes" rows="2" placeholder="أي تعليمات للطالب...">${esc(app.interview_notes||'')}</textarea>
                 </div>
-                <div style="display:flex;gap:10px">
-                    <button onclick="closeModal('editInterviewModal')" class="btn btn-secondary" style="flex:1">إلغاء</button>
-                    <button onclick="saveEditInterview('${appId}')" class="btn btn-primary" style="flex:1"><i class="fas fa-save"></i> حفظ التعديل</button>
-                </div>
+            </div>
+            <div class="modal-foot">
+                <button onclick="closeModal('editInterviewModal')" class="btn btn-outline">إلغاء</button>
+                <button onclick="saveEditInterview('${appId}')" class="btn btn-primary"><i class="fas fa-save"></i> حفظ وإرسال إشعار</button>
             </div>
         </div>
     </div>`;
@@ -1230,55 +1231,54 @@ window.editTrainingSchedule = (appId) => {
     if (!app) return;
     const ts = app.training_schedule || {};
     const daysOfWeek = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-    const html = `<div class="modal active" id="editScheduleModal">
-        <div class="modal-overlay" onclick="closeModal('editScheduleModal')"></div>
-        <div class="modal-content" style="max-width:520px">
-            <div class="modal-header">
+    const html = `
+    <div class="modal-overlay active" id="editScheduleModal" onclick="if(event.target===this)closeModal('editScheduleModal')">
+        <div class="modal" style="max-width:540px">
+            <div class="modal-head">
                 <h3><i class="fas fa-calendar-alt" style="color:var(--success)"></i> تعديل جدول التدريب</h3>
-                <button class="modal-close" onclick="closeModal('editScheduleModal')"><i class="fas fa-times"></i></button>
+                <button class="modal-close" onclick="closeModal('editScheduleModal')">&times;</button>
             </div>
-            <div style="padding:20px">
-                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:16px;font-size:.88rem;color:var(--text-muted)">
-                    <strong style="color:var(--text)">${esc(app.student_name)}</strong> — ${esc(app.internship_title)}
+            <div class="modal-body">
+                <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:10px;margin-bottom:16px;font-size:.88rem">
+                    <strong>${esc(app.student_name)}</strong>
+                    <span style="color:var(--text-muted);margin-right:8px">${esc(app.internship_title)}</span>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-                    <div>
-                        <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px">تاريخ البداية</label>
-                        <input type="date" id="esStartDate" value="${ts.start_date||''}" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text)">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="form-group">
+                        <label>تاريخ البداية</label>
+                        <input type="date" id="esStartDate" value="${ts.start_date||''}">
                     </div>
-                    <div>
-                        <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px">تاريخ النهاية</label>
-                        <input type="date" id="esEndDate" value="${ts.end_date||''}" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text)">
+                    <div class="form-group">
+                        <label>تاريخ النهاية</label>
+                        <input type="date" id="esEndDate" value="${ts.end_date||''}">
                     </div>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-                    <div>
-                        <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px">وقت الحضور</label>
-                        <input type="time" id="esDailyTime" value="${ts.daily_time||'09:00'}" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text)">
+                    <div class="form-group">
+                        <label>وقت الحضور</label>
+                        <input type="time" id="esDailyTime" value="${ts.daily_time||'09:00'}">
                     </div>
-                    <div>
-                        <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px">أيام/أسبوع</label>
-                        <select id="esDaysPerWeek" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit">
+                    <div class="form-group">
+                        <label>أيام/أسبوع</label>
+                        <select id="esDaysPerWeek" style="background:var(--bg-input,rgba(255,255,255,.04));border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;width:100%;font-family:inherit">
                             ${[1,2,3,4,5].map(n=>`<option value="${n}" ${ts.days_per_week==n?'selected':''}>${n} ${n===1?'يوم':'أيام'}</option>`).join('')}
                         </select>
                     </div>
                 </div>
-                <div style="margin-bottom:12px">
-                    <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:8px">أيام التدريب</label>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap">
-                        ${daysOfWeek.map(d=>`<label style="display:flex;align-items:center;gap:5px;background:var(--bg-card);border:1px solid var(--border);padding:6px 10px;border-radius:16px;cursor:pointer;font-size:.82rem">
-                            <input type="checkbox" value="${d}" name="esDays" ${(ts.training_days||[]).includes(d)?'checked':''} style="accent-color:var(--success)"> ${d}
+                <div class="form-group">
+                    <label>أيام التدريب</label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+                        ${daysOfWeek.map(d=>`<label style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:6px 10px;border-radius:16px;cursor:pointer;font-size:.82rem">
+                            <input type="checkbox" value="${d}" name="esDays" ${(ts.training_days||[]).includes(d)?'checked':''} style="accent-color:#10b981"> ${d}
                         </label>`).join('')}
                     </div>
                 </div>
-                <div style="margin-bottom:16px">
-                    <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px">ملاحظات</label>
-                    <textarea id="esNotes" rows="2" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;resize:vertical">${esc(ts.notes||'')}</textarea>
+                <div class="form-group">
+                    <label>ملاحظات للطالب</label>
+                    <textarea id="esNotes" rows="2" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;width:100%;font-family:inherit;resize:vertical">${esc(ts.notes||'')}</textarea>
                 </div>
-                <div style="display:flex;gap:10px">
-                    <button onclick="closeModal('editScheduleModal')" class="btn btn-secondary" style="flex:1">إلغاء</button>
-                    <button onclick="saveTrainingSchedule('${appId}')" class="btn btn-primary" style="flex:1"><i class="fas fa-save"></i> حفظ وإرسال للطالب</button>
-                </div>
+            </div>
+            <div class="modal-foot">
+                <button onclick="closeModal('editScheduleModal')" class="btn btn-outline">إلغاء</button>
+                <button onclick="saveTrainingSchedule('${appId}')" class="btn btn-primary"><i class="fas fa-save"></i> حفظ وإرسال للطالب</button>
             </div>
         </div>
     </div>`;
