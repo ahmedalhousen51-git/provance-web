@@ -806,31 +806,7 @@
         </div>
     </div>
 
-    <!-- Reject Modal -->
-    <div class="modal-overlay" id="rejectModal">
-        <div class="modal">
-            <div class="modal-head">
-                <h3>رفض الطلب</h3>
-                <button class="modal-close" onclick="closeModal('rejectModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>اسم المتقدم</label>
-                    <input type="text" id="rejectName" readonly>
-                </div>
-                <div class="form-group">
-                    <label>سبب الرفض *</label>
-                    <textarea id="rejectReason" placeholder="سيتم إرسال هذا السبب للمتدرب..." required></textarea>
-                </div>
-            </div>
-            <div class="modal-foot">
-                <button class="btn btn-outline" onclick="closeModal('rejectModal')">إلغاء</button>
-                <button class="btn btn-primary" style="background:#ef4444" onclick="confirmReject()">
-                    <i class="fas fa-times"></i> تأكيد الرفض
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Reject Modal: يُنشأ ديناميكياً عبر rejectApp() -->
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1415,12 +1391,18 @@ window.confirmReject = async (appId) => {
     if (!sb) { showToast('فشل الاتصال', 'error'); return; }
     
     try {
-        const { error } = await sb.from('applications').update({
+        // .select() عشان نتأكد إن الصف فعلاً اتعدّل (لو RLS رفض هترجع فاضية)
+        const { data: updated, error } = await sb.from('applications').update({
             status: 'rejected',
             rejection_reason: reason,
             updated_at: new Date().toISOString()
-        }).eq('id', appId);
+        }).eq('id', appId).select();
         if (error) throw error;
+
+        if (!updated || updated.length === 0) {
+            showToast('تعذّر حفظ الرفض — تأكد من صلاحيات قاعدة البيانات (RLS)', 'error');
+            return;
+        }
         
         const app = allApplications.find(a => a.id === appId);
         if (window.ProVance && window.ProVance.sendNotification && app) {
@@ -1433,13 +1415,14 @@ window.confirmReject = async (appId) => {
                     type: 'error',
                     link: 'student-applications.html'
                 });
-            } catch(e){}
+            } catch(e){ console.warn('notification failed:', e); }
         }
         
-        showToast('تم رفض الطلب', 'success');
         closeModal('rejectModal');
+        showToast('✅ تم رفض الطلب وإرسال إشعار للطالب', 'success');
         await loadAll();
     } catch(err) {
+        console.error('reject error:', err);
         showToast('خطأ: ' + err.message, 'error');
     }
 };
@@ -1457,15 +1440,17 @@ function renderModal(html) {
 }
 
 window.closeModal = (id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    // Static modals have modal-overlay class → toggle active
-    // Dynamic modals injected via renderModal → remove from DOM
-    if (el.classList.contains('modal-overlay')) {
-        el.classList.remove('active');
-    } else {
-        el.remove();
-    }
+    // ممكن يكون فيه أكتر من element بنفس الـ id (نسخة ثابتة + ديناميكية)
+    const all = document.querySelectorAll('#' + id);
+    all.forEach(el => {
+        if (el.classList.contains('modal-overlay')) {
+            // modal ثابت → اخفيه
+            el.classList.remove('active');
+        } else {
+            // modal ديناميكي → امسحه من الـ DOM
+            el.remove();
+        }
+    });
 };
 
 // Init
