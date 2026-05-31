@@ -94,7 +94,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 <div class="scanner-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)"><i class="fas fa-keyboard"></i></div>
 <div class="scanner-msg">اكتب الكود اللي ظهر معاك من الشركة</div>
 </div>
-<input type="text" id="codeInput" class="code-input" placeholder="مثال: ATT-XXXX-XXXX" maxlength="32">
+<input type="text" id="codeInput" class="code-input" placeholder="مثال: DAY-XXXXXXXX" maxlength="32">
 <button class="btn-primary" onclick="submitCode()"><i class="fas fa-check"></i> تأكيد</button>
 </div>
 
@@ -114,6 +114,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="supabase-config.js"></script>
 <script>
 const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
@@ -123,6 +124,7 @@ let studentUserId = null;
 let studentData = null;
 let scanning = false;
 let videoStream = null;
+let processing = false;
 
 function showToast(msg, type='info') {
     const t = document.createElement('div');
@@ -143,174 +145,109 @@ window.switchTab = (tab) => {
 };
 
 window.startScanner = async () => {
-    // 1. تأكد إن الـ navigator.mediaDevices موجود
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         showCameraFallback('الـ browser ده مش بيدعم الكاميرا. استخدم Chrome أو Safari.');
         return;
     }
-    
-    // 2. تأكد إن الـ site HTTPS (مهم جداً للموبايل)
     if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
         showCameraFallback('الكاميرا محتاجة HTTPS - استخدم الإدخال اليدوي.');
         return;
     }
-    
     try {
-        // 3. حاول environment camera الأول (back camera)
         const constraints = [
-            { video: { facingMode: { exact: 'environment' } } },  // back camera ل forced
-            { video: { facingMode: 'environment' } },              // back camera preferred
-            { video: { facingMode: 'user' } },                     // front camera fallback
-            { video: true }                                         // أي كاميرا
+            { video: { facingMode: { exact: 'environment' } } },
+            { video: { facingMode: 'environment' } },
+            { video: { facingMode: 'user' } },
+            { video: true }
         ];
-        
         let lastError = null;
         for (const c of constraints) {
             try {
                 videoStream = await navigator.mediaDevices.getUserMedia(c);
                 if (videoStream) break;
-            } catch (e) {
-                lastError = e;
-                console.warn('Camera attempt failed:', c, e.name);
-            }
+            } catch (e) { lastError = e; console.warn('Camera attempt failed:', c, e.name); }
         }
-        
-        if (!videoStream) {
-            throw lastError || new Error('فشل فتح الكاميرا');
-        }
-        
+        if (!videoStream) throw lastError || new Error('فشل فتح الكاميرا');
+
         const video = document.getElementById('qr-video');
         video.srcObject = videoStream;
-        video.setAttribute('playsinline', 'true');  // مهم لـ iOS
+        video.setAttribute('playsinline', 'true');
         video.setAttribute('autoplay', 'true');
         video.setAttribute('muted', 'true');
         video.muted = true;
         video.classList.remove('hidden');
-        
-        // Wait للـ video metadata قبل play
-        await new Promise((resolve) => {
-            video.onloadedmetadata = resolve;
-            // Timeout fallback
-            setTimeout(resolve, 2000);
-        });
-        
-        try {
-            await video.play();
-        } catch (playErr) {
-            console.warn('Video play failed:', playErr);
-        }
-        
+
+        await new Promise((resolve) => { video.onloadedmetadata = resolve; setTimeout(resolve, 2000); });
+        try { await video.play(); } catch (playErr) { console.warn('Video play failed:', playErr); }
+
         document.getElementById('scannerArea').classList.add('hidden');
         document.getElementById('startScanBtn').classList.add('hidden');
         document.getElementById('stopScanBtn').classList.remove('hidden');
-        
+
         scanning = true;
         scanLoop(video);
     } catch (err) {
         console.error('Camera error:', err.name, err.message);
-        
         let errMsg = 'فشل فتح الكاميرا';
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-            errMsg = '🚫 تم رفض إذن الكاميرا. روح Settings → ProVance → السماح بالكاميرا';
-        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-            errMsg = '📵 مفيش كاميرا في الجهاز';
-        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-            errMsg = '⚠️ الكاميرا مستخدمة من app تاني - اقفله وحاول تاني';
-        } else if (err.name === 'OverconstrainedError') {
-            errMsg = '⚠️ مشكلة في إعدادات الكاميرا';
-        } else if (err.name === 'SecurityError') {
-            errMsg = '🔒 المتصفح بيمنع الكاميرا - استخدم HTTPS';
-        }
-        
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') errMsg = '🚫 تم رفض إذن الكاميرا. روح Settings → السماح بالكاميرا';
+        else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') errMsg = '📵 مفيش كاميرا في الجهاز';
+        else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') errMsg = '⚠️ الكاميرا مستخدمة من app تاني - اقفله وحاول تاني';
+        else if (err.name === 'OverconstrainedError') errMsg = '⚠️ مشكلة في إعدادات الكاميرا';
+        else if (err.name === 'SecurityError') errMsg = '🔒 المتصفح بيمنع الكاميرا - استخدم HTTPS';
         showCameraFallback(errMsg);
     }
 };
 
-// عرض الـ fallback options لما الكاميرا مش شغّالة
 function showCameraFallback(reason) {
     const scannerArea = document.getElementById('scannerArea');
     const startBtn = document.getElementById('startScanBtn');
-    
     if (scannerArea) {
         scannerArea.innerHTML = `
-            <div class="scanner-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
+            <div class="scanner-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)"><i class="fas fa-exclamation-triangle"></i></div>
             <div class="scanner-msg" style="color:#f59e0b;font-weight:700">${reason}</div>
             <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px">
-                <button class="btn-secondary" onclick="document.getElementById('photoInput').click()" style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff;border:none;font-weight:800">
-                    <i class="fas fa-image"></i> ارفع صورة من الجهاز
-                </button>
-                <button class="btn-secondary" onclick="switchTab('code')" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;font-weight:800">
-                    <i class="fas fa-keyboard"></i> اكتب الكود يدوياً
-                </button>
-                <button class="btn-secondary" onclick="startScanner()">
-                    <i class="fas fa-redo"></i> حاول الكاميرا تاني
-                </button>
-            </div>
-        `;
+                <button class="btn-secondary" onclick="document.getElementById('photoInput').click()" style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff;border:none;font-weight:800"><i class="fas fa-image"></i> ارفع صورة من الجهاز</button>
+                <button class="btn-secondary" onclick="switchTab('code')" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;font-weight:800"><i class="fas fa-keyboard"></i> اكتب الكود يدوياً</button>
+                <button class="btn-secondary" onclick="startScanner()"><i class="fas fa-redo"></i> حاول الكاميرا تاني</button>
+            </div>`;
     }
     if (startBtn) startBtn.classList.add('hidden');
 }
 
-// قراءة QR من صورة مرفوعة (fallback ممتاز للموبايل)
 window.scanFromImage = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    
     try {
         const img = new Image();
         const reader = new FileReader();
-        
         reader.onload = (e) => {
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                
-                // تحجيم الصورة لو كبيرة جداً
                 let w = img.width, h = img.height;
                 const maxDim = 1200;
                 if (w > maxDim || h > maxDim) {
-                    if (w > h) { h = h * maxDim / w; w = maxDim; }
-                    else { w = w * maxDim / h; h = maxDim; }
+                    if (w > h) { h = h * maxDim / w; w = maxDim; } else { w = w * maxDim / h; h = maxDim; }
                 }
-                
-                canvas.width = w;
-                canvas.height = h;
+                canvas.width = w; canvas.height = h;
                 ctx.drawImage(img, 0, 0, w, h);
-                
                 const imageData = ctx.getImageData(0, 0, w, h);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: 'attemptBoth'
-                });
-                
-                if (code && code.data) {
-                    console.log('QR detected from image:', code.data);
-                    processQR(code.data);
-                } else {
-                    showToast('❌ مفيش QR Code في الصورة - جرب صورة أوضح', 'error');
-                }
+                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+                if (code && code.data) { processQR(code.data); }
+                else { showToast('❌ مفيش QR Code في الصورة - جرب صورة أوضح', 'error'); }
             };
             img.onerror = () => showToast('❌ فشل قراءة الصورة', 'error');
             img.src = e.target.result;
         };
         reader.onerror = () => showToast('❌ فشل قراءة الملف', 'error');
         reader.readAsDataURL(file);
-    } catch (err) {
-        console.error('Image scan error:', err);
-        showToast('❌ خطأ: ' + err.message, 'error');
-    } finally {
-        // Reset الـ input عشان يقدر يرفع نفس الصورة تاني
-        event.target.value = '';
-    }
+    } catch (err) { showToast('❌ خطأ: ' + err.message, 'error'); }
+    finally { event.target.value = ''; }
 };
 
 window.stopScanner = () => {
     scanning = false;
-    if (videoStream) {
-        videoStream.getTracks().forEach(t => t.stop());
-        videoStream = null;
-    }
+    if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
     document.getElementById('qr-video').classList.add('hidden');
     document.getElementById('scannerArea').classList.remove('hidden');
     document.getElementById('startScanBtn').classList.remove('hidden');
@@ -319,24 +256,16 @@ window.stopScanner = () => {
 
 function scanLoop(video) {
     if (!scanning) return;
-    
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
     const tick = () => {
         if (!scanning) return;
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(imageData.data, imageData.width, imageData.height);
-            if (code && code.data) {
-                console.log('QR detected:', code.data);
-                stopScanner();
-                processQR(code.data);
-                return;
-            }
+            if (code && code.data) { stopScanner(); processQR(code.data); return; }
         }
         requestAnimationFrame(tick);
     };
@@ -345,125 +274,121 @@ function scanLoop(video) {
 
 window.submitCode = () => {
     const code = document.getElementById('codeInput').value.trim().toUpperCase();
-    if (!code) {
-        showToast('اكتب الكود', 'warning');
-        return;
-    }
+    if (!code) { showToast('اكتب الكود', 'warning'); return; }
     processQR(code);
 };
 
 async function processQR(qrData) {
+    if (processing) return;
+    processing = true;
     document.getElementById('loadingOverlay').classList.remove('hidden');
-    
+
     try {
         // الـ QR ممكن يكون JSON أو string مباشر
         let qrCode = qrData;
-        try {
-            const parsed = JSON.parse(qrData);
-            if (parsed.code) qrCode = parsed.code;
-        } catch(e) {}
-        
+        try { const parsed = JSON.parse(qrData); if (parsed.code) qrCode = parsed.code; } catch(e) {
+            const m = qrData.match(/[A-Z]+-[A-Z0-9]+/i);
+            if (m) qrCode = m[0];
+        }
         qrCode = qrCode.trim().toUpperCase();
-        
-        // جيب الـ QR من DB
-        const { data: qr, error: qrError } = await sb.from('qr_codes')
-            .select('*')
-            .eq('code', qrCode)
-            .maybeSingle();
-        
+
+        // 1. جيب الـ QR
+        const { data: qr, error: qrError } = await sb.from('qr_codes').select('*').eq('code', qrCode).maybeSingle();
         if (qrError || !qr) {
-            recordScan(null, qrCode, 'unauthorized', null);
             showResult('error', '❌ كود غير صحيح', 'الكود ده غير موجود أو غلط');
             return;
         }
-        
-        // تأكد من الصلاحية
+
+        // 2. تأكد من الحالة والصلاحية
         const now = new Date();
-        const validUntil = new Date(qr.valid_until);
-        
         if (qr.status !== 'active') {
-            await recordScan(qr.id, qrCode, qr.status === 'cancelled' ? 'cancelled' : 'expired', qr);
             showResult('error', '⏰ كود ' + (qr.status === 'cancelled' ? 'ملغي' : 'منتهي'), 'الكود ده مش صالح للاستخدام دلوقتي');
             return;
         }
-        
-        if (now > validUntil) {
-            await recordScan(qr.id, qrCode, 'expired', qr);
+        if (new Date(qr.valid_until) < now) {
             showResult('error', '⏰ انتهت صلاحية الكود', 'الكود ده انتهت صلاحيته');
-            // مارك Q كـ expired
             try { await sb.from('qr_codes').update({ status: 'expired' }).eq('id', qr.id); } catch(e) {}
             return;
         }
-        
-        // ✅ الـ QR صالح - حدد الـ purpose
-        const purpose = qr.metadata?.purpose || qr.purpose || (qr.qr_type === 'interview' ? 'interview' : 'attendance');
-        const department = qr.metadata?.department || qr.department;
-        
-        // تأكد إن الـ QR للمقابلة بتاع الطالب الصحيح
-        if (qr.qr_type === 'interview' && qr.student_user_id && qr.student_user_id !== studentUserId) {
-            await recordScan(qr.id, qrCode, 'unauthorized', qr);
-            showResult('error', '🚫 الكود ده لطالب آخر', 'الـ QR ده ليس لك');
+
+        // 3. تأكد إن الطالب مش ماسح قبل كده النهارده لنفس الكود
+        const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+        const { data: existing } = await sb.from('attendance_logs')
+            .select('id').eq('student_user_id', studentUserId).eq('qr_code_id', qr.id)
+            .gte('scanned_at', todayStart.toISOString()).maybeSingle();
+        if (existing) {
+            showResult('error', '✋ سجّلت قبل كده', 'إنت بالفعل سجّلت على الكود ده النهارده');
             return;
         }
-        
-        // سجّل الـ scan
-        await recordScan(qr.id, qrCode, 'success', qr);
-        
-        // حدّث scan_count
+
+        // 4. احسب الغرض والتأخير
+        const purpose = qr.metadata?.purpose || (qr.qr_type === 'interview_checkin' ? 'interview' : 'attendance');
+        const attendanceType = purpose === 'interview' ? 'interview' : 'daily_attendance';
+        const department = qr.metadata?.department || null;
+        const validFrom = new Date(qr.valid_from);
+        const delayMinutes = Math.max(0, Math.round((now - validFrom) / 60000));
+        const status = delayMinutes <= 15 ? 'on_time' : 'late';
+
+        // 5. سجّل في attendance_logs (نفس الجدول اللي الشركة بتقرأ منه)
+        const { error: insErr } = await sb.from('attendance_logs').insert({
+            qr_code_id:      qr.id,
+            company_user_id: qr.company_user_id,
+            student_user_id: studentUserId,
+            student_name:    studentData?.full_name || null,
+            student_photo:   studentData?.photo || null,
+            attendance_type: attendanceType,
+            purpose:         purpose,
+            department:      department,
+            status:          status,
+            delay_minutes:   delayMinutes,
+            scanned_at:      now.toISOString()
+        });
+        if (insErr) { showResult('error', '❌ خطأ في التسجيل', insErr.message); return; }
+
+        // 6. حدّث عداد المسحات
         try {
-            await sb.from('qr_codes').update({ 
-                scan_count: (qr.scan_count || 0) + 1, 
-                last_scanned_at: now.toISOString() 
+            await sb.from('qr_codes').update({
+                scans_count: (qr.scans_count || 0) + 1,
+                last_scanned_at: now.toISOString()
             }).eq('id', qr.id);
         } catch(e) {}
-        
-        // عرّض رسالة نجاح حسب الـ purpose
-        const purposeLabels = { attendance: 'حضور التدريب', interview: 'المقابلة', visit: 'الزيارة', daily_attendance: 'حضور التدريب' };
-        const successMsg = purposeLabels[purpose] || 'العملية';
-        
+
+        // 7. إشعار للشركة
+        if (window.ProVance?.sendNotification) {
+            await window.ProVance.sendNotification({
+                userId:   qr.company_user_id,
+                userType: 'company',
+                title:    purpose === 'interview' ? '🎯 طالب وصل للمقابلة' : '✅ تسجيل حضور جديد',
+                message:  `${studentData?.full_name || 'طالب'} سجّل ${purpose === 'interview' ? 'حضوره للمقابلة' : 'حضوره'}${status === 'late' ? ' (متأخر ' + delayMinutes + ' دقيقة)' : ''}`,
+                type:     status === 'late' ? 'warning' : 'success',
+                link:     'company-QR_Code.html'
+            });
+        }
+
+        // 8. لو مقابلة، حدّث حالة الطلب
+        if (purpose === 'interview') {
+            try {
+                await sb.from('applications').update({ status: 'interview_done', updated_at: now.toISOString() })
+                    .eq('student_user_id', studentUserId).eq('company_user_id', qr.company_user_id)
+                    .eq('status', 'interview_scheduled');
+            } catch(e) {}
+        }
+
+        const purposeLabel = purpose === 'interview' ? 'حضور المقابلة' : 'الحضور';
         let detail = `<strong>الشركة:</strong> ${escapeHtml(qr.company_name || '')}<br>`;
         if (department) detail += `<strong>القسم:</strong> ${escapeHtml(department)}<br>`;
         detail += `<strong>الوقت:</strong> ${now.toLocaleString('ar-EG')}`;
-        
-        showResult('success', '✅ تم تسجيل ' + successMsg + ' بنجاح', detail);
-        
-        // لو مقابلة، حدث الـ application status
-        if (purpose === 'interview' && qr.application_id) {
-            try {
-                await sb.from('applications').update({ 
-                    status: 'interview_done',
-                    updated_at: now.toISOString()
-                }).eq('id', qr.application_id).eq('student_user_id', studentUserId);
-            } catch(e) { console.warn('Could not update application:', e); }
-        }
-        
+        if (status === 'late') detail += `<br><span style="color:#f59e0b">⏰ متأخر ${delayMinutes} دقيقة</span>`;
+
+        showResult('success', '✅ تم تسجيل ' + purposeLabel + ' بنجاح', detail);
         loadRecentScans();
     } catch (err) {
         console.error('Process QR error:', err);
         showResult('error', '❌ حدث خطأ', err.message || 'فشل معالجة الكود');
     } finally {
+        processing = false;
         document.getElementById('loadingOverlay').classList.add('hidden');
     }
-}
-
-async function recordScan(qrId, qrCodeText, result, qrData) {
-    try {
-        await sb.from('qr_scans').insert({
-            qr_code_id: qrId,
-            qr_code_text: qrCodeText,
-            scanner_user_id: studentUserId,
-            scanner_type: 'student',
-            scanner_name: studentData?.full_name,
-            scanner_email: studentData?.email,
-            result: result,
-            detected_purpose: qrData?.metadata?.purpose || qrData?.qr_type,
-            application_id: qrData?.application_id,
-            metadata: {
-                department: qrData?.metadata?.department || qrData?.department,
-                company_name: qrData?.company_name
-            }
-        });
-    } catch(e) { console.warn('Scan record failed:', e); }
 }
 
 function showResult(type, title, detail) {
@@ -473,49 +398,37 @@ function showResult(type, title, detail) {
             <div class="result-title">${title}</div>
             <div class="result-detail">${detail}</div>
             <button class="btn-secondary" onclick="document.getElementById('resultArea').innerHTML=''" style="margin-top:14px"><i class="fas fa-times"></i> إغلاق</button>
-        </div>
-    `;
+        </div>`;
     document.getElementById('resultArea').innerHTML = html;
-    
-    // امسح كود الإدخال
     const inp = document.getElementById('codeInput');
     if (inp) inp.value = '';
 }
 
 async function loadRecentScans() {
     try {
-        const { data } = await sb.from('qr_scans')
-            .select('*')
-            .eq('scanner_user_id', studentUserId)
-            .order('scanned_at', { ascending: false })
-            .limit(5);
-        
+        const { data } = await sb.from('attendance_logs')
+            .select('*').eq('student_user_id', studentUserId)
+            .order('scanned_at', { ascending: false }).limit(5);
         const list = document.getElementById('recentScansList');
         if (!data || data.length === 0) {
             list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.88rem">لا توجد عمليات سابقة</div>';
             return;
         }
-        
-        const purposeIcons = { attendance: 'fa-clipboard-check', interview: 'fa-handshake', visit: 'fa-user-friends', daily_attendance: 'fa-clipboard-check' };
-        const purposeLabels = { attendance: 'حضور تدريب', interview: 'مقابلة', visit: 'زيارة', daily_attendance: 'حضور تدريب' };
-        const purposeColors = { attendance: '#10b981', interview: '#4facfe', visit: '#f59e0b', daily_attendance: '#10b981' };
-        
+        const labels = { attendance: 'حضور تدريب', interview: 'مقابلة', daily_attendance: 'حضور تدريب' };
+        const icons  = { attendance: 'fa-clipboard-check', interview: 'fa-handshake', daily_attendance: 'fa-clipboard-check' };
+        const colors = { attendance: '#10b981', interview: '#4facfe', daily_attendance: '#10b981' };
         list.innerHTML = data.map(s => {
-            const purpose = s.detected_purpose || 'attendance';
-            const company = s.metadata?.company_name || '';
-            const dept = s.metadata?.department;
+            const purpose = s.purpose || s.attendance_type || 'attendance';
+            const ok = s.status === 'on_time' || s.status === 'late';
             return `
                 <div class="scan-item">
-                    <div class="scan-icon" style="background:${purposeColors[purpose]}20;color:${purposeColors[purpose]}">
-                        <i class="fas ${purposeIcons[purpose] || 'fa-qrcode'}"></i>
-                    </div>
+                    <div class="scan-icon" style="background:${colors[purpose]||'#4facfe'}20;color:${colors[purpose]||'#4facfe'}"><i class="fas ${icons[purpose]||'fa-qrcode'}"></i></div>
                     <div class="scan-info">
-                        <div class="scan-type">${purposeLabels[purpose] || 'مسح'}${dept ? ' - ' + escapeHtml(dept) : ''}</div>
-                        <div class="scan-time">${escapeHtml(company)} • ${new Date(s.scanned_at).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}</div>
+                        <div class="scan-type">${labels[purpose]||'مسح'}${s.department ? ' - ' + escapeHtml(s.department) : ''}</div>
+                        <div class="scan-time">${new Date(s.scanned_at).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}${s.status==='late' ? ' • متأخر' : ''}</div>
                     </div>
-                    <span class="scan-result ${s.result === 'success' ? 'success' : 'error'}">${s.result === 'success' ? '✓' : '✗'}</span>
-                </div>
-            `;
+                    <span class="scan-result ${ok ? 'success' : 'error'}">${ok ? '✓' : '✗'}</span>
+                </div>`;
         }).join('');
     } catch(e) { console.warn('Could not load scans:', e); }
 }
@@ -523,28 +436,16 @@ async function loadRecentScans() {
 async function init() {
     try {
         const { data: { session } } = await sb.auth.getSession();
-        if (!session) {
-            window.location.href = 'student-login.html';
-            return;
-        }
+        if (!session) { window.location.href = 'student-login.html'; return; }
         studentUserId = session.user.id;
-        
         const { data: student } = await sb.from('student').select('full_name, email, photo').eq('user_id', studentUserId).maybeSingle();
         studentData = student;
-        
         await loadRecentScans();
-    } catch (err) {
-        console.error(err);
-        showToast('خطأ في التحميل', 'error');
-    }
+    } catch (err) { console.error(err); showToast('خطأ في التحميل', 'error'); }
 }
 
 document.addEventListener('DOMContentLoaded', init);
-
-// لو ضغط Enter في input الكود
-document.getElementById('codeInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') submitCode();
-});
+document.getElementById('codeInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') submitCode(); });
 </script>
 </body>
 </html>
