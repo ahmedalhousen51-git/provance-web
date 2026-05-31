@@ -241,6 +241,9 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
                     <button class="btn btn-secondary btn-sm" onclick="loadAll()">
                         <i class="fas fa-sync-alt"></i> تحديث
                     </button>
+                    <button class="btn btn-secondary btn-sm" onclick="syncAllToInternships()" title="حدّث بيانات كل الأقسام في صفحة فرص التدريب (بعد تعديل اسم الشركة أو عنوانها)">
+                        <i class="fas fa-cloud-upload-alt"></i> مزامنة كل الأقسام
+                    </button>
                 </div>
             </div>
 
@@ -722,6 +725,34 @@ window.deleteDept = async (field) => {
     }
 };
 
+// ========== مزامنة كل الأقسام دفعة واحدة (بعد تعديل بيانات الشركة) ==========
+window.syncAllToInternships = async () => {
+    if (!confirm('تحديث بيانات كل الأقسام في صفحة فرص التدريب؟\nهيستخدم آخر بيانات الشركة والفروع.')) return;
+    try {
+        // اجيب أحدث بيانات الشركة
+        const { data: fresh } = await sb.from('companies')
+            .select('company_name, company_location, training_fields, training_details, branch_locations')
+            .eq('user_id', companyUserId).maybeSingle();
+        if (fresh) {
+            companyData = { ...companyData, ...fresh };
+            allBranches = safeParse(fresh.branch_locations, allBranches);
+        }
+
+        const td = safeParse(companyData.training_details, {});
+        const fields = Object.keys(td);
+        if (fields.length === 0) { showToast('مفيش أقسام للمزامنة', 'warning'); return; }
+
+        let done = 0;
+        for (const field of fields) {
+            try { await syncToInternship(field, td[field]); done++; } catch(e) { console.warn('sync failed', field, e); }
+        }
+        showToast(`✅ تم تحديث ${done} قسم في صفحة فرص التدريب`, 'success');
+        await loadAll();
+    } catch (err) {
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
 // ========== Sync to Internships table (للظهور في صفحة الطالب) ==========
 async function syncToInternship(field, details) {
     if (!companyData) return;
@@ -866,7 +897,7 @@ function showDeptModal(details, fieldName) {
                             <div class="system-card-finance">
                                 <div class="system-card-finance-title" style="color:#4facfe">💰 النظام المالي:</div>
                                 <ul>
-                                    <li><strong>خدمة مجانية تماماً</strong> — لا يتم دفع الشركة أي رسوم للمنصة ولا تحصل على أي عائد مالي</li>
+                                    <li><strong>خدمة مجانية تماماً</strong> — لا تدفع الشركة أي رسوم للمنصة ولا تحصل على أي عائد مالي</li>
                                     <li>الشركة هي من <strong>تقدّم للمتدرب</strong> مقابلاً مادياً (ليس بالضرورة مالاً، يمكن بدائل مثل مواصلات أو بدل معيشة)</li>
                                     <li>تقدم الشركة الميزة المعرفية بالإضافة إلى الميزة المادية للمتدرب</li>
                                 </ul>
@@ -1247,8 +1278,17 @@ window.saveBranch = async (existingId) => {
                 branch_locations: branches,
                 updated_at: new Date().toISOString()
             }).eq('user_id', companyUserId);
-            
-            showToast('✅ تم حفظ التعديلات', 'success');
+
+            // حدّث الـ internships لكل قسم مربوط بالفرع ده (يحدّث الـ location)
+            companyData.branch_locations = branches;
+            allBranches = branches;
+            const td = safeParse(companyData.training_details, {});
+            const linked = Object.keys(td).filter(f => td[f].branchId === existingId);
+            for (const field of linked) {
+                try { await syncToInternship(field, td[field]); } catch(e) { console.warn('sync failed', field, e); }
+            }
+
+            showToast('✅ تم حفظ التعديلات وتحديث الأقسام المرتبطة', 'success');
             closeModal('branchModal');
             await loadAll();
         } else {
@@ -1336,9 +1376,17 @@ window.deleteBranch = async (branchId) => {
             updated_at: new Date().toISOString()
         }).eq('user_id', companyUserId);
 
+        // حدّث الـ internships للأقسام اللي كانت مربوطة بالفرع (يرجّع location لعنوان الشركة الرئيسي)
+        companyData.training_details = newDetails;
+        companyData.branch_locations = branches;
+        allBranches = branches;
+        for (const field of linkedDepts) {
+            try { await syncToInternship(field, newDetails[field]); } catch(e) { console.warn('sync failed for', field, e); }
+        }
+
         if (currentBranchId === branchId) currentBranchId = '';
 
-        showToast('🗑️ تم حذف الفرع', 'success');
+        showToast('🗑️ تم حذف الفرع وتحديث الأقسام المرتبطة', 'success');
         closeModal('branchModal');
         await loadAll();
     } catch (err) {
