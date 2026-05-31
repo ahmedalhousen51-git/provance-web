@@ -1107,11 +1107,15 @@ window.acceptApp = (appId) => {
 window.confirmAccept = async () => {
     const modal  = document.getElementById('acceptModal');
     const appId  = modal?.getAttribute('data-app-id');
-    if (!appId) return;
+    if (!appId) {
+        showToast('خطأ: لم يتم تحديد الطلب — أعد فتح نافذة القبول', 'error');
+        console.error('confirmAccept: no data-app-id on modal', modal);
+        return;
+    }
     const day      = document.getElementById('interviewDay')?.value;
     const time     = document.getElementById('interviewTime')?.value || '09:00';
-    const location = document.getElementById('interviewLocation').value.trim();
-    const notes    = document.getElementById('interviewNotes').value.trim();
+    const location = document.getElementById('interviewLocation')?.value?.trim() || '';
+    const notes    = document.getElementById('interviewNotes')?.value?.trim() || '';
 
     if (!day) { showToast('حدد تاريخ المقابلة', 'warning'); return; }
 
@@ -1129,8 +1133,13 @@ window.confirmAccept = async () => {
         if (location) updates.interview_location = location;
         if (notes) updates.interview_notes = notes;
         
-        const { error } = await sb.from('applications').update(updates).eq('id', appId);
+        // .select() للتأكد إن الصف فعلاً اتعدّل (لو RLS رفض هترجع فاضية)
+        const { data: updated, error } = await sb.from('applications').update(updates).eq('id', appId).select();
         if (error) throw error;
+        if (!updated || updated.length === 0) {
+            showToast('تعذّر حفظ القبول — تأكد من صلاحيات قاعدة البيانات (RLS)', 'error');
+            return;
+        }
         
         const app = allApplications.find(a => a.id === appId);
         if (window.ProVance && window.ProVance.sendNotification && app) {
@@ -1143,11 +1152,11 @@ window.confirmAccept = async () => {
                     type: 'success',
                     link: 'student-applications.html'
                 });
-            } catch(e){}
+            } catch(e){ console.warn('notification failed', e); }
         }
         
-        showToast('✅ تم قبول الطلب وإرسال موعد المقابلة', 'success');
         closeModal('acceptModal');
+        showToast('✅ تم قبول الطلب وإرسال موعد المقابلة للطالب', 'success');
         await loadAll();
     } catch(err) {
         console.error('Accept error:', err);
