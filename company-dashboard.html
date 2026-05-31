@@ -890,6 +890,24 @@
             currentAppId: null
         };
 
+        // ============= Safe helpers (مستقلة عن ProVance) =============
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+        }
+        function fmtDateTime(d) {
+            try { return new Date(d).toLocaleString('ar-EG', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+            catch(e){ return ''; }
+        }
+        function timeAgo(d) {
+            try {
+                const diff = (Date.now() - new Date(d).getTime()) / 1000;
+                if (diff < 60) return 'الآن';
+                if (diff < 3600) return `منذ ${Math.floor(diff/60)} دقيقة`;
+                if (diff < 86400) return `منذ ${Math.floor(diff/3600)} ساعة`;
+                return `منذ ${Math.floor(diff/86400)} يوم`;
+            } catch(e){ return ''; }
+        }
+
         // ========================================================
         // Init
 
@@ -1060,7 +1078,6 @@
         }
 
         function renderAppCard(app) {
-            const esc = window.ProVance.escapeHtml;
             const initial = (app.student_name || 'م').charAt(0);
 
             const statusMap = {
@@ -1104,7 +1121,7 @@
                         </div>
                         <div class="detail-row">
                             <div class="lbl">تاريخ التقديم</div>
-                            <div class="val">${window.ProVance.timeAgo(app.created_at)}</div>
+                            <div class="val">${timeAgo(app.created_at)}</div>
                         </div>
                     </div>
 
@@ -1118,7 +1135,7 @@
                     ${app.interview_date && app.status === 'interview_scheduled' ? `
                         <div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.1); border-radius:8px; font-size:0.85rem;">
                             <i class="fas fa-calendar"></i> <strong>موعد المقابلة:</strong>
-                            ${window.ProVance.formatDateTime(app.interview_date)}
+                            ${fmtDateTime(app.interview_date)}
                         </div>
                     ` : ''}
 
@@ -1228,42 +1245,45 @@
         // Upcoming Interviews
         // ========================================================
         async function loadUpcomingInterviews() {
+            const container = document.getElementById('upcomingInterviews');
             try {
                 const { data } = await state.sb
                     .from('applications')
-                    .select('id, student_user_id, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date')
+                    .select('id, student_user_id, student_name, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date')
                     .eq('company_user_id', state.session.user.id)
                     .eq('status', 'interview_scheduled')
                     .gt('interview_date', new Date().toISOString())
                     .order('interview_date', { ascending: true })
                     .limit(5);
 
-                const container = document.getElementById('upcomingInterviews');
+                if (!container) return;
 
                 if (!data || data.length === 0) {
                     container.innerHTML = emptyState('لا توجد مقابلات قادمة', '', 'calendar');
                     return;
                 }
 
+                const esc = (s) => String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+                const fmt = (d) => { try { return new Date(d).toLocaleString('ar-EG', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); } catch(e){ return ''; } };
+
                 container.innerHTML = data.map(itw => {
-                    const esc = window.ProVance.escapeHtml;
-                    const initial = (itw.student_name || 'م').charAt(0);
+                    const name = itw.student_name || itw.internship_title || 'متدرب';
+                    const initial = name.charAt(0);
                     return `
                         <div class="interview-item">
                             <div class="interview-avatar">${esc(initial)}</div>
                             <div class="interview-info">
-                                <div class="n">${esc(itw.student_name || 'متدرب')}</div>
-                                <div class="f">${esc(itw.student_field || 'غير محدد')}</div>
+                                <div class="n">${esc(name)}</div>
+                                <div class="f">${esc(itw.internship_title || 'مقابلة')}</div>
                             </div>
-                            <div class="interview-time">
-                                ${window.ProVance.formatDateTime(itw.interview_date)}
-                            </div>
+                            <div class="interview-time">${fmt(itw.interview_date)}</div>
                         </div>
                     `;
                 }).join('');
 
             } catch (err) {
                 console.error('loadUpcomingInterviews error:', err);
+                if (container) container.innerHTML = emptyState('لا توجد مقابلات قادمة', '', 'calendar');
             }
         }
 
@@ -1367,7 +1387,7 @@
                         userId: app.student_user_id,
                         userType: 'student',
                         title: 'تم قبول طلبك! 🎉',
-                        message: `تم قبول طلبك في ${state.company.company_name}. موعد المقابلة: ${window.ProVance.formatDateTime(date)}`,
+                        message: `تم قبول طلبك في ${state.company.company_name}. موعد المقابلة: ${fmtDateTime(date)}`,
                         type: 'success',
                         relatedType: 'application',
                         relatedId: appId,
