@@ -1294,7 +1294,7 @@
             const guestBadge = c._guest ? '<span class="badge badge-info" style="background:rgba(79,172,254,.15);color:#4facfe">👤 غير مسجّل كمتدرب</span>' : '';
 
             return `
-                <div class="attendance-card">
+                <div class="attendance-card" onclick="showScannerProfile('${c.student_user_id}')" style="cursor:pointer" title="اضغط لعرض البيانات الكاملة">
                     <div class="attendance-avatar">${photo}</div>
                     <div class="attendance-body">
                         <div class="attendance-name">${esc(c.student_name || '-')}</div>
@@ -1303,6 +1303,7 @@
                             ${statusBadge}
                             ${guestBadge}
                             ${c.scanned_at ? `<span><i class="fas fa-clock"></i> ${formatTime(c.scanned_at)}</span>` : ''}
+                            <span style="color:var(--primary);font-size:.78rem"><i class="fas fa-eye"></i> التفاصيل</span>
                         </div>
                     </div>
                 </div>
@@ -1310,11 +1311,144 @@
         }).join('');
     }
 
+    // ── عرض البروفايل الكامل للماسح ──────────────────────────────
+    window.showScannerProfile = async (userId) => {
+        if (!userId) return;
+        const sb = window.ProVance.sb;
+
+        // افتح modal بحالة تحميل
+        let modal = document.getElementById('scannerProfileModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'scannerProfileModal';
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
+            document.body.appendChild(modal);
+        }
+        modal.innerHTML = '<div style="background:#1a1535;border:1px solid var(--border);border-radius:20px;padding:40px;text-align:center"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--primary)"></i><p style="margin-top:12px;color:var(--text-muted)">جاري التحميل...</p></div>';
+
+        try {
+            // بيانات الطالب
+            const { data: student } = await sb.from('student')
+                .select('full_name, email, phone, photo, university, faculty, education_level, study_year, gpa, city, skills, interested_fields, linkedin, github, bio')
+                .eq('user_id', userId).maybeSingle();
+
+            // حالة طلبه عند الشركة دي
+            const { data: app } = await sb.from('applications')
+                .select('status, internship_title, interview_date, training_schedule, rejection_reason, created_at')
+                .eq('student_user_id', userId).eq('company_user_id', companyUserId)
+                .order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+            // آخر مسح للطالب
+            const lastScan = allAttendanceLogs
+                .filter(a => a.student_user_id === userId)
+                .sort((a,b) => new Date(b.scanned_at) - new Date(a.scanned_at))[0];
+
+            const name    = student?.full_name || lastScan?.student_name || 'طالب';
+            const initial = name.charAt(0).toUpperCase();
+            const photo   = student?.photo || lastScan?.student_photo;
+            const purpose = lastScan?.purpose || lastScan?.attendance_type;
+            const purposeLabel = purpose === 'interview' ? '🎯 مقابلة' : '📋 حضور يومي';
+
+            const statusInfo = {
+                pending:             ['قيد المراجعة','#fbbf24'],
+                interview_scheduled: ['مقابلة مجدولة','#34d399'],
+                interview_done:      ['تمت المقابلة','#60a5fa'],
+                accepted:            ['مقبول ✓','#34d399'],
+                rejected:            ['مرفوض','#f87171'],
+                completed:           ['مكتمل','#60a5fa']
+            }[app?.status] || ['غير متقدّم','#94a3b8'];
+
+            const skills = student?.skills;
+            const skillsArr = Array.isArray(skills) ? skills : (typeof skills === 'string' ? (()=>{try{return JSON.parse(skills)}catch{return []}})() : []);
+            const skillsHtml = skillsArr.length
+                ? skillsArr.slice(0,8).map(s => `<span style="background:rgba(79,172,254,.12);color:#4facfe;padding:4px 10px;border-radius:12px;font-size:.8rem">${esc(s)}</span>`).join('')
+                : '<span style="color:var(--text-muted);font-size:.85rem">لا توجد مهارات مسجّلة</span>';
+
+            const ts = app?.training_schedule;
+
+            modal.innerHTML = `
+                <div style="background:#1a1535;border:1px solid var(--border);border-radius:20px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#1a1535;z-index:1">
+                        <h3 style="font-size:1.1rem;font-weight:800"><i class="fas fa-user-circle" style="color:var(--primary)"></i> بيانات الماسح</h3>
+                        <button onclick="document.getElementById('scannerProfileModal').remove()" style="background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.1rem">×</button>
+                    </div>
+
+                    <div style="padding:24px">
+                        <!-- Header -->
+                        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+                            <div style="width:72px;height:72px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:1.8rem;flex-shrink:0;overflow:hidden">
+                                ${photo ? `<img src="${esc(photo)}" style="width:100%;height:100%;object-fit:cover">` : initial}
+                            </div>
+                            <div style="flex:1">
+                                <div style="font-weight:800;font-size:1.25rem">${esc(name)}</div>
+                                <div style="color:var(--text-muted);font-size:.88rem">${esc(student?.email || '')}</div>
+                                <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+                                    <span style="background:rgba(79,172,254,.12);color:#4facfe;padding:3px 10px;border-radius:12px;font-size:.78rem">${purposeLabel}</span>
+                                    <span style="background:rgba(255,255,255,.06);color:${statusInfo[1]};padding:3px 10px;border-radius:12px;font-size:.78rem">${statusInfo[0]}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- معلومات المسح -->
+                        ${lastScan ? `
+                        <div style="background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:12px;margin-bottom:16px;font-size:.86rem">
+                            <strong style="color:#34d399"><i class="fas fa-qrcode"></i> آخر مسح</strong>
+                            <div style="margin-top:6px;color:var(--text-muted)">
+                                ${new Date(lastScan.scanned_at).toLocaleString('ar-EG')}
+                                ${lastScan.status === 'late' ? ` • <span style="color:#fbbf24">متأخر ${lastScan.delay_minutes} دقيقة</span>` : ' • <span style="color:#34d399">في الوقت</span>'}
+                                ${lastScan.department ? ` • قسم: ${esc(lastScan.department)}` : ''}
+                            </div>
+                        </div>` : ''}
+
+                        <!-- بيانات أكاديمية -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:.86rem;margin-bottom:16px">
+                            ${student?.phone ? `<div><span style="color:var(--text-muted)">الهاتف</span><br><strong>${esc(student.phone)}</strong></div>` : ''}
+                            ${student?.university ? `<div><span style="color:var(--text-muted)">الجامعة</span><br><strong>${esc(student.university)}</strong></div>` : ''}
+                            ${student?.faculty ? `<div><span style="color:var(--text-muted)">الكلية</span><br><strong>${esc(student.faculty)}</strong></div>` : ''}
+                            ${student?.education_level ? `<div><span style="color:var(--text-muted)">المستوى</span><br><strong>${esc(student.education_level)}</strong></div>` : ''}
+                            ${student?.study_year ? `<div><span style="color:var(--text-muted)">السنة</span><br><strong>${esc(student.study_year)}</strong></div>` : ''}
+                            ${student?.gpa ? `<div><span style="color:var(--text-muted)">المعدل</span><br><strong>${esc(student.gpa)}</strong></div>` : ''}
+                            ${student?.city ? `<div><span style="color:var(--text-muted)">المدينة</span><br><strong>${esc(student.city)}</strong></div>` : ''}
+                            ${app?.internship_title ? `<div style="grid-column:1/-1"><span style="color:var(--text-muted)">الفرصة المتقدّم لها</span><br><strong>${esc(app.internship_title)}</strong></div>` : ''}
+                        </div>
+
+                        <!-- المهارات -->
+                        <div style="margin-bottom:16px">
+                            <div style="color:var(--text-muted);font-size:.82rem;margin-bottom:8px">المهارات</div>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap">${skillsHtml}</div>
+                        </div>
+
+                        ${student?.bio ? `<div style="margin-bottom:16px"><div style="color:var(--text-muted);font-size:.82rem;margin-bottom:4px">نبذة</div><p style="font-size:.86rem;line-height:1.7">${esc(student.bio)}</p></div>` : ''}
+
+                        <!-- جدول التدريب لو مقبول -->
+                        ${ts && app?.status === 'accepted' ? `
+                        <div style="background:rgba(79,172,254,.07);border:1px solid rgba(79,172,254,.2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:.85rem">
+                            <strong style="color:var(--primary)"><i class="fas fa-calendar-alt"></i> جدول التدريب</strong>
+                            <div style="margin-top:6px;color:var(--text-muted)">
+                                ${ts.start_date ? `يبدأ ${ts.start_date}` : ''} ${ts.daily_time ? `• ${ts.daily_time}` : ''}<br>
+                                ${ts.training_days?.length ? 'الأيام: ' + ts.training_days.join('، ') : ''}
+                            </div>
+                        </div>` : ''}
+
+                        <!-- روابط -->
+                        ${(student?.linkedin || student?.github) ? `
+                        <div style="display:flex;gap:10px">
+                            ${student.linkedin ? `<a href="${esc(student.linkedin)}" target="_blank" style="flex:1;text-align:center;background:rgba(10,102,194,.15);color:#4facfe;padding:10px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem"><i class="fab fa-linkedin"></i> LinkedIn</a>` : ''}
+                            ${student.github ? `<a href="${esc(student.github)}" target="_blank" style="flex:1;text-align:center;background:rgba(255,255,255,.06);color:var(--text);padding:10px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem"><i class="fab fa-github"></i> GitHub</a>` : ''}
+                        </div>` : ''}
+                    </div>
+                </div>`;
+        } catch (err) {
+            console.error(err);
+            modal.innerHTML = `<div style="background:#1a1535;border:1px solid var(--border);border-radius:20px;padding:30px;text-align:center"><p style="color:var(--error)">خطأ في تحميل البيانات</p><button onclick="document.getElementById('scannerProfileModal').remove()" style="margin-top:14px;background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 20px;border-radius:10px;cursor:pointer">إغلاق</button></div>`;
+        }
+    };
+
     function renderHistory() {
         const search = document.getElementById('searchHistory').value.toLowerCase().trim();
         const dateFilter = document.getElementById('filterHistoryDate').value;
 
-        let logs = allAttendanceLogs.filter(a => a.attendance_type === 'daily_attendance');
+        let logs = allAttendanceLogs.slice();
 
         if (search) logs = logs.filter(l => (l.student_name || '').toLowerCase().includes(search));
         if (dateFilter) {
@@ -1333,9 +1467,8 @@
         }
 
         grid.innerHTML = logs.slice(0, 100).map(l => {
-            const trainee = activeTrainees.find(t => t.student_user_id === l.student_user_id);
-            const photo = trainee?.student_photo
-                ? `<img src="${trainee.student_photo}" alt="">`
+            const photo = l.student_photo
+                ? `<img src="${l.student_photo}" alt="">`
                 : `<span>${getInitial(l.student_name)}</span>`;
 
             const statusBadge = {
@@ -1345,13 +1478,17 @@
                 'absent': '<span class="badge badge-error">✕ غائب</span>'
             }[l.status] || '';
 
+            const purposeBadge = l.purpose === 'interview'
+                ? '<span class="badge badge-info" style="background:rgba(79,172,254,.15);color:#4facfe">🎯 مقابلة</span>'
+                : '';
+
             return `
-                <div class="attendance-card">
+                <div class="attendance-card" onclick="showScannerProfile('${l.student_user_id}')" style="cursor:pointer" title="اضغط لعرض البيانات الكاملة">
                     <div class="attendance-avatar">${photo}</div>
                     <div class="attendance-body">
                         <div class="attendance-name">${esc(l.student_name || '-')}</div>
                         <div class="attendance-pos">${formatDate(l.scanned_at)} • ${formatTime(l.scanned_at)}</div>
-                        <div class="attendance-meta">${statusBadge}</div>
+                        <div class="attendance-meta">${statusBadge} ${purposeBadge}</div>
                     </div>
                 </div>
             `;
