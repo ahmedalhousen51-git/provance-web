@@ -899,7 +899,7 @@ async function loadAll() {
     
     try {
         const { data, error } = await sb.from('applications')
-            .select('id, student_user_id, student_name, student_email, student_photo, student_university, student_cv_url, internship_id, internship_title, application_message, status, rejection_reason, interview_date, interview_location, interview_notes, created_at, updated_at')
+            .select('id, student_user_id, student_name, student_email, student_photo, student_university, student_cv_url, internship_id, internship_title, application_message, status, rejection_reason, interview_date, interview_location, interview_notes, training_schedule, created_at, updated_at')
             .eq('company_user_id', companyUserId)
             .order('created_at', { ascending: false });
         
@@ -1001,6 +1001,7 @@ function renderApps() {
             (a.application_message ? '<div style="background:rgba(239,68,68,0.05);padding:10px;border-radius:8px;color:var(--text-muted);font-size:0.88rem;margin-bottom:10px"><strong>رسالة الطالب:</strong> ' + esc(a.application_message) + '</div>' : '') +
             (a.rejection_reason ? '<div style="background:rgba(239,68,68,0.05);padding:10px;border-radius:8px;color:#fca5a5;font-size:0.88rem;margin-bottom:10px"><strong>سبب الرفض:</strong> ' + esc(a.rejection_reason) + '</div>' : '') +
             (a.interview_date ? '<div style="background:rgba(16,185,129,0.05);padding:10px;border-radius:8px;color:#86efac;font-size:0.88rem;margin-bottom:10px"><strong>موعد المقابلة:</strong> ' + new Date(a.interview_date).toLocaleString('ar-EG') + (a.interview_location ? ' - ' + esc(a.interview_location) : '') + '</div>' : '') +
+            (a.status === 'accepted' && a.training_schedule ? '<div style="background:rgba(79,172,254,0.07);border:1px solid rgba(79,172,254,0.2);padding:10px;border-radius:8px;font-size:0.85rem;margin-bottom:10px"><strong style="color:var(--primary)">📅 جدول التدريب:</strong> يبدأ ' + (a.training_schedule.start_date||'-') + ' — ' + (a.training_schedule.training_days||[]).join('، ') + ' — ' + (a.training_schedule.daily_time||'') + '</div>' : '') +
             '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
                 '<button onclick="viewDetails(\''+a.id+'\')" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer"><i class="fas fa-eye"></i> عرض البيانات الكاملة</button>' +
                 (a.student_cv_url ? '<a href="' + esc(a.student_cv_url) + '" target="_blank" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:10px;font-weight:700;font-size:0.85rem;text-decoration:none"><i class="fas fa-file-pdf"></i> تحميل CV</a>' : '') +
@@ -1376,6 +1377,18 @@ window.confirmReject = async (appId) => {
         showToast('خطأ: ' + err.message, 'error');
     }
 };
+
+function renderModal(html) {
+    // أزل أي modal موجود بنفس الـ id
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const newModal = tmp.firstElementChild;
+    if (newModal?.id) {
+        const old = document.getElementById(newModal.id);
+        if (old) old.remove();
+    }
+    document.body.insertAdjacentHTML('beforeend', html);
+}
 
 window.closeModal = (id) => {
     const el = document.getElementById(id);
