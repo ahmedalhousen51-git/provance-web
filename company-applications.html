@@ -756,17 +756,45 @@
                     <label>اسم المتقدم</label>
                     <input type="text" id="acceptName" readonly>
                 </div>
-                <div class="form-group">
-                    <label>موعد المقابلة *</label>
-                    <input type="datetime-local" id="acceptDate" required>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar" style="color:var(--primary)"></i> تاريخ المقابلة *</label>
+                        <input type="date" id="interviewDay" min="">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-clock" style="color:var(--primary)"></i> وقت المقابلة *</label>
+                        <select id="interviewTime" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;width:100%;font-family:inherit;font-size:.9rem">
+                            <option value="08:00">08:00 ص</option>
+                            <option value="08:30">08:30 ص</option>
+                            <option value="09:00" selected>09:00 ص</option>
+                            <option value="09:30">09:30 ص</option>
+                            <option value="10:00">10:00 ص</option>
+                            <option value="10:30">10:30 ص</option>
+                            <option value="11:00">11:00 ص</option>
+                            <option value="11:30">11:30 ص</option>
+                            <option value="12:00">12:00 م</option>
+                            <option value="12:30">12:30 م</option>
+                            <option value="13:00">01:00 م</option>
+                            <option value="13:30">01:30 م</option>
+                            <option value="14:00">02:00 م</option>
+                            <option value="14:30">02:30 م</option>
+                            <option value="15:00">03:00 م</option>
+                            <option value="15:30">03:30 م</option>
+                            <option value="16:00">04:00 م</option>
+                            <option value="16:30">04:30 م</option>
+                            <option value="17:00">05:00 م</option>
+                            <option value="17:30">05:30 م</option>
+                            <option value="18:00">06:00 م</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>مكان المقابلة</label>
-                    <input type="text" id="acceptLocation" placeholder="عنوان الشركة أو رابط اجتماع">
+                    <input type="text" id="interviewLocation" placeholder="عنوان الشركة أو رابط اجتماع">
                 </div>
                 <div class="form-group">
                     <label>ملاحظات (اختياري)</label>
-                    <textarea id="acceptNotes" placeholder="أي تعليمات إضافية للمتدرب..."></textarea>
+                    <textarea id="interviewNotes" placeholder="أي تعليمات إضافية للمتدرب..."></textarea>
                 </div>
             </div>
             <div class="modal-foot">
@@ -1082,40 +1110,36 @@ window.viewDetails = async (appId) => {
 window.acceptApp = (appId) => {
     const app = allApplications.find(a => a.id === appId);
     if (!app) return;
-    
-    const defaultDate = new Date();
-    defaultDate.setDate(defaultDate.getDate() + 3);
-    defaultDate.setHours(10, 0, 0, 0);
-    const defaultDateStr = defaultDate.toISOString().slice(0, 16);
-    
-    const html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px" id="acceptModal">' +
-        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;padding:24px">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">' +
-                '<h3 style="font-size:1.15rem;font-weight:800"><i class="fas fa-check-circle" style="color:#10b981"></i> قبول وجدولة المقابلة</h3>' +
-                '<button onclick="closeModal(\'acceptModal\')" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>' +
-            '</div>' +
-            '<div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.2);padding:12px;border-radius:10px;margin-bottom:14px;color:#86efac;font-size:0.9rem"><i class="fas fa-info-circle"></i> هتقبل طلب <strong>' + esc(app.student_name || 'الطالب') + '</strong> وتحدد موعد للمقابلة.</div>' +
-            '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-calendar-alt"></i> موعد المقابلة <span style="color:var(--danger)">*</span></label>' +
-            '<input type="datetime-local" id="interviewDate" value="' + defaultDateStr + '" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem"></div>' +
-            '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-map-marker-alt"></i> مكان المقابلة (اختياري)</label>' +
-            '<input type="text" id="interviewLocation" placeholder="مثال: مقر الشركة - الدور 3" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem"></div>' +
-            '<div style="margin-bottom:14px"><label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-comment"></i> ملاحظات للطالب (اختياري)</label>' +
-            '<textarea id="interviewNotes" rows="3" placeholder="مثال: لازم تجيب CV مطبوع" style="width:100%;padding:11px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:0.92rem;resize:vertical"></textarea></div>' +
-            '<div style="display:flex;gap:10px;margin-top:14px">' +
-                '<button onclick="closeModal(\'acceptModal\')" style="flex:1;background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>' +
-                '<button onclick="confirmAccept(\''+appId+'\')" style="flex:1;background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:10px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-check"></i> تأكيد القبول</button>' +
-            '</div>' +
-        '</div>' +
-    '</div>';
-    document.body.insertAdjacentHTML('beforeend', html);
-};
 
-window.confirmAccept = async (appId) => {
-    const interviewDate = document.getElementById('interviewDate').value;
-    const interviewLocation = document.getElementById('interviewLocation').value.trim();
-    const notes = document.getElementById('interviewNotes').value.trim();
+    // اضبط الـ min date لليوم
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const dayInput = document.getElementById('interviewDay');
+    if (dayInput) dayInput.min = todayStr;
+
+    // ملأ اسم المتقدم
+    const nameEl = document.getElementById('acceptName');
+    if (nameEl) nameEl.value = app.student_name || '';
+
+    // أظهر الـ modal
+    const modal = document.getElementById('acceptModal');
+    if (modal) {
+        modal.classList.add('active');
+        modal.setAttribute('data-app-id', appId);
+    }
+};
     
-    if (!interviewDate) { showToast('حدد موعد المقابلة', 'warning'); return; }
+window.confirmAccept = async () => {
+    const modal  = document.getElementById('acceptModal');
+    const appId  = modal?.getAttribute('data-app-id');
+    if (!appId) return;
+    const day      = document.getElementById('interviewDay')?.value;
+    const time     = document.getElementById('interviewTime')?.value || '09:00';
+    const location = document.getElementById('interviewLocation').value.trim();
+    const notes    = document.getElementById('interviewNotes').value.trim();
+
+    if (!day) { showToast('حدد تاريخ المقابلة', 'warning'); return; }
+
+    const interviewDate = new Date(`${day}T${time}:00`).toISOString();
     
     const sb = await window.getSafeSupabase();
     if (!sb) { showToast('فشل الاتصال', 'error'); return; }
@@ -1126,7 +1150,7 @@ window.confirmAccept = async (appId) => {
             interview_date: interviewDate,
             updated_at: new Date().toISOString()
         };
-        if (interviewLocation) updates.interview_location = interviewLocation;
+        if (location) updates.interview_location = location;
         if (notes) updates.interview_notes = notes;
         
         const { error } = await sb.from('applications').update(updates).eq('id', appId);
@@ -1434,7 +1458,14 @@ function renderModal(html) {
 
 window.closeModal = (id) => {
     const el = document.getElementById(id);
-    if (el) el.remove();
+    if (!el) return;
+    // Static modals have modal-overlay class → toggle active
+    // Dynamic modals injected via renderModal → remove from DOM
+    if (el.classList.contains('modal-overlay')) {
+        el.classList.remove('active');
+    } else {
+        el.remove();
+    }
 };
 
 // Init
