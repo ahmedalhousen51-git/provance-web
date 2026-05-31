@@ -641,9 +641,6 @@
                 <button class="tab-btn active" data-tab="generate" onclick="switchTab(event, 'generate')">
                     <i class="fas fa-qrcode"></i> توليد QR
                 </button>
-                <button class="tab-btn" data-tab="live-scan" onclick="switchTab(event, 'live-scan')">
-                    <i class="fas fa-user-check"></i> الطالب الماسح
-                </button>
                 <button class="tab-btn" data-tab="today-attendance" onclick="switchTab(event, 'today-attendance')">
                     <i class="fas fa-calendar-day"></i> حضور اليوم
                     <span class="tab-badge" id="todayCount">0</span>
@@ -659,24 +656,24 @@
                 </button>
             </div>
 
-            <!-- Tab: Generate QR --><br>
+            <!-- Tab: Generate QR -->
             <div id="tab-generate" class="tab-content active">
                 <div class="qr-generator-card">
                     <h2>QR Code - حضور أو مقابلة</h2>
                     <p id="qrGenSubtitle">حدد الغرض والقسم ثم ولّد الـ QR</p>
 
-                    <!-- QR Options -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px" id="qrOptionsPanel">
-                        <div>
+                    <!-- خيارات الـ QR -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0">
+                        <div style="text-align:right">
                             <label style="font-size:.85rem;font-weight:700;display:block;margin-bottom:6px;color:var(--text-muted)"><i class="fas fa-tag" style="color:var(--primary)"></i> غرض الـ QR</label>
-                            <select id="qrPurpose" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit">
+                            <select id="qrPurpose" style="width:100%;padding:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:.92rem">
                                 <option value="attendance">📋 حضور يومي</option>
                                 <option value="interview">🎯 مقابلة</option>
                             </select>
                         </div>
-                        <div>
+                        <div style="text-align:right">
                             <label style="font-size:.85rem;font-weight:700;display:block;margin-bottom:6px;color:var(--text-muted)"><i class="fas fa-building" style="color:var(--primary)"></i> القسم</label>
-                            <select id="qrDepartment" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit">
+                            <select id="qrDepartment" style="width:100%;padding:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:.92rem">
                                 <option value="">كل الأقسام</option>
                             </select>
                         </div>
@@ -757,21 +754,6 @@
             </div>
 
             <!-- Tab: Today's Attendance -->
-            <div id="tab-live-scan" class="tab-content">
-                <div style="max-width:500px;margin:0 auto">
-                    <div style="text-align:center;padding:20px 0 16px">
-                        <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px"><i class="fas fa-user-check" style="color:var(--primary)"></i> آخر طالب قام بمسح الـ QR</h3>
-                        <p style="color:var(--text-muted);font-size:.88rem">يتحدث تلقائياً عند كل مسح جديد</p>
-                    </div>
-                    <div id="lastScanCard">
-                        <div style="text-align:center;padding:40px 20px;color:var(--text-muted)">
-                            <i class="fas fa-qrcode" style="font-size:3rem;opacity:.3;display:block;margin-bottom:12px"></i>
-                            <p>في انتظار أول مسح...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div id="tab-today-attendance" class="tab-content">
                 <div class="stats-row">
                     <div class="stat-mini">
@@ -993,117 +975,6 @@
 
     function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
     function formatDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('ar-EG'); }
-
-    // ── عرض بروفايل الطالب الماسح ──────────────────────────────
-    async function renderLastScanProfile(sb, log) {
-        const card = document.getElementById('lastScanCard');
-        if (!card) return;
-
-        card.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> جاري تحميل البيانات...</div>';
-
-        try {
-            // جيب بيانات الطالب
-            const { data: student } = await sb.from('student')
-                .select('full_name, email, phone, photo, university, faculty, education_level, study_year, gpa, city, skills, interested_fields, linkedin, github')
-                .eq('user_id', log.student_user_id)
-                .maybeSingle();
-
-            // جيب حالة طلبه
-            const { data: app } = await sb.from('applications')
-                .select('status, internship_title, interview_date, training_schedule, rejection_reason')
-                .eq('student_user_id', log.student_user_id)
-                .eq('company_user_id', companyUserId)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-            const name    = student?.full_name || log.student_name || 'طالب';
-            const initial = (name).charAt(0).toUpperCase();
-            const photo   = student?.photo || log.student_photo;
-            const purpose = log.purpose || log.attendance_type || 'daily_attendance';
-            const purposeLabel = purpose === 'interview' ? '🎯 مقابلة' : '📋 حضور يومي';
-
-            const statusBadge = {
-                pending:             ['قيد المراجعة','#fbbf24'],
-                interview_scheduled: ['مقابلة مجدولة','#34d399'],
-                accepted:            ['مقبول ✓','#34d399'],
-                rejected:            ['مرفوض','#f87171'],
-                completed:           ['مكتمل','#60a5fa'],
-                withdrawn:           ['منسحب','#94a3b8']
-            }[app?.status] || ['-','#94a3b8'];
-
-            const skills = student?.skills;
-            const skillsList = Array.isArray(skills) && skills.length
-                ? skills.slice(0,5).map(s=>`<span style="background:rgba(79,172,254,.12);color:var(--primary);padding:3px 8px;border-radius:10px;font-size:.78rem">${esc(s)}</span>`).join('')
-                : '';
-
-            const ts = app?.training_schedule;
-
-            card.innerHTML = `
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px">
-                    <!-- Header -->
-                    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
-                        <div style="width:60px;height:60px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:1.5rem;flex-shrink:0;overflow:hidden">
-                            ${photo ? `<img src="${esc(photo)}" style="width:100%;height:100%;object-fit:cover">` : initial}
-                        </div>
-                        <div style="flex:1">
-                            <div style="font-weight:800;font-size:1.1rem">${esc(name)}</div>
-                            <div style="color:var(--text-muted);font-size:.83rem">${esc(student?.email||log.student_email||'')}</div>
-                            <div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
-                                <span style="background:rgba(79,172,254,.12);color:var(--primary);padding:3px 8px;border-radius:10px;font-size:.78rem">${purposeLabel}</span>
-                                <span style="background:rgba(16,185,129,.12);color:#34d399;padding:3px 8px;border-radius:10px;font-size:.78rem">⏰ ${new Date(log.scanned_at).toLocaleTimeString('ar-EG')}</span>
-                                <span style="background:rgba(255,255,255,.06);color:${statusBadge[1]};padding:3px 8px;border-radius:10px;font-size:.78rem">${statusBadge[0]}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Info Grid -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.85rem;margin-bottom:14px">
-                        ${student?.phone ? `<div><span style="color:var(--text-muted)">الهاتف: </span><strong>${esc(student.phone)}</strong></div>` : ''}
-                        ${student?.university ? `<div><span style="color:var(--text-muted)">الجامعة: </span><strong>${esc(student.university)}</strong></div>` : ''}
-                        ${student?.faculty ? `<div><span style="color:var(--text-muted)">الكلية: </span><strong>${esc(student.faculty)}</strong></div>` : ''}
-                        ${student?.study_year ? `<div><span style="color:var(--text-muted)">السنة: </span><strong>${esc(student.study_year)}</strong></div>` : ''}
-                        ${student?.gpa ? `<div><span style="color:var(--text-muted)">المعدل: </span><strong>${esc(student.gpa)}</strong></div>` : ''}
-                        ${student?.city ? `<div><span style="color:var(--text-muted)">المدينة: </span><strong>${esc(student.city)}</strong></div>` : ''}
-                        ${app?.internship_title ? `<div style="grid-column:1/-1"><span style="color:var(--text-muted)">الفرصة: </span><strong>${esc(app.internship_title)}</strong></div>` : ''}
-                    </div>
-
-                    ${skillsList ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${skillsList}</div>` : ''}
-
-                    <!-- Interview -->
-                    ${app?.interview_date && app.status === 'interview_scheduled' ? `
-                    <div style="background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:10px;margin-bottom:12px;font-size:.85rem">
-                        <strong style="color:#34d399"><i class="fas fa-calendar-check"></i> موعد المقابلة</strong>
-                        <div style="margin-top:4px;color:var(--text-muted)">${new Date(app.interview_date).toLocaleString('ar-EG')}</div>
-                    </div>` : ''}
-
-                    <!-- Training Schedule -->
-                    ${ts && app?.status === 'accepted' ? `
-                    <div style="background:rgba(79,172,254,.07);border:1px solid rgba(79,172,254,.2);border-radius:10px;padding:10px;font-size:.85rem">
-                        <strong style="color:var(--primary)"><i class="fas fa-calendar-alt"></i> جدول التدريب</strong>
-                        <div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:6px;color:var(--text-muted)">
-                            ${ts.start_date ? `<div>البداية: <strong style="color:var(--text)">${ts.start_date}</strong></div>` : ''}
-                            ${ts.daily_time ? `<div>الوقت: <strong style="color:var(--text)">${ts.daily_time}</strong></div>` : ''}
-                            ${ts.training_days?.length ? `<div style="grid-column:1/-1">الأيام: <strong style="color:var(--text)">${ts.training_days.join('، ')}</strong></div>` : ''}
-                        </div>
-                    </div>` : ''}
-                </div>`;
-        } catch(e) {
-            console.error('Profile load error:', e);
-            card.innerHTML = `<div style="text-align:center;padding:20px;color:var(--error)"><i class="fas fa-exclamation-triangle"></i> خطأ في تحميل البيانات</div>`;
-        }
-    }
-
-    // عرض آخر مسح عند تحميل الصفحة
-    async function loadLastScan(sb) {
-        const { data } = await sb.from('attendance_logs')
-            .select('*')
-            .eq('company_user_id', companyUserId)
-            .order('scanned_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-        if (data) await renderLastScanProfile(sb, data);
-    }
     function formatTime(d) { if (!d) return '-'; return new Date(d).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }); }
 
     function addCleanupLog(action, details, type = 'info') {
@@ -1145,14 +1016,15 @@
     };
 
     window.generateNewQR = async () => {
+        // الشركة تقدر تعمل QR في أي وقت — مفيش شرط متدربين
         const purpose    = document.getElementById('qrPurpose')?.value || 'attendance';
         const department = document.getElementById('qrDepartment')?.value || '';
 
         try {
-            const sb = await window.getSafeSupabase ? await window.getSafeSupabase() : window.ProVance.sb;
+            const sb = window.ProVance.sb;
             if (!sb) { window.ProVance.showToast('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
 
-            // ألغِ الـ QR النشط القديم (لو موجود) قبل توليد واحد جديد
+            // ألغِ الـ QR النشط القديم لو موجود
             if (activeQrCode && activeQrCode.status === 'active') {
                 await sb.from('qr_codes').update({ status: 'cancelled' }).eq('id', activeQrCode.id);
                 addCleanupLog('إلغاء QR قديم', `تم إلغاء الكود ${activeQrCode.code}`, 'warning');
@@ -1162,11 +1034,10 @@
             const qrCodeStr  = prefix + Math.random().toString(36).substring(2, 14).toUpperCase();
             const now        = new Date();
             const validUntil = new Date(now.getTime() + 60 * 60 * 1000);
-            const qrTypeMap  = { attendance: 'daily_attendance', interview: 'interview_checkin' };
 
             const { data: newQr, error } = await sb.from('qr_codes').insert({
                 code: qrCodeStr,
-                qr_type: qrTypeMap[purpose] || 'daily_attendance',
+                qr_type: purpose === 'interview' ? 'interview_checkin' : 'daily_attendance',
                 company_user_id: companyUserId,
                 company_name: companyName,
                 application_id: null,
@@ -1187,8 +1058,8 @@
 
             activeQrCode = newQr;
             const purposeTxt = purpose === 'interview' ? 'مقابلة' : 'حضور يومي';
-            const deptTxt = department ? ` - قسم: ${department}` : '';
-            addCleanupLog('توليد QR جديد', `كود: ${qrCodeStr} - ${purposeTxt}${deptTxt} - صالح لساعة`, 'success');
+            const deptTxt    = department ? ` - قسم: ${department}` : '';
+            addCleanupLog('توليد QR جديد', `كود: ${qrCodeStr} - ${purposeTxt}${deptTxt}`, 'success');
             window.ProVance.showToast(`🎉 تم توليد QR لـ ${purposeTxt}${deptTxt}!`, 'success');
             renderQR();
             startCountdown();
@@ -1228,10 +1099,8 @@
         document.getElementById('qrScansInfo').textContent = activeQrCode.scans_count || 0;
         document.getElementById('qrCodeInfo').textContent = activeQrCode.code;
 
-        const pLabel = activeQrCode.metadata?.purpose_label || 'حضور يومي';
-        const dept = activeQrCode.metadata?.department;
         document.getElementById('qrGenSubtitle').textContent =
-            `QR لـ ${pLabel}${dept ? ' - قسم ' + dept : ''} • صالح لساعة كاملة`;
+            `الـ QR صالح لساعة كاملة • ${activeTrainees.length} متدرب نشط`;
     }
 
     function startCountdown() {
@@ -1873,7 +1742,7 @@
 
         try {
             const results = await Promise.allSettled([
-                sb.from('companies').select('company_name, training_details, branch_locations, training_fields').eq('user_id', companyUserId).maybeSingle(),
+                sb.from('companies').select('company_name, training_fields').eq('user_id', companyUserId).maybeSingle(),
                 sb.from('applications').select('*').eq('company_user_id', companyUserId).in('status', ['hired', 'in_training']),
                 sb.from('qr_codes').select('*').eq('company_user_id', companyUserId).eq('qr_type', 'daily_attendance').eq('status', 'active').gt('valid_until', new Date().toISOString()).order('created_at', { ascending: false }).limit(1).maybeSingle(),
                 sb.from('attendance_logs').select('*').eq('company_user_id', companyUserId).order('scanned_at', { ascending: false }).limit(500),
@@ -1885,14 +1754,13 @@
             const attRes = results[3] && results[3].status === "fulfilled" ? results[3].value : { data: [], error: results[3] && results[3].reason };
             const holRes = results[4] && results[4].status === "fulfilled" ? results[4].value : { data: [], error: results[4] && results[4].reason };
 
-            companyName    = companyRes.data?.company_name || 'الشركة';
+            companyName = companyRes.data?.company_name || 'الشركة';
             activeTrainees = traineesRes.data || [];
-            activeQrCode   = qrRes.data;
+            activeQrCode = qrRes.data;
             allAttendanceLogs = attRes.data || [];
-            weeklyHolidays    = holRes.data;
+            weeklyHolidays = holRes.data;
 
-            // تعبئة الأقسام — نفس المصدر بالظبط من إدارة الأقسام والفروع
-            // training_fields = array of strings (أسماء الأقسام)
+            // تعبئة الأقسام من training_fields (نفس مصدر إدارة الأقسام والفروع)
             const deptSelect = document.getElementById('qrDepartment');
             if (deptSelect) {
                 let depts = [];
@@ -1905,14 +1773,9 @@
                 deptSelect.innerHTML = '<option value="">كل الأقسام</option>';
                 depts.filter(Boolean).forEach(d => {
                     const opt = document.createElement('option');
-                    opt.value = d;
-                    opt.textContent = d;
+                    opt.value = d; opt.textContent = d;
                     deptSelect.appendChild(opt);
                 });
-
-                // أظهر الـ dropdown دايماً
-                const wrap = deptSelect.closest('div');
-                if (wrap) wrap.style.display = '';
             }
 
             renderQR();
@@ -1960,15 +1823,10 @@
         loadCleanupLogs();
         loadDataPolicy();
         await loadAll();
-        await loadLastScan(sb);
 
         sb.channel('qr-' + userId)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'qr_codes', filter: `company_user_id=eq.${userId}` }, () => loadAll())
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'attendance_logs', filter: `company_user_id=eq.${userId}` }, async (payload) => {
-                await loadAll();
-                // عرض بيانات الطالب الماسح فوراً
-                if (payload.new) await renderLastScanProfile(sb, payload.new);
-            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs', filter: `company_user_id=eq.${userId}` }, () => loadAll())
             .subscribe();
 
         setInterval(() => {
