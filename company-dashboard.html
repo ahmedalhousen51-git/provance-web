@@ -727,6 +727,7 @@
             </div>
 
             <!-- Stats -->
+            <h2 class="section-title" style="margin-bottom:12px"><i class="fas fa-chart-line" style="color:var(--primary)"></i> الإحصائيات الإجمالية</h2>
             <div class="stats">
                 <div class="stat-card" onclick="location.href='company-trainers.html'">
                     <div class="stat-icon primary"><i class="fas fa-users"></i></div>
@@ -756,6 +757,17 @@
                         <div class="stat-label">إشعارات جديدة</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- إحصائيات الأقسام المنفصلة -->
+            <div class="section" id="deptStatsSection" style="display:none">
+                <div class="section-head">
+                    <h2 class="section-title">
+                        <i class="fas fa-layer-group" style="color:var(--primary)"></i>
+                        إحصائيات كل قسم تدريب
+                    </h2>
+                </div>
+                <div id="deptStatsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
             </div>
 
             <!-- Applications -->
@@ -1192,7 +1204,74 @@
 
             // Update badge
             const badge = document.getElementById('pendingBadge');
-            badge.textContent = pending > 0 ? pending : '';
+            if (badge) badge.textContent = pending > 0 ? pending : '';
+
+            try { renderDeptStats(); } catch(e) { console.error('renderDeptStats:', e); }
+        }
+
+        // ========================================================
+        // إحصائيات منفصلة لكل قسم تدريب
+        // ========================================================
+        function renderDeptStats() {
+            const section = document.getElementById('deptStatsSection');
+            const grid = document.getElementById('deptStatsGrid');
+            if (!section || !grid) return;
+
+            const apps = state.applications;
+            // جمّع الطلبات حسب اسم القسم
+            const byDept = {};
+            apps.forEach(a => {
+                const dept = a.internship_title || 'تدريب عام';
+                if (!byDept[dept]) byDept[dept] = [];
+                byDept[dept].push(a);
+            });
+
+            const deptNames = Object.keys(byDept);
+            // لو فيه قسم واحد بس أو أقل، مفيش داعي للإحصائيات المنفصلة
+            if (deptNames.length <= 1) { section.style.display = 'none'; return; }
+
+            section.style.display = '';
+
+            const acceptedStatuses = ['accepted','interview_scheduled','interview_done','hired','completed'];
+            const palette = ['#4facfe','#10b981','#f59e0b','#ef4444','#a855f7','#ec4899','#14b8a6','#f97316'];
+
+            grid.innerHTML = deptNames.map((dept, i) => {
+                const list = byDept[dept];
+                const total = list.length;
+                const pending = list.filter(a => a.status === 'pending').length;
+                const accepted = list.filter(a => acceptedStatuses.includes(a.status)).length;
+                const rejected = list.filter(a => a.status === 'rejected').length;
+                const interviews = list.filter(a => a.status === 'interview_scheduled' && a.interview_date && new Date(a.interview_date) > new Date()).length;
+                const color = palette[i % palette.length];
+
+                return `
+                    <div class="stat-card" style="display:block;cursor:default;border-top:3px solid ${color}">
+                        <div style="font-weight:800;font-size:1rem;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                            <i class="fas fa-briefcase" style="color:${color}"></i>
+                            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(dept)}</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                            <div style="background:rgba(255,255,255,.03);padding:10px;border-radius:10px;text-align:center">
+                                <div style="font-size:1.5rem;font-weight:900;color:${color}">${total}</div>
+                                <div style="font-size:.75rem;color:var(--text-muted)">إجمالي الطلبات</div>
+                            </div>
+                            <div style="background:rgba(245,158,11,.08);padding:10px;border-radius:10px;text-align:center">
+                                <div style="font-size:1.5rem;font-weight:900;color:#f59e0b">${pending}</div>
+                                <div style="font-size:.75rem;color:var(--text-muted)">بانتظار الرد</div>
+                            </div>
+                            <div style="background:rgba(16,185,129,.08);padding:10px;border-radius:10px;text-align:center">
+                                <div style="font-size:1.5rem;font-weight:900;color:#10b981">${accepted}</div>
+                                <div style="font-size:.75rem;color:var(--text-muted)">مقبول</div>
+                            </div>
+                            <div style="background:rgba(79,172,254,.08);padding:10px;border-radius:10px;text-align:center">
+                                <div style="font-size:1.5rem;font-weight:900;color:#4facfe">${interviews}</div>
+                                <div style="font-size:.75rem;color:var(--text-muted)">مقابلات قادمة</div>
+                            </div>
+                        </div>
+                        ${rejected > 0 ? `<div style="margin-top:8px;font-size:.78rem;color:#ef4444;text-align:center"><i class="fas fa-times-circle"></i> ${rejected} مرفوض</div>` : ''}
+                    </div>
+                `;
+            }).join('');
         }
 
         // ========================================================
