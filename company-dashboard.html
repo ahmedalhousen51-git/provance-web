@@ -674,6 +674,9 @@
             <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
             <a href="company-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
             <a href="company-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+            <a href="#" onclick="suspendOperations(event)" class="nav-item" style="color:#f59e0b">
+                <i class="fas fa-power-off"></i> إغلاق عمليات الشركة
+            </a>
             <a href="#" onclick="logoutCompany(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
             </a>
@@ -1031,6 +1034,22 @@
                 } else {
                     avatarEl.textContent = name.charAt(0).toUpperCase();
                 }
+            }
+
+            // بانر لو الشركة موقوفة
+            if (c.operations_suspended) {
+                let banner = document.getElementById('suspendBanner');
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.id = 'suspendBanner';
+                    banner.style.cssText = 'background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#f87171;padding:14px 18px;border-radius:12px;margin-bottom:16px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap';
+                    const main = document.querySelector('.main-content') || document.querySelector('main') || document.body;
+                    main.insertBefore(banner, main.firstChild);
+                }
+                banner.innerHTML = `
+                    <span><i class="fas fa-exclamation-circle"></i> عمليات الشركة مُغلقة حالياً. فرص التدريب مخفية عن الطلاب.</span>
+                    <button onclick="reactivateOperations()" style="background:#10b981;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit"><i class="fas fa-power-off"></i> إعادة التفعيل</button>
+                `;
             }
         }
 
@@ -1596,6 +1615,66 @@
         // ========================================================
         // Logout
         // ========================================================
+        window.reactivateOperations = async function () {
+            if (!confirm('إعادة تفعيل عمليات الشركة وإظهار فرص التدريب؟')) return;
+            try {
+                const uid = state.session.user.id;
+                await state.sb.from('companies').update({
+                    operations_suspended: false,
+                    suspension_reason: null,
+                    suspended_at: null
+                }).eq('user_id', uid);
+                // أعد فتح الأقسام
+                try { await state.sb.from('internships').update({ status: 'active' }).eq('company_user_id', uid); } catch(e){}
+                alert('✅ تم إعادة تفعيل عمليات الشركة.');
+                location.reload();
+            } catch (err) { alert('خطأ: ' + err.message); }
+        };
+
+        window.suspendOperations = async function (e) {
+            if (e) e.preventDefault();
+            const reason = prompt('⚠️ إغلاق عمليات الشركة (ظرف قهري)\n\nسيتم:\n• إخفاء كل فرص التدريب من الطلاب\n• إيقاف استقبال طلبات جديدة\n\nاكتب سبب الإغلاق للإدارة:');
+            if (reason === null) return;
+            if (!reason.trim() || reason.trim().length < 5) { alert('لازم تكتب سبب واضح (5 أحرف على الأقل)'); return; }
+            if (!confirm('متأكد إنك عايز تقفل كل عمليات الشركة؟')) return;
+
+            try {
+                const uid = state.session.user.id;
+                // علّم الشركة كموقوفة
+                const { error } = await state.sb.from('companies').update({
+                    operations_suspended: true,
+                    suspension_reason: reason.trim(),
+                    suspended_at: new Date().toISOString()
+                }).eq('user_id', uid).select();
+                if (error) throw error;
+
+                // أخفِ كل فرص التدريب
+                try {
+                    await state.sb.from('internships').update({ status: 'closed' }).eq('company_user_id', uid);
+                } catch(er) { console.warn('close internships:', er); }
+
+                // أبلغ الأدمن
+                try {
+                    const { data: admins } = await state.sb.from('admins').select('user_id');
+                    if (admins) {
+                        for (const a of admins) {
+                            await state.sb.from('notifications').insert({
+                                user_id: a.user_id, user_type: 'admin',
+                                title: '🔴 شركة أغلقت عملياتها',
+                                message: `${state.company?.company_name || 'شركة'} أغلقت عملياتها. السبب: ${reason.trim()}`,
+                                type: 'error', link: 'admin-users.html', is_read: false
+                            });
+                        }
+                    }
+                } catch(er) {}
+
+                alert('✅ تم إغلاق عمليات الشركة. فرص التدريب أصبحت مخفية. تواصل مع الإدارة لإعادة التفعيل.');
+                location.reload();
+            } catch (err) {
+                alert('خطأ: ' + err.message);
+            }
+        };
+
         window.logoutCompany = async function (e) {
             if (e) e.preventDefault();
             const ok = confirm('هل تريد الخروج من حسابك؟');
