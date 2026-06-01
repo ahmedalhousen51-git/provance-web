@@ -804,6 +804,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
+    <script src="reminders-check.js"></script>
     <script>
 
     // ============================================================
@@ -2296,6 +2297,9 @@
                 State._companyUserId = userId;
                 Object.defineProperty(State, 'companyUserId', { get: () => userId, configurable: true });
             }
+
+            // فحص التذكيرات والمواعيد الفايتة في الخلفية
+            if (window.ProVanceReminders) { window.ProVanceReminders.run(sb, userId, 'company'); }
 
             const results = await Promise.allSettled([
                 sb.from('companies').select('company_name').eq('user_id', userId).maybeSingle(),
