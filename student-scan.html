@@ -131,6 +131,7 @@ let scanning = false;
 let videoStream = null;
 let processing = false;
 let loopRunning = false;
+let scanInterval = null;
 
 function showToast(msg, type='info') {
     const t = document.createElement('div');
@@ -261,6 +262,8 @@ window.scanFromImage = async (event) => {
 window.stopScanner = () => {
     scanning = false;
     loopRunning = false;
+    if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+    const ss = document.getElementById('scanStatus'); if (ss) ss.style.display = 'none';
     if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
     document.getElementById('qr-video').classList.add('hidden');
     document.getElementById('scannerArea').classList.remove('hidden');
@@ -274,28 +277,47 @@ function scanLoop(video) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     let frames = 0;
-    const tick = () => {
-        if (!scanning) { loopRunning = false; return; }
-        // تأكد إن الفيديو جاهز وأبعاده مش صفر
-        if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
+
+    // مؤشر بصري حي
+    let statusEl = document.getElementById('scanStatus');
+    if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.id = 'scanStatus';
+        statusEl.style.cssText = 'text-align:center;padding:10px;margin-top:10px;background:rgba(79,172,254,.1);border:1px solid rgba(79,172,254,.3);border-radius:10px;color:#4facfe;font-weight:700;font-size:.9rem';
+        const vid = document.getElementById('qr-video');
+        if (vid && vid.parentNode) vid.parentNode.insertBefore(statusEl, vid.nextSibling);
+    }
+    statusEl.style.display = 'block';
+
+    if (scanInterval) clearInterval(scanInterval);
+    scanInterval = setInterval(() => {
+        if (!scanning) { clearInterval(scanInterval); loopRunning = false; return; }
+        if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             try {
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+                frames++;
                 if (code && code.data) {
                     console.log('✅ QR detected:', code.data);
+                    statusEl.textContent = '✅ تم التقاط الكود!';
+                    statusEl.style.color = '#10b981';
+                    clearInterval(scanInterval);
                     stopScanner();
                     processQR(code.data);
                     return;
                 }
+                // حدّث المؤشر كل شوية
+                if (frames % 5 === 0) {
+                    statusEl.innerHTML = '<i class="fas fa-search"></i> جاري البحث عن الكود... وجّه الكاميرا للـ QR (' + frames + ')';
+                }
             } catch (e) { console.warn('scan frame error:', e); }
-            frames++;
+        } else {
+            statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تشغيل الكاميرا...';
         }
-        requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
+    }, 200); // 5 مرات في الثانية
 }
 
 window.submitCode = () => {
