@@ -329,134 +329,146 @@ window.submitCode = () => {
 async function processQR(qrData) {
     if (processing) return;
     processing = true;
+    console.log('🔍 processQR بدأت، البيانات:', qrData);
     document.getElementById('loadingOverlay').classList.remove('hidden');
 
     try {
-        // الـ QR ممكن يكون JSON أو string مباشر
+        // ── استخراج الكود (JSON أو نص مباشر) ──
         let qrCode = qrData;
         try { const parsed = JSON.parse(qrData); if (parsed.code) qrCode = parsed.code; } catch(e) {
             const m = qrData.match(/[A-Z]+-[A-Z0-9]+/i);
             if (m) qrCode = m[0];
         }
-        qrCode = qrCode.trim().toUpperCase();
+        qrCode = String(qrCode).trim().toUpperCase();
+        console.log('🔑 الكود المستخرج:', qrCode);
 
-        // 1. جيب الـ QR
+        // ── 1. جيب الـ QR ──
         const { data: qr, error: qrError } = await sb.from('qr_codes').select('*').eq('code', qrCode).maybeSingle();
-        if (qrError || !qr) {
-            showResult('error', '❌ كود غير صحيح', 'الكود ده غير موجود أو غلط');
+        console.log('📦 نتيجة جلب الكود:', { qr, qrError });
+        if (qrError) {
+            showResult('error', '❌ خطأ في قراءة الكود', 'تفاصيل: ' + qrError.message);
+            return;
+        }
+        if (!qr) {
+            showResult('error', '❌ كود غير موجود', 'الكود "' + qrCode + '" مش موجود في النظام. تأكد إنك ماسح كود صحيح.');
             return;
         }
 
-        // 2. تأكد من الحالة والصلاحية
+        // ── 2. الحالة ──
+        if (qr.status && qr.status !== 'active') {
+            showResult('error', '⏰ الكود غير نشط', 'حالة الكود: ' + qr.status + '. اطلب من الشركة كود جديد.');
+            return;
+        }
+
+        // ── 3. الصلاحية (مع سماح 10 ثوانٍ لتأخير الشبكة) ──
         const now = new Date();
-        if (qr.status !== 'active') {
-            showResult('error', '⏰ كود ' + (qr.status === 'cancelled' ? 'ملغي' : 'منتهي'), 'الكود ده مش صالح للاستخدام دلوقتي');
-            return;
-        }
-        if (new Date(qr.valid_until) < now) {
-            showResult('error', '⏰ انتهت صلاحية الكود', 'الكود ده انتهت صلاحيته');
-            try { await sb.from('qr_codes').update({ status: 'expired' }).eq('id', qr.id); } catch(e) {}
-            return;
+        if (qr.valid_until) {
+            const validUntil = new Date(qr.valid_until);
+            validUntil.setSeconds(validUntil.getSeconds() + 10); // سماح إضافي
+            if (validUntil < now) {
+                showResult('error', '⏰ انتهت صلاحية الكود', 'الكود ده انتهت صلاحيته. اطلب كود جديد من الشركة.');
+                try { await sb.from('qr_codes').update({ status: 'expired' }).eq('id', qr.id); } catch(e) {}
+                return;
+            }
         }
 
-        // 3. تأكد إن الطالب مش ماسح قبل كده النهارده لنفس الكود
+        // ── 4. تأكد إنه مش ماسح قبل كده النهارده ──
         const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-        const { data: existing } = await sb.from('attendance_logs')
-            .select('id').eq('student_user_id', studentUserId).eq('qr_code_id', qr.id)
-            .gte('scanned_at', todayStart.toISOString()).maybeSingle();
-        if (existing) {
-            showResult('error', '✋ سجّلت قبل كده', 'إنت بالفعل سجّلت على الكود ده النهارده');
-            return;
-        }
+        try {
+            const { data: existing } = await sb.from('attendance_logs')
+                .select('id').eq('student_user_id', studentUserId).eq('qr_code_id', qr.id)
+                .gte('scanned_at', todayStart.toISOString()).maybeSingle();
+            if (existing) {
+                showResult('error', '✋ سجّلت قبل كده', 'إنت بالفعل سجّلت على الكود ده النهارده.');
+                return;
+            }
+        } catch(e) { console.warn('duplicate check skipped:', e.message); }
 
-        // 4. احسب الغرض والتأخير
-        const purpose = qr.metadata?.purpose || (qr.qr_type === 'interview_checkin' ? 'interview' : 'attendance');
+        // ── 5. احسب الغرض والتأخير ──
+        const purpose = (qr.metadata && qr.metadata.purpose) || (qr.qr_type === 'interview_checkin' ? 'interview' : 'attendance');
         const attendanceType = purpose === 'interview' ? 'interview' : 'daily_attendance';
-        const department = qr.metadata?.department || null;
-        const validFrom = new Date(qr.valid_from);
+        const department = (qr.metadata && qr.metadata.department) || null;
+        const validFrom = qr.valid_from ? new Date(qr.valid_from) : now;
         const delayMinutes = Math.max(0, Math.round((now - validFrom) / 60000));
         const status = delayMinutes <= 15 ? 'on_time' : 'late';
 
-        // 5. سجّل في attendance_logs (نفس الجدول اللي الشركة بتقرأ منه)
-        const fullRow = {
+        // ── 6. سجّل الحضور — جرّب صف كامل ثم مبسّط ──
+        const baseRow = {
             qr_code_id:      qr.id,
             company_user_id: qr.company_user_id,
             student_user_id: studentUserId,
-            student_name:    studentData?.full_name || null,
-            student_photo:   studentData?.photo || null,
+            student_name:    (studentData && studentData.full_name) || null,
+            status:          status,
+            scanned_at:      now.toISOString()
+        };
+        const fullRow = Object.assign({}, baseRow, {
+            student_photo:   (studentData && studentData.photo) || null,
             attendance_type: attendanceType,
             purpose:         purpose,
             department:      department,
-            status:          status,
-            delay_minutes:   delayMinutes,
-            scanned_at:      now.toISOString()
-        };
+            delay_minutes:   delayMinutes
+        });
 
-        let { error: insErr } = await sb.from('attendance_logs').insert(fullRow);
+        console.log('💾 محاولة تسجيل الحضور:', fullRow);
+        let insErr = (await sb.from('attendance_logs').insert(fullRow)).error;
 
-        // لو فشل بسبب عمود ناقص، جرّب بالأعمدة الأساسية بس
         if (insErr) {
-            console.warn('Full insert failed, trying minimal:', insErr.message);
-            const minimalRow = {
-                qr_code_id:      qr.id,
-                company_user_id: qr.company_user_id,
-                student_user_id: studentUserId,
-                student_name:    studentData?.full_name || null,
-                attendance_type: attendanceType,
-                status:          status,
-                delay_minutes:   delayMinutes,
-                scanned_at:      now.toISOString()
-            };
-            const retry = await sb.from('attendance_logs').insert(minimalRow);
-            insErr = retry.error;
+            console.warn('⚠️ فشل الصف الكامل، أجرّب المبسّط:', insErr.message);
+            insErr = (await sb.from('attendance_logs').insert(baseRow)).error;
         }
 
         if (insErr) {
-            console.error('Insert failed:', insErr);
-            showResult('error', '❌ خطأ في التسجيل', insErr.message + ' — صوّر الشاشة وابعتها للدعم');
+            console.error('❌ فشل التسجيل نهائياً:', insErr);
+            showResult('error', '❌ تعذّر تسجيل الحضور',
+                'السبب: ' + insErr.message + '<br><br>غالباً صلاحيات قاعدة البيانات (RLS). صوّر الشاشة وابعتها للدعم.');
             return;
         }
 
-        // 6. حدّث عداد المسحات
+        console.log('✅ تم تسجيل الحضور بنجاح');
+
+        // ── 7. حدّث العداد (مش مهم لو فشل) ──
         try {
             await sb.from('qr_codes').update({
                 scans_count: (qr.scans_count || 0) + 1,
                 last_scanned_at: now.toISOString()
             }).eq('id', qr.id);
-        } catch(e) {}
+        } catch(e) { console.warn('counter update skipped'); }
 
-        // 7. إشعار للشركة
-        if (window.ProVance?.sendNotification) {
-            await window.ProVance.sendNotification({
-                userId:   qr.company_user_id,
-                userType: 'company',
-                title:    purpose === 'interview' ? '🎯 طالب وصل للمقابلة' : '✅ تسجيل حضور جديد',
-                message:  `${studentData?.full_name || 'طالب'} سجّل ${purpose === 'interview' ? 'حضوره للمقابلة' : 'حضوره'}${status === 'late' ? ' (متأخر ' + delayMinutes + ' دقيقة)' : ''}`,
-                type:     status === 'late' ? 'warning' : 'success',
-                link:     'company-QR_Code.html'
-            });
-        }
+        // ── 8. إشعار للشركة ──
+        try {
+            if (window.ProVance && window.ProVance.sendNotification) {
+                await window.ProVance.sendNotification({
+                    userId:   qr.company_user_id,
+                    userType: 'company',
+                    title:    purpose === 'interview' ? '🎯 طالب وصل للمقابلة' : '✅ تسجيل حضور جديد',
+                    message:  ((studentData && studentData.full_name) || 'طالب') + ' سجّل ' + (purpose === 'interview' ? 'حضوره للمقابلة' : 'حضوره') + (status === 'late' ? ' (متأخر ' + delayMinutes + ' دقيقة)' : ''),
+                    type:     status === 'late' ? 'warning' : 'success',
+                    link:     'company-QR_Code.html'
+                });
+            }
+        } catch(e) { console.warn('notify company skipped:', e.message); }
 
-        // 8. لو مقابلة، حدّث حالة الطلب
+        // ── 9. لو مقابلة، علّم الطلب كـ تمت ──
         if (purpose === 'interview') {
             try {
                 await sb.from('applications').update({ status: 'interview_done', updated_at: now.toISOString() })
                     .eq('student_user_id', studentUserId).eq('company_user_id', qr.company_user_id)
                     .eq('status', 'interview_scheduled');
-            } catch(e) {}
+            } catch(e) { console.warn('app update skipped'); }
         }
 
+        // ── 10. اعرض النجاح ──
         const purposeLabel = purpose === 'interview' ? 'حضور المقابلة' : 'الحضور';
-        let detail = `<strong>الشركة:</strong> ${escapeHtml(qr.company_name || '')}<br>`;
-        if (department) detail += `<strong>القسم:</strong> ${escapeHtml(department)}<br>`;
-        detail += `<strong>الوقت:</strong> ${now.toLocaleString('ar-EG')}`;
-        if (status === 'late') detail += `<br><span style="color:#f59e0b">⏰ متأخر ${delayMinutes} دقيقة</span>`;
+        let detail = '<strong>الشركة:</strong> ' + escapeHtml(qr.company_name || '') + '<br>';
+        if (department) detail += '<strong>القسم:</strong> ' + escapeHtml(department) + '<br>';
+        detail += '<strong>الوقت:</strong> ' + now.toLocaleString('ar-EG');
+        if (status === 'late') detail += '<br><span style="color:#f59e0b">⏰ متأخر ' + delayMinutes + ' دقيقة</span>';
 
         showResult('success', '✅ تم تسجيل ' + purposeLabel + ' بنجاح', detail);
-        loadRecentScans();
+        try { loadRecentScans(); } catch(e) {}
     } catch (err) {
-        console.error('Process QR error:', err);
-        showResult('error', '❌ حدث خطأ', err.message || 'فشل معالجة الكود');
+        console.error('💥 خطأ غير متوقع:', err);
+        showResult('error', '❌ حدث خطأ غير متوقع', (err && err.message) || 'فشل معالجة الكود — صوّر الشاشة وابعتها للدعم');
     } finally {
         processing = false;
         document.getElementById('loadingOverlay').classList.add('hidden');
@@ -472,6 +484,7 @@ function showResult(type, title, detail) {
             <button class="btn-secondary" onclick="document.getElementById('resultArea').innerHTML=''" style="margin-top:14px"><i class="fas fa-times"></i> إغلاق</button>
         </div>`;
     document.getElementById('resultArea').innerHTML = html;
+    try { document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
     const inp = document.getElementById('codeInput');
     if (inp) inp.value = '';
 }
