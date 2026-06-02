@@ -119,6 +119,12 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+    // احتياطي: لو الـ CDN الأساسي فشل، حمّل من مصدر تاني
+    if (typeof jsQR === 'undefined') {
+        document.write('<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"><\/script>');
+    }
+</script>
 <script src="supabase-config.js"></script>
 <script>
 const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
@@ -192,13 +198,17 @@ window.startScanner = async () => {
         document.getElementById('stopScanBtn').classList.remove('hidden');
 
         scanning = true;
+        console.log('🎬 الكاميرا اشتغلت. readyState:', video.readyState, 'الأبعاد:', video.videoWidth, 'x', video.videoHeight);
+        console.log('🔧 jsQR متاح؟', typeof jsQR);
         // ابدأ المسح أول ما الفيديو يبدأ فعلاً يعرض frames
         if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+            console.log('▶️ بدء المسح فوراً');
             scanLoop(video);
         } else {
-            video.addEventListener('playing', () => { if (scanning) scanLoop(video); }, { once: true });
+            console.log('⏳ في انتظار الفيديو...');
+            video.addEventListener('playing', () => { console.log('📹 event playing'); if (scanning) scanLoop(video); }, { once: true });
             // احتياطي: لو الـ event ماجاش، ابدأ بعد ثانية
-            setTimeout(() => { if (scanning) scanLoop(video); }, 1000);
+            setTimeout(() => { if (scanning) { console.log('⏰ بدء احتياطي بعد ثانية'); scanLoop(video); } }, 1000);
         }
     } catch (err) {
         console.error('Camera error:', err.name, err.message);
@@ -272,8 +282,15 @@ window.stopScanner = () => {
 };
 
 function scanLoop(video) {
-    if (!scanning || loopRunning) return;
+    console.log('🔁 scanLoop اتنادت. scanning:', scanning, 'loopRunning:', loopRunning);
+    if (!scanning || loopRunning) { console.log('⛔ scanLoop وقفت'); return; }
     loopRunning = true;
+    if (typeof jsQR === 'undefined') {
+        console.error('❌ jsQR مش محمّل! الـ CDN فشل');
+        alert('مكتبة قراءة QR لم تُحمّل. تأكد من الإنترنت وأعد تحميل الصفحة.');
+        loopRunning = false;
+        return;
+    }
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     let frames = 0;
