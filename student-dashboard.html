@@ -138,7 +138,6 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         <a href="student-dashboard.html" class="nav-item active"><i class="fas fa-th-large"></i> الرئيسية</a>
         <a href="student-internship.html" class="nav-item"><i class="fas fa-briefcase"></i> فرص التدريب</a>
         <a href="student-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلباتي <span class="nav-badge" id="appsBadge" style="display:none">0</span></a>
-        <a href="student-scan.html" class="nav-item"><i class="fas fa-qrcode"></i> مسح QR</a>
         <a href="student-profile.html" class="nav-item"><i class="fas fa-user"></i> الملف الشخصي</a>
         <a href="student-payments.html" class="nav-item"><i class="fas fa-credit-card"></i> المدفوعات</a>
         <a href="student-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
@@ -247,6 +246,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 <div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="push-subscribe.js"></script>
 <script>
 const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
@@ -255,6 +255,37 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 
 let studentUserId = null;
+
+// بانر تفعيل إشعارات Web Push للطالب
+function showStudentPushBanner(sb, userId) {
+    if (!window.ProVancePush) return;
+    const st = window.ProVancePush.status();
+    if (st === 'granted' || st === 'denied' || st === 'unsupported') return;
+    if (sessionStorage.getItem('pushBannerDismissed')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'pushBanner';
+    banner.style.cssText = 'background:rgba(79,172,254,.12);border:1px solid rgba(79,172,254,.35);color:#fff;padding:14px 18px;border-radius:12px;margin:0 auto 16px;max-width:1200px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:inherit';
+    banner.innerHTML = '<span style="font-weight:700"><i class="fas fa-bell"></i> فعّل الإشعارات عشان توصلك تنبيهات القبول والمقابلات حتى والموقع مقفول</span>' +
+        '<span style="display:flex;gap:8px">' +
+        '<button id="pushEnableBtn" style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit">تفعيل</button>' +
+        '<button id="pushDismissBtn" style="background:transparent;color:#94a3b8;border:1px solid rgba(255,255,255,.15);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit">لاحقاً</button>' +
+        '</span>';
+    document.body.insertBefore(banner, document.body.firstChild);
+
+    document.getElementById('pushEnableBtn').onclick = async () => {
+        const r = await window.ProVancePush.enable(sb, userId, 'student');
+        if (r.ok) { banner.remove(); showToast('✅ تم تفعيل الإشعارات', 'success'); }
+        else if (r.reason === 'denied') { banner.remove(); showToast('تم رفض الإذن — فعّله من إعدادات المتصفح', 'warning'); }
+        else if (r.reason === 'no-vapid') { showToast('الإشعارات قيد الإعداد', 'info'); }
+        else { showToast('تعذّر التفعيل، حاول تاني', 'error'); }
+    };
+    document.getElementById('pushDismissBtn').onclick = () => {
+        sessionStorage.setItem('pushBannerDismissed', '1');
+        banner.remove();
+    };
+}
+
 let studentData = null;
 
 function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
@@ -296,6 +327,9 @@ async function loadDashboard() {
             return;
         }
         studentUserId = sessData.session.user.id;
+
+        // بانر تفعيل إشعارات Web Push
+        try { showStudentPushBanner(sb, studentUserId); } catch(e) {}
 
         // اجلب بيانات الطالب
         const { data: student, error: studentErr } = await sb.from('student')
