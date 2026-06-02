@@ -304,6 +304,19 @@
                 related_id: opts.relatedId || null,
                 is_read: false
             });
+
+            // أرسل Web Push (يصل حتى لو الموقع مقفول) — لا يعطّل لو فشل
+            try {
+                sb.functions.invoke('send-push', {
+                    body: {
+                        user_id: opts.userId,
+                        title: opts.title,
+                        body: opts.message,
+                        url: opts.link || opts.actionUrl || '/'
+                    }
+                }).catch(() => {});
+            } catch (e) { /* تجاهل */ }
+
             return true;
         } catch (err) {
             console.warn('sendNotification:', err.message);
