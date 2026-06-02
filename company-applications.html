@@ -763,7 +763,23 @@
                     </div>
                     <div class="form-group">
                         <label><i class="fas fa-clock" style="color:var(--primary)"></i> وقت المقابلة *</label>
-                        <input type="time" id="interviewTime" value="09:00" step="300" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;width:100%;font-family:inherit;font-size:1rem;color-scheme:dark">
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                            <select id="ivHour" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;font-family:inherit;font-size:1rem;text-align:center">
+                                <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                                <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                                <option value="7">7</option><option value="8">8</option><option value="9" selected>9</option>
+                                <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                            </select>
+                            <select id="ivMinute" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;font-family:inherit;font-size:1rem;text-align:center">
+                                <option value="00" selected>:00</option><option value="15">:15</option>
+                                <option value="30">:30</option><option value="45">:45</option>
+                            </select>
+                            <select id="ivAmPm" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;font-family:inherit;font-size:1rem;text-align:center">
+                                <option value="ص" selected>صباحاً</option>
+                                <option value="م">مساءً</option>
+                            </select>
+                        </div>
+                        <div style="font-size:.75rem;color:var(--text-muted);margin-top:5px;text-align:center">الساعة : الدقيقة : الفترة</div>
                     </div>
                 </div>
                 <div class="form-group">
@@ -1082,6 +1098,26 @@ window.acceptApp = (appId) => {
     }
 };
     
+// يحوّل 3 قوائم (ساعة 12 + دقيقة + ص/م) لصيغة 24 ساعة "HH:MM"
+function build24hTime(hourId, minId, ampmId) {
+    let h = parseInt(document.getElementById(hourId)?.value || '9', 10);
+    const m = document.getElementById(minId)?.value || '00';
+    const ampm = document.getElementById(ampmId)?.value || 'ص';
+    if (ampm === 'م' && h !== 12) h += 12;       // مساءً: 1م=13 ... 11م=23 (12م تفضل 12)
+    if (ampm === 'ص' && h === 12) h = 0;          // 12 صباحاً = منتصف الليل 00
+    return String(h).padStart(2, '0') + ':' + m;
+}
+
+// يحوّل "HH:MM" (24h) لقيم الـ 3 قوائم {hour, minute, ampm}
+function parse24hTime(t) {
+    const [hh, mm] = (t || '09:00').split(':');
+    let h = parseInt(hh, 10);
+    const ampm = h >= 12 ? 'م' : 'ص';
+    if (h === 0) h = 12;            // منتصف الليل
+    else if (h > 12) h -= 12;       // مساءً
+    return { hour: String(h), minute: mm || '00', ampm };
+}
+
 window.confirmAccept = async () => {
     const modal  = document.getElementById('acceptModal');
     const appId  = modal?.getAttribute('data-app-id');
@@ -1091,7 +1127,7 @@ window.confirmAccept = async () => {
         return;
     }
     const day      = document.getElementById('interviewDay')?.value;
-    const time     = document.getElementById('interviewTime')?.value || '09:00';
+    const time     = build24hTime('ivHour', 'ivMinute', 'ivAmPm');
     const location = document.getElementById('interviewLocation')?.value?.trim() || '';
     const notes    = document.getElementById('interviewNotes')?.value?.trim() || '';
 
@@ -1175,7 +1211,18 @@ window.editInterview = (appId) => {
                     </div>
                     <div class="form-group">
                         <label><i class="fas fa-clock" style="color:var(--primary)"></i> وقت المقابلة</label>
-                        <input type="time" id="editIvTime" value="${ivTime || '09:00'}" step="300" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;width:100%;font-family:inherit;font-size:1rem;color-scheme:dark">
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                            <select id="editIvHour" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;font-family:inherit;font-size:1rem;text-align:center">
+                                ${[1,2,3,4,5,6,7,8,9,10,11,12].map(h => `<option value="${h}" ${parse24hTime(ivTime).hour==String(h)?'selected':''}>${h}</option>`).join('')}
+                            </select>
+                            <select id="editIvMinute" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;font-family:inherit;font-size:1rem;text-align:center">
+                                ${['00','15','30','45'].map(m => `<option value="${m}" ${parse24hTime(ivTime).minute==m?'selected':''}>:${m}</option>`).join('')}
+                            </select>
+                            <select id="editIvAmPm" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;font-family:inherit;font-size:1rem;text-align:center">
+                                <option value="ص" ${parse24hTime(ivTime).ampm==='ص'?'selected':''}>صباحاً</option>
+                                <option value="م" ${parse24hTime(ivTime).ampm==='م'?'selected':''}>مساءً</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -1202,7 +1249,7 @@ window.editInterview = (appId) => {
 
 window.saveEditInterview = async (appId) => {
     const day      = document.getElementById('editIvDay')?.value;
-    const time     = document.getElementById('editIvTime')?.value || '09:00';
+    const time     = build24hTime('editIvHour', 'editIvMinute', 'editIvAmPm');
     const location = document.getElementById('editIvLocation')?.value?.trim();
     const notes    = document.getElementById('editIvNotes')?.value?.trim();
 
