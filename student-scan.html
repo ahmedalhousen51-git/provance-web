@@ -130,6 +130,7 @@ let studentData = null;
 let scanning = false;
 let videoStream = null;
 let processing = false;
+let loopRunning = false;
 
 function showToast(msg, type='info') {
     const t = document.createElement('div');
@@ -190,7 +191,14 @@ window.startScanner = async () => {
         document.getElementById('stopScanBtn').classList.remove('hidden');
 
         scanning = true;
-        scanLoop(video);
+        // ابدأ المسح أول ما الفيديو يبدأ فعلاً يعرض frames
+        if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+            scanLoop(video);
+        } else {
+            video.addEventListener('playing', () => { if (scanning) scanLoop(video); }, { once: true });
+            // احتياطي: لو الـ event ماجاش، ابدأ بعد ثانية
+            setTimeout(() => { if (scanning) scanLoop(video); }, 1000);
+        }
     } catch (err) {
         console.error('Camera error:', err.name, err.message);
         let errMsg = 'فشل فتح الكاميرا';
@@ -252,6 +260,7 @@ window.scanFromImage = async (event) => {
 
 window.stopScanner = () => {
     scanning = false;
+    loopRunning = false;
     if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
     document.getElementById('qr-video').classList.add('hidden');
     document.getElementById('scannerArea').classList.remove('hidden');
@@ -260,17 +269,29 @@ window.stopScanner = () => {
 };
 
 function scanLoop(video) {
-    if (!scanning) return;
+    if (!scanning || loopRunning) return;
+    loopRunning = true;
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    let frames = 0;
     const tick = () => {
-        if (!scanning) return;
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        if (!scanning) { loopRunning = false; return; }
+        // تأكد إن الفيديو جاهز وأبعاده مش صفر
+        if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
-            if (code && code.data) { stopScanner(); processQR(code.data); return; }
+            try {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+                if (code && code.data) {
+                    console.log('✅ QR detected:', code.data);
+                    stopScanner();
+                    processQR(code.data);
+                    return;
+                }
+            } catch (e) { console.warn('scan frame error:', e); }
+            frames++;
         }
         requestAnimationFrame(tick);
     };
