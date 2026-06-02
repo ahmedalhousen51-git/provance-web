@@ -158,15 +158,10 @@ window.switchTab = (tab) => {
 };
 
 window.startScanner = async () => {
-    // كشف المتصفحات الداخلية (سناب/انستجرام/فيسبوك) — بتمنع الكاميرا
-    const ua = navigator.userAgent || '';
-    const inApp = /Snapchat|Instagram|FBAN|FBAV|FB_IAB|Messenger|Line|Twitter|TikTok|WhatsApp/i.test(ua);
-    if (inApp) {
-        showCameraFallback('⚠️ إنت فاتح الموقع جوّه تطبيق (سناب/انستجرام..). دي بتمنع الكاميرا.<br><br>📲 <strong>اضغط على الـ 3 نقط فوق ← "فتح في المتصفح" (Chrome)</strong><br>أو انسخ الرابط وافتحه في Chrome.<br><br>وممكن دلوقتي تكتب الكود يدوياً تحت 👇');
-        return;
-    }
+    console.log('📷 startScanner. mediaDevices?', !!navigator.mediaDevices, '| protocol:', location.protocol, '| host:', location.hostname);
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showCameraFallback('الـ browser ده مش بيدعم الكاميرا. استخدم Chrome أو Safari.');
+        console.warn('⛔ mediaDevices غير متاح');
+        showCameraFallback('المتصفح ده مش بيدعم الكاميرا. جرّب Chrome أو Safari، أو اكتب الكود يدوياً تحت.');
         return;
     }
     if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
@@ -219,8 +214,8 @@ window.startScanner = async () => {
         }
     } catch (err) {
         console.error('Camera error:', err.name, err.message);
-        let errMsg = 'فشل فتح الكاميرا';
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') errMsg = '🚫 تم رفض إذن الكاميرا. روح Settings → السماح بالكاميرا';
+        let errMsg = 'فشل فتح الكاميرا (' + (err.name || 'خطأ') + ')';
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') errMsg = '🚫 تم رفض إذن الكاميرا. روح إعدادات المتصفح → السماح بالكاميرا لـ pro-vance.com';
         else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') errMsg = '📵 مفيش كاميرا في الجهاز';
         else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') errMsg = '⚠️ الكاميرا مستخدمة من app تاني - اقفله وحاول تاني';
         else if (err.name === 'OverconstrainedError') errMsg = '⚠️ مشكلة في إعدادات الكاميرا';
