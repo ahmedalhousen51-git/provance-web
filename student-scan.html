@@ -74,17 +74,24 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 <div id="cameraSection" class="hidden">
 <div class="scanner-area" id="scannerArea">
 <div class="scanner-icon"><i class="fas fa-qrcode"></i></div>
-<div class="scanner-msg">اضغط "بدء المسح" وصوّر الـ QR Code اللي عرضته الشركة</div>
-<div style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;padding:10px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:10px;line-height:1.6">
-<i class="fas fa-info-circle" style="color:#4facfe"></i> <strong>ملاحظات مهمة:</strong><br>
-• المتصفح هيطلب إذن للكاميرا - اضغط "السماح"<br>
-• لو ما اشتغلتش، استخدم "ارفع صورة" أو "اكتب الكود"
+<div class="scanner-msg">اختر طريقة تسجيل حضورك بالـ QR Code</div>
+<div style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;padding:10px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:10px;line-height:1.7">
+<i class="fas fa-info-circle" style="color:#4facfe"></i> <strong>طريقتان:</strong><br>
+• <strong>مسح مباشر:</strong> الكاميرا تقرأ الكود تلقائياً<br>
+• <strong>صوّر الـ QR:</strong> صوّر الكود بالكاميرا وهنقراه (أضمن لو المسح المباشر مااشتغلش)<br>
+• المتصفح هيطلب إذن الكاميرا - اضغط "السماح"
 </div>
 </div>
-<button class="btn-primary" id="startScanBtn" onclick="startScanner()"><i class="fas fa-camera"></i> بدء المسح</button>
+<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+    <button class="btn-primary" id="startScanBtn" onclick="startScanner()" style="flex:1;min-width:140px"><i class="fas fa-qrcode"></i> مسح مباشر</button>
+    <button class="btn-primary" id="captureBtn" onclick="document.getElementById('cameraInput').click()" style="flex:1;min-width:140px;background:linear-gradient(135deg,#10b981,#059669)"><i class="fas fa-camera"></i> صوّر الـ QR</button>
+</div>
 <video id="qr-video" class="hidden" playsinline autoplay muted></video>
-<input type="file" id="photoInput" accept="image/*" capture="environment" onchange="scanFromImage(event)" style="display:none">
-<button class="btn-secondary" onclick="document.getElementById('photoInput').click()" style="margin-top:8px;background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff;border:none;font-weight:800"><i class="fas fa-image"></i> أو ارفع صورة الـ QR</button>
+<!-- كاميرا مباشرة لالتقاط صورة (بتفتح كاميرا النظام) -->
+<input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="scanFromImage(event)" style="display:none">
+<!-- رفع صورة من المعرض -->
+<input type="file" id="photoInput" accept="image/*" onchange="scanFromImage(event)" style="display:none">
+<button class="btn-secondary" onclick="document.getElementById('photoInput').click()" style="margin-top:8px;background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border)"><i class="fas fa-image"></i> أو ارفع صورة من المعرض</button>
 <button class="btn-secondary hidden" id="stopScanBtn" onclick="stopScanner()" style="margin-top:10px"><i class="fas fa-times"></i> إيقاف</button>
 </div>
 
@@ -243,13 +250,15 @@ function showCameraFallback(reason) {
 window.scanFromImage = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.classList.remove('hidden');
     try {
         const img = new Image();
         const reader = new FileReader();
         reader.onload = (e) => {
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
                 let w = img.width, h = img.height;
                 const maxDim = 1200;
                 if (w > maxDim || h > maxDim) {
@@ -259,15 +268,16 @@ window.scanFromImage = async (event) => {
                 ctx.drawImage(img, 0, 0, w, h);
                 const imageData = ctx.getImageData(0, 0, w, h);
                 const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+                if (overlay) overlay.classList.add('hidden');
                 if (code && code.data) { processQR(code.data); }
-                else { showToast('❌ مفيش QR Code في الصورة - جرب صورة أوضح', 'error'); }
+                else { showToast('❌ مفيش QR واضح في الصورة - قرّب الكاميرا من الكود وصوّر تاني', 'error'); }
             };
-            img.onerror = () => showToast('❌ فشل قراءة الصورة', 'error');
+            img.onerror = () => { if (overlay) overlay.classList.add('hidden'); showToast('❌ فشل قراءة الصورة', 'error'); };
             img.src = e.target.result;
         };
-        reader.onerror = () => showToast('❌ فشل قراءة الملف', 'error');
+        reader.onerror = () => { if (overlay) overlay.classList.add('hidden'); showToast('❌ فشل قراءة الملف', 'error'); };
         reader.readAsDataURL(file);
-    } catch (err) { showToast('❌ خطأ: ' + err.message, 'error'); }
+    } catch (err) { if (overlay) overlay.classList.add('hidden'); showToast('❌ خطأ: ' + err.message, 'error'); }
     finally { event.target.value = ''; }
 };
 
