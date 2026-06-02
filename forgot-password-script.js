@@ -77,22 +77,42 @@ forgotForm.addEventListener('submit', function(e) {
     // Show loading
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
-    
-    // Simulate API call
-    setTimeout(() => {
-        // Hide form and show success
-        forgotFormElement.style.display = 'none';
-        forgotHeader.style.display = 'none';
-        forgotIcon.style.display = 'none';
-        successMessage.classList.add('show');
-        
-        // Set email in success message
-        document.getElementById('sentEmail').textContent = email;
-        
-        // Reset button
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
-    }, 2000);
+
+    // إرسال إيميل إعادة التعيين فعلياً عبر Supabase
+    (async () => {
+        try {
+            const sb = (window.ProVance && window.ProVance.sb)
+                || (window.supabase && window.supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
+                ));
+
+            const redirectTo = window.location.origin + '/company-reset-password.html';
+            const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+
+            if (error) {
+                console.error(error);
+                showError('حدث خطأ، حاول مرة أخرى');
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                return;
+            }
+
+            // نجح - اعرض رسالة النجاح
+            forgotFormElement.style.display = 'none';
+            forgotHeader.style.display = 'none';
+            forgotIcon.style.display = 'none';
+            successMessage.classList.add('show');
+            document.getElementById('sentEmail').textContent = email;
+            submitBtn.classList.remove('loading');
+            submitBtn.disabled = false;
+        } catch (err) {
+            console.error(err);
+            showError('خطأ في الاتصال، حاول مرة أخرى');
+            submitBtn.classList.remove('loading');
+            submitBtn.disabled = false;
+        }
+    })();
 });
 
 // ============================================
@@ -112,13 +132,25 @@ resendLink.addEventListener('click', function(e) {
     this.style.pointerEvents = 'none';
     this.style.opacity = '0.5';
     this.textContent = 'جاري الإرسال...';
-    
-    setTimeout(() => {
-        this.style.pointerEvents = 'auto';
-        this.style.opacity = '1';
-        this.textContent = 'أعد الإرسال';
-        showNotification('تم إعادة إرسال الرابط بنجاح!');
-    }, 2000);
+
+    const linkEl = this;
+    (async () => {
+        try {
+            const sb = (window.ProVance && window.ProVance.sb)
+                || (window.supabase && window.supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
+                ));
+            const redirectTo = window.location.origin + '/company-reset-password.html';
+            await sb.auth.resetPasswordForEmail(email, { redirectTo });
+            showNotification('تم إعادة إرسال الرابط بنجاح!');
+        } catch (err) {
+            showNotification('حدث خطأ، حاول مرة أخرى');
+        }
+        linkEl.style.pointerEvents = 'auto';
+        linkEl.style.opacity = '1';
+        linkEl.textContent = 'أعد الإرسال';
+    })();
 });
 
 // ============================================
