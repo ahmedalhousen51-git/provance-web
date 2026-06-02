@@ -1139,22 +1139,25 @@ window.confirmAccept = async () => {
     if (!sb) { showToast('فشل الاتصال', 'error'); return; }
     
     try {
-        const updates = {
-            status: 'interview_scheduled',
-            interview_date: interviewDate,
-            updated_at: new Date().toISOString()
-        };
-        if (location) updates.interview_location = location;
-        if (notes) updates.interview_notes = notes;
-        
-        // .select() للتأكد إن الصف فعلاً اتعدّل (لو RLS رفض هترجع فاضية)
-        const { data: updated, error } = await sb.from('applications').update(updates).eq('id', appId).select();
+        // الأساسيات أولاً (status + التاريخ) — دي الأهم
+        const { data: updated, error } = await sb.from('applications')
+            .update({ status: 'interview_scheduled', interview_date: interviewDate, updated_at: new Date().toISOString() })
+            .eq('id', appId).select();
         if (error) throw error;
         if (!updated || updated.length === 0) {
             showToast('تعذّر حفظ القبول — تأكد من صلاحيات قاعدة البيانات (RLS)', 'error');
             return;
         }
-        
+
+        // المكان والملاحظات بشكل منفصل — لو الأعمدة ناقصة مايفشلش القبول
+        if (location || notes) {
+            const extra = {};
+            if (location) extra.interview_location = location;
+            if (notes) extra.interview_notes = notes;
+            try { await sb.from('applications').update(extra).eq('id', appId); }
+            catch(e) { console.warn('interview extra fields skipped:', e.message); }
+        }
+
         const app = allApplications.find(a => a.id === appId);
         if (window.ProVance && window.ProVance.sendNotification && app) {
             try {
