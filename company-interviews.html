@@ -2322,20 +2322,22 @@
             console.log('🎯 كل الطلبات اللي رجعت:', interviews.length);
             if (appsRes.error) console.error('❌ خطأ في جلب الطلبات:', appsRes.error);
 
-            // حدّث المتغير المحلي اللي دوال العرض بتستخدمه (ده كان سبب إن كله 0)
-            allInterviews = interviews;
-
             const qrCodes = qrRes.data || [];
             const myAppIds = new Set(interviews.map(a => a.id));
             const lateReports = (lateRes.data || []).filter(r => myAppIds.has(r.application_id));
 
-            Object.defineProperty(State, 'allInterviews', { get: () => interviews, configurable: true });
-            Object.defineProperty(State, 'allQrCodes', { get: () => qrCodes, configurable: true });
+            // حدّث المتغيرات المحلية (دوال العرض بتستخدمها)
+            allInterviews = interviews;
+            window._allQrCodes = qrCodes;
             window._allLateReports = lateReports;
 
-            // patch the renderLateReports getter
-            const origLate = State.allLateReports;
-            Object.defineProperty(State, 'allLateReports', { get: () => lateReports, configurable: true });
+            // عرّف الـ getters مرة واحدة بس (تجنّب "Cannot redefine property")
+            if (!State._gettersReady) {
+                Object.defineProperty(State, 'allInterviews', { get: () => allInterviews, configurable: true });
+                Object.defineProperty(State, 'allQrCodes', { get: () => window._allQrCodes || [], configurable: true });
+                Object.defineProperty(State, 'allLateReports', { get: () => window._allLateReports || [], configurable: true });
+                State._gettersReady = true;
+            }
 
             State.updateStats();
             State.renderAllTabs();
@@ -2370,8 +2372,8 @@
                 });
             }
         } catch (err) {
-            console.error('Load error:', err);
-            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
+            console.error('💥 Load error بالتفصيل:', err);
+            window.ProVance.showToast('خطأ: ' + (err && err.message ? err.message : 'تحميل البيانات'), 'error');
         }
     }
 
