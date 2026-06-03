@@ -985,13 +985,13 @@
     // ============ STATS ============
     function updateStats() {
         const now = Date.now();
-        const upcoming = allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
-        const past = allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
+        const upcoming = State.allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() > now);
+        const past = State.allInterviews.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
         const attended = past.filter(i => ['interview_done', 'accepted', 'hired', 'in_training', 'completed'].includes(i.status));
         const missed = past.filter(i => i.status === 'interview_scheduled');
         const rate = past.length ? Math.round(attended.length / past.length * 100) : 0;
 
-        document.getElementById('statTotal').textContent = allInterviews.length;
+        document.getElementById('statTotal').textContent = State.allInterviews.length;
         document.getElementById('statUpcoming').textContent = upcoming.length;
         document.getElementById('statAttended').textContent = attended.length;
         document.getElementById('statMissed').textContent = missed.length;
@@ -999,7 +999,7 @@
 
         const today = new Date(); today.setHours(0,0,0,0);
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-        const todayInts = allInterviews.filter(i => {
+        const todayInts = State.allInterviews.filter(i => {
             if (!i.interview_date) return false;
             const d = new Date(i.interview_date);
             return d >= today && d < tomorrow;
@@ -1008,7 +1008,7 @@
         document.getElementById('upcomingCount').textContent = upcoming.length;
         document.getElementById('todayCount').textContent = todayInts.length;
         document.getElementById('pastCount').textContent = past.length;
-        document.getElementById('lateCount').textContent = allLateReports.length;
+        document.getElementById('lateCount').textContent = State.allLateReports.length;
     }
 
     // ============ RENDER INTERVIEW CARD ============
@@ -1124,7 +1124,7 @@
         const today = new Date(); today.setHours(0,0,0,0);
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
 
-        let filtered = allInterviews.slice();
+        let filtered = State.allInterviews.slice();
 
         if (search) {
             filtered = filtered.filter(i =>
@@ -1189,7 +1189,7 @@
 
     function renderLateReports() {
         const list = document.getElementById('lateReportsList');
-        if (allLateReports.length === 0) {
+        if (State.allLateReports.length === 0) {
             list.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>لا توجد تقارير تأخير</h3><p>هنا تظهر التقارير لما يحصل تأخير</p></div>';
             return;
         }
@@ -1199,7 +1199,7 @@
             'both': 'الطرفين', 'force_majeure': 'قوة قاهرة'
         };
 
-        list.innerHTML = allLateReports.map(r => `
+        list.innerHTML = State.allLateReports.map(r => `
             <div class="late-report-card">
                 <div class="late-icon"><i class="fas fa-exclamation-triangle"></i></div>
                 <div class="late-body">
@@ -2326,14 +2326,15 @@
             const myAppIds = new Set(interviews.map(a => a.id));
             const lateReports = (lateRes.data || []).filter(r => myAppIds.has(r.application_id));
 
-            // حدّث المتغيرات المحلية (دوال العرض بتستخدمها)
-            allInterviews = interviews;
+            // حدّث المتغيرات على window (نطاق عام مؤكد)
+            window._allInterviews = interviews;
             window._allQrCodes = qrCodes;
             window._allLateReports = lateReports;
+            try { allInterviews = interviews; } catch(e) {}
 
-            // عرّف الـ getters مرة واحدة بس (تجنّب "Cannot redefine property")
+            // عرّف الـ getters مرة واحدة بس (تقرأ من window)
             if (!State._gettersReady) {
-                Object.defineProperty(State, 'allInterviews', { get: () => allInterviews, configurable: true });
+                Object.defineProperty(State, 'allInterviews', { get: () => window._allInterviews || [], configurable: true });
                 Object.defineProperty(State, 'allQrCodes', { get: () => window._allQrCodes || [], configurable: true });
                 Object.defineProperty(State, 'allLateReports', { get: () => window._allLateReports || [], configurable: true });
                 State._gettersReady = true;
