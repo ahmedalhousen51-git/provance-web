@@ -2303,11 +2303,11 @@
 
             const results = await Promise.allSettled([
                 sb.from('companies').select('company_name').eq('user_id', userId).maybeSingle(),
-                sb.from('applications').select('id, student_user_id, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date').eq('company_user_id', userId)
-                    .in('status', ['interview_scheduled', 'interview_done', 'accepted', 'rejected', 'hired', 'in_training', 'completed'])
-                    .order('interview_date', { ascending: true }),
+                sb.from('applications').select('id, student_user_id, student_name, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date, interview_location, interview_notes')
+                    .eq('company_user_id', userId)
+                    .order('created_at', { ascending: false }),
                 sb.from('qr_codes').select('*').eq('company_user_id', userId)
-                    .eq('qr_type', 'interview').order('created_at', { ascending: false }),
+                    .order('created_at', { ascending: false }),
                 sb.from('late_reports').select('*').order('created_at', { ascending: false })
             ]);
             const companyRes = results[0] && results[0].status === "fulfilled" ? results[0].value : { data: [], error: results[0] && results[0].reason };
@@ -2319,9 +2319,12 @@
             Object.defineProperty(State, 'companyName', { get: () => companyName, configurable: true });
 
             const interviews = appsRes.data || [];
-            console.log('🎯 المقابلات اللي رجعت من القاعدة:', interviews.length, interviews);
-            console.log('🆔 company userId:', userId);
-            if (appsRes.error) console.error('❌ خطأ في جلب المقابلات:', appsRes.error);
+            console.log('🎯 كل الطلبات اللي رجعت:', interviews.length);
+            if (appsRes.error) console.error('❌ خطأ في جلب الطلبات:', appsRes.error);
+
+            // حدّث المتغير المحلي اللي دوال العرض بتستخدمه (ده كان سبب إن كله 0)
+            allInterviews = interviews;
+
             const qrCodes = qrRes.data || [];
             const myAppIds = new Set(interviews.map(a => a.id));
             const lateReports = (lateRes.data || []).filter(r => myAppIds.has(r.application_id));
