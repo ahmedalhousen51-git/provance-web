@@ -658,6 +658,13 @@
 
             <!-- Tab: Generate QR -->
             <div id="tab-generate" class="tab-content active">
+                <!-- مقابلات اليوم المجدولة -->
+                <div class="qr-generator-card" id="todayInterviewsCard" style="margin-bottom:18px;display:none">
+                    <h2><i class="fas fa-calendar-day" style="color:#4facfe"></i> مقابلات اليوم</h2>
+                    <p style="color:var(--text-muted);font-size:.88rem;margin-bottom:14px">المتدربين اللي عندهم مقابلة النهارده — ولّد QR مخصص لكل واحد بضغطة</p>
+                    <div id="todayInterviewsList"></div>
+                </div>
+
                 <div class="qr-generator-card">
                     <h2>QR Code - حضور أو مقابلة</h2>
                     <p id="qrGenSubtitle">حدد الغرض والقسم ثم ولّد الـ QR</p>
@@ -1030,6 +1037,101 @@
 
         if (tabName === 'stats') renderMonthStats();
         if (tabName === 'cleanup-logs') renderCleanupLogs();
+    };
+
+    // ============ مقابلات اليوم ============
+    async function loadTodayInterviews() {
+        try {
+            const sb = window.ProVance.sb;
+            if (!sb || !companyUserId) return;
+            const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+            const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
+
+            const { data: apps } = await sb.from('applications')
+                .select('id, student_user_id, student_name, internship_title, interview_date, interview_location, status')
+                .eq('company_user_id', companyUserId)
+                .eq('status', 'interview_scheduled')
+                .gte('interview_date', todayStart.toISOString())
+                .lte('interview_date', todayEnd.toISOString())
+                .order('interview_date', { ascending: true });
+
+            const card = document.getElementById('todayInterviewsCard');
+            const list = document.getElementById('todayInterviewsList');
+            if (!card || !list) return;
+
+            if (!apps || apps.length === 0) { card.style.display = 'none'; return; }
+
+            card.style.display = 'block';
+            list.innerHTML = apps.map(a => {
+                const t = a.interview_date ? new Date(a.interview_date).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
+                const esc = window.ProVance.escapeHtml;
+                return `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:rgba(79,172,254,.06);border:1px solid rgba(79,172,254,.2);border-radius:12px;padding:14px;margin-bottom:10px">
+                        <div style="flex:1;min-width:160px">
+                            <div style="font-weight:800;font-size:.98rem">${esc(a.student_name || 'متدرب')}</div>
+                            <div style="color:var(--text-muted);font-size:.82rem;margin-top:3px">
+                                <i class="fas fa-clock"></i> ${t}
+                                ${a.internship_title ? ' • ' + esc(a.internship_title) : ''}
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="generateInterviewQR('${a.id}','${(a.student_name||'').replace(/'/g,"")}')" style="padding:8px 16px;font-size:.85rem;background:linear-gradient(135deg,#4facfe,#00f2fe)">
+                            <i class="fas fa-qrcode"></i> ولّد QR للمقابلة
+                        </button>
+                    </div>`;
+            }).join('');
+        } catch (e) { console.warn('loadTodayInterviews:', e); }
+    }
+
+    // توليد QR مربوط بمقابلة محددة
+    window.generateInterviewQR = async (appId, studentName) => {
+        try {
+            const sb = window.ProVance.sb;
+            if (!sb) { window.ProVance.showToast('فشل الاتصال', 'error'); return; }
+
+            // ألغِ الكود النشط القديم
+            if (activeQrCode && activeQrCode.status === 'active') {
+                await sb.from('qr_codes').update({ status: 'cancelled' }).eq('id', activeQrCode.id);
+            }
+
+            // جيب بيانات المقابلة
+            const { data: app } = await sb.from('applications')
+                .select('student_user_id, interview_location').eq('id', appId).maybeSingle();
+
+            const now = new Date();
+            const validUntil = new Date(now.getTime() + 60 * 60 * 1000); // ساعة
+            const qrCodeStr = 'INT-' + Math.random().toString(36).substring(2, 14).toUpperCase();
+
+            const { data: newQr, error } = await sb.from('qr_codes').insert({
+                code: qrCodeStr,
+                qr_type: 'daily_attendance',
+                company_user_id: companyUserId,
+                company_name: companyName,
+                application_id: appId,
+                student_user_id: app ? app.student_user_id : null,
+                metadata: {
+                    training_day: now.toISOString().slice(0, 10),
+                    purpose: 'interview',
+                    purpose_label: 'مقابلة',
+                    student_name: studentName || null,
+                    department: (app && app.interview_location) || null
+                },
+                valid_from: now.toISOString(),
+                valid_until: validUntil.toISOString(),
+                status: 'active'
+            }).select().single();
+
+            if (error) throw error;
+
+            activeQrCode = newQr;
+            window.ProVance.showToast('🎯 تم توليد QR لمقابلة ' + (studentName || 'المتدرب') + '!', 'success');
+            renderQR();
+            startCountdown();
+            // اعمل scroll للكود
+            try { document.querySelector('.qr-generator-card:nth-of-type(2)')?.scrollIntoView({ behavior: 'smooth' }); } catch(e) {}
+        } catch (err) {
+            console.error(err);
+            window.ProVance.showToast('خطأ في توليد الكود: ' + err.message, 'error');
+        }
     };
 
     window.generateNewQR = async () => {
@@ -2021,10 +2123,12 @@
         loadCleanupLogs();
         loadDataPolicy();
         await loadAll();
+        loadTodayInterviews();
 
         sb.channel('qr-' + userId)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'qr_codes', filter: `company_user_id=eq.${userId}` }, () => loadAll())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs', filter: `company_user_id=eq.${userId}` }, () => loadAll())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `company_user_id=eq.${userId}` }, () => loadTodayInterviews())
             .subscribe();
 
         setInterval(() => {
