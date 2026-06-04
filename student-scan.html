@@ -355,19 +355,41 @@ window.submitCode = () => {
     processQR(code);
 };
 
+// يعرض خطوات التشخيص مباشرة على الشاشة (مش toast بيختفي)
+function diagStep(msg, ok) {
+    let box = document.getElementById('diagBox');
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'diagBox';
+        box.style.cssText = 'background:#0f172a;border:2px solid #4facfe;border-radius:12px;padding:14px;margin:14px 0;font-size:.85rem;line-height:1.9;color:#fff;direction:rtl;max-height:300px;overflow:auto';
+        const ra = document.getElementById('resultArea');
+        if (ra) ra.parentNode.insertBefore(box, ra);
+    }
+    const color = ok === true ? '#10b981' : ok === false ? '#ef4444' : '#94a3b8';
+    const icon = ok === true ? '✅' : ok === false ? '❌' : '⏳';
+    box.innerHTML += `<div style="color:${color}">${icon} ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+}
+
 async function processQR(qrData) {
     if (processing) return;
     processing = true;
-    console.log('🔍 processQR بدأت، البيانات:', qrData);
+
+    // امسح أي تشخيص قديم وابدأ جديد
+    const oldDiag = document.getElementById('diagBox');
+    if (oldDiag) oldDiag.remove();
+
+    diagStep('بدأت المعالجة. البيانات: ' + String(qrData).substring(0, 40), null);
 
     // فحص حاسم: لازم الطالب يكون مسجّل دخول
     if (!studentUserId) {
+        diagStep('الطالب مش مسجّل دخول! studentUserId فاضي', false);
         processing = false;
-        showResult('error', '⚠️ مش مسجّل دخول', 'لازم تسجّل دخول كطالب الأول. الموبايل لازم يكون داخل بحساب الطالب. اقفل الصفحة وادخل من student-login.');
+        showResult('error', '⚠️ مش مسجّل دخول', 'الموبايل لازم يكون داخل بحساب الطالب. سجّل دخول من student-login.');
         return;
     }
+    diagStep('الطالب مسجّل دخول: ' + studentUserId.substring(0, 8) + '...', true);
 
-    showToast('⏳ جاري معالجة الكود...', 'info');
     document.getElementById('loadingOverlay').classList.remove('hidden');
 
     try {
@@ -378,19 +400,22 @@ async function processQR(qrData) {
             if (m) qrCode = m[0];
         }
         qrCode = String(qrCode).trim().toUpperCase();
-        console.log('🔑 الكود المستخرج:', qrCode);
+        diagStep('الكود المستخرج: ' + qrCode, true);
 
         // ── 1. جيب الـ QR ──
+        diagStep('بدوّر على الكود في قاعدة البيانات...', null);
         const { data: qr, error: qrError } = await sb.from('qr_codes').select('*').eq('code', qrCode).maybeSingle();
-        console.log('📦 نتيجة جلب الكود:', { qr, qrError });
         if (qrError) {
-            showResult('error', '❌ خطأ في قراءة الكود', 'تفاصيل: ' + qrError.message);
+            diagStep('خطأ في قراءة جدول qr_codes: ' + qrError.message, false);
+            showResult('error', '❌ خطأ في قراءة الكود', 'تفاصيل: ' + qrError.message + '<br><br>ده يعني إن صلاحيات قراءة qr_codes مش مظبوطة (RLS).');
             return;
         }
         if (!qr) {
-            showResult('error', '❌ كود غير موجود', 'الكود "' + qrCode + '" مش موجود في النظام. تأكد إنك ماسح كود صحيح.');
+            diagStep('الكود مش موجود في القاعدة', false);
+            showResult('error', '❌ كود غير موجود', 'الكود "' + qrCode + '" مش موجود. تأكد إنك كاتب الكود الصح.');
             return;
         }
+        diagStep('الكود موجود! الشركة: ' + (qr.company_name || '؟'), true);
 
         // ── 2. الحالة ──
         if (qr.status && qr.status !== 'active') {
@@ -447,22 +472,22 @@ async function processQR(qrData) {
             delay_minutes:   delayMinutes
         });
 
-        console.log('💾 محاولة تسجيل الحضور:', fullRow);
+        diagStep('بحاول أكتب الحضور في attendance_logs...', null);
         let insErr = (await sb.from('attendance_logs').insert(fullRow)).error;
 
         if (insErr) {
-            console.warn('⚠️ فشل الصف الكامل، أجرّب المبسّط:', insErr.message);
+            diagStep('الصف الكامل فشل: ' + insErr.message + ' — بجرّب المبسّط', null);
             insErr = (await sb.from('attendance_logs').insert(baseRow)).error;
         }
 
         if (insErr) {
-            console.error('❌ فشل التسجيل نهائياً:', insErr);
+            diagStep('فشل التسجيل نهائياً: ' + insErr.message, false);
             showResult('error', '❌ تعذّر تسجيل الحضور',
-                'السبب: ' + insErr.message + '<br><br>غالباً صلاحيات قاعدة البيانات (RLS). صوّر الشاشة وابعتها للدعم.');
+                'السبب: ' + insErr.message + '<br><br>دي مشكلة صلاحيات الكتابة (RLS) على attendance_logs. لازم تشغّل RUN_THIS_ALL_IN_ONE.sql في Supabase.');
             return;
         }
 
-        console.log('✅ تم تسجيل الحضور بنجاح');
+        diagStep('تم تسجيل الحضور بنجاح! 🎉', true);
 
         // ── 7. حدّث العداد (مش مهم لو فشل) ──
         try {
