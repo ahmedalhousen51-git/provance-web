@@ -50,7 +50,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 .scan-result.error { background: rgba(239,68,68,0.15); color: #ef4444; }
 .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; max-width: 90vw; text-align: center; }
 .loading-overlay { position: fixed; inset: 0; background: rgba(10,14,39,0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .3s; }
-.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-overlay.hidden { display: none !important; opacity: 0; pointer-events: none; }
 .loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .hidden { display: none !important; }
@@ -539,6 +539,10 @@ async function processQR(qrData) {
 }
 
 function showResult(type, title, detail) {
+    // اقفل الـ overlay عشان النتيجة تبان
+    const ov = document.getElementById('loadingOverlay');
+    if (ov) ov.classList.add('hidden');
+    processing = false;
     const html = `
         <div class="result-card ${type}">
             <div class="result-icon ${type}"><i class="fas fa-${type === 'success' ? 'check' : 'times'}"></i></div>
