@@ -65,6 +65,12 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 <div style="width:44px"></div>
 </div>
 
+<!-- زرار تشخيص مؤقت -->
+<button onclick="runDiagnostic()" style="width:100%;background:#f59e0b;color:#000;border:none;padding:12px;border-radius:10px;font-weight:800;font-family:inherit;margin-bottom:12px;cursor:pointer">
+🔧 اختبار الاتصال بقاعدة البيانات (اضغط هنا)
+</button>
+<div id="diagResult" style="display:none;background:#0f172a;border:2px solid #f59e0b;border-radius:12px;padding:16px;margin-bottom:14px;font-size:.9rem;line-height:2;color:#fff;direction:rtl"></div>
+
 <div class="tab-row">
 <button class="tab-btn" id="tabCamera" onclick="switchTab('camera')"><i class="fas fa-camera"></i> الكاميرا</button>
 <button class="tab-btn active" id="tabCode" onclick="switchTab('code')"><i class="fas fa-keyboard"></i> إدخال الكود</button>
@@ -348,6 +354,68 @@ function scanLoop(video) {
         }
     }, 200); // 5 مرات في الثانية
 }
+
+// ============ تشخيص مستقل ============
+window.runDiagnostic = async () => {
+    const box = document.getElementById('diagResult');
+    box.style.display = 'block';
+    box.innerHTML = '⏳ جاري الاختبار...';
+    const log = (msg, ok) => {
+        const c = ok === true ? '#10b981' : ok === false ? '#ef4444' : '#facc15';
+        const i = ok === true ? '✅' : ok === false ? '❌' : '⏳';
+        box.innerHTML += `<div style="color:${c}">${i} ${msg}</div>`;
+    };
+    box.innerHTML = '';
+
+    // 1. الاتصال بـ Supabase
+    if (!sb) { log('الاتصال بـ Supabase فشل — sb مش معرّف', false); return; }
+    log('الاتصال بـ Supabase موجود', true);
+
+    // 2. تسجيل الدخول
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) { log('مش مسجّل دخول! لازم تدخل بحساب طالب', false); return; }
+        log('مسجّل دخول. user id: ' + session.user.id.substring(0, 12) + '...', true);
+        window._diagUid = session.user.id;
+    } catch(e) { log('خطأ في فحص الجلسة: ' + e.message, false); return; }
+
+    // 3. قراءة جدول qr_codes
+    try {
+        const { data, error } = await sb.from('qr_codes').select('code').limit(1);
+        if (error) { log('قراءة qr_codes فشلت (RLS): ' + error.message, false); }
+        else { log('قراءة qr_codes شغّالة (لقى ' + (data ? data.length : 0) + ' كود)', true); }
+    } catch(e) { log('خطأ qr_codes: ' + e.message, false); }
+
+    // 4. قراءة جدول attendance_logs
+    try {
+        const { data, error } = await sb.from('attendance_logs').select('id').limit(1);
+        if (error) { log('قراءة attendance_logs فشلت: ' + error.message, false); }
+        else { log('قراءة attendance_logs شغّالة', true); }
+    } catch(e) { log('خطأ attendance_logs قراءة: ' + e.message, false); }
+
+    // 5. الأهم — تجربة كتابة فعلية في attendance_logs
+    try {
+        const testRow = {
+            student_user_id: window._diagUid,
+            company_user_id: window._diagUid,  // مؤقت للاختبار
+            student_name: 'TEST_DIAGNOSTIC',
+            status: 'on_time',
+            scanned_at: new Date().toISOString()
+        };
+        const { data, error } = await sb.from('attendance_logs').insert(testRow).select();
+        if (error) {
+            log('❗الكتابة في attendance_logs فشلت: ' + error.message, false);
+            log('👈  دي هي المشكلة! لازم تشغّل RUN_THIS_ALL_IN_ONE.sql', false);
+        } else {
+            log('الكتابة في attendance_logs نجحت! 🎉', true);
+            log('يبقى قاعدة البيانات سليمة — المشكلة في الكاميرا/القراءة بس', true);
+            // امسح صف الاختبار
+            if (data && data[0]) { try { await sb.from('attendance_logs').delete().eq('id', data[0].id); } catch(e){} }
+        }
+    } catch(e) { log('خطأ في الكتابة: ' + e.message, false); }
+
+    box.innerHTML += '<div style="margin-top:10px;color:#94a3b8;font-size:.8rem">صوّر النتيجة دي وابعتها</div>';
+};
 
 window.submitCode = () => {
     const code = document.getElementById('codeInput').value.trim().toUpperCase();
