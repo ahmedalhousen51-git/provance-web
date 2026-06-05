@@ -1114,6 +1114,16 @@ async function init() {
     studentData = student;
 
     await loadRecentScans();
+
+    // تحديث فوري للسجل عند أي تسجيل حضور جديد
+    try {
+      sb.channel('scan-attendance-' + studentUserId)
+        .on('postgres_changes', {
+          event: 'INSERT', schema: 'public', table: 'attendance_logs',
+          filter: 'student_user_id=eq.' + studentUserId
+        }, () => { loadRecentScans(); })
+        .subscribe();
+    } catch(_) {}
   } catch (err) {
     console.error('Init error:', err);
     showToast('خطأ في التحميل — حاول مرة أخرى', 'error');
