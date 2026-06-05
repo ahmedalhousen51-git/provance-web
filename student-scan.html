@@ -724,13 +724,26 @@ function scanLoop(video) {
       if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تشغيل الكاميرا...';
       return;
     }
-    canvas.width  = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const vw = video.videoWidth, vh = video.videoHeight;
+    canvas.width  = vw;
+    canvas.height = vh;
     ctx.drawImage(video, 0, 0);
+    frames++;
     try {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
-      frames++;
+      // محاولة 1: الإطار كامل
+      let code = null;
+      const imageData = ctx.getImageData(0, 0, vw, vh);
+      code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+
+      // محاولة 2: المنطقة الوسطى المربعة (الـ QR غالباً في النص) — أوضح وأدق
+      if (!code) {
+        const side = Math.floor(Math.min(vw, vh) * 0.7);
+        const sx = Math.floor((vw - side) / 2);
+        const sy = Math.floor((vh - side) / 2);
+        const center = ctx.getImageData(sx, sy, side, side);
+        code = jsQR(center.data, center.width, center.height, { inversionAttempts: 'attemptBoth' });
+      }
+
       if (code && code.data) {
         console.log('✅ QR detected:', code.data);
         if (statusEl) { statusEl.textContent = '✅ تم التقاط الكود!'; statusEl.style.color = '#10b981'; }
@@ -739,12 +752,13 @@ function scanLoop(video) {
         processQR(code.data);
         return;
       }
-      if (frames % 5 === 0 && statusEl) {
-        statusEl.innerHTML = '<i class="fas fa-search"></i> جاري البحث... وجّه الكاميرا للـ QR (' + frames + ')';
+      if (frames % 4 === 0 && statusEl) {
+        const dots = '.'.repeat((Math.floor(frames / 4) % 4));
+        statusEl.innerHTML = '<i class="fas fa-search"></i> جاري البحث عن الكود' + dots;
         statusEl.style.color = '#4facfe';
       }
     } catch (e) { console.warn('scan frame error:', e); }
-  }, 200); // ~5 fps
+  }, 120); // ~8 fps
 }
 
 /* ════════════════════════════════════════════════
