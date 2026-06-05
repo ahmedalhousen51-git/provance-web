@@ -4,451 +4,1115 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>مسح QR - ProVance</title>
+<link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-:root { --primary:#4facfe; --secondary:#00d2ff; --gradient:linear-gradient(135deg,#00d2ff,#00a8ff); --bg:#0b1120; --bg-2:#070a14; --card:rgba(255,255,255,0.04); --border:rgba(255,255,255,0.08); --text:#fff; --text-muted:#94a3b8; --error:#ef4444; --success:#10b981; --warning:#f59e0b; }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Cairo',sans-serif; background:linear-gradient(160deg,#0b1120,#070a14); color:var(--text); min-height:100vh; -webkit-font-smoothing:antialiased; }
-.container { max-width:520px; margin:0 auto; padding:16px; }
-.top-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
-.back-btn { width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text); cursor:pointer; font-size:1rem; }
-.page-title { font-size:1.15rem; font-weight:800; display:flex; align-items:center; gap:8px; }
-.tab-row { display:flex; gap:8px; margin-bottom:18px; background:var(--card); padding:5px; border-radius:14px; border:1px solid var(--border); }
-.tab-btn { flex:1; padding:13px 8px; background:transparent; border:none; color:var(--text-muted); font-weight:700; cursor:pointer; border-radius:10px; font-family:inherit; font-size:0.92rem; display:flex; align-items:center; justify-content:center; gap:7px; transition:all .2s; }
-.tab-btn.active { background:var(--gradient); color:#fff; box-shadow:0 4px 14px rgba(0,168,255,0.35); }
-.card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:22px; margin-bottom:14px; }
-.scan-box { border:2px dashed rgba(255,255,255,0.18); border-radius:16px; padding:30px 20px; text-align:center; }
-.scan-icon { width:72px; height:72px; border-radius:20px; background:var(--gradient); display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:#fff; margin:0 auto 16px; }
-.scan-icon.warn { background:linear-gradient(135deg,#f59e0b,#f97316); }
-.scan-icon.green { background:linear-gradient(135deg,#10b981,#059669); }
-.msg { color:var(--text); font-weight:700; font-size:1rem; margin-bottom:6px; }
-.msg-sub { color:var(--text-muted); font-size:0.82rem; line-height:1.7; margin-top:8px; }
-.btn { width:100%; padding:14px; border:none; border-radius:12px; font-family:inherit; font-weight:800; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; transition:transform .15s; }
-.btn:active { transform:scale(0.98); }
-.btn-primary { background:var(--gradient); color:#fff; }
-.btn-green { background:linear-gradient(135deg,#10b981,#059669); color:#fff; }
-.btn-ghost { background:rgba(255,255,255,0.06); color:var(--text); border:1px solid var(--border); }
-.btn-row { display:flex; gap:10px; }
-.btn-row .btn { flex:1; }
-#qr-video { width:100%; border-radius:14px; margin-top:12px; display:none; background:#000; max-height:360px; object-fit:contain; }
-#qr-video.show { display:block; }
-.video-wrap { position:relative; }
-.scan-frame { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:60%; aspect-ratio:1; border:3px solid var(--secondary); border-radius:16px; box-shadow:0 0 0 9999px rgba(0,0,0,0.25); pointer-events:none; display:none; }
-.video-wrap.scanning .scan-frame { display:block; }
-.scan-status { text-align:center; color:var(--secondary); font-size:0.85rem; margin-top:10px; font-weight:700; min-height:20px; }
-.code-input { width:100%; padding:15px; background:var(--bg-2); border:2px solid var(--border); border-radius:12px; color:var(--text); font-family:inherit; font-size:1.1rem; text-align:center; letter-spacing:2px; font-weight:700; margin-top:14px; }
-.code-input:focus { outline:none; border-color:var(--secondary); }
-.hidden { display:none !important; }
-.result-card { border-radius:16px; padding:22px; text-align:center; margin-bottom:14px; animation:pop .3s; }
-@keyframes pop { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
-.result-card.success { background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.4); }
-.result-card.error { background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.4); }
-.result-icon { width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.6rem; margin:0 auto 12px; }
-.result-icon.success { background:var(--success); color:#fff; }
-.result-icon.error { background:var(--error); color:#fff; }
-.result-title { font-size:1.1rem; font-weight:800; margin-bottom:8px; }
-.result-detail { color:var(--text-muted); font-size:0.88rem; line-height:1.8; }
-.recent { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:18px; }
-.recent h3 { font-size:0.95rem; font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
-.scan-item { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--border); }
-.scan-item:last-child { border-bottom:none; }
-.scan-i { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.scan-info { flex:1; min-width:0; }
-.scan-type { font-weight:700; font-size:0.88rem; }
-.scan-time { color:var(--text-muted); font-size:0.75rem; margin-top:2px; }
-.scan-result { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem; }
-.scan-result.success { background:rgba(16,185,129,0.15); color:#10b981; }
-.scan-result.error { background:rgba(239,68,68,0.15); color:#ef4444; }
-.toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); padding:14px 24px; border-radius:12px; color:#fff; font-weight:700; z-index:9999; max-width:90vw; text-align:center; box-shadow:0 8px 24px rgba(0,0,0,0.3); }
-.overlay { position:fixed; inset:0; background:rgba(7,10,20,0.95); display:flex; align-items:center; justify-content:center; z-index:9998; }
-.overlay.hidden { display:none !important; }
-.spinner { width:52px; height:52px; border:5px solid rgba(0,168,255,0.2); border-top-color:var(--secondary); border-radius:50%; animation:spin 1s linear infinite; }
-@keyframes spin { to{transform:rotate(360deg)} }
+:root {
+  --primary: #4facfe;
+  --secondary: #00f2fe;
+  --gradient: linear-gradient(135deg, #4facfe, #00f2fe);
+  --bg: #0a0e27;
+  --card: rgba(255,255,255,0.04);
+  --card-hover: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.15);
+  --text: #fff;
+  --text-muted: #94a3b8;
+  --error: #ef4444;
+  --success: #10b981;
+  --warning: #f59e0b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Cairo', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── خلفية متحركة ─── */
+.bg-anim {
+  position: fixed; inset: 0; z-index: -1;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(79,172,254,0.08), transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(0,242,254,0.06), transparent 45%),
+    var(--bg);
+}
+
+/* ─── حاوية الصفحة ─── */
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── الشريط العلوي ─── */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.back-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.back-btn:hover { background: var(--card-hover); }
+.page-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  display: flex; align-items: center; gap: 8px;
+}
+.page-title i { color: var(--primary); }
+.spacer { width: 44px; }
+
+/* ─── التبويبات ─── */
+.tab-row {
+  display: flex; gap: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 5px;
+  margin-bottom: 20px;
+}
+.tab-btn {
+  flex: 1; padding: 12px 8px;
+  background: transparent; border: none;
+  color: var(--text-muted);
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700; font-size: 0.9rem;
+  cursor: pointer; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all .25s;
+}
+.tab-btn.active {
+  background: var(--gradient);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(79,172,254,0.3);
+}
+
+/* ─── منطقة الماسح ─── */
+.scanner-area {
+  background: var(--card);
+  border: 2px dashed var(--border);
+  border-radius: 20px;
+  padding: 36px 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  min-height: 300px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px;
+  transition: border-color .3s;
+}
+.scanner-area.scanning { border-color: rgba(79,172,254,0.5); border-style: solid; }
+
+.scanner-icon {
+  width: 100px; height: 100px;
+  background: var(--gradient);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 2.8rem;
+  flex-shrink: 0;
+}
+.scanner-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.scanner-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+
+.scanner-msg {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  max-width: 300px;
+}
+
+/* ─── تلميح الإذن ─── */
+.perm-tip {
+  background: rgba(245,158,11,0.07);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex; gap: 10px; align-items: flex-start;
+  width: 100%; text-align: right;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.65;
+}
+.perm-tip i { color: var(--warning); flex-shrink: 0; margin-top: 2px; }
+.perm-tip strong { color: rgba(255,255,255,0.8); }
+
+/* ─── إشارة المسح الحي ─── */
+#scanStatus {
+  width: 100%;
+  text-align: center;
+  padding: 10px 14px;
+  margin-top: 10px;
+  background: rgba(79,172,254,0.08);
+  border: 1px solid rgba(79,172,254,0.25);
+  border-radius: 10px;
+  color: #4facfe;
+  font-weight: 700;
+  font-size: 0.88rem;
+  display: none;
+}
+
+/* ─── الفيديو ─── */
+#qr-video {
+  width: 100%; border-radius: 14px;
+  background: #000; max-height: 380px;
+  display: none;
+}
+
+/* ─── الأزرار ─── */
+.btn-primary {
+  width: 100%; padding: 14px;
+  background: var(--gradient); color: #fff;
+  border: none; border-radius: 13px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 800; font-size: 0.95rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: opacity .2s, transform .2s;
+}
+.btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+.btn-green {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff; border: none; border-radius: 13px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 800; font-size: 0.9rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: opacity .2s;
+}
+.btn-green:hover { opacity: .9; }
+
+.btn-ghost {
+  width: 100%; padding: 13px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-strong);
+  color: var(--text); border-radius: 13px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700; font-size: 0.9rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background .2s;
+}
+.btn-ghost:hover { background: var(--card-hover); }
+.btn-ghost:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-danger-ghost {
+  width: 100%; padding: 12px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #fca5a5; border-radius: 13px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700; font-size: 0.88rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background .2s;
+}
+.btn-danger-ghost:hover { background: rgba(239,68,68,0.13); }
+
+/* ─── شريط أزرار الكاميرا ─── */
+.camera-btns {
+  display: flex; gap: 10px;
+  flex-wrap: wrap;
+}
+.camera-btns .btn-primary { flex: 1; min-width: 140px; }
+.camera-btns .btn-primary.green {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+/* ─── أزرار الإجراءات ─── */
+.action-stack {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* ─── زر الرفع الكبير ─── */
+.upload-btn {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: #fff; border: none; border-radius: 14px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 800; font-size: 1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px rgba(79,172,254,0.25);
+  transition: opacity .2s;
+}
+.upload-btn:hover { opacity: .9; }
+
+/* ─── حقل الكود ─── */
+.code-input {
+  width: 100%; padding: 16px 18px;
+  background: rgba(255,255,255,0.03);
+  border: 2px solid var(--border);
+  border-radius: 13px;
+  color: var(--text);
+  font-family: monospace;
+  font-size: 1.05rem;
+  letter-spacing: 3px;
+  text-align: center;
+  text-transform: uppercase;
+  outline: none;
+  transition: border-color .2s;
+}
+.code-input:focus { border-color: var(--primary); }
+.code-input::placeholder {
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 1px;
+  font-family: 'Cairo', sans-serif;
+  font-size: .88rem;
+}
+
+/* ─── كارت النتيجة ─── */
+.result-card {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 18px; padding: 22px;
+  margin-bottom: 16px; text-align: center;
+  animation: slideUp .3s ease-out;
+}
+.result-card.success { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.05); }
+.result-card.error   { border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.05); }
+@keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+.result-icon {
+  width: 68px; height: 68px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; margin: 0 auto 14px;
+}
+.result-icon.success { background: rgba(16,185,129,0.2); color: #10b981; }
+.result-icon.error   { background: rgba(239,68,68,0.2);  color: #ef4444; }
+.result-title  { font-size: 1.1rem; font-weight: 800; margin-bottom: 10px; }
+.result-detail { color: var(--text-muted); font-size: 0.88rem; line-height: 1.75; }
+.result-detail strong { color: var(--text); }
+
+/* ─── سجل آخر العمليات ─── */
+.recent-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px;
+  margin-top: 4px;
+}
+.recent-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 14px;
+  font-size: 0.95rem; font-weight: 800;
+}
+.recent-header i { color: var(--primary); }
+
+.scan-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.scan-item:last-child { border-bottom: none; padding-bottom: 0; }
+.s-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: .92rem;
+}
+.s-info { flex: 1; min-width: 0; }
+.s-type { font-size: .84rem; font-weight: 700; color: var(--text); }
+.s-time { font-size: .72rem; color: var(--text-muted); margin-top: 1px; }
+.s-badge {
+  font-size: .72rem; font-weight: 700;
+  padding: 3px 9px; border-radius: 6px;
+  white-space: nowrap;
+}
+.s-badge.ok   { background: rgba(16,185,129,0.15); color: #10b981; }
+.s-badge.late { background: rgba(245,158,11,0.15);  color: #f59e0b; }
+.s-badge.err  { background: rgba(239,68,68,0.15);   color: #ef4444; }
+
+/* ─── Loading overlay ─── */
+.loading-overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,14,39,0.9);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 9999; gap: 16px;
+  transition: opacity .3s;
+}
+.loading-overlay.hidden { display: none; }
+.loading-spinner {
+  width: 56px; height: 56px;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+.loading-text { color: var(--text-muted); font-size: .9rem; font-weight: 700; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.hidden { display: none !important; }
+
+/* ─── Toast ─── */
+.toast {
+  position: fixed; top: 20px; left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 22px; border-radius: 12px;
+  color: #fff; font-weight: 700;
+  font-family: 'Cairo', sans-serif;
+  z-index: 10000; max-width: 90vw;
+  text-align: center; font-size: .9rem;
+  animation: fadeIn .25s;
+}
+
+@media (max-width: 400px) {
+  .container { padding: 14px 12px 36px; }
+  .camera-btns { flex-direction: column; }
+}
 </style>
 </head>
 <body>
+<div class="bg-anim"></div>
+
 <div class="container">
-    <div class="top-bar">
-        <button class="back-btn" onclick="history.back()"><i class="fas fa-arrow-right"></i></button>
-        <div class="page-title"><i class="fas fa-qrcode" style="color:var(--secondary)"></i> مسح QR Code</div>
-        <div style="width:44px"></div>
-    </div>
 
-    <div class="tab-row">
-        <button class="tab-btn active" id="tabCamera" onclick="switchTab('camera')"><i class="fas fa-camera"></i> الكاميرا</button>
-        <button class="tab-btn" id="tabCode" onclick="switchTab('code')"><i class="fas fa-keyboard"></i> إدخال الكود</button>
-    </div>
+  <!-- ─── الشريط العلوي ─── -->
+  <div class="top-bar">
+    <button class="back-btn" onclick="history.back()"><i class="fas fa-chevron-right"></i></button>
+    <div class="page-title"><i class="fas fa-qrcode"></i> مسح QR Code</div>
+    <div class="spacer"></div>
+  </div>
 
-    <!-- ===== Camera ===== -->
-    <div id="cameraSection">
-        <div class="card">
-            <div class="scan-box" id="scanBox">
-                <div class="scan-icon"><i class="fas fa-qrcode"></i></div>
-                <div class="msg">امسح الـ QR Code</div>
-                <div class="msg-sub">وجّه الكاميرا للكود اللي عند الشركة، أو صوّره</div>
-            </div>
-            <div class="video-wrap" id="videoWrap">
-                <video id="qr-video" playsinline autoplay muted></video>
-                <div class="scan-frame"></div>
-            </div>
-            <div class="scan-status" id="scanStatus"></div>
+  <!-- ─── التبويبات ─── -->
+  <div class="tab-row">
+    <button class="tab-btn active" id="tabCamera" onclick="switchTab('camera')">
+      <i class="fas fa-camera"></i> الكاميرا
+    </button>
+    <button class="tab-btn" id="tabCode" onclick="switchTab('code')">
+      <i class="fas fa-keyboard"></i> إدخال الكود
+    </button>
+  </div>
 
-            <div class="btn-row">
-                <button class="btn btn-primary" id="startScanBtn" onclick="startScanner()"><i class="fas fa-play"></i> مسح مباشر</button>
-                <button class="btn btn-green" onclick="document.getElementById('cameraInput').click()"><i class="fas fa-camera"></i> صوّر الـ QR</button>
-            </div>
-            <button class="btn btn-ghost hidden" id="stopScanBtn" onclick="stopScanner()"><i class="fas fa-stop"></i> إيقاف</button>
-            <button class="btn btn-ghost" onclick="document.getElementById('photoInput').click()"><i class="fas fa-image"></i> ارفع صورة من المعرض</button>
+  <!-- ══════════════════════════════════
+       قسم الكاميرا
+  ══════════════════════════════════ -->
+  <div id="cameraSection">
 
-            <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="scanFromImage(event)" style="display:none">
-            <input type="file" id="photoInput" accept="image/*" onchange="scanFromImage(event)" style="display:none">
+    <div class="scanner-area" id="scannerArea">
+      <div class="scanner-icon"><i class="fas fa-qrcode"></i></div>
+      <div class="scanner-msg">
+        وجّه كاميرا جهازك نحو الـ QR Code الخاص بالشركة لتسجيل الحضور تلقائياً
+      </div>
+      <div class="perm-tip">
+        <i class="fas fa-info-circle"></i>
+        <div>
+          <strong>طريقتان للمسح:</strong><br>
+          • <strong>مسح مباشر:</strong> الكاميرا تقرأ الكود تلقائياً<br>
+          • <strong>صوّر الـ QR:</strong> صوّر الكود وهنقراه (أضمن لو المسح المباشر واجه مشكلة)
         </div>
+      </div>
     </div>
 
-    <!-- ===== Manual Code ===== -->
-    <div id="codeSection" class="hidden">
-        <div class="card">
-            <div class="scan-box">
-                <div class="scan-icon green"><i class="fas fa-keyboard"></i></div>
-                <div class="msg">اكتب الكود يدوياً</div>
-                <div class="msg-sub">الكود ظاهر تحت الـ QR عند الشركة</div>
-            </div>
-            <input type="text" id="codeInput" class="code-input" placeholder="INT-XXXXXXXX" maxlength="32" autocomplete="off" autocapitalize="characters">
-            <button class="btn btn-primary" onclick="submitCode()"><i class="fas fa-check"></i> تأكيد الحضور</button>
-        </div>
+    <!-- فيديو الكاميرا -->
+    <video id="qr-video" playsinline autoplay muted></video>
+    <div id="scanStatus"></div>
+
+    <!-- أزرار الكاميرا الرئيسية -->
+    <div class="camera-btns" id="cameraStartBtns" style="margin-bottom:10px">
+      <button class="btn-primary" id="startScanBtn" onclick="startScanner()">
+        <i class="fas fa-qrcode"></i> مسح مباشر
+      </button>
+      <button class="btn-primary green" onclick="triggerCameraCapture()">
+        <i class="fas fa-camera"></i> صوّر الـ QR
+      </button>
     </div>
 
-    <!-- ===== Result ===== -->
-    <div id="resultArea"></div>
+    <!-- زر الإيقاف (يظهر أثناء المسح فقط) -->
+    <button class="btn-danger-ghost hidden" id="stopScanBtn" onclick="stopScanner()" style="margin-bottom:10px">
+      <i class="fas fa-stop-circle"></i> إيقاف المسح
+    </button>
 
-    <!-- ===== Recent ===== -->
-    <div class="recent">
-        <h3><i class="fas fa-history" style="color:var(--secondary)"></i> آخر العمليات</h3>
-        <div id="recentScansList">
-            <div style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.88rem">لا توجد عمليات سابقة</div>
-        </div>
+    <!-- input التقاط الكاميرا -->
+    <input type="file" id="cameraInput"  accept="image/*" capture="environment" onchange="scanFromImage(event)" style="display:none">
+    <!-- input رفع من المعرض -->
+    <input type="file" id="photoInput"   accept="image/*"                       onchange="scanFromImage(event)" style="display:none">
+
+  </div>
+
+  <!-- ══════════════════════════════════
+       قسم الإدخال اليدوي
+  ══════════════════════════════════ -->
+  <div id="codeSection" class="hidden">
+    <div class="scanner-area" style="min-height:auto; padding:28px 20px">
+      <div class="scanner-icon success"><i class="fas fa-keyboard"></i></div>
+      <div class="scanner-msg">اكتب الكود الموجود تحت الـ QR Code عند الشركة</div>
     </div>
+
+    <input type="text" id="codeInput" class="code-input"
+      placeholder="DAY-XXXXXXXX أو INT-XXXXXXXX"
+      maxlength="32" autocomplete="off" autocapitalize="characters"
+      style="margin-bottom:12px"
+    >
+
+    <div class="action-stack">
+      <button class="btn-primary" onclick="submitCode()">
+        <i class="fas fa-check-circle"></i> تأكيد الحضور
+      </button>
+      <button class="btn-ghost" onclick="switchTab('camera')">
+        <i class="fas fa-camera"></i> أو افتح الكاميرا لمسح الكود
+      </button>
+    </div>
+  </div>
+
+  <!-- ─── منطقة النتيجة ─── -->
+  <div id="resultArea"></div>
+
+  <!-- ─── زر رفع الصورة من المعرض ─── -->
+  <button class="upload-btn" onclick="document.getElementById('photoInput').click()">
+    <i class="fas fa-image"></i> أو ارفع صورة الـ QR من معرض الصور
+  </button>
+
+  <!-- ─── سجل آخر العمليات ─── -->
+  <div class="recent-section">
+    <div class="recent-header">
+      <i class="fas fa-history"></i> آخر العمليات
+    </div>
+    <div id="recentScansList">
+      <div style="text-align:center; color:var(--text-muted); padding:18px; font-size:.88rem">
+        <i class="fas fa-spinner fa-spin" style="margin-bottom:8px; display:block; font-size:1.5rem; color:rgba(148,163,184,0.3)"></i>
+        جاري التحميل...
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.container -->
+
+<div class="loading-overlay hidden" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">جاري معالجة الكود...</div>
 </div>
 
-<div class="overlay hidden" id="loadingOverlay"><div class="spinner"></div></div>
-
+<!-- ══════════════════════════════════
+     Scripts
+══════════════════════════════════ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+  /* احتياطي: لو jsQR فشل من CDN الأساسي */
+  if (typeof jsQR === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js';
+    document.head.appendChild(s);
+  }
+</script>
 <script src="supabase-config.js"></script>
 <script>
+'use strict';
+
+/* ════════════════════════════════════════════════
+   ⚙️  Supabase Client
+════════════════════════════════════════════════ */
 const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } });
 
-let studentUserId = null, studentData = null;
-let videoStream = null, scanning = false, scanInterval = null, processing = false;
-
-function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
-function showToast(msg, type) {
-    const t = document.createElement('div');
-    t.className = 'toast';
-    t.style.background = type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : '#00a8ff';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 4000);
+let sb;
+try {
+  /* لو ProVance config موجود استخدمه، غير كده اعمل client مباشرة */
+  sb = (window.ProVance && window.ProVance.sb) ||
+       supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+         auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
+       });
+} catch(e) {
+  console.error('Supabase init failed', e);
 }
 
+/* ════════════════════════════════════════════════
+   🗂️  State
+════════════════════════════════════════════════ */
+let studentUserId = null;
+let studentData   = null;
+let scanning      = false;
+let videoStream   = null;
+let processing    = false;
+let loopRunning   = false;
+let scanInterval  = null;
+
+/* ════════════════════════════════════════════════
+   🔧  Utilities
+════════════════════════════════════════════════ */
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])
+  );
+}
+
+function showToast(msg, type = 'info') {
+  const colors = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.background = colors[type] || colors.info;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+/* ════════════════════════════════════════════════
+   🔀  Tab Switching
+════════════════════════════════════════════════ */
 window.switchTab = (tab) => {
-    document.getElementById('tabCamera').classList.toggle('active', tab === 'camera');
-    document.getElementById('tabCode').classList.toggle('active', tab === 'code');
-    document.getElementById('cameraSection').classList.toggle('hidden', tab !== 'camera');
-    document.getElementById('codeSection').classList.toggle('hidden', tab !== 'code');
-    if (tab !== 'camera') stopScanner();
+  const isCamera = tab === 'camera';
+  document.getElementById('tabCamera').classList.toggle('active',  isCamera);
+  document.getElementById('tabCode').classList.toggle('active',   !isCamera);
+  document.getElementById('cameraSection').classList.toggle('hidden', !isCamera);
+  document.getElementById('codeSection').classList.toggle('hidden',    isCamera);
+  if (!isCamera && scanning) stopScanner();
 };
 
-// ===== الكاميرا =====
+/* ════════════════════════════════════════════════
+   📷  Camera — Start
+════════════════════════════════════════════════ */
 window.startScanner = async () => {
-    if (typeof jsQR === 'undefined') { showToast('مكتبة QR لسه بتحمّل، استنى ثانية وحاول تاني', 'warning'); return; }
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showToast('متصفحك مش بيدعم الكاميرا، استخدم "صوّر الـ QR" أو الإدخال اليدوي', 'warning');
-        return;
-    }
-    const video = document.getElementById('qr-video');
-    try {
-        videoStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: 'environment',
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            }
-        });
-        video.srcObject = videoStream;
-        video.classList.add('show');
-        await video.play();
-        scanning = true;
-        document.getElementById('startScanBtn').classList.add('hidden');
-        document.getElementById('videoWrap').classList.add('scanning');
-        document.getElementById('stopScanBtn').classList.remove('hidden');
-        document.getElementById('scanStatus').textContent = '🔍 جاري البحث عن الكود...';
-        startScanLoop(video);
-    } catch (err) {
-        console.error('camera:', err.name, err.message);
-        let m = 'فشل فتح الكاميرا';
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') m = '🚫 إذن الكاميرا مرفوض. من إعدادات المتصفح اسمح بالكاميرا، أو استخدم "صوّر الـ QR"';
-        else if (err.name === 'NotFoundError') m = '📵 مفيش كاميرا في الجهاز';
-        else if (err.name === 'NotReadableError') m = '⚠️ الكاميرا مستخدمة من تطبيق تاني';
-        showToast(m, 'error');
-    }
+  console.log('📷 startScanner | mediaDevices:', !!navigator.mediaDevices, '| protocol:', location.protocol);
+
+  /* فحص دعم الكاميرا */
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showCameraFallback('⛔ المتصفح ده مش بيدعم الكاميرا — جرّب Chrome أو Safari، أو استخدم الإدخال اليدوي.');
+    return;
+  }
+
+  /* HTTPS مطلوب للكاميرا (ما عدا localhost) */
+  const host = location.hostname;
+  if (location.protocol !== 'https:' && host !== 'localhost' && host !== '127.0.0.1') {
+    showCameraFallback('🔒 الكاميرا تحتاج HTTPS — استخدم الإدخال اليدوي أو ارفع صورة.');
+    return;
+  }
+
+  /* جرّب عدة إعدادات للكاميرا */
+  const constraints = [
+    { video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+    { video: { facingMode: 'environment' } },
+    { video: { facingMode: 'user' } },
+    { video: true }
+  ];
+
+  let lastErr = null;
+  for (const c of constraints) {
+    try { videoStream = await navigator.mediaDevices.getUserMedia(c); break; }
+    catch (e) { lastErr = e; console.warn('camera attempt failed:', c, e.name); }
+  }
+
+  if (!videoStream) {
+    let msg = '❌ فشل فتح الكاميرا';
+    const n = lastErr && lastErr.name;
+    if (n === 'NotAllowedError' || n === 'PermissionDeniedError')
+      msg = '🚫 تم رفض إذن الكاميرا — روح إعدادات المتصفح وابعت السماح لـ pro-vance.com';
+    else if (n === 'NotFoundError' || n === 'DevicesNotFoundError')
+      msg = '📵 مفيش كاميرا في الجهاز';
+    else if (n === 'NotReadableError' || n === 'TrackStartError')
+      msg = '⚠️ الكاميرا شغّالة في app تاني — اقفله وحاول تاني';
+    else if (n === 'SecurityError')
+      msg = '🔒 المتصفح بيمنع الكاميرا — استخدم HTTPS';
+    showCameraFallback(msg);
+    return;
+  }
+
+  /* ربط الفيديو */
+  const video = document.getElementById('qr-video');
+  video.srcObject = videoStream;
+  Object.assign(video, { playsinline: true, autoplay: true, muted: true });
+  video.style.display = 'block';
+
+  await new Promise(res => { video.onloadedmetadata = res; setTimeout(res, 2000); });
+  try { await video.play(); } catch(e) { console.warn('video.play() failed:', e); }
+
+  /* إخفاء منطقة البداية وإظهار إيقاف */
+  document.getElementById('scannerArea').classList.add('hidden');
+  document.getElementById('cameraStartBtns').classList.add('hidden');
+  document.getElementById('stopScanBtn').classList.remove('hidden');
+
+  scanning = true;
+  console.log('🎬 الكاميرا اشتغلت — readyState:', video.readyState, video.videoWidth, 'x', video.videoHeight);
+
+  if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+    scanLoop(video);
+  } else {
+    video.addEventListener('playing', () => { if (scanning) scanLoop(video); }, { once: true });
+    setTimeout(() => { if (scanning && !loopRunning) scanLoop(video); }, 1200);
+  }
 };
 
-function startScanLoop(video) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (scanInterval) clearInterval(scanInterval);
-    let frames = 0;
-
-    scanInterval = setInterval(() => {
-        if (!scanning) return;
-        if (video.readyState !== video.HAVE_ENOUGH_DATA || !video.videoWidth) return;
-
-        frames++;
-        const vw = video.videoWidth, vh = video.videoHeight;
-        canvas.width = vw;
-        canvas.height = vh;
-        ctx.drawImage(video, 0, 0, vw, vh);
-
-        // محاولة 1: الإطار كامل
-        let code = null;
-        try {
-            const img = ctx.getImageData(0, 0, vw, vh);
-            code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
-        } catch (e) {}
-
-        // محاولة 2: المنطقة الوسطى المربعة (الـ QR غالباً في النص) — أوضح وأدق
-        if (!code) {
-            try {
-                const side = Math.floor(Math.min(vw, vh) * 0.7);
-                const sx = Math.floor((vw - side) / 2);
-                const sy = Math.floor((vh - side) / 2);
-                const center = ctx.getImageData(sx, sy, side, side);
-                code = jsQR(center.data, center.width, center.height, { inversionAttempts: 'attemptBoth' });
-            } catch (e) {}
-        }
-
-        if (code && code.data) {
-            document.getElementById('scanStatus').textContent = '✅ تم التقاط الكود!';
-            stopScanner();
-            processQR(code.data);
-            return;
-        }
-
-        // مؤشر متحرك
-        if (frames % 4 === 0) {
-            const dots = '.'.repeat((Math.floor(frames / 4) % 4));
-            document.getElementById('scanStatus').textContent = '🔍 جاري البحث عن الكود' + dots;
-        }
-    }, 120);
+/* ─── Fallback UI عند فشل الكاميرا ─── */
+function showCameraFallback(reason) {
+  const area = document.getElementById('scannerArea');
+  if (area) {
+    area.innerHTML = `
+      <div class="scanner-icon warning"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="scanner-msg" style="color:var(--warning);font-weight:700">${escapeHtml(reason)}</div>
+      <div class="perm-tip">
+        <i class="fas fa-lightbulb"></i>
+        <div><strong>لتفعيل الكاميرا:</strong><br>
+        اضغط أيقونة القفل في شريط العنوان ← اسمح بالكاميرا ← أعد تحميل الصفحة</div>
+      </div>`;
+    area.classList.remove('hidden');
+  }
+  document.getElementById('cameraStartBtns').classList.remove('hidden');
+  document.getElementById('stopScanBtn').classList.add('hidden');
+  document.getElementById('qr-video').style.display = 'none';
 }
 
-window.stopScanner = () => {
-    scanning = false;
-    if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
-    if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-    const video = document.getElementById('qr-video');
-    if (video) { video.classList.remove('show'); video.srcObject = null; }
-    const vw = document.getElementById('videoWrap'); if (vw) vw.classList.remove('scanning');
-    document.getElementById('startScanBtn').classList.remove('hidden');
-    document.getElementById('stopScanBtn').classList.add('hidden');
+/* ─── Trigger التقاط صورة بالكاميرا ─── */
+window.triggerCameraCapture = () => {
+  document.getElementById('cameraInput').click();
 };
 
-// ===== رفع/تصوير صورة =====
-window.scanFromImage = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (typeof jsQR === 'undefined') { showToast('مكتبة QR لسه بتحمّل', 'warning'); return; }
-    const overlay = document.getElementById('loadingOverlay');
-    overlay.classList.remove('hidden');
+/* ════════════════════════════════════════════════
+   📷  Camera — Stop
+════════════════════════════════════════════════ */
+window.stopScanner = () => {
+  scanning = false;
+  loopRunning = false;
+  if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+  const ss = document.getElementById('scanStatus');
+  if (ss) ss.style.display = 'none';
+  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+  const video = document.getElementById('qr-video');
+  video.srcObject = null;
+  video.style.display = 'none';
+  document.getElementById('scannerArea').classList.remove('hidden');
+  document.getElementById('cameraStartBtns').classList.remove('hidden');
+  document.getElementById('stopScanBtn').classList.add('hidden');
+};
+
+/* ════════════════════════════════════════════════
+   🔁  Scan Loop (jsQR)
+════════════════════════════════════════════════ */
+function scanLoop(video) {
+  if (!scanning || loopRunning) return;
+  loopRunning = true;
+
+  if (typeof jsQR === 'undefined') {
+    alert('مكتبة قراءة QR لم تُحمّل. تأكد من الإنترنت وأعد تحميل الصفحة.');
+    loopRunning = false;
+    return;
+  }
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  let frames = 0;
+
+  const statusEl = document.getElementById('scanStatus');
+  if (statusEl) statusEl.style.display = 'block';
+
+  if (scanInterval) clearInterval(scanInterval);
+  scanInterval = setInterval(() => {
+    if (!scanning) { clearInterval(scanInterval); loopRunning = false; return; }
+    if (video.readyState < 2 || video.videoWidth === 0) {
+      if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تشغيل الكاميرا...';
+      return;
+    }
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+    try {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+      frames++;
+      if (code && code.data) {
+        console.log('✅ QR detected:', code.data);
+        if (statusEl) { statusEl.textContent = '✅ تم التقاط الكود!'; statusEl.style.color = '#10b981'; }
+        clearInterval(scanInterval);
+        stopScanner();
+        processQR(code.data);
+        return;
+      }
+      if (frames % 5 === 0 && statusEl) {
+        statusEl.innerHTML = '<i class="fas fa-search"></i> جاري البحث... وجّه الكاميرا للـ QR (' + frames + ')';
+        statusEl.style.color = '#4facfe';
+      }
+    } catch (e) { console.warn('scan frame error:', e); }
+  }, 200); // ~5 fps
+}
+
+/* ════════════════════════════════════════════════
+   🖼️  Scan From Image
+════════════════════════════════════════════════ */
+window.scanFromImage = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) overlay.classList.remove('hidden');
+  try {
     const reader = new FileReader();
     reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            let w = img.width, h = img.height, max = 1400;
-            if (w > max || h > max) { if (w > h) { h = h * max / w; w = max; } else { w = w * max / h; h = max; } }
-            canvas.width = w; canvas.height = h;
-            ctx.drawImage(img, 0, 0, w, h);
-            const data = ctx.getImageData(0, 0, w, h);
-            const code = jsQR(data.data, data.width, data.height, { inversionAttempts: 'attemptBoth' });
-            overlay.classList.add('hidden');
-            if (code && code.data) processQR(code.data);
-            else showToast('❌ مفيش QR واضح في الصورة، قرّب وصوّر تاني', 'error');
-        };
-        img.onerror = () => { overlay.classList.add('hidden'); showToast('فشل قراءة الصورة', 'error'); };
-        img.src = e.target.result;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        let w = img.width, h = img.height;
+        const MAX = 1400;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else       { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        canvas.width = w; canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        const imageData = ctx.getImageData(0, 0, w, h);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+        if (overlay) overlay.classList.add('hidden');
+        if (code && code.data) {
+          processQR(code.data);
+        } else {
+          showToast('❌ مفيش QR واضح في الصورة — قرّب الكاميرا من الكود وحاول تاني', 'error');
+        }
+      };
+      img.onerror = () => { if (overlay) overlay.classList.add('hidden'); showToast('❌ فشل قراءة الصورة', 'error'); };
+      img.src = e.target.result;
     };
-    reader.onerror = () => { overlay.classList.add('hidden'); showToast('فشل قراءة الملف', 'error'); };
+    reader.onerror = () => { if (overlay) overlay.classList.add('hidden'); showToast('❌ فشل قراءة الملف', 'error'); };
     reader.readAsDataURL(file);
+  } catch (err) {
+    if (overlay) overlay.classList.add('hidden');
+    showToast('❌ خطأ: ' + err.message, 'error');
+  } finally {
     event.target.value = '';
+  }
 };
 
-// ===== إدخال يدوي =====
+/* ════════════════════════════════════════════════
+   ⌨️  Submit Manual Code
+════════════════════════════════════════════════ */
 window.submitCode = () => {
-    const code = (document.getElementById('codeInput').value || '').trim();
-    if (!code) { showToast('اكتب الكود الأول', 'warning'); return; }
-    processQR(code);
+  const code = document.getElementById('codeInput').value.trim().toUpperCase();
+  if (!code) { showToast('⚠️ اكتب الكود أولاً', 'warning'); return; }
+  if (code.length < 5) { showToast('⚠️ الكود قصير جداً', 'warning'); return; }
+  processQR(code);
 };
 
-// ===== المعالجة (القلب) =====
+/* ════════════════════════════════════════════════
+   🔍  processQR  ← القلب
+   متوافق مع schema صفحة الشركة:
+   - جدول qr_codes  (code, status, valid_from, valid_until, metadata, qr_type, company_user_id, company_name)
+   - جدول attendance_logs (qr_code_id, company_user_id, student_user_id, student_name, student_photo,
+                            status, scanned_at, attendance_type, purpose, department, delay_minutes)
+════════════════════════════════════════════════ */
 async function processQR(qrData) {
-    if (processing) return;
-    processing = true;
+  if (processing) return;
+  processing = true;
+  console.log('🔍 processQR ← input:', qrData);
+  document.getElementById('loadingOverlay').classList.remove('hidden');
 
-    if (!studentUserId) {
-        processing = false;
-        return showResult('error', '⚠️ مش مسجّل دخول', 'لازم تكون داخل بحساب طالب على نفس الجهاز. سجّل دخول وحاول تاني.');
+  try {
+    /* ── استخراج الكود (JSON أو نص خام) ── */
+    let qrCode = qrData;
+    try {
+      const parsed = JSON.parse(qrData);
+      if (parsed && parsed.code) qrCode = parsed.code;
+    } catch (_) {
+      /* ليس JSON — ابحث عن نمط CODE-XXXXXXXX */
+      const m = String(qrData).match(/[A-Z]+-[A-Z0-9]{4,}/i);
+      if (m) qrCode = m[0];
+    }
+    qrCode = String(qrCode).trim().toUpperCase();
+    console.log('🔑 الكود النهائي:', qrCode);
+
+    if (!qrCode) {
+      showResult('error', '❌ كود غير صالح', 'تعذّر قراءة الكود. تأكد أن الصورة واضحة أو أدخل الكود يدوياً.');
+      return;
     }
 
-    document.getElementById('loadingOverlay').classList.remove('hidden');
+    /* ── 1. جلب الـ QR من قاعدة البيانات ── */
+    const { data: qr, error: qrErr } = await sb
+      .from('qr_codes')
+      .select('*')
+      .eq('code', qrCode)
+      .maybeSingle();
+
+    console.log('📦 qr_codes ←', { qr, qrErr });
+
+    if (qrErr) { showResult('error', '❌ خطأ في قراءة الكود', 'تفاصيل: ' + qrErr.message); return; }
+    if (!qr)   { showResult('error', '❌ كود غير موجود', 'الكود "' + qrCode + '" مش موجود في النظام — تأكد إنك ماسح كود صحيح.'); return; }
+
+    /* ── 2. فحص الحالة ── */
+    if (qr.status && qr.status !== 'active') {
+      const statusLabels = { expired:'منتهي', cancelled:'ملغي', used:'مستخدم' };
+      showResult('error', '⏰ الكود غير نشط', 'حالة الكود: ' + (statusLabels[qr.status] || qr.status) + ' — اطلب من الشركة كوداً جديداً.');
+      return;
+    }
+
+    /* ── 3. فحص الصلاحية الزمنية (سماح 30 ثانية لتأخير الشبكة) ── */
+    const now = new Date();
+    if (qr.valid_until) {
+      const exp = new Date(qr.valid_until);
+      exp.setSeconds(exp.getSeconds() + 30);
+      if (exp < now) {
+        showResult('error', '⏰ انتهت صلاحية الكود', 'انتهت صلاحية هذا الكود — اطلب كوداً جديداً من الشركة.');
+        try { await sb.from('qr_codes').update({ status: 'expired' }).eq('id', qr.id); } catch(_) {}
+        return;
+      }
+    }
+    if (qr.valid_from && new Date(qr.valid_from) > now) {
+      showResult('error', '⏰ الكود لم يبدأ بعد', 'هذا الكود سيصبح صالحاً لاحقاً — حاول وقت الدوام.');
+      return;
+    }
+
+    /* ── 4. منع التسجيل المكرر في نفس اليوم ── */
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
     try {
-        // استخراج الكود — لو JSON خد .code، غير كده خد النص كامل
-        let qrCode = qrData;
-        try {
-            const p = JSON.parse(qrData);
-            if (p && p.code) qrCode = p.code;
-        } catch (e) {
-            // مش JSON — النص هو الكود نفسه (زي INT-ABC123)
-            qrCode = qrData;
-        }
-        qrCode = String(qrCode).trim().toUpperCase();
+      const { data: dup } = await sb
+        .from('attendance_logs')
+        .select('id')
+        .eq('student_user_id', studentUserId)
+        .eq('qr_code_id', qr.id)
+        .gte('scanned_at', todayStart.toISOString())
+        .maybeSingle();
+      if (dup) {
+        showResult('error', '✋ سجّلت قبل كده', 'لقد سجّلت حضورك على هذا الكود اليوم بالفعل.');
+        return;
+      }
+    } catch (e) { console.warn('duplicate check skipped:', e.message); }
 
-        // 1) هات الكود
-        const { data: qr, error: qrErr } = await sb.from('qr_codes').select('*').eq('code', qrCode).maybeSingle();
-        if (qrErr) return showResult('error', '❌ خطأ في قراءة الكود', 'تفاصيل: ' + qrErr.message);
-        if (!qr) return showResult('error', '❌ كود غير موجود', 'الكود "' + qrCode + '" مش موجود. تأكد إنه صح.');
+    /* ── 5. استخراج بيانات الـ QR (متوافق مع metadata صفحة الشركة) ── */
+    const meta           = qr.metadata || {};
+    const purpose        = meta.purpose
+                           || (qr.qr_type === 'interview_checkin' ? 'interview' : 'attendance');
+    const attendanceType = purpose === 'interview' ? 'interview' : 'daily_attendance';
+    const department     = meta.department || null;
+    const companyName    = qr.company_name || meta.company_name || 'الشركة';
 
-        // 2) الحالة
-        if (qr.status && qr.status !== 'active') return showResult('error', '⏰ الكود غير نشط', 'اطلب كود جديد من الشركة.');
+    /* ── 6. حساب التأخير (15 دقيقة = حضور في الوقت) ── */
+    const validFrom    = qr.valid_from ? new Date(qr.valid_from) : now;
+    const delayMinutes = Math.max(0, Math.round((now - validFrom) / 60000));
+    const status       = delayMinutes <= 15 ? 'on_time' : 'late';
 
-        // 3) الصلاحية (+10 ثوانٍ سماح)
-        const now = new Date();
-        if (qr.valid_until) {
-            const vu = new Date(qr.valid_until); vu.setSeconds(vu.getSeconds() + 10);
-            if (vu < now) { try { await sb.from('qr_codes').update({ status: 'expired' }).eq('id', qr.id); } catch (e) {} return showResult('error', '⏰ انتهت صلاحية الكود', 'اطلب كود جديد من الشركة.'); }
-        }
+    /* ── 7. تسجيل الحضور في attendance_logs ── */
+    const fullRow = {
+      qr_code_id:      qr.id,
+      company_user_id: qr.company_user_id,
+      student_user_id: studentUserId,
+      student_name:    (studentData && studentData.full_name) || null,
+      student_photo:   (studentData && studentData.photo)     || null,
+      status,
+      scanned_at:      now.toISOString(),
+      attendance_type: attendanceType,
+      purpose,
+      department,
+      delay_minutes:   delayMinutes
+    };
+    /* صف مبسّط احتياطي (بدون الأعمدة الاختيارية) */
+    const baseRow = {
+      qr_code_id:      qr.id,
+      company_user_id: qr.company_user_id,
+      student_user_id: studentUserId,
+      student_name:    (studentData && studentData.full_name) || null,
+      status,
+      scanned_at:      now.toISOString()
+    };
 
-        // 4) مكرر النهارده؟
-        const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
-        try {
-            const { data: ex } = await sb.from('attendance_logs').select('id')
-                .eq('student_user_id', studentUserId).eq('qr_code_id', qr.id)
-                .gte('scanned_at', dayStart.toISOString()).maybeSingle();
-            if (ex) return showResult('error', '✋ سجّلت قبل كده', 'إنت سجّلت على الكود ده النهارده.');
-        } catch (e) {}
+    console.log('💾 INSERT attendance_logs ←', fullRow);
+    let { error: insErr } = await sb.from('attendance_logs').insert(fullRow);
 
-        // 5) الغرض والتأخير
-        const purpose = (qr.metadata && qr.metadata.purpose) || (qr.qr_type === 'interview' ? 'interview' : 'attendance');
-        const dept = (qr.metadata && qr.metadata.department) || null;
-        const vf = qr.valid_from ? new Date(qr.valid_from) : now;
-        const delay = Math.max(0, Math.round((now - vf) / 60000));
-        const status = delay <= 15 ? 'on_time' : 'late';
+    if (insErr) {
+      console.warn('⚠️ fullRow failed → try baseRow:', insErr.message);
+      const { error: insErr2 } = await sb.from('attendance_logs').insert(baseRow);
+      insErr = insErr2;
+    }
 
-        // 6) سجّل الحضور
-        const baseRow = {
-            qr_code_id: qr.id, company_user_id: qr.company_user_id, student_user_id: studentUserId,
-            student_name: (studentData && studentData.full_name) || null, status: status, scanned_at: now.toISOString()
-        };
-        const fullRow = Object.assign({}, baseRow, {
-            student_photo: (studentData && studentData.photo) || null,
-            attendance_type: purpose === 'interview' ? 'interview' : 'daily_attendance',
-            purpose: purpose, department: dept, delay_minutes: delay
+    if (insErr) {
+      console.error('❌ INSERT failed:', insErr);
+      showResult('error', '❌ تعذّر تسجيل الحضور',
+        'السبب: ' + insErr.message + '<br><br>غالباً صلاحيات قاعدة البيانات (RLS) — صوّر الشاشة وابعتها للدعم.');
+      return;
+    }
+
+    console.log('✅ الحضور اتسجّل بنجاح');
+
+    /* ── 8. تحديث عداد الـ QR (غير حرج) ── */
+    try {
+      await sb.from('qr_codes').update({
+        scans_count:     (qr.scans_count || 0) + 1,
+        last_scanned_at: now.toISOString()
+      }).eq('id', qr.id);
+    } catch(_) { console.warn('scans_count update skipped'); }
+
+    /* ── 9. إشعار الشركة (غير حرج) ── */
+    try {
+      if (window.ProVance && typeof window.ProVance.sendNotification === 'function') {
+        await window.ProVance.sendNotification({
+          userId:   qr.company_user_id,
+          userType: 'company',
+          title:    purpose === 'interview' ? '🎯 طالب وصل للمقابلة' : '✅ تسجيل حضور جديد',
+          message:  ((studentData && studentData.full_name) || 'طالب') + ' سجّل ' +
+                    (purpose === 'interview' ? 'حضوره للمقابلة' : 'حضوره') +
+                    (status === 'late' ? ' (متأخر ' + delayMinutes + ' دقيقة)' : ''),
+          type:     status === 'late' ? 'warning' : 'success',
+          link:     'company-QR_Code.html'
         });
+      }
+    } catch(_) { console.warn('notification skipped'); }
 
-        let insErr = (await sb.from('attendance_logs').insert(fullRow)).error;
-        if (insErr) insErr = (await sb.from('attendance_logs').insert(baseRow)).error;
-        if (insErr) return showResult('error', '❌ تعذّر تسجيل الحضور', 'السبب: ' + insErr.message + '<br><br>دي مشكلة صلاحيات (RLS). شغّل RUN_THIS_ALL_IN_ONE.sql في Supabase.');
-
-        // 7) عداد
-        try { await sb.from('qr_codes').update({ scans_count: (qr.scans_count || 0) + 1, last_scanned_at: now.toISOString() }).eq('id', qr.id); } catch (e) {}
-
-        // 8) إشعار للشركة
-        try {
-            if (window.ProVance && window.ProVance.sendNotification) {
-                await window.ProVance.sendNotification({
-                    userId: qr.company_user_id, userType: 'company',
-                    title: purpose === 'interview' ? '🎯 طالب وصل للمقابلة' : '✅ تسجيل حضور جديد',
-                    message: ((studentData && studentData.full_name) || 'طالب') + (purpose === 'interview' ? ' وصل للمقابلة' : ' سجّل حضوره') + (status === 'late' ? ' (متأخر ' + delay + ' دقيقة)' : ''),
-                    type: status === 'late' ? 'warning' : 'success', link: 'company-QR_Code.html'
-                });
-            }
-        } catch (e) {}
-
-        // 9) لو مقابلة، علّم الطلب
-        if (purpose === 'interview') {
-            try {
-                await sb.from('applications').update({ status: 'interview_done', updated_at: now.toISOString() })
-                    .eq('student_user_id', studentUserId).eq('company_user_id', qr.company_user_id).eq('status', 'interview_scheduled');
-            } catch (e) {}
-        }
-
-        // 10) نجاح
-        let detail = '<strong>الشركة:</strong> ' + esc(qr.company_name || '') + '<br>';
-        if (dept) detail += '<strong>القسم:</strong> ' + esc(dept) + '<br>';
-        detail += '<strong>الوقت:</strong> ' + now.toLocaleString('ar-EG');
-        if (status === 'late') detail += '<br><span style="color:#f59e0b">⏰ متأخر ' + delay + ' دقيقة</span>';
-        showResult('success', '✅ تم تسجيل ' + (purpose === 'interview' ? 'حضور المقابلة' : 'الحضور'), detail);
-        try { loadRecentScans(); } catch (e) {}
-    } catch (err) {
-        console.error(err);
-        showResult('error', '❌ حدث خطأ', (err && err.message) || 'فشل المعالجة');
-    } finally {
-        processing = false;
-        document.getElementById('loadingOverlay').classList.add('hidden');
+    /* ── 10. تحديث حالة المقابلة → interview_done (غير حرج) ── */
+    if (purpose === 'interview' && qr.application_id) {
+      try {
+        await sb.from('applications').update({
+          status: 'interview_done',
+          updated_at: now.toISOString()
+        }).eq('id', qr.application_id);
+      } catch(_) { console.warn('application status update skipped'); }
     }
-}
 
-function showResult(type, title, detail) {
-    document.getElementById('loadingOverlay').classList.add('hidden');
+    /* ── 11. عرض النجاح ── */
+    const purposeLabel = purpose === 'interview' ? 'حضور المقابلة' : 'الحضور';
+    let detail = '<strong>الشركة:</strong> ' + escapeHtml(companyName) + '<br>';
+    if (department) detail += '<strong>القسم:</strong> ' + escapeHtml(department) + '<br>';
+    detail += '<strong>الوقت:</strong> ' + now.toLocaleString('ar-EG');
+    if (status === 'late') detail += '<br><span style="color:var(--warning)">⏰ متأخر ' + delayMinutes + ' دقيقة</span>';
+
+    showResult('success', '✅ تم تسجيل ' + purposeLabel + ' بنجاح!', detail);
+    try { loadRecentScans(); } catch(_) {}
+
+  } catch (err) {
+    console.error('💥 processQR unexpected error:', err);
+    showResult('error', '❌ حدث خطأ غير متوقع', (err && err.message) || 'خطأ غير معروف — صوّر الشاشة وابعتها للدعم.');
+  } finally {
     processing = false;
-    const area = document.getElementById('resultArea');
-    area.innerHTML = '<div class="result-card ' + type + '">' +
-        '<div class="result-icon ' + type + '"><i class="fas fa-' + (type === 'success' ? 'check' : 'times') + '"></i></div>' +
-        '<div class="result-title">' + title + '</div>' +
-        '<div class="result-detail">' + detail + '</div></div>';
-    try { area.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
-    const inp = document.getElementById('codeInput'); if (inp) inp.value = '';
+    document.getElementById('loadingOverlay').classList.add('hidden');
+  }
 }
 
+/* ════════════════════════════════════════════════
+   🎨  Show Result Card
+════════════════════════════════════════════════ */
+function showResult(type, title, detail) {
+  const area = document.getElementById('resultArea');
+  area.innerHTML = `
+    <div class="result-card ${type}">
+      <div class="result-icon ${type}">
+        <i class="fas fa-${type === 'success' ? 'check' : 'times'}"></i>
+      </div>
+      <div class="result-title">${escapeHtml(title)}</div>
+      <div class="result-detail">${detail}</div>
+      <button onclick="document.getElementById('resultArea').innerHTML=''"
+        style="margin-top:16px;padding:10px 22px;border-radius:10px;background:rgba(255,255,255,0.08);
+               border:1px solid var(--border);color:var(--text);font-family:'Cairo',sans-serif;
+               font-weight:700;cursor:pointer;width:100%">
+        <i class="fas fa-times"></i> إغلاق
+      </button>
+    </div>`;
+  try { area.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_) {}
+  const inp = document.getElementById('codeInput');
+  if (inp) inp.value = '';
+}
+
+/* ════════════════════════════════════════════════
+   📋  Recent Scans
+════════════════════════════════════════════════ */
 async function loadRecentScans() {
-    try {
-        const { data } = await sb.from('attendance_logs').select('*')
-            .eq('student_user_id', studentUserId).order('scanned_at', { ascending: false }).limit(5);
-        const list = document.getElementById('recentScansList');
-        if (!data || data.length === 0) { list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.88rem">لا توجد عمليات سابقة</div>'; return; }
-        const labels = { attendance: 'حضور تدريب', interview: 'مقابلة', daily_attendance: 'حضور تدريب' };
-        const icons = { attendance: 'fa-clipboard-check', interview: 'fa-handshake', daily_attendance: 'fa-clipboard-check' };
-        const colors = { attendance: '#10b981', interview: '#4facfe', daily_attendance: '#10b981' };
-        list.innerHTML = data.map(s => {
-            const p = s.purpose || s.attendance_type || 'attendance';
-            const ok = s.status === 'on_time' || s.status === 'late';
-            return '<div class="scan-item"><div class="scan-i" style="background:' + (colors[p] || '#4facfe') + '20;color:' + (colors[p] || '#4facfe') + '"><i class="fas ' + (icons[p] || 'fa-qrcode') + '"></i></div>' +
-                '<div class="scan-info"><div class="scan-type">' + (labels[p] || 'مسح') + (s.department ? ' - ' + esc(s.department) : '') + '</div>' +
-                '<div class="scan-time">' + new Date(s.scanned_at).toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) + (s.status === 'late' ? ' • متأخر' : '') + '</div></div>' +
-                '<span class="scan-result ' + (ok ? 'success' : 'error') + '">' + (ok ? '✓' : '✗') + '</span></div>';
-        }).join('');
-    } catch (e) { console.warn('recent:', e); }
+  if (!studentUserId) return;
+  try {
+    const { data } = await sb
+      .from('attendance_logs')
+      .select('*')
+      .eq('student_user_id', studentUserId)
+      .order('scanned_at', { ascending: false })
+      .limit(5);
+
+    const list = document.getElementById('recentScansList');
+    if (!list) return;
+
+    if (!data || data.length === 0) {
+      list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:18px;font-size:.88rem">لا توجد عمليات سابقة</div>';
+      return;
+    }
+
+    const typeLabels  = { attendance:'حضور تدريب', interview:'مقابلة', daily_attendance:'حضور تدريب' };
+    const typeIcons   = { attendance:'fa-clipboard-check', interview:'fa-handshake', daily_attendance:'fa-clipboard-check' };
+    const typeColors  = { attendance:'#10b981', interview:'#4facfe', daily_attendance:'#10b981' };
+
+    list.innerHTML = data.map(s => {
+      const purpose = s.purpose || s.attendance_type || 'attendance';
+      const isOk    = s.status === 'on_time';
+      const isLate  = s.status === 'late';
+      const color   = typeColors[purpose] || '#4facfe';
+      const icon    = typeIcons[purpose]  || 'fa-qrcode';
+      const label   = typeLabels[purpose] || 'مسح';
+      const badge   = isOk   ? '<span class="s-badge ok">✓ في الوقت</span>'
+                    : isLate ? '<span class="s-badge late">⏰ متأخر</span>'
+                    :          '<span class="s-badge err">✗</span>';
+      const timeStr = s.scanned_at
+        ? new Date(s.scanned_at).toLocaleString('ar-EG', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit' })
+        : '';
+      const dept = s.department ? ' — ' + escapeHtml(s.department) : '';
+
+      return `
+        <div class="scan-item">
+          <div class="s-icon" style="background:${color}20;color:${color}">
+            <i class="fas ${icon}"></i>
+          </div>
+          <div class="s-info">
+            <div class="s-type">${label}${dept}</div>
+            <div class="s-time">${timeStr}</div>
+          </div>
+          ${badge}
+        </div>`;
+    }).join('');
+  } catch(e) { console.warn('loadRecentScans error:', e); }
 }
 
+/* ════════════════════════════════════════════════
+   🚀  Init
+════════════════════════════════════════════════ */
 async function init() {
-    try {
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) { window.location.href = 'student-login.html'; return; }
-        studentUserId = session.user.id;
-        const { data: student } = await sb.from('student').select('full_name, email, photo').eq('user_id', studentUserId).maybeSingle();
-        studentData = student;
-        await loadRecentScans();
-    } catch (err) { console.error(err); showToast('خطأ في التحميل', 'error'); }
+  try {
+    /* انتظر ProVance لو محتاج */
+    if (!sb && window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
+      try {
+        const _sb = await window.ProVance.waitForSupabaseClient(10000);
+        if (_sb) sb = _sb;
+      } catch(_) {}
+    }
+
+    if (!sb) { console.error('❌ Supabase not ready'); return; }
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'student-login.html'; return; }
+
+    studentUserId = session.user.id;
+
+    const { data: student } = await sb
+      .from('student')
+      .select('full_name, email, photo')
+      .eq('user_id', studentUserId)
+      .maybeSingle();
+    studentData = student;
+
+    await loadRecentScans();
+  } catch (err) {
+    console.error('Init error:', err);
+    showToast('خطأ في التحميل — حاول مرة أخرى', 'error');
+  }
 }
 
-document.getElementById('codeInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') submitCode(); });
-init();
+/* ─── Event Listeners ─── */
+document.addEventListener('DOMContentLoaded', init);
+
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('codeInput');
+  if (inp) inp.addEventListener('keypress', e => { if (e.key === 'Enter') submitCode(); });
+});
 </script>
 </body>
 </html>
