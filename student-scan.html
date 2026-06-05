@@ -32,8 +32,11 @@ body { font-family:'Cairo',sans-serif; background:linear-gradient(160deg,#0b1120
 .btn-ghost { background:rgba(255,255,255,0.06); color:var(--text); border:1px solid var(--border); }
 .btn-row { display:flex; gap:10px; }
 .btn-row .btn { flex:1; }
-#qr-video { width:100%; border-radius:14px; margin-top:12px; display:none; background:#000; max-height:340px; object-fit:cover; }
+#qr-video { width:100%; border-radius:14px; margin-top:12px; display:none; background:#000; max-height:360px; object-fit:contain; }
 #qr-video.show { display:block; }
+.video-wrap { position:relative; }
+.scan-frame { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:60%; aspect-ratio:1; border:3px solid var(--secondary); border-radius:16px; box-shadow:0 0 0 9999px rgba(0,0,0,0.25); pointer-events:none; display:none; }
+.video-wrap.scanning .scan-frame { display:block; }
 .scan-status { text-align:center; color:var(--secondary); font-size:0.85rem; margin-top:10px; font-weight:700; min-height:20px; }
 .code-input { width:100%; padding:15px; background:var(--bg-2); border:2px solid var(--border); border-radius:12px; color:var(--text); font-family:inherit; font-size:1.1rem; text-align:center; letter-spacing:2px; font-weight:700; margin-top:14px; }
 .code-input:focus { outline:none; border-color:var(--secondary); }
@@ -86,7 +89,10 @@ body { font-family:'Cairo',sans-serif; background:linear-gradient(160deg,#0b1120
                 <div class="msg">امسح الـ QR Code</div>
                 <div class="msg-sub">وجّه الكاميرا للكود اللي عند الشركة، أو صوّره</div>
             </div>
-            <video id="qr-video" playsinline autoplay muted></video>
+            <div class="video-wrap" id="videoWrap">
+                <video id="qr-video" playsinline autoplay muted></video>
+                <div class="scan-frame"></div>
+            </div>
             <div class="scan-status" id="scanStatus"></div>
 
             <div class="btn-row">
@@ -166,12 +172,19 @@ window.startScanner = async () => {
     }
     const video = document.getElementById('qr-video');
     try {
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        videoStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        });
         video.srcObject = videoStream;
         video.classList.add('show');
         await video.play();
         scanning = true;
         document.getElementById('startScanBtn').classList.add('hidden');
+        document.getElementById('videoWrap').classList.add('scanning');
         document.getElementById('stopScanBtn').classList.remove('hidden');
         document.getElementById('scanStatus').textContent = '🔍 جاري البحث عن الكود...';
         startScanLoop(video);
@@ -189,21 +202,49 @@ function startScanLoop(video) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (scanInterval) clearInterval(scanInterval);
+    let frames = 0;
+
     scanInterval = setInterval(() => {
-        if (!scanning || video.readyState !== video.HAVE_ENOUGH_DATA) return;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        if (!scanning) return;
+        if (video.readyState !== video.HAVE_ENOUGH_DATA || !video.videoWidth) return;
+
+        frames++;
+        const vw = video.videoWidth, vh = video.videoHeight;
+        canvas.width = vw;
+        canvas.height = vh;
+        ctx.drawImage(video, 0, 0, vw, vh);
+
+        // محاولة 1: الإطار كامل
+        let code = null;
         try {
-            const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
-            if (code && code.data) {
-                document.getElementById('scanStatus').textContent = '✅ تم التقاط الكود!';
-                stopScanner();
-                processQR(code.data);
-            }
+            const img = ctx.getImageData(0, 0, vw, vh);
+            code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
         } catch (e) {}
-    }, 200);
+
+        // محاولة 2: المنطقة الوسطى المربعة (الـ QR غالباً في النص) — أوضح وأدق
+        if (!code) {
+            try {
+                const side = Math.floor(Math.min(vw, vh) * 0.7);
+                const sx = Math.floor((vw - side) / 2);
+                const sy = Math.floor((vh - side) / 2);
+                const center = ctx.getImageData(sx, sy, side, side);
+                code = jsQR(center.data, center.width, center.height, { inversionAttempts: 'attemptBoth' });
+            } catch (e) {}
+        }
+
+        if (code && code.data) {
+            document.getElementById('scanStatus').textContent = '✅ تم التقاط الكود!';
+            stopScanner();
+            processQR(code.data);
+            return;
+        }
+
+        // مؤشر متحرك
+        if (frames % 4 === 0) {
+            const dots = '.'.repeat((Math.floor(frames / 4) % 4));
+            document.getElementById('scanStatus').textContent = '🔍 جاري البحث عن الكود' + dots;
+        }
+    }, 120);
 }
 
 window.stopScanner = () => {
@@ -212,6 +253,7 @@ window.stopScanner = () => {
     if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
     const video = document.getElementById('qr-video');
     if (video) { video.classList.remove('show'); video.srcObject = null; }
+    const vw = document.getElementById('videoWrap'); if (vw) vw.classList.remove('scanning');
     document.getElementById('startScanBtn').classList.remove('hidden');
     document.getElementById('stopScanBtn').classList.add('hidden');
 };
