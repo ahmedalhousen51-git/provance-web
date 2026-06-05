@@ -884,7 +884,9 @@
     <div id="modalsContainer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="supabase-config.js"></script>
+    <script src="company-layout.js"></script>
     <script>
 
         // ============================================================
@@ -1202,14 +1204,24 @@
         placeholder.style.display = 'none';
         display.style.display = 'block';
 
-        const qrData = JSON.stringify({
-            type: 'daily_attendance',
-            code: activeQrCode.code,
-            company: activeQrCode.company_name,
-            valid_until: activeQrCode.valid_until
-        });
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrData)}&color=000000&bgcolor=FFFFFF`;
-        document.getElementById('qrImage').src = qrUrl;
+        // الـ QR يحتوي الـ code المباشر فقط — أبسط وأسهل في القراءة
+        const qrPayload = activeQrCode.code;
+        const imgEl = document.getElementById('qrImage');
+
+        // ارسم محلياً (أضمن من خدمة خارجية)
+        if (window.QRCode && window.QRCode.toDataURL) {
+            window.QRCode.toDataURL(qrPayload, { width: 300, margin: 2, errorCorrectionLevel: 'M' }, (err, url) => {
+                if (!err && url) {
+                    imgEl.src = url;
+                } else {
+                    // fallback لخدمة خارجية
+                    imgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrPayload)}`;
+                }
+            });
+        } else {
+            // المكتبة مش متوفرة — استخدم الخدمة الخارجية
+            imgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrPayload)}`;
+        }
 
         const validFrom = new Date(activeQrCode.valid_from);
         const validUntil = new Date(activeQrCode.valid_until);
@@ -1312,7 +1324,7 @@
                 <p>⏰ صالح من ${formatTime(activeQrCode.valid_from)} إلى ${formatTime(activeQrCode.valid_until)}</p>
                 <p class="code">${activeQrCode.code}</p>
             </div>
-            </body></html>
+</body></html>
         `);
         printWin.document.close();
         setTimeout(() => printWin.print(), 500);
@@ -2163,5 +2175,10 @@
     init();
 })();
     </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.ProVanceLayout) { try { ProVanceLayout.init({ active: 'qr' }); } catch(e) { console.warn('layout:', e); } }
+    });
+</script>
 </body>
 </html>
