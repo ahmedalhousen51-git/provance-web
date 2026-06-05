@@ -658,6 +658,9 @@
 
             <!-- Tab: Generate QR -->
             <div id="tab-generate" class="tab-content active">
+                <!-- بانر حالة اليوم (عمل/إجازة) -->
+                <div id="dayStatusBanner" style="display:none;border-radius:14px;padding:14px 16px;margin-bottom:16px;align-items:center;gap:12px"></div>
+
                 <!-- مقابلات اليوم المجدولة -->
                 <div class="qr-generator-card" id="todayInterviewsCard" style="margin-bottom:18px;display:none">
                     <h2><i class="fas fa-calendar-day" style="color:#4facfe"></i> مقابلات اليوم</h2>
@@ -1041,6 +1044,38 @@
         if (tabName === 'cleanup-logs') renderCleanupLogs();
     };
 
+    // ============ حالة اليوم (عمل / إجازة) ============
+    const DAY_NAMES_AR = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    function renderDayStatus() {
+        const banner = document.getElementById('dayStatusBanner');
+        if (!banner) return;
+        const todayNum = new Date().getDay();
+        const todayName = DAY_NAMES_AR[todayNum];
+        const holidayDays = (weeklyHolidays && weeklyHolidays.holiday_days) || [5, 6]; // افتراضي جمعة/سبت
+        const isHoliday = holidayDays.includes(todayNum);
+
+        banner.style.display = 'flex';
+        if (isHoliday) {
+            banner.style.background = 'rgba(245,158,11,0.1)';
+            banner.style.border = '1px solid rgba(245,158,11,0.3)';
+            banner.innerHTML = `
+                <i class="fas fa-umbrella-beach" style="color:#f59e0b;font-size:1.3rem"></i>
+                <div style="flex:1">
+                    <div style="font-weight:800;color:#f59e0b">النهارده (${todayName}) إجازة رسمية للشركة</div>
+                    <div style="font-size:.82rem;color:var(--text-muted);margin-top:3px">المتدربين مش هيتحسب عليهم غياب النهارده. لو عايز تعمل QR لظرف خاص، تقدر — بس الأصل إنه إجازة.</div>
+                </div>`;
+        } else {
+            banner.style.background = 'rgba(16,185,129,0.08)';
+            banner.style.border = '1px solid rgba(16,185,129,0.25)';
+            banner.innerHTML = `
+                <i class="fas fa-briefcase" style="color:#10b981;font-size:1.2rem"></i>
+                <div style="flex:1">
+                    <div style="font-weight:800;color:#10b981">النهارده (${todayName}) يوم عمل</div>
+                    <div style="font-size:.82rem;color:var(--text-muted);margin-top:3px">ولّد QR الحضور عشان المتدربين يسجّلوا.</div>
+                </div>`;
+        }
+    }
+
     // ============ مقابلات اليوم ============
     async function loadTodayInterviews() {
         try {
@@ -1141,6 +1176,16 @@
         const purpose    = document.getElementById('qrPurpose')?.value || 'attendance';
         const department = document.getElementById('qrDepartment')?.value || '';
         const duration   = parseInt(document.getElementById('qrDuration')?.value || '60');
+
+        // لو النهارده إجازة وبيعمل QR حضور (مش مقابلة) — أكّد
+        if (purpose !== 'interview') {
+            const todayNum = new Date().getDay();
+            const holidayDays = (weeklyHolidays && weeklyHolidays.holiday_days) || [5, 6];
+            if (holidayDays.includes(todayNum)) {
+                const dayName = DAY_NAMES_AR[todayNum];
+                if (!confirm('⚠️ النهارده (' + dayName + ') إجازة رسمية للشركة.\n\nالمتدربين مش مطلوب منهم حضور، ومش هيتحسب عليهم غياب.\n\nمتأكد إنك عايز تعمل QR حضور برضه؟')) return;
+            }
+        }
 
         try {
             const sb = window.ProVance.sb;
@@ -2071,6 +2116,7 @@
             activeQrCode = qrRes.data;
             allAttendanceLogs = attRes.data || [];
             weeklyHolidays = holRes.data;
+            renderDayStatus();
 
             // تعبئة الأقسام من training_fields (نفس مصدر إدارة الأقسام والفروع)
             const deptSelect = document.getElementById('qrDepartment');
