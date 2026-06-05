@@ -1320,24 +1320,81 @@
         }).join('');
     }
 
+    // تحويل اسم اليوم العربي لرقم JS (الأحد=0)
+    const AR_DAY_TO_NUM = { 'الأحد': 0, 'الإثنين': 1, 'الاثنين': 1, 'الثلاثاء': 2, 'الأربعاء': 3, 'الخميس': 4, 'الجمعة': 5, 'السبت': 6 };
+
     function renderAttendanceSummary() {
         const box = document.getElementById('attendanceSummary');
         if (!box) return;
         const daily = allAttendance.filter(a => a.attendance_type === 'daily_attendance');
-        if (daily.length === 0) {
+
+        // هات جدول التدريب النشط (أيام العمل اللي الشركة حددتها)
+        const activeTraining = allApplications.find(a =>
+            ['in_training', 'accepted', 'hired'].includes(a.status) && a.training_schedule);
+        const sched = activeTraining && activeTraining.training_schedule;
+        const workDayNames = (sched && Array.isArray(sched.training_days)) ? sched.training_days : null;
+        const workDayNums = workDayNames ? workDayNames.map(d => AR_DAY_TO_NUM[d]).filter(n => n !== undefined) : null;
+
+        if (daily.length === 0 && !sched) {
             box.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><p>لا توجد بيانات حضور بعد</p></div>';
             return;
         }
 
-        // إحصائيات
-        const onTime = daily.filter(a => a.status === 'on_time').length;
-        const late   = daily.filter(a => a.status === 'late').length;
-        const absent = daily.filter(a => a.status === 'absent').length;
-        const total  = daily.length;
-        const present = onTime + late;
-        const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+        // أيام الحضور الفعلية (مجمّعة)
+        const attendedDays = {};
+        daily.forEach(a => {
+            if (!a.scanned_at) return;
+            const d = new Date(a.scanned_at).toISOString().slice(0, 10);
+            if (!attendedDays[d]) attendedDays[d] = a.status;
+        });
 
-        // آخر 14 يوم (تجميع حسب اليوم)
+        const onTime = daily.filter(a => a.status === 'on_time').length;
+        const late = daily.filter(a => a.status === 'late').length;
+        const presentDaysCount = Object.keys(attendedDays).length;
+
+        // ── الحساب الذكي للغياب: نعدّ أيام العمل المفروضة فقط (نتجاهل إجازات الشركة) ──
+        let expectedWorkDays = 0;
+        let realAbsent = 0;
+        let companyHolidays = 0;
+
+        if (sched && sched.start_date && workDayNums && workDayNums.length) {
+            const start = new Date(sched.start_date);
+            start.setHours(0, 0, 0, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const end = sched.end_date ? new Date(sched.end_date) : today;
+            const lastDay = end < today ? end : today;
+
+            for (let dt = new Date(start); dt <= lastDay; dt.setDate(dt.getDate() + 1)) {
+                const dayKey = dt.toISOString().slice(0, 10);
+                const dayNum = dt.getDay();
+                if (workDayNums.includes(dayNum)) {
+                    // يوم عمل مفروض
+                    expectedWorkDays++;
+                    if (!attendedDays[dayKey]) realAbsent++;  // مفروض يحضر ومحضرش = غياب حقيقي
+                } else {
+                    // يوم إجازة شركة (مش مفروض يحضر) — مايتحسبش غياب
+                    companyHolidays++;
+                }
+            }
+        }
+
+        // النسبة العادلة: على أساس أيام العمل المفروضة فقط
+        let rate, total, absent;
+        if (expectedWorkDays > 0) {
+            absent = realAbsent;
+            total = expectedWorkDays;
+            rate = Math.round((presentDaysCount / expectedWorkDays) * 100);
+            if (rate > 100) rate = 100;
+        } else {
+            // مفيش جدول — احسب بالطريقة البسيطة
+            absent = daily.filter(a => a.status === 'absent').length;
+            total = presentDaysCount + absent;
+            rate = total > 0 ? Math.round((presentDaysCount / total) * 100) : (presentDaysCount > 0 ? 100 : 0);
+        }
+        const present = onTime + late;
+
+        // آخر 14 يوم للأعمدة
         const byDay = {};
         daily.forEach(a => {
             if (!a.scanned_at) return;
@@ -1387,14 +1444,21 @@
                     </div>
                     <div style="background:rgba(239,68,68,.1);border-radius:10px;padding:10px;text-align:center">
                         <div style="font-size:1.3rem;font-weight:800;color:#ef4444">${absent}</div>
-                        <div style="font-size:.72rem;color:var(--text-muted,#94a3b8)">غياب</div>
+                        <div style="font-size:.72rem;color:var(--text-muted,#94a3b8)">غياب فعلي</div>
                     </div>
                     <div style="background:rgba(79,172,254,.1);border-radius:10px;padding:10px;text-align:center">
                         <div style="font-size:1.3rem;font-weight:800;color:#4facfe">${total}</div>
-                        <div style="font-size:.72rem;color:var(--text-muted,#94a3b8)">إجمالي الأيام</div>
+                        <div style="font-size:.72rem;color:var(--text-muted,#94a3b8)">أيام العمل</div>
                     </div>
                 </div>
             </div>
+            ${companyHolidays > 0 ? `
+            <div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+                <i class="fas fa-shield-alt" style="color:#8b5cf6;font-size:1.1rem"></i>
+                <div style="font-size:.82rem;line-height:1.6">
+                    <strong style="color:#8b5cf6">حساب عادل ✓</strong> — تم استبعاد <strong>${companyHolidays}</strong> يوم إجازة رسمية للشركة من حساب الغياب. غيابك محسوب على أيام العمل الفعلية فقط (${workDayNames ? workDayNames.join('، ') : ''}).
+                </div>
+            </div>` : ''}
             <!-- الأعمدة البيانية -->
             <div style="margin-top:10px">
                 <div style="font-size:.8rem;color:var(--text-muted,#94a3b8);margin-bottom:12px;font-weight:700">آخر ${days.length} يوم حضور</div>
@@ -2478,7 +2542,7 @@
             // استخدم Promise.allSettled عشان لو واحد فشل، الباقي يكمل
             const results = await Promise.allSettled([
                 sb.from('student').select('user_id, full_name, email, phone, birth_date, gender, national_id, university, faculty, major, gpa, graduation_year, city, address, country, linkedin, github, portfolio, cv_url, skills, languages, bio, education_level, interested_fields, specialization, study_year, year_of_study, photo, status, training_status, created_at, updated_at').eq('user_id', userId).maybeSingle(),
-                sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at, updated_at, interview_date').eq('student_user_id', userId).order('created_at', { ascending: false }),
+                sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at, updated_at, interview_date, training_schedule').eq('student_user_id', userId).order('created_at', { ascending: false }),
                 sb.from('performance_evaluations').select('*').eq('student_user_id', userId).eq('status', 'sent'),
                 sb.from('attendance_logs').select('*').eq('student_user_id', userId).order('scanned_at', { ascending: false }).limit(50),
                 sb.from('payment_locks').select('*').eq('student_user_id', userId).in('lock_status', ['locked', 'partial_paid']).maybeSingle(),
