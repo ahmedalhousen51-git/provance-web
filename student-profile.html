@@ -851,6 +851,17 @@
             <section class="section">
                 <div class="section-header">
                     <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i> ملخص الحضور
+                    </h2>
+                </div>
+                <div id="attendanceSummary" style="background:var(--bg-card,#1a1535);border:1px solid var(--border,#2d2659);border-radius:16px;padding:20px">
+                    <div class="empty-state"><i class="fas fa-chart-bar"></i><p>لا توجد بيانات حضور بعد</p></div>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
                         <i class="fas fa-qrcode"></i> سجل المسح (QR Scans)
                     </h2>
                 </div>
@@ -1309,7 +1320,91 @@
         }).join('');
     }
 
+    function renderAttendanceSummary() {
+        const box = document.getElementById('attendanceSummary');
+        if (!box) return;
+        const daily = allAttendance.filter(a => a.attendance_type === 'daily_attendance');
+        if (daily.length === 0) {
+            box.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><p>لا توجد بيانات حضور بعد</p></div>';
+            return;
+        }
+
+        // إحصائيات
+        const onTime = daily.filter(a => a.status === 'on_time').length;
+        const late   = daily.filter(a => a.status === 'late').length;
+        const absent = daily.filter(a => a.status === 'absent').length;
+        const total  = daily.length;
+        const present = onTime + late;
+        const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+
+        // آخر 14 يوم (تجميع حسب اليوم)
+        const byDay = {};
+        daily.forEach(a => {
+            if (!a.scanned_at) return;
+            const d = new Date(a.scanned_at).toISOString().slice(0, 10);
+            if (!byDay[d]) byDay[d] = { date: d, status: a.status };
+        });
+        const days = Object.values(byDay).sort((x, y) => x.date.localeCompare(y.date)).slice(-14);
+
+        const statusColor = { on_time: '#10b981', late: '#f59e0b', absent: '#ef4444', early: '#4facfe' };
+        const maxBar = 100;
+
+        // أعمدة بيانية
+        const bars = days.map(d => {
+            const c = statusColor[d.status] || '#64748b';
+            const label = new Date(d.date).toLocaleDateString('ar-EG', { day: 'numeric', month: 'numeric' });
+            return `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0">
+                    <div style="width:100%;max-width:24px;height:${maxBar}px;background:rgba(255,255,255,.05);border-radius:6px;display:flex;align-items:flex-end;overflow:hidden">
+                        <div style="width:100%;height:${d.status==='absent'?20:100}%;background:${c};border-radius:6px"></div>
+                    </div>
+                    <span style="font-size:.62rem;color:var(--text-muted,#94a3b8);white-space:nowrap">${label}</span>
+                </div>`;
+        }).join('');
+
+        box.innerHTML = `
+            <!-- نسبة الحضور -->
+            <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:22px">
+                <div style="position:relative;width:110px;height:110px;flex-shrink:0">
+                    <svg viewBox="0 0 120 120" style="transform:rotate(-90deg)">
+                        <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="12"/>
+                        <circle cx="60" cy="60" r="50" fill="none" stroke="${rate>=75?'#10b981':rate>=50?'#f59e0b':'#ef4444'}" stroke-width="12"
+                            stroke-dasharray="${2*Math.PI*50}" stroke-dashoffset="${2*Math.PI*50*(1-rate/100)}" stroke-linecap="round"/>
+                    </svg>
+                    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                        <span style="font-size:1.6rem;font-weight:800;color:var(--text,#fff)">${rate}%</span>
+                        <span style="font-size:.7rem;color:var(--text-muted,#94a3b8)">نسبة الحضور</span>
+                    </div>
+                </div>
+                <div style="flex:1;min-width:180px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div style="background:rgba(16,185,129,.1);border-radius:10px;padding:10px;text-align:center">
+                        <div style="font-size:1.3rem;font-weight:800;color:#10b981">${onTime}</div>
+                        <div style="font-size:.72rem;color:var(--text-muted,#94a3b8)">في الوقت</div>
+                    </div>
+                    <div style="background:rgba(245,158,11,.1);border-radius:10px;padding:10px;text-align:center">
+                        <div style="font-size:1.3rem;font-weight:800;color:#f59e0b">${late}</div>
+                        <div style="font-size:.72rem;color:var(--text-muted,#94a3b8)">متأخر</div>
+                    </div>
+                    <div style="background:rgba(239,68,68,.1);border-radius:10px;padding:10px;text-align:center">
+                        <div style="font-size:1.3rem;font-weight:800;color:#ef4444">${absent}</div>
+                        <div style="font-size:.72rem;color:var(--text-muted,#94a3b8)">غياب</div>
+                    </div>
+                    <div style="background:rgba(79,172,254,.1);border-radius:10px;padding:10px;text-align:center">
+                        <div style="font-size:1.3rem;font-weight:800;color:#4facfe">${total}</div>
+                        <div style="font-size:.72rem;color:var(--text-muted,#94a3b8)">إجمالي الأيام</div>
+                    </div>
+                </div>
+            </div>
+            <!-- الأعمدة البيانية -->
+            <div style="margin-top:10px">
+                <div style="font-size:.8rem;color:var(--text-muted,#94a3b8);margin-bottom:12px;font-weight:700">آخر ${days.length} يوم حضور</div>
+                <div style="display:flex;gap:6px;align-items:flex-end">${bars}</div>
+            </div>
+        `;
+    }
+
     function renderQRHistory() {
+        renderAttendanceSummary();
         const list = document.getElementById('qrHistory');
         if (allAttendance.length === 0) {
             list.innerHTML = '<div class="empty-state"><i class="fas fa-qrcode"></i><h3>لا يوجد سجل مسح بعد</h3></div>';
