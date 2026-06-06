@@ -1046,25 +1046,17 @@ function renderInternshipCard(i) {
                 appCountsByInternship[int.id] = int.current_applicants || 0;
             });
 
-            // اربط training_price حسب النظام المالي:
-            // النظام الأول (first-time): المتدرب يدفع رسوم الشركة
-            // النظام الثاني (once-trained): مجاني تماماً — الشركة هي اللي بتدفع للمتدرب
-            // النظام الثالث (twice-trained): مجاني للمتدرب — الشركة هي اللي بتدفع للمنصة
+            // رسوم التدريب موحّدة على مستوى الشركة كلها (الأدمن بيحددها للشركة مش للقسم)
+            // فبنتجاهل أي training_price مخزّن في الـ internship وناخد دايماً من الشركة
+            // المتدرب بيدفع نفس الرسوم في كل الأنظمة (الأول والثاني والثالث)
             allInternships.forEach(int => {
                 const comp = allCompanies[int.company_user_id];
-                const type = int.trainee_type;
-                if (type === 'once-trained' || type === 'twice-trained') {
-                    // المتدرب مش بيدفع في النظام الثاني والثالث
-                    int.training_price = 0;
-                    int.training_currency = comp ? (comp.training_currency || 'EGP') : 'EGP';
+                if (comp && comp.training_price) {
+                    int.training_price = comp.training_price;
+                    int.training_currency = comp.training_currency || 'EGP';
                 } else {
-                    // النظام الأول: المتدرب بيدفع رسوم الشركة
-                    if (!int.training_price && comp && comp.training_price) {
-                        int.training_price = comp.training_price;
-                    }
-                    if (!int.training_currency) {
-                        int.training_currency = comp ? (comp.training_currency || 'EGP') : 'EGP';
-                    }
+                    int.training_price = null;
+                    int.training_currency = comp ? (comp.training_currency || 'EGP') : 'EGP';
                 }
             });
             
