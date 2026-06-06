@@ -1,1149 +1,1616 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
-    <link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
+// ============================================
+// Data & State Management
+// ============================================
+let internshipsData = [
+    {
+        id: 1,
+        title: "مطور ويب متدرب",
+        company: "شركة التقنية المتطورة",
+        logo: "💻",
+        level: "beginner",
+        price: "مجاني",
+        location: "الرياض",
+        fields: ["تطوير الويب", "برمجة", "تصميم واجهات"],
+        duration: "3 أشهر",
+        applicants: 45,
+        maxApplicants: 50,
+        description: "فرصة تدريب مثالية للمبتدئين في مجال تطوير الويب. ستتعلم أساسيات HTML, CSS, JavaScript وتطوير تطبيقات ويب تفاعلية.",
+        branches: [
+            { id: 1, name: "الفرع الرئيسي", location: "الرياض - حي العليا" },
+            { id: 2, name: "فرع الشمال", location: "الرياض - حي الصحافة" }
+        ],
+        fieldsStats: [
+            { name: "تطوير الويب", current: 25, max: 30 },
+            { name: "برمجة", current: 15, max: 15 },
+            { name: "تصميم واجهات", current: 5, max: 5 }
+        ],
+        knowledgeBenefits: [
+            { title: "مهارات تقنية متقدمة", description: "تطوير مهارات البرمجة باستخدام أحدث التقنيات" },
+            { title: "خبرة عملية حقيقية", description: "العمل على مشاريع حقيقية مع فريق متخصص" }
+        ],
+        financialBenefits: [
+            { title: "بدل نقل", description: "مبلغ 500 ريال شهرياً" },
+            { title: "وجبات مجانية", description: "توفير وجبات غداء مجانية" }
+        ]
+    },
+    {
+        id: 2,
+        title: "مصمم جرافيك",
+        company: "وكالة الإبداع الرقمي",
+        logo: "🎨",
+        level: "intermediate",
+        price: "1500 ريال",
+        location: "جدة",
+        fields: ["تصميم جرافيك", "UI/UX", "فوتوشوب"],
+        duration: "2 شهر",
+        applicants: 20,
+        maxApplicants: 25,
+        description: "فرصة تدريب للمصممين ذوي الخبرة الأساسية. ستعمل على مشاريع حقيقية وتتعلم أحدث تقنيات التصميم.",
+        branches: [
+            { id: 1, name: "الفرع الرئيسي", location: "جدة - حي الصفا" },
+            { id: 2, name: "فرع الكورنيش", location: "جدة - حي الكورنيش" }
+        ],
+        fieldsStats: [
+            { name: "تصميم جرافيك", current: 12, max: 15 },
+            { name: "UI/UX", current: 6, max: 8 },
+            { name: "فوتوشوب", current: 2, max: 2 }
+        ],
+        knowledgeBenefits: [
+            { title: "أدوات التصميم الاحترافية", description: "إتقان استخدام Adobe Creative Suite" },
+            { title: "مبادئ التصميم", description: "تعلم أساسيات التصميم الجرافيكي والتفاعلي" }
+        ],
+        financialBenefits: [
+            { title: "مكافأة شهرية", description: "1500 ريال شهرياً" },
+            { title: "تذاكر مواصلات", description: "تذاكر مجانية للمواصلات العامة" }
+        ]
+    },
+    {
+        id: 3,
+        title: "محلل بيانات",
+        company: "بيانات المستقبل",
+        logo: "📊",
+        level: "advanced",
+        price: "2500 ريال",
+        location: "الدمام",
+        fields: ["تحليل البيانات", "إحصاء", "بايثون"],
+        duration: "4 أشهر",
+        applicants: 8,
+        maxApplicants: 10,
+        description: "فرصة تدريب متقدمة للمحللين ذوي الخبرة. ستعمل على مشاريع تحليل بيانات معقدة باستخدام Python وSQL.",
+        branches: [
+            { id: 1, name: "الفرع الرئيسي", location: "الدمام - حي الفيصلية" }
+        ],
+        fieldsStats: [
+            { name: "تحليل البيانات", current: 5, max: 6 },
+            { name: "إحصاء", current: 2, max: 2 },
+            { name: "بايثون", current: 1, max: 2 }
+        ],
+        knowledgeBenefits: [
+            { title: "تحليل البيانات المتقدم", description: "إتقان تقنيات التحليل الإحصائي والتعلم الآلي" },
+            { title: "أدوات التحليل", description: "استخدام Python, R, SQL للتحليل" }
+        ],
+        financialBenefits: [
+            { title: "راتب تدريب", description: "2500 ريال شهرياً" },
+            { title: "تأمين صحي", description: "تأمين صحي مجاني طوال فترة التدريب" }
+        ]
+    },
+    {
+        id: 4,
+        title: "مسوق رقمي",
+        company: "شركة التسويق الذكي",
+        logo: "📱",
+        level: "beginner",
+        price: "مجاني",
+        location: "عن بُعد",
+        fields: ["التسويق الرقمي", "إدارة وسائل التواصل", "تحليل الحملات"],
+        duration: "3 أشهر",
+        applicants: 35,
+        maxApplicants: 40,
+        description: "تعلم أساسيات التسويق الرقمي وإدارة الحملات الإعلانية على منصات التواصل الاجتماعي.",
+        branches: [
+            { id: 1, name: "التدريب عن بُعد", location: "أونلاين" }
+        ],
+        fieldsStats: [
+            { name: "التسويق الرقمي", current: 20, max: 25 },
+            { name: "إدارة وسائل التواصل", current: 10, max: 10 },
+            { name: "تحليل الحملات", current: 5, max: 5 }
+        ],
+        knowledgeBenefits: [
+            { title: "استراتيجيات التسويق", description: "تعلم أحدث استراتيجيات التسويق الرقمي" },
+            { title: "أدوات التحليل", description: "استخدام Google Analytics وأدوات تحليل الحملات" }
+        ],
+        financialBenefits: [
+            { title: "شهادة معتمدة", description: "شهادة معتمدة بعد إتمام التدريب" }
+        ]
+    },
+    {
+        id: 5,
+        title: "مطور تطبيقات جوال",
+        company: "تطبيقات المستقبل",
+        logo: "📲",
+        level: "intermediate",
+        price: "1800 ريال",
+        location: "الرياض",
+        fields: ["تطوير التطبيقات", "Android", "iOS"],
+        duration: "3 أشهر",
+        applicants: 15,
+        maxApplicants: 20,
+        description: "فرصة تدريب لتطوير تطبيقات الجوال للمنصات المختلفة باستخدام React Native وFlutter.",
+        branches: [
+            { id: 1, name: "الفرع الرئيسي", location: "الرياض - حي النخيل" },
+            { id: 2, name: "فرع العليا", location: "الرياض - حي العليا" }
+        ],
+        fieldsStats: [
+            { name: "تطوير التطبيقات", current: 8, max: 10 },
+            { name: "Android", current: 4, max: 5 },
+            { name: "iOS", current: 3, max: 5 }
+        ],
+        knowledgeBenefits: [
+            { title: "تطوير متعدد المنصات", description: "تعلم React Native وFlutter لتطوير تطبيقات متعددة المنصات" },
+            { title: "نشر التطبيقات", description: "تعلم عملية نشر التطبيقات على متاجر التطبيقات" }
+        ],
+        financialBenefits: [
+            { title: "مكافأة شهرية", description: "1800 ريال شهرياً" },
+            { title: "حساب مطور", description: "حساب مطور مجاني على متاجر التطبيقات" }
+        ]
+    },
+    {
+        id: 6,
+        title: "مهندس شبكات",
+        company: "شركة الاتصالات المتكاملة",
+        logo: "🌐",
+        level: "advanced",
+        price: "3000 ريال",
+        location: "جدة",
+        fields: ["شبكات الحاسب", "أمن المعلومات", "إدارة الأنظمة"],
+        duration: "4 أشهر",
+        applicants: 6,
+        maxApplicants: 8,
+        description: "فرصة تدريب متقدمة في مجال هندسة الشبكات وأمن المعلومات مع العمل على مشاريع حقيقية.",
+        branches: [
+            { id: 1, name: "الفرع الرئيسي", location: "جدة - حي السلامة" }
+        ],
+        fieldsStats: [
+            { name: "شبكات الحاسب", current: 3, max: 4 },
+            { name: "أمن المعلومات", current: 2, max: 2 },
+            { name: "إدارة الأنظمة", current: 1, max: 2 }
+        ],
+        knowledgeBenefits: [
+            { title: "هندسة الشبكات", description: "تصميم وإدارة شبكات الحاسب المتقدمة" },
+            { title: "أمن المعلومات", description: "تعلم تقنيات أمن المعلومات وحماية الشبكات" }
+        ],
+        financialBenefits: [
+            { title: "راتب تدريب", description: "3000 ريال شهرياً" },
+            { title: "دورات معتمدة", description: "دورات معتمدة في مجال الشبكات" }
+        ]
+    }
+];
 
-    <title>فرص التدريب - ProVance</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-:root {
-    --primary: #4facfe; --secondary: #00f2fe;
-    --gradient: linear-gradient(135deg, #4facfe, #00f2fe);
-    --bg: #0a0e27; --bg-2: #1a1535;
-    --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
-    --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
-    --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
-    --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe;
+let studentData = {
+    id: 1,
+    name: "أحمد محمد",
+    level: "beginner",
+    pendingApplicationsCount: 0,
+    maxPendingApplications: 3,
+    appliedInternships: []
+};
+
+let selectedInternship = null;
+let selectedBranch = null;
+
+// ============================================
+// الدوال المحسنة مع الميزات الجديدة
+// ============================================
+
+// دالة محسنة لتحميل بيانات التدريب المخزنة في localStorage
+function loadStoredInternshipData() {
+    try {
+        const savedInternships = localStorage.getItem('internshipsData');
+        if (savedInternships) {
+            let storedData = JSON.parse(savedInternships);
+            
+            // نتحقق من وجود createdAt في كل تدريب
+            storedData = storedData.map(internship => {
+                if (!internship.createdAt) {
+                    // نضيف createdAt افتراضيًا: الوقت الحالي ناقص عشوائي
+                    internship.createdAt = Date.now() - Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000;
+                }
+                return internship;
+            });
+            internshipsData = storedData;
+            console.log('تم تحميل بيانات التدريب المخزنة:', storedData);
+        } else {
+            // إذا لم تكن هناك بيانات مخزنة، نضيف createdAt للبيانات الأولية
+            internshipsData = internshipsData.map(internship => ({
+                ...internship,
+                createdAt: Date.now() - (internship.id * 2 * 24 * 60 * 60 * 1000)
+            }));
+            saveInternshipData();
+        }
+    } catch (error) {
+        console.error('خطأ في تحميل بيانات التدريب المخزنة:', error);
+    }
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
-.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(79,172,254,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(0,242,254,0.06), transparent 45%), var(--bg); }
-.layout { display: flex; min-height: 100vh; }
-.sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
-.sidebar-logo {
-            padding: 8px 4px 18px;
-            margin-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-        }
-        .logo-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 4px;
-        }
-        .logo-icon {
-            width: 42px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            filter: drop-shadow(0 4px 12px rgba(79,172,254,0.3));
-        }
-        .logo-icon svg {
-            width: 100%;
-            height: 100%;
-        }
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .logo-brand {
-            font-size: 1.15rem;
-            font-weight: 900;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.3px;
-            line-height: 1;
-        }
-        .logo-tagline {
-            font-size: 0.68rem;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
-.nav-item:hover { background: var(--card); color: var(--text); }
-.nav-item.active { background: var(--gradient); color: #fff; }
-.nav-item i { width: 18px; }
-.main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
-.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
-.menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
-.topbar-title { font-size: 1.5rem; font-weight: 800; }
-.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.privacy-notice { background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.04)); border: 1px solid rgba(16,185,129,0.25); border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
-.privacy-notice i { color: var(--success); font-size: 1.4rem; flex-shrink: 0; }
-.privacy-notice-text { flex: 1; }
-.privacy-notice-title { font-size: 0.94rem; font-weight: 800; color: var(--success); }
-.privacy-notice-desc { color: var(--text-muted); font-size: 0.84rem; margin-top: 3px; }
-.filters-section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 18px; }
-.filters-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; }
-@media (max-width: 900px) { .filters-row { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 600px) { .filters-row { grid-template-columns: 1fr; } }
-.filters-row input, .filters-row select { padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 0.9rem; }
-.filters-row input:focus, .filters-row select:focus { outline: none; border-color: var(--primary); }
-.stats-bar { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
-.stats-bar-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; font-size: 0.86rem; display: flex; align-items: center; gap: 6px; }
-.stats-bar-item i { color: var(--primary); }
-.stats-bar-item strong { color: var(--text); }
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.88rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
-.btn-primary { background: var(--gradient); color: #fff; }
-.btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(79,172,254,0.4); }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
-.btn-secondary:hover { background: var(--card-hover); }
-.btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
-.btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
-.btn-sm { padding: 7px 12px; font-size: 0.8rem; }
-.internships-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
-.internship-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px; transition: all .25s; position: relative; overflow: hidden; }
-.internship-card::before { content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: radial-gradient(circle, rgba(79,172,254,0.1), transparent 70%); pointer-events: none; }
-.internship-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 15px 40px rgba(79,172,254,0.15); }
-.internship-card.applied { border-color: rgba(16,185,129,0.4); background: linear-gradient(135deg, rgba(16,185,129,0.04), rgba(0,0,0,0)); }
-.internship-card.full { opacity: 0.7; }
-.internship-header { display: flex; align-items: center; gap: 12px; position: relative; }
-.company-logo { width: 56px; height: 56px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.3rem; flex-shrink: 0; overflow: hidden; }
-.company-logo img { width: 100%; height: 100%; object-fit: cover; }
-.company-info { flex: 1; min-width: 0; }
-.internship-title { font-weight: 800; font-size: 1.1rem; margin-bottom: 3px; }
-.company-name { color: var(--primary); font-size: 0.88rem; font-weight: 600; }
-.internship-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-.tag { padding: 3px 10px; border-radius: 12px; font-size: 0.74rem; font-weight: 700; background: rgba(79,172,254,0.12); color: var(--info); border: 1px solid rgba(79,172,254,0.2); }
-.tag.success { background: rgba(16,185,129,0.12); color: var(--success); border-color: rgba(16,185,129,0.2); }
-.tag.warning { background: rgba(245,158,11,0.12); color: var(--warning); border-color: rgba(245,158,11,0.2); }
-.internship-description { color: var(--text-muted); font-size: 0.86rem; line-height: 1.6; margin: 4px 0; }
-.internship-features { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.feature-icon { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; color: var(--text-muted); background: rgba(255,255,255,0.02); padding: 4px 10px; border-radius: 10px; }
-.feature-icon i { color: var(--success); }
-.feature-icon.disabled i { color: var(--text-dim); }
-.internship-meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.meta-cell { font-size: 0.84rem; }
-.meta-cell .label { color: var(--text-muted); font-size: 0.74rem; }
-.meta-cell .value { font-weight: 700; }
-.capacity-info { background: rgba(255,255,255,0.02); border-radius: 8px; padding: 8px 10px; }
-.capacity-info-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px; }
-.capacity-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
-.capacity-fill { height: 100%; background: var(--gradient); transition: width .4s; }
-.capacity-fill.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
-.capacity-fill.full { background: linear-gradient(135deg, #ef4444, #dc2626); }
-.internship-actions { display: flex; gap: 6px; }
-.internship-actions .btn { flex: 1; justify-content: center; padding: 10px; }
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .25s; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-.modal.active { display: flex; }
-.modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 720px; max-height: 92vh; overflow-y: auto; padding: 28px; position: relative; animation: slideUp .3s ease-out; }
-@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-.modal-content::-webkit-scrollbar { width: 6px; }
-.modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
-.modal-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-.modal-title i { color: var(--primary); }
-.modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
-.modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
-.field { margin-bottom: 16px; }
-.field label { display: block; color: var(--text); font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
-.field label i { color: var(--primary); margin-left: 4px; }
-.field input, .field textarea { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.95rem; font-family: inherit; transition: all .2s; }
-.field textarea { resize: vertical; min-height: 100px; line-height: 1.5; }
-.field input:focus, .field textarea:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.06); }
-.modal-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-.modal-section-title { font-size: 0.94rem; font-weight: 800; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
-.modal-section-title i { color: var(--primary); }
-.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
-.info-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
-.info-label { color: var(--text-muted); font-size: 0.76rem; display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
-.info-label i { color: var(--primary); }
-.info-value { font-weight: 700; font-size: 0.92rem; word-break: break-word; }
-.privacy-info { background: rgba(245,158,11,0.05); border: 1px dashed rgba(245,158,11,0.3); border-radius: 10px; padding: 10px 12px; font-size: 0.84rem; color: var(--warning); display: flex; align-items: flex-start; gap: 8px; }
-.privacy-info i { flex-shrink: 0; margin-top: 3px; }
-.req-list, .ben-list { list-style: none; padding: 0; }
-.req-list li, .ben-list li { padding: 8px 12px; background: rgba(255,255,255,0.02); border-right: 3px solid var(--primary); border-radius: 8px; margin-bottom: 6px; font-size: 0.88rem; color: var(--text-muted); display: flex; align-items: flex-start; gap: 8px; }
-.req-list li i, .ben-list li i { color: var(--success); flex-shrink: 0; margin-top: 4px; }
-.empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
-.empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
-.empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
-.help-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-.help-section h4 { font-size: 0.95rem; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--primary); }
-.help-section ul { list-style: none; padding: 0; }
-.help-section li { padding: 5px 0; color: var(--text-muted); font-size: 0.88rem; display: flex; align-items: flex-start; gap: 6px; }
-.help-section li i { color: var(--success); flex-shrink: 0; margin-top: 4px; }
-@media (max-width: 1024px) {
-    .sidebar { transform: translateX(100%); width: 280px; }
-    .sidebar.open { transform: translateX(0); }
-    .main { margin-right: 0; }
-    .menu-toggle { display: flex; align-items: center; justify-content: center; }
+
+// دالة محسنة لحفظ بيانات التدريب
+function saveInternshipData() {
+    try {
+        localStorage.setItem('internshipsData', JSON.stringify(internshipsData));
+        console.log('تم حفظ بيانات التدريب:', internshipsData);
+        return true;
+    } catch (error) {
+        console.error('خطأ في حفظ بيانات التدريب:', error);
+        return false;
+    }
 }
-@media (max-width: 600px) {
-    .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
-    .topbar-title { font-size: 1.2rem; }
-}
-    </style>
-</head>
-<body>
-    <div class="bg-anim"></div>
-    <div class="layout">
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-logo">
-                <div class="logo-wrapper">
-                    <div class="logo-icon">
-                        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#4facfe"/>
-                                    <stop offset="100%" stop-color="#00f2fe"/>
-                                </linearGradient>
-                            </defs>
-                            <path d="M16 2 L28 8 V20 Q28 26 16 30 Q4 26 4 20 V8 Z" fill="url(#logoGrad)" stroke="#fff" stroke-width="0.5" opacity="0.95"/>
-                            <text x="16" y="20" text-anchor="middle" font-family="Cairo, sans-serif" font-size="14" font-weight="900" fill="#fff">P</text>
-                        </svg>
-                    </div>
-                    <div class="logo-text">
-                        <div class="logo-brand">ProVance</div>
-                        <div class="logo-tagline">منصة التدريب</div>
-                    </div>
-                </div>
-            </div>
-            <a href="student-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
-            <a href="student-internship.html" class="nav-item active"><i class="fas fa-search"></i> فرص التدريب</a>
-            <a href="student-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلباتي</a>
-            <a href="student-profile.html" class="nav-item"><i class="fas fa-user"></i> ملفي</a>
-            <a href="student-payments.html" class="nav-item"><i class="fas fa-credit-card"></i> المدفوعات</a>
-            <a href="student-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
-        <a href="student-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
-            <a href="#" onclick="logoutStudent(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
-                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
-            </a>
-        </aside>
-        <main class="main">
-            <div class="topbar">
-                <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1 class="topbar-title"><i class="fas fa-search" style="color:var(--primary)"></i> فرص التدريب</h1>
-                <div class="topbar-actions">
-                    <button class="btn btn-secondary btn-sm" onclick="loadAll(); window.ProVance.showToast('تم التحديث', 'success')" style="margin-left:8px">
-                        <i class="fas fa-sync-alt"></i> تحديث
-                    </button>
-                    <button class="btn btn-secondary btn-sm" onclick="openHelpModal()">
-                        <i class="fas fa-question-circle"></i> مساعدة
-                    </button>
-                </div>
-            </div>
 
-            <div class="stats-bar">
-                <div class="stats-bar-item">
-                    <i class="fas fa-bullhorn"></i>
-                    <span><strong id="totalCount">0</strong> فرصة متاحة</span>
-                </div>
-                <div class="stats-bar-item">
-                    <i class="fas fa-paper-plane"></i>
-                    <span><strong id="myActiveCount">0</strong> طلبات نشطة</span>
-                </div>
-                <div class="stats-bar-item">
-                    <i class="fas fa-info-circle" style="color:var(--info)"></i>
-                    <span>الحد الأقصى: <strong>3 طلبات</strong></span>
-                </div>
-                <div class="stats-bar-item">
-                    <i class="fas fa-layer-group" style="color:var(--primary)"></i>
-                    <span>مستواك: <strong id="myLevelLabel">-</strong></span>
-                </div>
-            </div>
-            <div class="filters-section">
-                <div class="filters-row">
-                    <input type="text" id="searchInput" placeholder="🔍 ابحث باسم الشركة أو الفرصة...">
-                    <select id="filterField">
-                        <option value="">كل المجالات</option>
-                    </select>
-                    <select id="filterPrice">
-                        <option value="">كل الفئات السعرية</option>
-                        <option value="free">مجاني</option>
-                        <option value="0-500">حتى 500</option>
-                        <option value="500-1000">500 - 1000</option>
-                        <option value="1000-2000">1000 - 2000</option>
-                        <option value="2000-5000">2000 - 5000</option>
-                        <option value="5000+">أكثر من 5000</option>
-                    </select>
-                    <select id="filterSort">
-                        <option value="newest">الأحدث أولاً</option>
-                        <option value="oldest">الأقدم أولاً</option>
-                        <option value="price_low">السعر الأقل أولاً</option>
-                        <option value="price_high">السعر الأعلى أولاً</option>
-                    </select>
-                    <button class="btn btn-secondary" onclick="resetFilters()">
-                        <i class="fas fa-redo"></i> مسح
-                    </button>
-                </div>
-            </div>
-            <div class="internships-grid" id="internshipsGrid">
-                <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
-            </div>
-        </main>
-    </div>
-    <div id="modalsContainer"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
-    <script>
-
-    // ============================================================
-    // 🛡️ Resilient Supabase Client - GLOBAL
-    // ============================================================
-    window.getSafeSupabase = async function() {
-        if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
-            try {
-                const sb = await window.ProVance.waitForSupabaseClient(8000);
-                if (sb && typeof sb.from === 'function') return sb;
-            } catch(e) {}
-        }
-        try {
-            const sb = window.ProVance && window.ProVance.sb;
-            if (sb && typeof sb.from === 'function') return sb;
-        } catch(e) {}
-        if (typeof supabase !== 'undefined' && supabase.createClient) {
-            try {
-                return supabase.createClient(
-                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                    { auth: { persistSession: true, storage: window.localStorage } }
-                );
-            } catch(e) {}
-        }
-        return null;
-    };
-
-// ============================================================
-// ProVance: Student Internship Gallery - Privacy Protected
-// ============================================================
-(function() {
-    'use strict';
-
-    if (!window.ProVance) { window.ProVance = {}; console.error('⚠️ supabase-config.js مش متحمل'); }
-    if (typeof window.ProVance.escapeHtml !== 'function') {
-        window.ProVance.escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-    if (typeof window.ProVance.showToast !== 'function') {
-        window.ProVance.showToast = (msg, type) => {
-            const t = document.createElement('div');
-            const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
-            t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:' + (c[type]||'#4facfe') + ';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
-            t.textContent = msg;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 4000);
-        };
-    }
-    if (typeof window.ProVance.confirmModal !== 'function') {
-        window.ProVance.confirmModal = async ({title, message}) => confirm((title||'') + '\n' + (message||''));
-    }
-
-    console.log('✅ Internship Gallery initialized');
-
-    const esc = window.ProVance.escapeHtml;
-    const MAX_ACTIVE = 3;
-
-    let studentUserId = null;
-    let studentData = null;
-    let allInternships = [];
-    let allCompanies = {};  // map company_user_id => {name, logo, ...}
-    let myApplications = [];
-    let appCountsByInternship = {};
-
-    function getInitial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
-    function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
-
-    function renderModal(html) {
-        document.getElementById('modalsContainer').innerHTML = html;
-        document.body.style.overflow = 'hidden';
-    }
-    window.closeModal = (id) => {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-        if (document.querySelectorAll('.modal').length === 0) document.body.style.overflow = '';
-    };
-
-    window.logoutStudent = async (e) => {
-        e.preventDefault();
-        const ok = await window.ProVance.confirmModal({title: 'تسجيل الخروج', message: 'هل تريد تسجيل الخروج؟'});
-        if (ok) {
-            if (window.ProVance.logout) await window.ProVance.logout('student-login.html');
-            else window.location.href = 'student-login.html';
-        }
-    };
-
-    function isActiveStatus(s) {
-        return ['pending', 'reviewing', 'interview_scheduled', 'interview_done', 'accepted'].includes(s);
-    }
-
-    // ── مستوى الطالب = عدد التدريبات المكتملة ──────────────────
-    // 0 = أول مرة → يقدّم على النظام الأول (first-time)
-    // 1 = اتمرّن مرة → النظام الثاني (once-trained)
-    // 2+ = متمرس → النظام الثالث (twice-trained)
-    function getStudentLevel() {
-        return myApplications.filter(a => a.status === 'completed').length;
-    }
-
-    // النظام المطلوب لكل مستوى
-    function systemForLevel(level) {
-        if (level <= 0) return 'first-time';
-        if (level === 1) return 'once-trained';
-        return 'twice-trained';
-    }
-
-    // هل الطالب مؤهّل يقدّم على فرصة بنظام معيّن؟
-    function canApplyToSystem(traineeType) {
-        const level = getStudentLevel();
-        const required = systemForLevel(level);
-        // لو الفرصة مفيهاش نوع محدد، اسمح
-        if (!traineeType || traineeType === 'all') return true;
-        return traineeType === required;
-    }
-
-    function systemLabel(t) {
-        return { 'first-time': 'متدرب لأول مرة', 'once-trained': 'متدرب ذو خبرة (تدريب واحد سابق)', 'twice-trained': 'متدرب متمرس (تدريبان أو أكثر)' }[t] || t;
-    }
-
-    function getMyActiveCount() {
-        return myApplications.filter(a => isActiveStatus(a.status)).length;
-    }
-
-    function hasApplied(internshipId) {
-        return myApplications.some(a => a.internship_id === internshipId && isActiveStatus(a.status));
-    }
-
-        // تحويل duration code لـ text عربي
-    function getDurationText(d) {
-        return { 
-            '2-weeks': 'أسبوعين', 
-            '3-weeks': '3 أسابيع', 
-            '1-month': 'شهر', 
-            '1.5-months': 'شهر ونصف', 
-            '2-months': 'شهرين', 
-            '2.5-months': 'شهرين ونصف',
-            '3-months': '3 شهور',
-            '4-months': '4 شهور',
-            '6-months': '6 شهور'
-        }[d] || d || '-';
-    }
-    
-function renderInternshipCard(i) {
-        const company = allCompanies[i.company_user_id] || {};
-        const logo = company.logo
-            ? `<img src="${company.logo}" alt="">`
-            : `<span>${getInitial(i.company_name || company.company_name)}</span>`;
-
-        const applicants = appCountsByInternship[i.id] || 0;
-        const max = i.max_applicants || 10;
-        const percent = Math.min(100, (applicants / max) * 100);
-        const isFull = applicants >= max;
-        const fillCls = percent >= 100 ? 'full' : percent >= 80 ? 'warning' : '';
-        const isApplied = hasApplied(i.id);
-
-        const features = [];
-        // عرض الراتب (بعد التعيين)
-        if (i.salary_min && i.salary_max) {
-            features.push(`<div class="feature-icon"><i class="fas fa-money-bill-wave"></i> راتب: ${i.salary_min}-${i.salary_max} ${i.salary_currency || 'EGP'}</div>`);
-        } else if (i.salary_max) {
-            features.push(`<div class="feature-icon"><i class="fas fa-money-bill-wave"></i> راتب: ${i.salary_max} ${i.salary_currency || 'EGP'}</div>`);
+// دالة محسنة لحساب عدد الطلبات قيد المراجعة مع تتبع التدريبات المقدمة عليها
+function calculatePendingApplications() {
+    try {
+        const savedApplications = localStorage.getItem('studentApplications');
+        if (!savedApplications) {
+            return 0;
         }
         
-        // عرض سعر التدريب (اللي الطالب يدفعه)
-        if (i.training_price && parseFloat(i.training_price) > 0) {
-            features.push(`<div class="feature-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="fas fa-credit-card"></i> رسوم: ${i.training_price} ${i.training_currency || 'EGP'}</div>`);
+        const applicationsData = JSON.parse(savedApplications);
+        const pendingApplications = applicationsData.filter(app => app.status === 'pending');
+        
+        studentData.appliedInternships = pendingApplications.map(app => app.internshipId);
+        
+        console.log(`عدد الطلبات قيد المراجعة: ${pendingApplications.length}`);
+        return pendingApplications.length;
+    } catch (error) {
+        console.error('خطأ في حساب الطلبات قيد المراجعة:', error);
+        return 0;
+    }
+}
+
+// دالة محسنة لتحديث عدد الطلبات قيد المراجعة
+function updatePendingApplicationsCount() {
+    studentData.pendingApplicationsCount = calculatePendingApplications();
+    localStorage.setItem('studentData', JSON.stringify(studentData));
+    
+    updateApplicationsCounter();
+    updateCardButtonsState();
+    
+    console.log(`تم تحديث عدد الطلبات قيد المراجعة إلى: ${studentData.pendingApplicationsCount}`);
+}
+
+// دالة محسنة لحفظ الطلب في نظام الطلبات
+function saveApplicationToStorage(internship, branch, applicationMessage) {
+    try {
+        const savedApplications = localStorage.getItem('studentApplications');
+        let applicationsData = [];
+        
+        if (savedApplications) {
+            applicationsData = JSON.parse(savedApplications);
+        }
+        
+        const newApplication = {
+            id: Date.now(),
+            internshipId: internship.id,
+            title: internship.title,
+            company: internship.company,
+            logo: internship.logo,
+            status: "pending",
+            date: new Date().toISOString().split('T')[0],
+            branch: branch ? `${branch.name} - ${branch.location}` : 'غير محدد',
+            field: internship.fields[0] || 'عام',
+            salary: internship.price,
+            duration: internship.duration,
+            message: applicationMessage,
+            cv: "تم الرفع",
+            lastUpdate: new Date().toISOString().split('T')[0],
+            companyPolicy: {
+                maxResponseDays: Math.floor(Math.random() * 10) + 3,
+                maxResponseAfterInterview: Math.floor(Math.random() * 5) + 1
+            },
+            studentId: studentData.id,
+            studentLevel: studentData.level,
+            applicationTime: new Date().toISOString()
+        };
+        
+        applicationsData.push(newApplication);
+        localStorage.setItem('studentApplications', JSON.stringify(applicationsData));
+        
+        updateInternshipApplicants(internship.id, true);
+        updatePendingApplicationsCount();
+        
+        window.postMessage({
+            type: 'INTERNSHIP_APPLIED',
+            application: newApplication,
+            pendingCount: studentData.pendingApplicationsCount
+        }, '*');
+        
+        console.log('تم حفظ الطلب بنجاح:', newApplication);
+        return true;
+    } catch (error) {
+        console.error('خطأ في حفظ الطلب:', error);
+        return false;
+    }
+}
+
+// دالة محسنة لتحديث عدد المتقدمين في التدريب
+function updateInternshipApplicants(internshipId, increment = true) {
+    try {
+        const internshipIndex = internshipsData.findIndex(item => item.id === internshipId);
+        
+        if (internshipIndex !== -1) {
+            if (increment) {
+                internshipsData[internshipIndex].applicants += 1;
+            } else {
+                internshipsData[internshipIndex].applicants = Math.max(0, internshipsData[internshipIndex].applicants - 1);
+            }
+            
+            saveInternshipData();
+            renderInternshipCards();
+            
+            console.log(`تم تحديث التدريب ${internshipId}: ${internshipsData[internshipIndex].applicants} متقدم`);
+            return true;
+        }
+        
+        return false;
+    } catch (error) {
+        console.error('خطأ في تحديث عدد المتقدمين:', error);
+        return false;
+    }
+}
+
+// دالة جديدة: التحقق مما إذا كان الطالب قد تقدم على هذا التدريب مسبقاً
+function hasAppliedToInternship(internshipId) {
+    try {
+        const savedApplications = localStorage.getItem('studentApplications');
+        if (!savedApplications) return false;
+        
+        const applicationsData = JSON.parse(savedApplications);
+        return applicationsData.some(app => 
+            app.internshipId === internshipId && 
+            app.studentId === studentData.id && 
+            app.status === 'pending'
+        );
+    } catch (error) {
+        console.error('خطأ في التحقق من التقديم السابق:', error);
+        return false;
+    }
+}
+
+// دالة جديدة: الحصول على حالة التقديم للطالب
+function getStudentApplicationStatus(internshipId) {
+    try {
+        const savedApplications = localStorage.getItem('studentApplications');
+        if (!savedApplications) return null;
+        
+        const applicationsData = JSON.parse(savedApplications);
+        const application = applicationsData.find(app => 
+            app.internshipId === internshipId && 
+            app.studentId === studentData.id
+        );
+        
+        return application ? application.status : null;
+    } catch (error) {
+        console.error('خطأ في الحصول على حالة التقديم:', error);
+        return null;
+    }
+}
+
+// دالة جديدة: تحديث حالة أزرار التقديم في جميع البطاقات
+function updateCardButtonsState() {
+    const cards = document.querySelectorAll('.internship-card');
+    cards.forEach(card => {
+        const internshipId = parseInt(card.getAttribute('data-id'));
+        const internship = internshipsData.find(i => i.id === internshipId);
+        const applyBtn = card.querySelector('.apply-btn');
+        
+        if (applyBtn && internship) {
+            const eligible = isEligibleToApply(internship);
+            const alreadyApplied = hasAppliedToInternship(internshipId);
+            
+            if (alreadyApplied) {
+                const status = getStudentApplicationStatus(internshipId);
+                applyBtn.innerHTML = `<i class="fas fa-check-circle"></i><span>${getStatusText(status)}</span>`;
+                applyBtn.disabled = true;
+                applyBtn.style.opacity = '0.7';
+                applyBtn.style.cursor = 'not-allowed';
+            } else if (!eligible) {
+                applyBtn.innerHTML = '<i class="fas fa-paper-plane"></i><span>غير متاح</span>';
+                applyBtn.disabled = true;
+            } else {
+                applyBtn.innerHTML = '<i class="fas fa-paper-plane"></i><span>تقديم الآن</span>';
+                applyBtn.disabled = false;
+                applyBtn.style.opacity = '1';
+                applyBtn.style.cursor = 'pointer';
+            }
+        }
+    });
+}
+
+// دالة جديدة: الحصول على نص حالة التقديم
+function getStatusText(status) {
+    const statuses = {
+        'pending': 'قيد المراجعة',
+        'accepted': 'تم القبول',
+        'rejected': 'تم الرفض'
+    };
+    return statuses[status] || 'تم التقديم';
+}
+
+// مستمع محسن للأحداث القادمة من صفحة الطلبات
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'APPLICATION_CANCELLED') {
+        const { internshipId, status, applicationId } = event.data;
+        
+        console.log(`تم استلام إشعار إلغاء طلب: ${applicationId} للتدريب: ${internshipId}`);
+        
+        if (status === 'pending') {
+            updatePendingApplicationsCount();
+            updateInternshipApplicants(internshipId, false);
+            
+            setTimeout(() => {
+                renderInternshipCards();
+                showNotification('تم إلغاء الطلب بنجاح. يمكنك الآن التقديم على تدريب آخر.', 'success');
+            }, 300);
+        }
+        
+    } else if (event.data && event.data.type === 'APPLICATION_STATUS_CHANGED') {
+        const { oldStatus, newStatus, internshipId } = event.data;
+        
+        console.log(`تم تغيير حالة الطلب للتدريب ${internshipId}: ${oldStatus} -> ${newStatus}`);
+        
+        if (oldStatus === 'pending' && (newStatus === 'accepted' || newStatus === 'rejected')) {
+            updatePendingApplicationsCount();
+            
+            if (newStatus === 'rejected') {
+                showNotification('تم رفض طلبك. يمكنك التقديم على تدريبات أخرى.', 'info');
+            }
+        }
+        
+    } else if (event.data && event.data.type === 'PENDING_APPLICATIONS_UPDATED') {
+        updatePendingApplicationsCount();
+        
+    } else if (event.data && event.data.type === 'APPLICATION_ADDED') {
+        updatePendingApplicationsCount();
+    }
+});
+
+// ============================================
+// دوال التحديث التلقائي الجديدة
+// ============================================
+
+function setupAutoRefresh() {
+    // 1. التحقق من تحديثات localStorage
+    window.addEventListener('storage', function(event) {
+        if (event.key === 'internshipsData' || 
+            event.key === 'companiesData' ||
+            event.key === 'departmentsData') {
+            
+            console.log('📦 بيانات جديدة متاحة، إعادة التحميل...');
+            loadStoredInternshipData();
+            renderInternshipCards();
+            showNotification('تم تحديث قائمة التدريبات', 'info');
+        }
+    });
+    
+    // 2. تحديث دوري كل دقيقة
+    setInterval(() => {
+        checkForNewInternships();
+    }, 60000); // 60 ثانية
+}
+
+function checkForNewInternships() {
+    const lastCheck = localStorage.getItem('lastInternshipCheck') || 0;
+    const currentTime = Date.now();
+    
+    if (currentTime - lastCheck > 30000) { // كل 30 ثانية
+        const newInternships = getNewInternshipsSince(lastCheck);
+        if (newInternships.length > 0) {
+            updateInternshipDisplay(newInternships);
+            showNewInternshipsNotification(newInternships.length);
+        }
+        localStorage.setItem('lastInternshipCheck', currentTime);
+    }
+}
+
+function getNewInternshipsSince(lastCheck) {
+    return internshipsData.filter(internship => internship.createdAt > lastCheck);
+}
+
+function updateInternshipDisplay(newInternships) {
+    newInternships.forEach(internship => {
+        const card = document.querySelector(`.internship-card[data-id="${internship.id}"]`);
+        if (card) {
+            if (!card.querySelector('.new-badge')) {
+                const newBadge = document.createElement('div');
+                newBadge.className = 'new-badge';
+                newBadge.textContent = 'جديد';
+                card.querySelector('.internship-header').appendChild(newBadge);
+            }
+        }
+    });
+}
+
+function showNewInternshipsNotification(count) {
+    showNotification(`هناك ${count} تدريب جديد متاح`, 'success');
+}
+
+// ============================================
+// Initialize Application (محدث)
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('%c🚀 ProVance Internship System', 'color: #667eea; font-size: 24px; font-weight: bold;');
+    console.log('%c✨ نظام الطلبات المحسن - الإصدار 2.0', 'color: #51cf66; font-size: 16px;');
+    
+    checkLoginStatus();
+    initializeApp();
+});
+
+// ============================================
+// التحقق من حالة الدخول (محدث)
+// ============================================
+function checkLoginStatus() {
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (isLoggedIn !== 'true') {
+        window.location.href = 'student-login.html';
+        return;
+    }
+    
+    const userEmail = localStorage.getItem('userEmail');
+    const userName = localStorage.getItem('userName');
+    if (userName) {
+        studentData.name = userName;
+    }
+    
+    updateUserDisplay();
+}
+
+function updateUserDisplay() {
+    const userDisplayElement = document.getElementById('userDisplay');
+    if (userDisplayElement && studentData.name) {
+        userDisplayElement.textContent = `مرحباً، ${studentData.name}`;
+    }
+    
+    const navCounter = document.getElementById('navApplicationsCounter');
+    if (navCounter) {
+        navCounter.textContent = `طلباتي (${studentData.pendingApplicationsCount})`;
+    }
+}
+
+// ============================================
+// التهيئة المحسنة
+// ============================================
+function initializeApp() {
+    loadStoredInternshipData();
+    loadStudentData();
+    
+    renderInternshipCards();
+    attachEventListeners();
+    animateStats();
+    
+    addApplicationsStatusDisplay();
+    
+    // إعداد التحديث التلقائي
+    setupAutoRefresh();
+}
+
+function loadStudentData() {
+    const savedData = localStorage.getItem('studentData');
+    if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        studentData = { ...studentData, ...parsedData };
+    }
+    
+    updatePendingApplicationsCount();
+}
+
+function updateApplicationsCounter() {
+    const counterElement = document.getElementById('applicationsCounter');
+    if (counterElement) {
+        counterElement.textContent = `${studentData.pendingApplicationsCount}/${studentData.maxPendingApplications}`;
+        
+        if (studentData.pendingApplicationsCount >= studentData.maxPendingApplications) {
+            counterElement.classList.add('max-limit');
         } else {
-            features.push(`<div class="feature-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="fas fa-gift"></i> مجاني</div>`);
+            counterElement.classList.remove('max-limit');
         }
-        if (company.provides_certificate !== false) {
-            features.push(`<div class="feature-icon"><i class="fas fa-certificate"></i> شهادة</div>`);
-        }
-        if (company.provides_meals) {
-            features.push(`<div class="feature-icon"><i class="fas fa-utensils"></i> وجبات</div>`);
-        }
-        if (company.provides_transport) {
-            features.push(`<div class="feature-icon"><i class="fas fa-bus"></i> مواصلات</div>`);
-        }
+    }
+}
 
+// دالة جديدة: إضافة عرض لحالة الطلبات
+function addApplicationsStatusDisplay() {
+    const statusContainer = document.querySelector('.filter-section') || document.querySelector('.applications-hero');
+    if (statusContainer && !document.getElementById('applicationsStatus')) {
+        const statusHTML = `
+            <div class="applications-status" id="applicationsStatus" style="
+                background: rgba(108, 99, 255, 0.1);
+                border: 2px solid var(--primary);
+                border-radius: 12px;
+                padding: 16px;
+                margin-bottom: 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                animation: fadeIn 0.5s ease;
+            ">
+                <div>
+                    <h4 style="margin: 0; color: var(--primary); font-size: 1.1rem;">
+                        <i class="fas fa-clock"></i> حالة طلباتك الحالية
+                    </h4>
+                    <p style="margin: 8px 0 0 0; color: var(--text-secondary); font-size: 0.9rem;">
+                        يمكنك التقديم على <strong>${studentData.maxPendingApplications - studentData.pendingApplicationsCount}</strong> تدريب إضافي
+                    </p>
+                </div>
+                <div class="status-progress" style="
+                    width: 150px;
+                    height: 30px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 15px;
+                    overflow: hidden;
+                    position: relative;
+                ">
+                    <div class="progress-bar" style="
+                        width: ${(studentData.pendingApplicationsCount / studentData.maxPendingApplications) * 100}%;
+                        height: 100%;
+                        background: linear-gradient(90deg, var(--primary), var(--secondary));
+                        transition: width 0.5s ease;
+                    "></div>
+                    <div class="progress-text" style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        font-weight: bold;
+                        font-size: 0.9rem;
+                    ">
+                        ${studentData.pendingApplicationsCount}/${studentData.maxPendingApplications}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        if (statusContainer.classList.contains('filter-section')) {
+            statusContainer.insertAdjacentHTML('beforebegin', statusHTML);
+        } else {
+            statusContainer.insertAdjacentHTML('afterend', statusHTML);
+        }
+    }
+}
+
+// ============================================
+// Render Functions (محدثة)
+// ============================================
+function renderInternshipCards() {
+    const grid = document.getElementById('internshipGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    
+    const filteredInternships = filterInternships();
+    
+    if (filteredInternships.length === 0) {
+        grid.innerHTML = `
+            <div class="text-center" style="grid-column: 1 / -1; padding: var(--spacing-xl);">
+                <div style="font-size: 4rem; color: var(--text-muted); margin-bottom: var(--spacing-md);">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3 style="color: var(--text-secondary); margin-bottom: var(--spacing-sm);">لم نجد أي فرص تدريب</h3>
+                <p style="color: var(--text-muted);">جرب تغيير معايير البحث أو إعادة تعيين الفلتر</p>
+            </div>
+        `;
+        return;
+    }
+    
+    filteredInternships.forEach(internship => {
+        const card = document.createElement('div');
+        card.className = 'internship-card';
+        card.setAttribute('data-id', internship.id);
+        
+        const levelClass = `level-${internship.level}`;
+        const levelText = getLevelText(internship.level);
+        const eligible = isEligibleToApply(internship);
+        const alreadyApplied = hasAppliedToInternship(internship.id);
+        const applicationStatus = getStudentApplicationStatus(internship.id);
+        const isNew = Date.now() - internship.createdAt < 3 * 24 * 60 * 60 * 1000;
+        
+        let buttonText = 'تقديم الآن';
+        let buttonIcon = 'fa-paper-plane';
+        let buttonDisabled = !eligible;
+        let statusBadge = '';
+        
+        if (alreadyApplied) {
+            buttonText = getStatusText(applicationStatus);
+            buttonIcon = 'fa-check-circle';
+            buttonDisabled = true;
+            
+            if (applicationStatus) {
+                const statusClass = applicationStatus === 'pending' ? 'pending-badge' : 
+                                  applicationStatus === 'accepted' ? 'accepted-badge' : 'rejected-badge';
+                const statusText = applicationStatus === 'pending' ? 'قيد المراجعة' :
+                                  applicationStatus === 'accepted' ? 'مقبول' : 'مرفوض';
+                
+                statusBadge = `<div class="application-status-badge ${statusClass}">${statusText}</div>`;
+            }
+        }
+        
+        card.innerHTML = `
+            <div class="internship-header" style="position: relative;">
+                ${isNew ? '<div class="new-badge">جديد</div>' : ''}
+                <div class="company-logo">
+                    ${internship.logo}
+                </div>
+                <div class="internship-info">
+                    <h3 class="internship-title">${internship.title}</h3>
+                    <div class="company-name">${internship.company}</div>
+                    <div class="internship-level ${levelClass}">${levelText}</div>
+                    ${statusBadge}
+                </div>
+            </div>
+            <div class="internship-meta">
+                <div class="meta-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>${internship.location}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-clock"></i>
+                    <span>${internship.duration}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-users"></i>
+                    <span>${internship.applicants}/${internship.maxApplicants}</span>
+                </div>
+            </div>
+            <div class="internship-tags">
+                ${internship.fields.map(field => `<span class="tag">${field}</span>`).join('')}
+            </div>
+            <div class="internship-footer">
+                <div class="internship-salary">${internship.price}</div>
+                <button class="apply-btn" ${buttonDisabled ? 'disabled' : ''}>
+                    <i class="fas ${buttonIcon}"></i>
+                    <span>${buttonText}</span>
+                </button>
+            </div>
+        `;
+        
+        grid.appendChild(card);
+    });
+    
+    attachCardEventListeners();
+}
+
+function renderInternshipDetails(internship) {
+    const detailsSection = document.getElementById('internshipDetails');
+    if (!detailsSection) return;
+    
+    const levelClass = `level-${internship.level}`;
+    const levelText = getLevelText(internship.level);
+    const alreadyApplied = hasAppliedToInternship(internship.id);
+    const applicationStatus = getStudentApplicationStatus(internship.id);
+    
+    detailsSection.innerHTML = `
+        <div class="details-header">
+            <div class="details-logo">
+                ${internship.logo}
+            </div>
+            <div class="details-info">
+                <h2 class="details-title">${internship.title}</h2>
+                <div class="details-company">${internship.company}</div>
+                <div class="internship-level ${levelClass}">${levelText}</div>
+                ${alreadyApplied ? `<div class="application-status-indicator status-${applicationStatus}">${getStatusText(applicationStatus)}</div>` : ''}
+                <p class="details-description">${internship.description}</p>
+            </div>
+        </div>
+        
+        <div class="details-grid">
+            <div class="details-section">
+                <h3 class="section-title">
+                    <i class="fas fa-map-marker-alt"></i>
+                    الفروع المتاحة
+                </h3>
+                <div class="branch-selection" id="branchSelection">
+                    ${internship.branches.map(branch => `
+                        <div class="branch-card" data-id="${branch.id}">
+                            <div class="branch-name">${branch.name}</div>
+                            <div class="branch-location">${branch.location}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="details-section">
+                <h3 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    إحصائيات المجالات
+                </h3>
+                <div class="field-stats">
+                    ${internship.fieldsStats.map(field => `
+                        <div class="field-stat">
+                            <div class="field-name">${field.name}</div>
+                            <div class="field-counter">${field.current}/${field.max}</div>
+                            <div class="field-label">متقدم/العدد المطلوب</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="details-section">
+                <h3 class="section-title">
+                    <i class="fas fa-graduation-cap"></i>
+                    المميزات المعرفية
+                </h3>
+                <div class="benefits-list">
+                    ${internship.knowledgeBenefits.map(benefit => `
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <div class="benefit-text">
+                                <div class="benefit-title">${benefit.title}</div>
+                                <div class="benefit-description">${benefit.description}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            ${internship.financialBenefits.length > 0 ? `
+            <div class="details-section">
+                <h3 class="section-title">
+                    <i class="fas fa-money-bill-wave"></i>
+                    المميزات المادية
+                </h3>
+                <div class="benefits-list">
+                    ${internship.financialBenefits.map(benefit => `
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="fas fa-gift"></i>
+                            </div>
+                            <div class="benefit-text">
+                                <div class="benefit-title">${benefit.title}</div>
+                                <div class="benefit-description">${benefit.description}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+            
+            <div class="details-section">
+                <h3 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    معلومات التقديم
+                </h3>
+                <div class="application-info-box">
+                    ${getApplicationInfoHTML(internship)}
+                </div>
+            </div>
+        </div>
+        
+        <div class="details-actions">
+            <button class="btn btn-secondary" id="backToList">
+                <i class="fas fa-arrow-right"></i>
+                <span>العودة للقائمة</span>
+            </button>
+            ${alreadyApplied ? `
+                <button class="btn btn-info" id="viewApplicationBtn">
+                    <i class="fas fa-eye"></i>
+                    <span>عرض حالة الطلب</span>
+                </button>
+            ` : `
+                <button class="btn btn-primary" id="applyToInternship" ${isEligibleToApply(internship) ? '' : 'disabled'}>
+                    <i class="fas fa-paper-plane"></i>
+                    <span>${isEligibleToApply(internship) ? 'تقديم طلب التدريب' : 'غير متاح للتقديم'}</span>
+                </button>
+            `}
+        </div>
+    `;
+    
+    detailsSection.style.display = 'block';
+    attachDetailsEventListeners(internship);
+}
+
+// دالة جديدة: الحصول على معلومات التقديم
+function getApplicationInfoHTML(internship) {
+    const alreadyApplied = hasAppliedToInternship(internship.id);
+    const applicationStatus = getStudentApplicationStatus(internship.id);
+    
+    if (alreadyApplied) {
         return `
-            <div class="internship-card ${isApplied ? 'applied' : ''} ${isFull ? 'full' : ''}">
-                <div class="internship-header">
-                    <div class="company-logo">${logo}</div>
-                    <div class="company-info">
-                        <div class="internship-title">${esc(i.title || '-')}</div>
-                        <div class="company-name">${esc(i.company_name || company.company_name || '-')}</div>
-                    </div>
-                </div>
-
-                <div class="internship-tags">
-                    <span class="tag">${esc(i.field || 'عام')}</span>
-                    ${i.duration ? `<span class="tag"><i class="fas fa-clock"></i> ${getDurationText(i.duration)}</span>` : ''}
-                    ${i.company_location ? `<span class="tag"><i class="fas fa-map-marker-alt"></i> ${esc(i.company_location)}</span>` : ''}
-                    ${isApplied ? '<span class="tag success">✓ قدمت بالفعل</span>' : ''}
-                    ${isFull ? '<span class="tag warning">امتلأت</span>' : ''}
-                </div>
-
-                ${i.description ? `<div class="internship-description">${esc(i.description.length > 130 ? i.description.substring(0, 130) + '...' : i.description)}</div>` : ''}
-
-                <div class="internship-features">${features.join('')}</div>
-
-                <div class="capacity-info">
-                    <div class="capacity-info-label">
-                        <span><i class="fas fa-users"></i> المتقدمين</span>
-                        <strong>${applicants} / ${max}</strong>
-                    </div>
-                    <div class="capacity-bar"><div class="capacity-fill ${fillCls}" style="width:${percent}%"></div></div>
-                </div>
-
-                <div class="internship-actions">
-                    <button class="btn btn-info btn-sm" onclick="viewInternshipDetails('${i.id}')" style="flex:1;justify-content:center">
-                        <i class="fas fa-eye"></i> التفاصيل
-                    </button>
-                    ${isApplied
-                        ? `<a href="student-applications.html" class="btn btn-success btn-sm" style="flex:1;justify-content:center"><i class="fas fa-check"></i> قدمت</a>`
-                        : isFull
-                        ? `<button class="btn btn-secondary btn-sm" disabled style="flex:1;justify-content:center"><i class="fas fa-ban"></i> ممتلئة</button>`
-                        : !canApplyToSystem(i.trainee_type)
-                        ? `<button class="btn btn-secondary btn-sm" onclick="openApplyModal('${i.id}')" style="flex:1;justify-content:center;opacity:.7" title="غير متاح لمستواك الحالي"><i class="fas fa-lock"></i> مستوى أعلى</button>`
-                        : `<button class="btn btn-primary btn-sm" onclick="openApplyModal('${i.id}')" style="flex:1;justify-content:center"><i class="fas fa-paper-plane"></i> قدم</button>`
-                    }
+            <div class="info-item applied">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                    <strong>لقد تقدمت على هذا التدريب مسبقاً</strong>
+                    <p>حالة طلبك: <span class="status-${applicationStatus}">${getStatusText(applicationStatus)}</span></p>
                 </div>
             </div>
         `;
     }
-
-    function renderInternships() {
-        const search = document.getElementById('searchInput').value.toLowerCase().trim();
-        const fieldFilter = document.getElementById('filterField').value;
-        const priceFilter = document.getElementById('filterPrice').value;
-        const sort = document.getElementById('filterSort').value;
-
-        let filtered = allInternships.filter(i => i.status === 'active');
-
-        if (search) {
-            filtered = filtered.filter(i =>
-                (i.title || '').toLowerCase().includes(search) ||
-                (i.company_name || '').toLowerCase().includes(search) ||
-                (i.field || '').toLowerCase().includes(search)
-            );
-        }
-
-        if (fieldFilter) filtered = filtered.filter(i => i.field === fieldFilter);
-
-        // فلتر بالسعر (training_price من companies)
-        if (priceFilter) {
-            filtered = filtered.filter(i => {
-                const price = parseFloat(i.training_price || 0);
-                if (priceFilter === 'free') return price === 0;
-                if (priceFilter === '0-500') return price > 0 && price <= 500;
-                if (priceFilter === '500-1000') return price > 500 && price <= 1000;
-                if (priceFilter === '1000-2000') return price > 1000 && price <= 2000;
-                if (priceFilter === '2000-5000') return price > 2000 && price <= 5000;
-                if (priceFilter === '5000+') return price > 5000;
-                return true;
-            });
-        }
-
-        if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-        else if (sort === 'price_low') filtered.sort((a, b) => (parseFloat(a.training_price) || 0) - (parseFloat(b.training_price) || 0));
-        else if (sort === 'price_high') filtered.sort((a, b) => (parseFloat(b.training_price) || 0) - (parseFloat(a.training_price) || 0));
-
-        document.getElementById('totalCount').textContent = filtered.length;
-        document.getElementById('myActiveCount').textContent = getMyActiveCount();
-        const lvlEl = document.getElementById('myLevelLabel');
-        if (lvlEl) {
-            const lvl = getStudentLevel();
-            lvlEl.textContent = systemLabel(systemForLevel(lvl)) + ` (${lvl} مكتمل)`;
-        }
-
-        const grid = document.getElementById('internshipsGrid');
-        if (filtered.length === 0) {
-            grid.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><h3>لا توجد فرص مطابقة</h3><p>جرب تغيير الفلاتر</p></div>';
-            return;
-        }
-
-        grid.innerHTML = filtered.map(renderInternshipCard).join('');
+    
+    const eligible = isEligibleToApply(internship);
+    const availableSlots = internship.maxApplicants - internship.applicants;
+    
+    if (!eligible) {
+        const reasons = getEligibilityReasons(internship);
+        return `
+            <div class="info-item not-eligible">
+                <i class="fas fa-exclamation-circle"></i>
+                <div>
+                    <strong>غير متاح للتقديم</strong>
+                    <ul>
+                        ${reasons.map(reason => `<li>${reason}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
     }
     
-    // املأ الـ field options من البيانات الفعلية
-    function populateFieldOptions() {
-        const fieldSelect = document.getElementById('filterField');
-        if (!fieldSelect) return;
+    return `
+        <div class="info-item eligible">
+            <i class="fas fa-thumbs-up"></i>
+            <div>
+                <strong>متاح للتقديم</strong>
+                <p>المقاعد المتاحة: ${availableSlots} من ${internship.maxApplicants}</p>
+                <p>طلباتك الحالية: ${studentData.pendingApplicationsCount} من ${studentData.maxPendingApplications}</p>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================
+// Event Listeners (محدثة)
+// ============================================
+function attachEventListeners() {
+    const priceFilter = document.getElementById('priceFilter');
+    const locationFilter = document.getElementById('locationFilter');
+    const companyFilter = document.getElementById('companyFilter');
+    const levelFilter = document.getElementById('levelFilter');
+    const resetFilters = document.getElementById('resetFilters');
+    
+    if (priceFilter) priceFilter.addEventListener('change', function() {
+        renderInternshipCards();
+        updateApplicationsStatusDisplay();
+    });
+    if (locationFilter) locationFilter.addEventListener('change', function() {
+        renderInternshipCards();
+        updateApplicationsStatusDisplay();
+    });
+    if (companyFilter) companyFilter.addEventListener('input', function() {
+        renderInternshipCards();
+        updateApplicationsStatusDisplay();
+    });
+    if (levelFilter) levelFilter.addEventListener('change', function() {
+        renderInternshipCards();
+        updateApplicationsStatusDisplay();
+    });
+    if (resetFilters) resetFilters.addEventListener('click', resetAllFilters);
+    
+    const closeApplicationModal = document.getElementById('closeApplicationModal');
+    const cancelApplication = document.getElementById('cancelApplication');
+    const closeSuccessModal = document.getElementById('closeSuccessModal');
+    const closeUnavailableModal = document.getElementById('closeUnavailableModal');
+    
+    if (closeApplicationModal) closeApplicationModal.addEventListener('click', closeModals);
+    if (cancelApplication) cancelApplication.addEventListener('click', closeModals);
+    if (closeSuccessModal) closeSuccessModal.addEventListener('click', closeModals);
+    if (closeUnavailableModal) closeUnavailableModal.addEventListener('click', closeModals);
+    
+    const submitApplication = document.getElementById('submitApplication');
+    if (submitApplication) submitApplication.addEventListener('click', submitApplicationForm);
+    
+    document.addEventListener('click', function(e) {
+        const applicationModal = document.getElementById('applicationModal');
+        const successModal = document.getElementById('successModal');
+        const unavailableModal = document.getElementById('unavailableModal');
         
-        // جمع المجالات الفريدة من active internships
-        const fields = [...new Set(allInternships
-            .filter(i => i.status === 'active' && i.field)
-            .map(i => i.field)
-        )].sort();
+        if (applicationModal && applicationModal.classList.contains('active') && e.target === applicationModal) {
+            closeModals();
+        }
         
-        // امسح الـ options القديمة (ما عدا "كل المجالات")
-        fieldSelect.innerHTML = '<option value="">كل المجالات (' + fields.length + ')</option>';
+        if (successModal && successModal.classList.contains('active') && e.target === successModal) {
+            closeModals();
+        }
         
-        fields.forEach(field => {
-            const count = allInternships.filter(i => i.status === 'active' && i.field === field).length;
-            const option = document.createElement('option');
-            option.value = field;
-            option.textContent = `${field} (${count})`;
-            fieldSelect.appendChild(option);
+        if (unavailableModal && unavailableModal.classList.contains('active') && e.target === unavailableModal) {
+            closeModals();
+        }
+    });
+    
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
         });
     }
-
-    window.resetFilters = () => {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('filterField').value = '';
-        document.getElementById('filterPrice').value = '';
-        document.getElementById('filterSort').value = 'newest';
-        renderInternships();
-    };
-
-    // VIEW DETAILS
     
-    // getSafeSupabase موجودة في top of script
+    setInterval(() => {
+        updatePendingApplicationsCount();
+    }, 30000);
+}
 
-    window.viewInternshipDetails = async (id) => {
-        const i = allInternships.find(x => x.id === id);
-        if (!i) return;
+function attachCardEventListeners() {
+    const cards = document.querySelectorAll('.internship-card');
+    cards.forEach(card => {
+        card.addEventListener('click', function() {
+            const internshipId = parseInt(this.getAttribute('data-id'));
+            const internship = internshipsData.find(i => i.id === internshipId);
+            
+            if (internship) {
+                showInternshipDetails(internship);
+            }
+        });
         
-        // اجلب التفاصيل الكاملة من DB لو لسه ما اتجبتش
-        if (!i._fullDetailsLoaded) {
-            try {
-                const sb = await window.getSafeSupabase();
-                if (sb) {
-                    const { data: fullData } = await sb.from('internships')
-                        .select('description, requirements, knowledge_benefits, financial_benefits')
-                        .eq('id', id).maybeSingle();
-                    if (fullData) {
-                        Object.assign(i, fullData);
-                        i._fullDetailsLoaded = true;
-                    }
+        const applyBtn = card.querySelector('.apply-btn');
+        if (applyBtn) {
+            applyBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                const internshipId = parseInt(card.getAttribute('data-id'));
+                const internship = internshipsData.find(i => i.id === internshipId);
+                const alreadyApplied = hasAppliedToInternship(internshipId);
+                
+                if (!alreadyApplied && internship && isEligibleToApply(internship)) {
+                    showApplicationModal(internship);
+                } else if (alreadyApplied) {
+                    showNotification('لقد تقدمت على هذا التدريب مسبقاً', 'info');
+                } else {
+                    showEligibilityError(internship);
                 }
-            } catch (e) { console.warn('Details load failed (showing without details):', e); }
+            });
         }
+    });
+}
 
-        const company = allCompanies[i.company_user_id] || {};
-        const logo = company.logo
-            ? `<img src="${company.logo}" alt="">`
-            : `<span>${getInitial(i.company_name || company.company_name)}</span>`;
+function attachDetailsEventListeners(internship) {
+    const branchCards = document.querySelectorAll('.branch-card');
+    branchCards.forEach(card => {
+        card.addEventListener('click', function() {
+            branchCards.forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            const branchId = parseInt(this.getAttribute('data-id'));
+            selectedBranch = internship.branches.find(b => b.id === branchId);
+        });
+    });
+    
+    if (branchCards.length > 0 && !selectedBranch) {
+        branchCards[0].click();
+    }
+    
+    const backToList = document.getElementById('backToList');
+    if (backToList) {
+        backToList.addEventListener('click', function() {
+            hideInternshipDetails();
+        });
+    }
+    
+    const applyToInternship = document.getElementById('applyToInternship');
+    if (applyToInternship) {
+        applyToInternship.addEventListener('click', function() {
+            const alreadyApplied = hasAppliedToInternship(internship.id);
+            
+            if (!alreadyApplied && isEligibleToApply(internship)) {
+                showApplicationModal(internship);
+            } else if (alreadyApplied) {
+                showNotification('لقد تقدمت على هذا التدريب مسبقاً', 'info');
+            } else {
+                showEligibilityError(internship);
+            }
+        });
+    }
+    
+    const viewApplicationBtn = document.getElementById('viewApplicationBtn');
+    if (viewApplicationBtn) {
+        viewApplicationBtn.addEventListener('click', function() {
+            window.location.href = 'student-applications.html';
+        });
+    }
+}
 
-        const applicants = appCountsByInternship[i.id] || 0;
-        const max = i.max_applicants || 10;
-        const isFull = applicants >= max;
-        const isApplied = hasApplied(i.id);
-
-        const requirements = Array.isArray(i.requirements) ? i.requirements : [];
-        // benefits come as text from knowledge_benefits and financial_benefits
-
-        const html = `
-            <div class="modal active" id="detailsModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-briefcase"></i><span>تفاصيل الفرصة</span></div>
-                        <button class="modal-close" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div style="display:flex;align-items:center;gap:14px;padding:14px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.2);border-radius:14px;margin-bottom:14px">
-                        <div class="company-logo" style="width:60px;height:60px">${logo}</div>
-                        <div style="flex:1">
-                            <h3 style="font-size:1.15rem;font-weight:800">${esc(i.title)}</h3>
-                            <div style="color:var(--primary);font-size:0.92rem;margin-top:3px;font-weight:700">${esc(i.company_name || company.company_name || '-')}</div>
-                        </div>
-                    </div>
-                    
-                    ${(company.company_bio || company.company_field || company.employees_count) ? `
-                    <div class="modal-section">
-                        <div class="modal-section-title"><i class="fas fa-building"></i> عن الشركة</div>
-                        ${company.company_bio ? `<div style="color:var(--text-muted);line-height:1.7;margin-bottom:10px;font-size:0.92rem">${esc(company.company_bio)}</div>` : ''}
-                        <div class="info-grid">
-                            ${company.company_field ? `
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-briefcase"></i> المجال</div>
-                                <div class="info-value">${esc(company.company_field)}</div>
-                            </div>` : ''}
-                            ${company.employees_count ? `
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-users"></i> عدد الموظفين</div>
-                                <div class="info-value">${esc(company.employees_count)}</div>
-                            </div>` : ''}
-                            ${company.provides_certificate ? `
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-certificate"></i> شهادة تدريب</div>
-                                <div class="info-value" style="color:#10b981">✓ يوفّر</div>
-                            </div>` : ''}
-                            ${company.provides_meals ? `
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-utensils"></i> وجبات</div>
-                                <div class="info-value" style="color:#10b981">✓ يوفّر</div>
-                            </div>` : ''}
-                            ${company.provides_transport ? `
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-bus"></i> مواصلات</div>
-                                <div class="info-value" style="color:#10b981">✓ يوفّر</div>
-                            </div>` : ''}
-                        </div>
-                    </div>` : ''}
-
-                    <div class="modal-section">
-                        <div class="modal-section-title"><i class="fas fa-info-circle"></i> معلومات أساسية</div>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-tag"></i> المجال</div>
-                                <div class="info-value">${esc(i.field || 'عام')}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-calendar"></i> المدة</div>
-                                <div class="info-value">${getDurationText(i.duration)}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-users"></i> السعة</div>
-                                <div class="info-value">${applicants}/${max} متقدم</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-money-bill-wave"></i> المرتب المتوقع بعد التعيين</div>
-                                <div class="info-value">${(i.salary_min || i.salary_max) ? `${i.salary_min || 0} - ${i.salary_max || i.salary_min} ${i.salary_currency || 'EGP'}` : 'حسب الاتفاق'}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-credit-card"></i> رسوم التدريب</div>
-                                <div class="info-value">${i.training_price && parseFloat(i.training_price) > 0 ? `${i.training_price} ${i.training_currency || 'EGP'}` : '<span style="color:#10b981">🎁 مجاني</span>'}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-map-marker-alt"></i> المكان</div>
-                                <div class="info-value">${esc(i.company_location || 'مقر الشركة')}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-user-tag"></i> نوع المتدرب</div>
-                                <div class="info-value">${i.trainee_type === 'first-time' ? 'لأول مرة' : i.trainee_type === 'experienced' ? 'خبرة سابقة' : (i.trainee_type || 'الكل')}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-calendar-plus"></i> نُشرت</div>
-                                <div class="info-value">${formatDate(i.created_at)}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    ${i.description ? `
-                        <div class="modal-section">
-                            <div class="modal-section-title"><i class="fas fa-align-right"></i> وصف الفرصة</div>
-                            <div style="color:var(--text-muted);line-height:1.7;font-size:0.92rem">${esc(i.description)}</div>
-                        </div>
-                    ` : ''}
-
-                    ${requirements.length > 0 ? `
-                        <div class="modal-section">
-                            <div class="modal-section-title"><i class="fas fa-list-check"></i> المتطلبات</div>
-                            <ul class="req-list">
-                                ${requirements.map(r => `<li><i class="fas fa-check"></i> ${esc(r)}</li>`).join('')}
-                            </ul>
-                        </div>
-                    ` : ''}
-
-                    ${i.knowledge_benefits || i.financial_benefits ? `
-                        <div class="modal-section">
-                            <div class="modal-section-title"><i class="fas fa-gift"></i> المزايا</div>
-                            ${i.knowledge_benefits ? `<div style="background:rgba(79,172,254,0.05);padding:12px;border-radius:10px;margin-bottom:10px"><strong style="color:var(--primary)">💡 مكتسبات معرفية:</strong><div style="margin-top:6px;line-height:1.7">${esc(i.knowledge_benefits)}</div></div>` : ''}
-                            ${i.financial_benefits ? `<div style="background:rgba(16,185,129,0.05);padding:12px;border-radius:10px"><strong style="color:#10b981">💰 مكتسبات مادية:</strong><div style="margin-top:6px;line-height:1.7">${esc(i.financial_benefits)}</div></div>` : ''}
-                        </div>
-                    ` : ''}
-
-                    <div style="display:flex;gap:10px;margin-top:14px">
-                        ${isApplied
-                            ? `<a href="student-applications.html" class="btn btn-success" style="flex:1;justify-content:center"><i class="fas fa-check"></i> اذهب لطلباتي</a>`
-                            : isFull
-                            ? `<button class="btn btn-secondary" disabled style="flex:1;justify-content:center"><i class="fas fa-ban"></i> الفرصة ممتلئة</button>`
-                            : `<button class="btn btn-primary" onclick="closeModal('detailsModal');openApplyModal('${i.id}')" style="flex:1;justify-content:center"><i class="fas fa-paper-plane"></i> قدم الآن</button>`
-                        }
-                        <button class="btn btn-secondary" onclick="closeModal('detailsModal')" style="flex:1;justify-content:center">إغلاق</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    // APPLY MODAL
-    window.openApplyModal = (id) => {
-        const i = allInternships.find(x => x.id === id);
-        if (!i) return;
-
-        // Check quota
-        if (getMyActiveCount() >= MAX_ACTIVE) {
-            window.ProVance.showToast(`⚠️ وصلت لحد ${MAX_ACTIVE} طلبات نشطة - اسحب طلب قبل ما تقدم`, 'warning');
-            return;
-        }
-
-        // Check level matching - مستوى الطالب لازم يطابق نظام التدريب
-        if (!canApplyToSystem(i.trainee_type)) {
-            const level = getStudentLevel();
-            const required = systemForLevel(level);
-            window.ProVance.showToast(
-                `⚠️ الفرصة دي لـ "${systemLabel(i.trainee_type)}". مستواك الحالي: "${systemLabel(required)}" (${level} تدريب مكتمل). كمّل تدريبك الحالي عشان ترتقي للمستوى الأعلى.`,
-                'warning'
-            );
-            return;
-        }
-
-        // Check profile completeness (الاسم فقط مطلوب، الباقي اختياري)
-        if (!studentData?.full_name || !studentData.full_name.trim()) {
-            window.ProVance.showToast('⚠️ أضف اسمك الكامل في البروفايل أولاً', 'warning');
-            setTimeout(() => window.location.href = 'student-profile.html', 1500);
-            return;
+// ============================================
+// Filter Functions (محدثة)
+// ============================================
+function filterInternships() {
+    const priceFilter = document.getElementById('priceFilter')?.value;
+    const locationFilter = document.getElementById('locationFilter')?.value;
+    const companyFilter = document.getElementById('companyFilter')?.value.toLowerCase();
+    const levelFilter = document.getElementById('levelFilter')?.value;
+    
+    return internshipsData.filter(internship => {
+        if (priceFilter) {
+            if (priceFilter === 'free' && internship.price !== 'مجاني') return false;
+            if (priceFilter === 'paid' && internship.price === 'مجاني') return false;
+            if (priceFilter === '0-1000' && (internship.price === 'مجاني' || parseInt(internship.price) > 1000)) return false;
+            if (priceFilter === '1000-2000' && (parseInt(internship.price) < 1000 || parseInt(internship.price) > 2000)) return false;
+            if (priceFilter === '2000+' && parseInt(internship.price) <= 2000) return false;
         }
         
-        // لو الهاتف فاضي، نعرض رسالة لكن نسمح بالتقديم
-        if (!studentData.phone || !studentData.phone.trim()) {
-            const proceed = confirm('⚠️ رقم هاتفك مش متسجل في البروفايل\n\nهل تكمل التقديم بدون هاتف؟ (الشركة هتشوف بياناتك بدون رقم تواصل)\n\n• OK = أكمل بدون هاتف\n• Cancel = أضف هاتفي الأول');
-            if (!proceed) {
-                window.location.href = 'student-profile.html';
-                return;
-            }
+        if (locationFilter && internship.location !== locationFilter) return false;
+        
+        if (companyFilter && !internship.company.toLowerCase().includes(companyFilter)) return false;
+        
+        if (levelFilter && internship.level !== levelFilter) return false;
+        
+        return true;
+    });
+}
+
+function resetAllFilters() {
+    const priceFilter = document.getElementById('priceFilter');
+    const locationFilter = document.getElementById('locationFilter');
+    const companyFilter = document.getElementById('companyFilter');
+    const levelFilter = document.getElementById('levelFilter');
+    
+    if (priceFilter) priceFilter.value = '';
+    if (locationFilter) locationFilter.value = '';
+    if (companyFilter) companyFilter.value = '';
+    if (levelFilter) levelFilter.value = '';
+    
+    renderInternshipCards();
+    updateApplicationsStatusDisplay();
+}
+
+// دالة جديدة: تحديث عرض حالة الطلبات
+function updateApplicationsStatusDisplay() {
+    const statusDisplay = document.getElementById('applicationsStatus');
+    if (statusDisplay) {
+        const progressBar = statusDisplay.querySelector('.progress-bar');
+        const progressText = statusDisplay.querySelector('.progress-text');
+        const infoText = statusDisplay.querySelector('p');
+        
+        if (progressBar) {
+            progressBar.style.width = `${(studentData.pendingApplicationsCount / studentData.maxPendingApplications) * 100}%`;
         }
-
-        const html = `
-            <div class="modal active" id="applyModal">
-                <div class="modal-content" style="max-width:600px">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-paper-plane"></i><span>تقديم على فرصة</span></div>
-                        <button class="modal-close" onclick="closeModal('applyModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div style="padding:14px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.2);border-radius:12px;margin-bottom:14px">
-                        <strong style="font-size:1rem">${esc(i.title)}</strong>
-                        <div style="color:var(--text-muted);font-size:0.86rem;margin-top:3px">${esc(i.company_name || '-')} • ${esc(i.field || 'عام')}</div>
-                    </div>
-
-                    <div class="modal-section">
-                        <div class="modal-section-title"><i class="fas fa-user"></i> بياناتك (هتتبعت للشركة)</div>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-user"></i> الاسم</div>
-                                <div class="info-value">${esc(studentData.full_name)}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-phone"></i> الهاتف</div>
-                                <div class="info-value">${esc(studentData.phone || '-')}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-university"></i> الجامعة</div>
-                                <div class="info-value">${esc(studentData.university || '-')}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label"><i class="fas fa-file-pdf"></i> CV</div>
-                                <div class="info-value">${studentData.cv_url ? '<span style="color:var(--success)">✓ مرفق</span>' : '<span style="color:var(--warning)">غير مرفق</span>'}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label><i class="fas fa-comment"></i> رسالة للشركة (اختياري لكن منصوح بيها)</label>
-                        <textarea id="applyMessage" rows="5" placeholder="اكتب رسالة قصيرة عن نفسك ولماذا أنت مناسب لهذه الفرصة..."></textarea>
-                        <div style="color:var(--text-muted);font-size:0.78rem;margin-top:4px">
-                            <i class="fas fa-lightbulb"></i> رسالة جيدة تزيد فرص قبولك بشكل كبير
-                        </div>
-                    </div>
-
-                    <div class="privacy-info">
-                        <i class="fas fa-info-circle"></i>
-                        <div>
-                            بالضغط على "تقديم"، أنت توافق على إرسال بياناتك (الاسم، الهاتف، الإيميل، CV، البروفايل) للشركة لمراجعة طلبك.
-                        </div>
-                    </div>
-
-                    <div style="display:flex;gap:10px;margin-top:14px">
-                        <button class="btn btn-secondary" onclick="closeModal('applyModal')" style="flex:1;justify-content:center">إلغاء</button>
-                        <button class="btn btn-primary" onclick="submitApplication('${id}')" style="flex:1;justify-content:center">
-                            <i class="fas fa-paper-plane"></i> تأكيد التقديم
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    window.submitApplication = async (id) => {
-        const internship = allInternships.find(x => x.id === id);
-        if (!internship) return;
-
-        // أمان إضافي: تأكد من تطابق المستوى قبل الإرسال
-        if (!canApplyToSystem(internship.trainee_type)) {
-            window.ProVance?.showToast?.('⚠️ الفرصة دي مش متاحة لمستواك الحالي', 'warning');
-            closeModal('applyModal');
-            return;
+        
+        if (progressText) {
+            progressText.textContent = `${studentData.pendingApplicationsCount}/${studentData.maxPendingApplications}`;
         }
-
-        const message = document.getElementById('applyMessage').value.trim();
-
-        try {
-            const sb = await window.getSafeSupabase();
-            if (!sb) {
-                window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error');
-                return;
-            }
-            const company = allCompanies[internship.company_user_id] || {};
-
-            const { error } = await sb.from('applications').insert({
-                student_user_id: studentUserId,
-                student_name: studentData.full_name,
-                student_email: studentData.email,
-                student_phone: studentData.phone,
-                student_photo: studentData.photo,
-                student_university: studentData.university,
-                student_cv_url: studentData.cv_url,
-                company_user_id: internship.company_user_id,
-                company_name: internship.company_name || company.company_name,
-                company_logo: company.logo,
-                internship_id: id,
-                internship_title: internship.title,
-                application_message: message || null,
-                status: 'pending'
-            });
-
-            if (error) throw error;
-
-            // إشعار للشركة
-            if (window.ProVance.sendNotification) {
-                await window.ProVance.sendNotification({
-                    userId: internship.company_user_id,
-                    userType: 'company',
-                    title: '📩 طلب تقديم جديد',
-                    message: `${studentData.full_name} قدم على فرصة ${internship.title}`,
-                    type: 'info',
-                    link: 'company-requests-control.html'
-                });
-            }
-
-            window.ProVance.showToast('🎉 تم التقديم بنجاح!', 'success');
-            closeModal('applyModal');
-            window.dispatchEvent(new CustomEvent('reload-internships'));
-        } catch (err) {
-            console.error(err);
-            window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
-        }
-    };
-
-    // HELP MODAL
-    window.openHelpModal = () => {
-        const html = `
-            <div class="modal active" id="helpModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-question-circle"></i><span>دليل استكشاف الفرص</span></div>
-                        <button class="modal-close" onclick="closeModal('helpModal')"><i class="fas fa-times"></i></button>
-                    </div>
-
-                    <div class="help-section">
-                        <h4><i class="fas fa-shield-alt"></i> الخصوصية والحماية</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> بيانات الشركة الحساسة (تليفون - عنوان دقيق) مخفية</li>
-                            <li><i class="fas fa-check"></i> هتوصلك بيانات التواصل بعد قبولك للمقابلة</li>
-                            <li><i class="fas fa-check"></i> كل التواصل يتم من خلال المنصة</li>
-                            <li><i class="fas fa-check"></i> ده عشان حماية المنصة من الـ bypass</li>
-                        </ul>
-                    </div>
-
-                    <div class="help-section">
-                        <h4><i class="fas fa-search"></i> البحث والفلترة</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> ابحث باسم الشركة أو الفرصة</li>
-                            <li><i class="fas fa-check"></i> فلتر بالمجال (تطوير ويب، تصميم، إلخ)</li>
-                            <li><i class="fas fa-check"></i> فلتر حسب وجود مرتب</li>
-                            <li><i class="fas fa-check"></i> رتب الفرص حسب المدة أو التاريخ</li>
-                        </ul>
-                    </div>
-
-                    <div class="help-section">
-                        <h4><i class="fas fa-paper-plane"></i> التقديم</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> تقدر تقدم على 3 فرص كحد أقصى</li>
-                            <li><i class="fas fa-check"></i> اكتب رسالة قصيرة لرفع فرص قبولك</li>
-                            <li><i class="fas fa-check"></i> تأكد إن البروفايل + CV مكتملين</li>
-                            <li><i class="fas fa-check"></i> الفرص الـ "ممتلئة" مش هتقبل طلبات جديدة</li>
-                        </ul>
-                    </div>
-
-                    <div class="help-section">
-                        <h4><i class="fas fa-lightbulb"></i> نصائح للقبول</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> اكمل بروفايلك بنسبة 90%+</li>
-                            <li><i class="fas fa-check"></i> ارفع CV احترافي</li>
-                            <li><i class="fas fa-check"></i> ضع روابط LinkedIn/GitHub لو متاحة</li>
-                            <li><i class="fas fa-check"></i> اقرأ المتطلبات كويس قبل التقديم</li>
-                            <li><i class="fas fa-check"></i> اكتب رسالة شخصية لكل فرصة</li>
-                        </ul>
-                    </div>
-
-                    <button class="btn btn-primary" onclick="closeModal('helpModal')" style="width:100%;justify-content:center;margin-top:14px">
-                        <i class="fas fa-check"></i> فهمت
-                    </button>
-                </div>
-            </div>
-        `;
-        renderModal(html);
-    };
-
-    // LOAD ALL
-    let isInitialized = false;
-    async function loadAll() {
-                // محاولة الحصول على Supabase client بطرق متعددة
-        let sb = null;
-        if (window.ProVance?.waitForSupabaseClient) {
-            try { sb = await window.ProVance.waitForSupabaseClient(15000); } catch(e) {}
-        }
-        if (!sb && typeof supabase !== 'undefined' && supabase.createClient) {
-            try {
-                sb = supabase.createClient(
-                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                    { auth: { persistSession: true, storage: window.localStorage } }
-                );
-            } catch(e) { console.error('Direct client creation failed:', e); }
-        }
-        if (!sb) {
-            console.error('❌ Supabase client unavailable');
-            if (!window._pageRetried) {
-                window._pageRetried = true;
-                setTimeout(() => location.reload(), 3000);
-            }
-            return;
-        }
-
-        try {
-            const session = await sb.auth.getSession();
-            const userId = session?.data?.session?.user?.id;
-            if (!userId) {
-                window.location.href = 'student-login.html';
-                return;
-            }
-            studentUserId = userId;
-
-            const results = await Promise.allSettled([
-                sb.from('student').select('user_id, full_name, email, phone, university, faculty, major, gpa, city, country, national_id, birth_date, gender, bio, education_level, cv_url, linkedin, github, portfolio, skills, languages, interested_fields, year_of_study, photo, status, training_status').eq('user_id', userId).maybeSingle(),
-                sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, duration, max_applicants, current_applicants, trainee_type, salary_min, salary_max, salary_currency, training_price, training_currency, status, created_at').eq('status', 'active').order('created_at', { ascending: false }),
-                sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at').eq('student_user_id', userId),
-                sb.from('companies').select('user_id, company_name, training_price, training_currency, provides_certificate, provides_meals, provides_transport')
-            ]);
-
-            // التعامل مع الـ results حتى لو واحد فشل
-            const studentRes = results[0].status === 'fulfilled' ? results[0].value : { data: null };
-            const internshipsRes = results[1].status === 'fulfilled' ? results[1].value : { data: [] };
-            const appsRes = results[2].status === 'fulfilled' ? results[2].value : { data: [] };
-            const companiesRes = results[3].status === 'fulfilled' ? results[3].value : { data: [] };
-
-            studentData = studentRes.data;
-            allInternships = internshipsRes.data || [];
-            myApplications = appsRes.data || [];
-
-            // Build companies map - بدون البيانات الحساسة
-            allCompanies = {};
-            (companiesRes.data || []).forEach(c => {
-                allCompanies[c.user_id] = c;  // No phone, no exact address
-            });
-
-            // استخدم current_applicants من جدول internships (موجود بالفعل)
-            appCountsByInternship = {};
-            allInternships.forEach(int => {
-                appCountsByInternship[int.id] = int.current_applicants || 0;
-            });
-
-            // اربط training_price - من internship نفسها إذا موجود، وإلا من company
-            allInternships.forEach(int => {
-                const comp = allCompanies[int.company_user_id];
-                if (comp) {
-                    if (!int.training_price && comp.training_price) {
-                        int.training_price = comp.training_price;
-                    }
-                    if (!int.training_currency) {
-                        int.training_currency = comp.training_currency || 'EGP';
-                    }
-                }
-            });
-            
-            // املأ filter options من البيانات
-            populateFieldOptions();
-            
-            renderInternships();
-
-            if (!isInitialized) {
-                isInitialized = true;
-                sb.channel('internships-gallery')
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'internships' }, () => {
-                        console.log('🔄 Realtime: internships changed');
-                        loadAll();
-                    })
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `student_user_id=eq.${userId}` }, () => {
-                        console.log('🔄 Realtime: applications changed');
-                        loadAll();
-                    })
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => {
-                        console.log('🔄 Realtime: companies changed');
-                        loadAll();
-                    })
-                    .subscribe();
-                
-                // Fallback: auto-refresh كل 30 ثانية (لو الـ realtime مش شغّال)
-                setInterval(() => {
-                    console.log('⏱️ Auto-refresh internships');
-                    loadAll();
-                }, 30000);
-                
-                // Refresh on focus (لو رجع للصفحة بعد ما اتعدلت)
-                window.addEventListener('focus', () => {
-                    console.log('👀 Window focused - refreshing');
-                    loadAll();
-                });
-
-                window.addEventListener('reload-internships', loadAll);
-
-                // زرار تحديث يدوي
-                const refreshBtn = document.getElementById('refreshBtn');
-                if (refreshBtn) {
-                    refreshBtn.addEventListener('click', async () => {
-                        refreshBtn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> جاري التحديث...';
-                        refreshBtn.disabled = true;
-                        await loadAll();
-                        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> تحديث';
-                        refreshBtn.disabled = false;
-                    });
-                }
-                
-                document.getElementById('searchInput').addEventListener('input', renderInternships);
-                document.getElementById('filterField').addEventListener('change', renderInternships);
-                document.getElementById('filterPrice').addEventListener('change', renderInternships);
-                document.getElementById('filterSort').addEventListener('change', renderInternships);
-
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        const modals = document.querySelectorAll('.modal.active');
-                        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
-                    }
-                });
-            }
-        } catch (err) {
-            // أعرض رسالة بدل ما الـ "جاري التحميل" يفضل
-            const grid = document.getElementById('internshipsGrid');
-            if (grid) grid.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--warning)"></i><h3>تعذر تحميل البيانات</h3><p>اضغط على زر التحديث أو حاول لاحقاً</p></div>';
-            // إظهار رسالة
-            console.error('═══════════ LOAD ERROR ═══════════');
-            console.error('Page:', window.location.pathname);
-            console.error('Error:', err);
-            console.error('Code:', err?.code);
-            console.error('Message:', err?.message);
-            console.error('Details:', err?.details);
-            console.error('Hint:', err?.hint);
-            console.error('═════════════════════════════════');
-            window.ProVance.showToast('خطأ في تحميل البيانات', 'error');
+        
+        if (infoText) {
+            infoText.innerHTML = `يمكنك التقديم على <strong>${studentData.maxPendingApplications - studentData.pendingApplicationsCount}</strong> تدريب إضافي`;
         }
     }
+}
 
-    loadAll();
-    // Auto-refresh كل 30 ثانية
-    setInterval(() => { if (!document.hidden) loadAll(); }, 30000);
+// ============================================
+// Application Functions (محدثة)
+// ============================================
+function submitApplicationForm() {
+    const form = document.getElementById('applicationForm');
+    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+    const textarea = form.querySelector('textarea');
+    
+    let isValid = true;
+    
+    checkboxes.forEach(checkbox => {
+        if (!checkbox.checked) {
+            isValid = false;
+            checkbox.parentElement.style.color = 'var(--error)';
+        } else {
+            checkbox.parentElement.style.color = '';
+        }
+    });
+    
+    if (!textarea.value.trim()) {
+        isValid = false;
+        textarea.style.borderColor = 'var(--error)';
+    } else {
+        textarea.style.borderColor = '';
+    }
+    
+    if (!isValid) {
+        showNotification('يرجى ملء جميع الحقول المطلوبة وتأكيد الموافقة على الشروط', 'error');
+        return;
+    }
+    
+    if (!isEligibleToApply(selectedInternship)) {
+        showNotification('لا يمكنك التقديم على هذا التدريب حالياً.', 'error');
+        return;
+    }
+    
+    if (hasAppliedToInternship(selectedInternship.id)) {
+        showNotification('لقد تقدمت على هذا التدريب مسبقاً', 'error');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submitApplication');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري التقديم...</span>';
+    submitBtn.disabled = true;
+    
+    setTimeout(() => {
+        const saveSuccess = saveApplicationToStorage(selectedInternship, selectedBranch, textarea.value);
+        
+        if (!saveSuccess) {
+            showNotification('حدث خطأ في حفظ الطلب، يرجى المحاولة مرة أخرى', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+        
+        closeModals();
+        showSuccessModal();
+        hideInternshipDetails();
+        
+        showNotification('تم تقديم طلب التدريب بنجاح!', 'success');
+    }, 2000);
+}
 
-})();
-    </script>
-</body>
-</html>
+// ============================================
+// Helper Functions (محدثة)
+// ============================================
+function getLevelText(level) {
+    const levels = {
+        'beginner': 'مبتدئ (أول مرة)',
+        'intermediate': 'متوسط (تدريب واحد)',
+        'advanced': 'خبير (تدريبين أو أكثر)'
+    };
+    return levels[level] || level;
+}
+
+function isEligibleToApply(internship) {
+    if (internship.level !== studentData.level) {
+        return false;
+    }
+    
+    if (internship.applicants >= internship.maxApplicants) {
+        return false;
+    }
+    
+    if (studentData.pendingApplicationsCount >= studentData.maxPendingApplications) {
+        return false;
+    }
+    
+    if (hasAppliedToInternship(internship.id)) {
+        return false;
+    }
+    
+    return true;
+}
+
+// دالة جديدة: الحصول على أسباب عدم الأهلية
+function getEligibilityReasons(internship) {
+    const reasons = [];
+    
+    if (internship.level !== studentData.level) {
+        const levelText = getLevelText(internship.level);
+        const studentLevelText = getLevelText(studentData.level);
+        reasons.push(`المستوى المطلوب: ${levelText} (مستواك: ${studentLevelText})`);
+    }
+    
+    if (internship.applicants >= internship.maxApplicants) {
+        reasons.push('تم الوصول للحد الأقصى للمتقدمين');
+    }
+    
+    if (studentData.pendingApplicationsCount >= studentData.maxPendingApplications) {
+        reasons.push(`لديك ${studentData.pendingApplicationsCount} طلب قيد المراجعة (الحد الأقصى: ${studentData.maxPendingApplications})`);
+    }
+    
+    if (hasAppliedToInternship(internship.id)) {
+        const status = getStudentApplicationStatus(internship.id);
+        reasons.push(`لقد تقدمت مسبقاً (الحالة: ${getStatusText(status)})`);
+    }
+    
+    return reasons;
+}
+
+function showEligibilityError(internship) {
+    const reasons = getEligibilityReasons(internship);
+    
+    if (reasons.length > 0) {
+        showUnavailableModal(reasons);
+    } else {
+        showNotification('لا يمكنك التقديم على هذا التدريب حالياً.', 'error');
+    }
+}
+
+// ============================================
+// الأنماط الإضافية
+// ============================================
+function addAdditionalStyles() {
+    if (!document.querySelector('#additional-styles')) {
+        const style = document.createElement('style');
+        style.id = 'additional-styles';
+        style.textContent = `
+            .application-status-badge {
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                font-weight: bold;
+                margin-top: 8px;
+                margin-left: 8px;
+            }
+            
+            .pending-badge {
+                background: rgba(255, 230, 109, 0.2);
+                color: var(--warning);
+                border: 1px solid var(--warning);
+            }
+            
+            .accepted-badge {
+                background: rgba(78, 205, 196, 0.2);
+                color: var(--success);
+                border: 1px solid var(--success);
+            }
+            
+            .rejected-badge {
+                background: rgba(255, 107, 107, 0.2);
+                color: var(--error);
+                border: 1px solid var(--error);
+            }
+            
+            .status-pending {
+                color: var(--warning);
+            }
+            
+            .status-accepted {
+                color: var(--success);
+            }
+            
+            .status-rejected {
+                color: var(--error);
+            }
+            
+            .application-status-indicator {
+                display: inline-block;
+                padding: 6px 16px;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                font-weight: bold;
+                margin-left: 12px;
+                vertical-align: middle;
+            }
+            
+            .info-item {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 16px;
+                border-radius: 12px;
+                margin-bottom: 12px;
+                background: rgba(255, 255, 255, 0.05);
+            }
+            
+            .info-item.applied {
+                border-right: 4px solid var(--primary);
+            }
+            
+            .info-item.not-eligible {
+                border-right: 4px solid var(--error);
+            }
+            
+            .info-item.eligible {
+                border-right: 4px solid var(--success);
+            }
+            
+            .info-item i {
+                font-size: 1.5rem;
+                margin-top: 4px;
+            }
+            
+            .info-item.applied i {
+                color: var(--primary);
+            }
+            
+            .info-item.not-eligible i {
+                color: var(--error);
+            }
+            
+            .info-item.eligible i {
+                color: var(--success);
+            }
+            
+            .info-item ul {
+                margin: 8px 0 0 20px;
+                padding: 0;
+            }
+            
+            .info-item li {
+                margin-bottom: 4px;
+                color: var(--text-secondary);
+            }
+            
+            .max-limit {
+                color: var(--error) !important;
+                font-weight: bold;
+            }
+            
+            .new-badge {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                background: var(--success);
+                color: white;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                font-weight: bold;
+                z-index: 1;
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// استدعاء إضافة الأنماط عند التهيئة
+addAdditionalStyles();
+
+// ============================================
+// Export for Global Access
+// ============================================
+window.InternshipManager = {
+    internshipsData,
+    studentData,
+    renderInternshipCards,
+    showInternshipDetails,
+    hideInternshipDetails,
+    showApplicationModal,
+    closeModals,
+    submitApplicationForm,
+    saveApplicationToStorage,
+    updateInternshipApplicants,
+    updatePendingApplicationsCount,
+    hasAppliedToInternship,
+    getStudentApplicationStatus,
+    isEligibleToApply
+};
+// ============================================
+// ✅ Supabase - تحميل التدريبات الحقيقية
+// ============================================
+const _SB_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+
+function _getSB() {
+    if (!window._intSB) {
+        if (typeof supabase === 'undefined') return null;
+        window._intSB = supabase.createClient(_SB_URL, _SB_KEY);
+    }
+    return window._intSB;
+}
+
+async function loadRealInternships() {
+    const sb = _getSB();
+    if (!sb) return;
+
+    try {
+        // تحقق من تسجيل الدخول
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+            window.location.href = 'student-login.html';
+            return;
+        }
+
+        // جيب بيانات الطالب الحقيقية
+        const { data: st } = await sb
+            .from('student')
+            .select('full_name, level')
+            .eq('user_id', session.user.id)
+            .single();
+
+        if (st) {
+            studentData.name  = st.full_name || session.user.email.split('@')[0];
+            studentData.level = st.level || 'beginner';
+            // تحديث الاسم في الـ UI
+            document.querySelectorAll('.student-name, .user-name, #studentName').forEach(el => {
+                el.textContent = studentData.name;
+            });
+        }
+
+        // جيب التدريبات المعتمدة من قاعدة البيانات
+        const { data: rows, error } = await sb
+            .from('internships')
+            .select('*')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false });
+
+        if (error || !rows || rows.length === 0) return;
+
+        // تحويل البيانات لنفس الشكل المستخدم في الكود
+        const mapped = rows.map((r, i) => ({
+            id:            r.id || (i + 100),
+            title:         r.title || `تدريب في ${r.field}`,
+            company:       r.company_name || '',
+            logo:          r.company_logo || '🏢',
+            level:         r.trainee_type === 'first-time'    ? 'beginner'     :
+                           r.trainee_type === 'once-trained'  ? 'intermediate' : 'advanced',
+            price:         (r.salary_min && r.salary_max)
+                           ? `${r.salary_min} - ${r.salary_max}`
+                           : 'مجاني',
+            location:      r.company_location || '',
+            fields:        [r.field || ''],
+            duration:      r.duration || '3 أشهر',
+            applicants:    0,
+            maxApplicants: parseInt(r.max_applicants) || 10,
+            description:   r.description || '',
+            requirements:  r.requirements || '',
+            createdAt:     new Date(r.created_at).getTime(),
+            branches: [{
+                id: 1,
+                name: 'الفرع الرئيسي',
+                location: r.company_location || ''
+            }],
+            fieldsStats: [{
+                name:    r.field || '',
+                current: 0,
+                max:     parseInt(r.max_applicants) || 10
+            }],
+            knowledgeBenefits: r.requirements
+                ? [{ title: 'المتطلبات', description: r.requirements }]
+                : [],
+            financialBenefits: (r.salary_min && r.salary_max)
+                ? [{ title: 'المكافأة الشهرية', description: `${r.salary_min} - ${r.salary_max}` }]
+                : []
+        }));
+
+        // استبدال البيانات الوهمية بالحقيقية
+        internshipsData.length = 0;
+        mapped.forEach(item => internshipsData.push(item));
+
+        // إعادة رسم الكروت
+        if (typeof renderInternshipCards === 'function') renderInternshipCards();
+
+        // جيب الطلبات السابقة للطالب من Supabase
+        const { data: apps } = await sb
+            .from('applications')
+            .select('*')
+            .eq('student_user_id', session.user.id);
+
+        if (apps && apps.length > 0) {
+            studentData.appliedInternships = apps.map(a => ({
+                internshipId: a.internship_id,
+                status: a.status,
+                appliedAt: a.created_at
+            }));
+            studentData.pendingApplicationsCount = apps.filter(a => a.status === 'pending').length;
+            if (typeof updatePendingApplicationsCount === 'function') {
+                updatePendingApplicationsCount();
+            }
+        }
+
+    } catch (err) {
+        console.error('loadRealInternships error:', err);
+    }
+}
+
+// override saveApplicationToStorage عشان يحفظ في Supabase
+const _origSave = window.saveApplicationToStorage || (() => {});
+window.saveApplicationToStorage = async function(internship, branch, field) {
+    const sb = _getSB();
+    if (!sb) return _origSave(internship, branch, field);
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+
+    await sb.from('applications').insert({
+        student_user_id: session.user.id,
+        company_user_id: null,
+        internship_id:   String(internship.id),
+        status:          'pending',
+        field:           field || '',
+        branch:          branch?.name || '',
+    }).then(({ error }) => {
+        if (error) console.warn('Application insert error:', error.message);
+    });
+
+    // أيضاً الـ original save للـ UI
+    _origSave(internship, branch, field);
+};
