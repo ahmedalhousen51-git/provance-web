@@ -109,24 +109,6 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 .internship-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 15px 40px rgba(79,172,254,0.15); }
 .internship-card.applied { border-color: rgba(16,185,129,0.4); background: linear-gradient(135deg, rgba(16,185,129,0.04), rgba(0,0,0,0)); }
 .internship-card.full { opacity: 0.7; }
-.company-group-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px; transition: all .25s; position: relative; overflow: hidden; cursor: pointer; }
-.company-group-card::before { content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: radial-gradient(circle, rgba(79,172,254,0.1), transparent 70%); pointer-events: none; }
-.company-group-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 15px 40px rgba(79,172,254,0.15); }
-.company-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
-.depts-count { font-size: 0.82rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px; }
-.depts-count i { color: var(--primary); }
-.view-depts-btn { font-size: 0.8rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px; }
-.depts-list { display: flex; flex-direction: column; gap: 8px; }
-.dept-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px; background: rgba(255,255,255,0.025); border: 1px solid var(--border); border-radius: 12px; transition: all .2s; flex-wrap: wrap; }
-.dept-row:hover { background: rgba(79,172,254,0.06); border-color: rgba(79,172,254,0.3); }
-.dept-row.applied { border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.04); }
-.dept-row.full { opacity: 0.65; }
-.dept-info { flex: 1; min-width: 0; }
-.dept-title { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 7px; }
-.dept-title i { color: var(--primary); font-size: 0.85rem; }
-.dept-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.78rem; color: var(--text-muted); margin-top: 5px; }
-.dept-meta span { display: flex; align-items: center; gap: 4px; }
-.dept-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
 .internship-header { display: flex; align-items: center; gap: 12px; position: relative; }
 .company-logo { width: 56px; height: 56px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.3rem; flex-shrink: 0; overflow: hidden; }
 .company-logo img { width: 100%; height: 100%; object-fit: cover; }
@@ -450,125 +432,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         }[d] || d || '-';
     }
     
-function renderCompanyCard(companyKey, internships) {
-        // كل internship هنا لنفس الشركة — ناخد بيانات الشركة من أول واحد
-        const first = internships[0];
-        const company = allCompanies[first.company_user_id] || {};
-        const companyName = first.company_name || company.company_name || 'شركة';
-        const logo = company.logo
-            ? `<img src="${company.logo}" alt="">`
-            : `<span>${getInitial(companyName)}</span>`;
-
-        // سعر التدريب (مشترك على مستوى الشركة)
-        const trainingPrice = first.training_price || company.training_price;
-        const priceTag = (trainingPrice && parseFloat(trainingPrice) > 0)
-            ? `<span class="tag" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="fas fa-credit-card"></i> رسوم: ${trainingPrice} ${first.training_currency || company.training_currency || 'EGP'}</span>`
-            : `<span class="tag" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="fas fa-gift"></i> مجاني</span>`;
-
-        // مزايا الشركة المشتركة
-        const perks = [];
-        if (company.provides_certificate !== false) perks.push(`<span class="tag"><i class="fas fa-certificate"></i> شهادة</span>`);
-        if (company.provides_meals) perks.push(`<span class="tag"><i class="fas fa-utensils"></i> وجبات</span>`);
-        if (company.provides_transport) perks.push(`<span class="tag"><i class="fas fa-bus"></i> مواصلات</span>`);
-
-        // كام قسم متاح للمستوى + كام طبّق عليه
-        const appliedCount = internships.filter(i => hasApplied(i.id)).length;
-
-        return `
-            <div class="company-group-card" onclick="openCompanyDepts('${esc(String(companyKey))}')" role="button" tabindex="0">
-                <div class="internship-header">
-                    <div class="company-logo">${logo}</div>
-                    <div class="company-info">
-                        <div class="internship-title">${esc(companyName)}</div>
-                        <div class="company-name">${first.company_location ? '<i class="fas fa-map-marker-alt"></i> ' + esc(first.company_location) : esc(first.field || '')}</div>
-                    </div>
-                </div>
-                <div class="internship-tags">
-                    ${priceTag}
-                    ${perks.join('')}
-                </div>
-                ${company.company_bio ? `<div class="internship-description">${esc(company.company_bio.length > 110 ? company.company_bio.substring(0, 110) + '...' : company.company_bio)}</div>` : ''}
-                <div class="company-card-footer">
-                    <span class="depts-count"><i class="fas fa-layer-group"></i> ${internships.length} ${internships.length === 1 ? 'قسم متاح' : 'أقسام متاحة'}${appliedCount > 0 ? ` • قدمت على ${appliedCount}` : ''}</span>
-                    <span class="view-depts-btn"><i class="fas fa-hand-pointer"></i> اضغط لعرض الأقسام والتقديم</span>
-                </div>
-            </div>
-        `;
-    }
-
-    // فتح نافذة أقسام الشركة
-    window.openCompanyDepts = (companyKey) => {
-        const internships = (window._byCompany && window._byCompany[companyKey]) || [];
-        if (internships.length === 0) return;
-        const first = internships[0];
-        const company = allCompanies[first.company_user_id] || {};
-        const companyName = first.company_name || company.company_name || 'شركة';
-        const logo = company.logo
-            ? `<img src="${company.logo}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:14px">`
-            : `<span style="font-size:1.8rem">${getInitial(companyName)}</span>`;
-
-        const deptsHtml = internships.map(i => {
-            const applicants = appCountsByInternship[i.id] || 0;
-            const max = i.max_applicants || 10;
-            const percent = Math.min(100, (applicants / max) * 100);
-            const isFull = applicants >= max;
-            const isApplied = hasApplied(i.id);
-            const canApply = canApplyToSystem(i.trainee_type);
-            const fillCls = percent >= 100 ? 'full' : percent >= 80 ? 'warning' : '';
-
-            let actionBtn;
-            if (isApplied) actionBtn = `<a href="student-applications.html" class="btn btn-success btn-sm" style="white-space:nowrap"><i class="fas fa-check"></i> قدمت</a>`;
-            else if (isFull) actionBtn = `<button class="btn btn-secondary btn-sm" disabled style="white-space:nowrap"><i class="fas fa-ban"></i> ممتلئة</button>`;
-            else if (!canApply) actionBtn = `<button class="btn btn-secondary btn-sm" onclick="closeModal('deptsModal');openApplyModal('${i.id}')" style="white-space:nowrap;opacity:.7" title="غير متاح لمستواك"><i class="fas fa-lock"></i> مستوى أعلى</button>`;
-            else actionBtn = `<button class="btn btn-primary btn-sm" onclick="closeModal('deptsModal');openApplyModal('${i.id}')" style="white-space:nowrap"><i class="fas fa-paper-plane"></i> قدم</button>`;
-
-            const feats = [];
-            if (i.salary_min || i.salary_max) feats.push(`<span><i class="fas fa-money-bill-wave"></i> ${i.salary_min ? i.salary_min + '-' : ''}${i.salary_max || ''} ${i.salary_currency || 'EGP'}</span>`);
-            if (i.duration) feats.push(`<span><i class="fas fa-clock"></i> ${getDurationText(i.duration)}</span>`);
-
-            return `
-                <div class="dept-row ${isApplied ? 'applied' : ''} ${isFull ? 'full' : ''}">
-                    <div class="dept-info">
-                        <div class="dept-title"><i class="fas fa-briefcase"></i> ${esc(i.title || i.field || 'قسم')}</div>
-                        <div class="dept-meta">
-                            ${feats.join('')}
-                            <span><i class="fas fa-users"></i> ${applicants}/${max}</span>
-                            ${isApplied ? '<span style="color:#10b981">✓ قدمت</span>' : ''}
-                        </div>
-                        ${i.description ? `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:6px;line-height:1.6">${esc(i.description.length > 120 ? i.description.substring(0,120)+'...' : i.description)}</div>` : ''}
-                        <div class="capacity-bar" style="margin-top:8px"><div class="capacity-fill ${fillCls}" style="width:${percent}%"></div></div>
-                    </div>
-                    <div class="dept-actions">
-                        <button class="btn btn-info btn-sm" onclick="closeModal('deptsModal');viewInternshipDetails('${i.id}')" style="white-space:nowrap"><i class="fas fa-eye"></i></button>
-                        ${actionBtn}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        renderModal(`
-            <div class="modal active" id="deptsModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <div class="modal-title"><i class="fas fa-building"></i><span>أقسام ${esc(companyName)}</span></div>
-                        <button class="modal-close" onclick="closeModal('deptsModal')"><i class="fas fa-times"></i></button>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.2);border-radius:14px;margin-bottom:16px">
-                        <div class="company-logo" style="width:64px;height:64px">${logo}</div>
-                        <div style="flex:1;min-width:0">
-                            <h3 style="font-size:1.2rem;font-weight:800">${esc(companyName)}</h3>
-                            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:3px">${first.company_location ? '<i class="fas fa-map-marker-alt"></i> ' + esc(first.company_location) : ''}</div>
-                        </div>
-                    </div>
-                    <div style="font-weight:700;font-size:0.9rem;margin-bottom:12px;color:var(--text-muted)"><i class="fas fa-list" style="color:var(--primary)"></i> اختار القسم اللي يناسبك وقدّم عليه:</div>
-                    <div class="depts-list">${deptsHtml}</div>
-                    <button class="btn btn-secondary" onclick="closeModal('deptsModal')" style="width:100%;justify-content:center;margin-top:16px">إغلاق</button>
-                </div>
-            </div>
-        `);
-    };
-
-    function renderInternshipCard(i) {
+function renderInternshipCard(i) {
         const company = allCompanies[i.company_user_id] || {};
         const logo = company.logo
             ? `<img src="${company.logo}" alt="">`
@@ -703,16 +567,7 @@ function renderCompanyCard(companyKey, internships) {
             return;
         }
 
-        // جمّع الفرص حسب الشركة (كل شركة كارت واحد)
-        const byCompany = {};
-        filtered.forEach(i => {
-            const key = i.company_user_id || i.company_name || 'unknown';
-            if (!byCompany[key]) byCompany[key] = [];
-            byCompany[key].push(i);
-        });
-        window._byCompany = byCompany;  // عشان الـ modal يوصلها
-
-        grid.innerHTML = Object.keys(byCompany).map(key => renderCompanyCard(key, byCompany[key])).join('');
+        grid.innerHTML = filtered.map(renderInternshipCard).join('');
     }
     
     // املأ الـ field options من البيانات الفعلية
@@ -1198,7 +1053,6 @@ function renderCompanyCard(companyKey, internships) {
             allInternships.forEach(int => {
                 const comp = allCompanies[int.company_user_id];
                 if (comp) {
-                    // training_price من internship.training_price له الأولوية
                     if (!int.training_price && comp.training_price) {
                         int.training_price = comp.training_price;
                     }
