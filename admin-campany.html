@@ -185,6 +185,28 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 .loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+/* ===== Dept Requests ===== */
+.dept-requests-grid { display: flex; flex-direction: column; gap: 14px; }
+.dept-req-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; transition: all .25s; }
+.dept-req-card:hover { border-color: var(--warning); transform: translateY(-2px); }
+.dept-req-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.dept-req-icon { width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg,#f59e0b,#f97316); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; flex-shrink: 0; }
+.dept-req-info { flex: 1; min-width: 0; }
+.dept-req-name { font-size: 1.1rem; font-weight: 800; }
+.dept-req-company { color: var(--text-muted); font-size: 0.84rem; margin-top: 2px; }
+.dept-req-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.dept-req-detail-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; }
+.dept-req-detail-label { color: var(--text-muted); font-size: 0.74rem; display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
+.dept-req-detail-label i { color: var(--primary); }
+.dept-req-detail-value { font-weight: 700; font-size: 0.88rem; }
+.dept-req-long { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; font-size: 0.84rem; color: var(--text-muted); line-height: 1.6; }
+.dept-req-long strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 0.82rem; }
+.dept-req-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.dept-req-actions .btn { flex: 1; justify-content: center; min-width: 100px; }
+.system-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; font-size: 0.74rem; font-weight: 800; }
+.system-tag.first-time { background: rgba(16,185,129,0.15); color: var(--success); }
+.system-tag.once-trained { background: rgba(79,172,254,0.15); color: var(--info); }
+.system-tag.twice-trained { background: rgba(239,68,68,0.15); color: var(--error); }
 @media (max-width: 1024px) {
     .sidebar { transform: translateX(100%); width: 280px; }
     .sidebar.open { transform: translateX(0); }
@@ -313,6 +335,10 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
                     <i class="fas fa-gavel"></i> مع عقوبات
                     <span class="tab-badge" id="badgePenaltiesTab">0</span>
                 </button>
+                <button class="tab-btn" data-filter="dept-requests" onclick="switchFilter(event, 'dept-requests')">
+                    <i class="fas fa-layer-group"></i> طلبات الأقسام
+                    <span class="tab-badge" id="badgeDeptRequests" style="background:rgba(245,158,11,0.3)">0</span>
+                </button>
             </div>
 
             <div class="filters-bar">
@@ -323,6 +349,16 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
                 <div class="empty-state">
                     <i class="fas fa-spinner fa-spin"></i>
                     <p>جاري التحميل...</p>
+                </div>
+            </div>
+
+            <!-- طلبات الأقسام -->
+            <div id="deptRequestsSection" style="display:none">
+                <div class="dept-requests-grid" id="deptRequestsGrid">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>جاري التحميل...</p>
+                    </div>
                 </div>
             </div>
         </main>
@@ -584,7 +620,283 @@ window.switchFilter = (e, filter) => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     e.currentTarget.classList.add('active');
     currentFilter = filter;
-    renderCompanies();
+    if (filter === 'dept-requests') {
+        document.getElementById('companiesGrid').style.display = 'none';
+        document.getElementById('deptRequestsSection').style.display = 'block';
+        loadDeptRequests();
+    } else {
+        document.getElementById('companiesGrid').style.display = '';
+        document.getElementById('deptRequestsSection').style.display = 'none';
+        renderCompanies();
+    }
+};
+
+// ========== Department Requests ==========
+let allDeptRequests = [];
+
+async function loadDeptRequests() {
+    const grid = document.getElementById('deptRequestsGrid');
+    grid.innerHTML = `<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>`;
+    try {
+        const { data, error } = await sb
+            .from('pending_approvals')
+            .select('*')
+            .eq('type', 'department')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            grid.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>خطأ في التحميل</h3><p>${escapeHtml(error.message)}</p><button class="btn btn-secondary" onclick="loadDeptRequests()"><i class="fas fa-sync-alt"></i> إعادة المحاولة</button></div>`;
+            return;
+        }
+
+        allDeptRequests = data || [];
+
+        // تحديث الـ badge
+        const pendingCount = allDeptRequests.filter(r => r.status === 'pending').length;
+        const badge = document.getElementById('badgeDeptRequests');
+        badge.textContent = pendingCount;
+
+        renderDeptRequests();
+    } catch (e) {
+        grid.innerHTML = `<div class="empty-state"><i class="fas fa-wifi"></i><h3>مشكلة في الاتصال</h3><button class="btn btn-secondary" onclick="loadDeptRequests()"><i class="fas fa-sync-alt"></i> إعادة المحاولة</button></div>`;
+    }
+}
+
+function getSystemText(s) {
+    return { 'first-time': 'متدرب لأول مرة', 'once-trained': 'سبق له التدريب', 'twice-trained': 'متدرب متمرس' }[s] || s || '-';
+}
+function getSystemClass(s) {
+    return { 'first-time': 'first-time', 'once-trained': 'once-trained', 'twice-trained': 'twice-trained' }[s] || 'first-time';
+}
+
+function renderDeptRequests() {
+    const grid = document.getElementById('deptRequestsGrid');
+    const list = allDeptRequests;
+
+    if (list.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-layer-group"></i>
+                <h3>لا توجد طلبات أقسام</h3>
+                <p>لم تُرسل أي شركة طلب قسم جديد بعد</p>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = list.map(req => {
+        const d = req.data || {};
+        const company = allCompanies.find(c => c.id === req.company_user_id);
+        const companyName = company ? company.name : (req.company_user_id || 'شركة غير محددة');
+        const statusBadge = req.status === 'pending'
+            ? `<span class="status-badge status-pending"><i class="fas fa-clock"></i> قيد المراجعة</span>`
+            : req.status === 'approved'
+            ? `<span class="status-badge status-approved"><i class="fas fa-check"></i> تمت الموافقة</span>`
+            : `<span class="status-badge status-rejected"><i class="fas fa-times"></i> مرفوض</span>`;
+
+        const branchLabel = d.branchId ? `فرع: ${escapeHtml(d.branchId)}` : 'الفرع الرئيسي';
+
+        return `
+        <div class="dept-req-card" id="deptReq_${escapeHtml(req.id)}">
+            <div class="dept-req-header">
+                <div class="dept-req-icon"><i class="fas fa-layer-group"></i></div>
+                <div class="dept-req-info">
+                    <div class="dept-req-name">${escapeHtml(req.item_name)}</div>
+                    <div class="dept-req-company">
+                        <i class="fas fa-building" style="color:var(--primary)"></i> ${escapeHtml(companyName)}
+                        &nbsp;|&nbsp; <i class="fas fa-calendar" style="color:var(--primary)"></i> ${formatDate(req.created_at)}
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+                    ${statusBadge}
+                    <span class="system-tag ${getSystemClass(d.traineeSystem)}">${getSystemText(d.traineeSystem)}</span>
+                </div>
+            </div>
+
+            <div class="dept-req-details">
+                <div class="dept-req-detail-item">
+                    <div class="dept-req-detail-label"><i class="fas fa-map-marker-alt"></i> الفرع</div>
+                    <div class="dept-req-detail-value">${escapeHtml(branchLabel)}</div>
+                </div>
+                <div class="dept-req-detail-item">
+                    <div class="dept-req-detail-label"><i class="fas fa-clock"></i> المدة</div>
+                    <div class="dept-req-detail-value">${getDurationText(d.duration)}</div>
+                </div>
+                <div class="dept-req-detail-item">
+                    <div class="dept-req-detail-label"><i class="fas fa-users"></i> عدد المتدربين</div>
+                    <div class="dept-req-detail-value">${escapeHtml(d.count || '-')}</div>
+                </div>
+                <div class="dept-req-detail-item">
+                    <div class="dept-req-detail-label"><i class="fas fa-user-tie"></i> المشرف</div>
+                    <div class="dept-req-detail-value">${escapeHtml(d.supervisor || '-')}</div>
+                </div>
+                <div class="dept-req-detail-item">
+                    <div class="dept-req-detail-label"><i class="fas fa-money-bill-wave"></i> الراتب المتوقع</div>
+                    <div class="dept-req-detail-value">${d.minSalary || 0}–${d.maxSalary || 0} ${getCurrencyText(d.currency)}</div>
+                </div>
+            </div>
+
+            ${d.knowledgeBenefits ? `
+            <div class="dept-req-long">
+                <strong><i class="fas fa-brain" style="color:var(--info)"></i> الميزة المعرفية</strong>
+                ${escapeHtml(d.knowledgeBenefits)}
+            </div>` : ''}
+
+            ${d.financialBenefits ? `
+            <div class="dept-req-long" style="border-color:rgba(16,185,129,0.2)">
+                <strong><i class="fas fa-gift" style="color:var(--success)"></i> الميزة المادية</strong>
+                ${escapeHtml(d.financialBenefits)}
+            </div>` : ''}
+
+            ${d.trainingRequirements ? `
+            <div class="dept-req-long" style="border-color:rgba(245,158,11,0.2)">
+                <strong><i class="fas fa-clipboard-list" style="color:var(--warning)"></i> مواصفات المتدرب</strong>
+                ${escapeHtml(d.trainingRequirements)}
+            </div>` : ''}
+
+            ${req.status === 'pending' ? `
+            <div class="dept-req-actions">
+                <button class="btn btn-success" onclick="approveDeptRequest('${escapeHtml(req.id)}', '${escapeHtml(req.company_user_id)}', '${escapeHtml(req.item_name)}')">
+                    <i class="fas fa-check"></i> موافقة وإضافة القسم
+                </button>
+                <button class="btn btn-danger" onclick="rejectDeptRequest('${escapeHtml(req.id)}')">
+                    <i class="fas fa-times"></i> رفض الطلب
+                </button>
+            </div>` : `
+            <div style="color:var(--text-muted);font-size:0.82rem;text-align:center;padding:6px">
+                ${req.status === 'approved' ? '✅ تمت الموافقة' : '❌ تم الرفض'}
+                ${req.reviewed_at ? ' في ' + formatDate(req.reviewed_at) : ''}
+            </div>`}
+        </div>`;
+    }).join('');
+}
+
+window.approveDeptRequest = async (reqId, companyUserId, fieldName) => {
+    if (!confirm(`موافقة على إضافة قسم "${fieldName}" للشركة؟`)) return;
+
+    try {
+        // 1. جيب بيانات الطلب
+        const req = allDeptRequests.find(r => r.id === reqId);
+        if (!req) { showToast('الطلب مش موجود', 'error'); return; }
+        const newDetails = req.data || {};
+
+        // 2. جيب بيانات الشركة الحالية
+        const { data: companyRow, error: compErr } = await sb.from('companies')
+            .select('training_fields, training_details')
+            .eq('user_id', companyUserId).maybeSingle();
+        if (compErr) { showToast('خطأ في جلب بيانات الشركة: ' + compErr.message, 'error'); return; }
+
+        let fields = [];
+        let details = {};
+        try { fields = JSON.parse(companyRow.training_fields || '[]'); } catch(e) { fields = companyRow.training_fields || []; }
+        try { details = JSON.parse(companyRow.training_details || '{}'); } catch(e) { details = companyRow.training_details || {}; }
+        if (!Array.isArray(fields)) fields = [];
+
+        // 3. أضف القسم لو مش موجود
+        if (!fields.includes(fieldName)) fields.push(fieldName);
+        details[fieldName] = newDetails;
+
+        // 4. حدّث جدول الشركات
+        const { error: upErr } = await sb.from('companies').update({
+            training_fields: fields,
+            training_details: details,
+            updated_at: new Date().toISOString()
+        }).eq('user_id', companyUserId);
+        if (upErr) { showToast('خطأ في تحديث الشركة: ' + upErr.message, 'error'); return; }
+
+        // 5. أنشئ أو حدّث internship
+        const companyData = allCompanies.find(c => c.id === companyUserId);
+        if (companyData) {
+            let location = companyData.location;
+            if (newDetails.branchId && companyData.branches) {
+                const branch = companyData.branches.find(b => b.id === newDetails.branchId);
+                if (branch) location = (branch.city ? branch.city + ' - ' : '') + (branch.fullAddress || branch.name || location);
+            }
+            const internshipData = {
+                company_user_id: companyUserId,
+                company_name: companyData.name,
+                company_location: location,
+                title: fieldName, field: fieldName,
+                description: newDetails.knowledgeBenefits || '',
+                duration: getDurationText(newDetails.duration),
+                max_applicants: parseInt(newDetails.count) || 10,
+                current_applicants: 0,
+                trainee_type: newDetails.traineeSystem || 'first-time',
+                requirements: newDetails.trainingRequirements || '',
+                knowledge_benefits: newDetails.knowledgeBenefits || '',
+                financial_benefits: newDetails.financialBenefits || '',
+                salary_min: parseFloat(newDetails.minSalary) || 0,
+                salary_max: parseFloat(newDetails.maxSalary) || 0,
+                salary_currency: newDetails.currency || 'EGP',
+                status: 'active',
+                updated_at: new Date().toISOString()
+            };
+            const { data: existingInternship } = await sb.from('internships')
+                .select('id').eq('company_user_id', companyUserId).eq('field', fieldName).maybeSingle();
+            if (existingInternship) {
+                await sb.from('internships').update(internshipData).eq('id', existingInternship.id);
+            } else {
+                internshipData.created_at = new Date().toISOString();
+                await sb.from('internships').insert(internshipData);
+            }
+        }
+
+        // 6. حدّث حالة الطلب
+        await sb.from('pending_approvals').update({
+            status: 'approved',
+            reviewed_at: new Date().toISOString()
+        }).eq('id', reqId);
+
+        // 7. إشعار للشركة
+        try {
+            await sb.from('notifications').insert({
+                user_id: companyUserId,
+                user_type: 'company',
+                type: 'dept_approved',
+                title: 'تمت الموافقة على قسمك',
+                message: `تمت الموافقة على إضافة قسم "${fieldName}" — سيظهر في صفحة فرص التدريب الآن`,
+                link: 'company-requests-control.html'
+            });
+        } catch(e) { /* ignore */ }
+
+        showToast('✅ تمت الموافقة وإضافة القسم بنجاح', 'success');
+        await loadDeptRequests();
+        await loadCompanies();
+    } catch (e) {
+        showToast('خطأ: ' + e.message, 'error');
+    }
+};
+
+window.rejectDeptRequest = async (reqId) => {
+    const reason = prompt('سبب الرفض (اختياري):');
+    if (reason === null) return; // ضغط إلغاء
+
+    const req = allDeptRequests.find(r => r.id === reqId);
+    try {
+        await sb.from('pending_approvals').update({
+            status: 'rejected',
+            rejection_reason: reason || '',
+            reviewed_at: new Date().toISOString()
+        }).eq('id', reqId);
+
+        // إشعار للشركة
+        if (req) {
+            try {
+                await sb.from('notifications').insert({
+                    user_id: req.company_user_id,
+                    user_type: 'company',
+                    type: 'dept_rejected',
+                    title: 'تم رفض طلب القسم',
+                    message: `تم رفض طلب إضافة قسم "${req.item_name}"${reason ? '. السبب: ' + reason : ''}`,
+                    link: 'company-requests-control.html'
+                });
+            } catch(e) { /* ignore */ }
+        }
+
+        showToast('❌ تم رفض الطلب', 'warning');
+        await loadDeptRequests();
+    } catch (e) {
+        showToast('خطأ: ' + e.message, 'error');
+    }
 };
 
 function renderCompanies() {
@@ -1321,6 +1633,24 @@ async function init() {
     
     // ثم اللود (الـ retry mechanism بيهتم بالباقي)
     await loadCompanies();
+    // اجيب عدد طلبات الأقسام المعلقة للـ badge
+    loadDeptRequestsBadge();
+}
+
+async function loadDeptRequestsBadge() {
+    try {
+        const { data, error } = await sb.from('pending_approvals')
+            .select('id', { count: 'exact', head: false })
+            .eq('type', 'department')
+            .eq('status', 'pending');
+        if (!error && data) {
+            const badge = document.getElementById('badgeDeptRequests');
+            if (badge) {
+                badge.textContent = data.length;
+                if (data.length > 0) badge.style.background = 'rgba(245,158,11,0.6)';
+            }
+        }
+    } catch(e) { /* ignore */ }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
