@@ -1253,51 +1253,110 @@ async function renderEvalTab() {
 window.startNewEval = async () => {
     const t = allTrainees.find(x => x.id === currentTraineeId);
     if (!t) return;
-    
+
     const content = document.getElementById('tabContent');
-    content.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="width:80px;height:80px;border:5px solid rgba(239,68,68,0.2);border-top-color:#ef4444;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px"></div><h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px">🤖 الـ AI بيولّد الأسئلة</h3><p style="color:var(--text-muted)">5-15 ثانية</p></div>';
-    
+    content.innerHTML = '<div style="text-align:center;padding:50px 20px"><div style="width:70px;height:70px;border:5px solid rgba(239,68,68,0.2);border-top-color:#ef4444;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px"></div><h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px">📋 بيتم تجهيز أسئلة التقييم</h3><p style="color:var(--text-muted)">لحظة واحدة...</p></div>';
+
     try {
         const sb = await window.getSafeSupabase();
-        
+        const field = t.field || 'عام';
+
         let template = null;
-        const { data: existing } = await sb.from('ai_evaluation_templates').select('*').eq('field', t.field).maybeSingle();
-        
-        if (existing) {
-            template = existing;
-        } else {
-            const { data: { session } } = await sb.auth.getSession();
-            const resp = await fetch('https://jrwazyrdzmbcnddpxxrf.supabase.co/functions/v1/ai-evaluation', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + (session && session.access_token || ''),
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ field: t.field, language: 'ar' })
-            });
-            
-            if (!resp.ok) throw new Error('فشل Edge Function');
-            
-            const result = await resp.json();
-            if (!result.success) throw new Error(result.error || 'فشل التوليد');
-            
-            const { data: inserted } = await sb.from('ai_evaluation_templates').insert({
-                field: t.field,
-                questions: result.questions,
-                summary_question: result.summary_question,
-                use_count: 1,
-                last_used_at: new Date().toISOString()
-            }).select().single();
-            
-            template = inserted || { questions: result.questions, summary_question: result.summary_question };
+        // جرّب تلاقي قالب محفوظ للمجال ده (عشان نفس الأسئلة تتعاد)
+        try {
+            const { data: existing } = await sb.from('ai_evaluation_templates').select('*').eq('field', field).maybeSingle();
+            if (existing && existing.questions) template = existing;
+        } catch (e) { /* الجدول ممكن مايكونش موجود — مش مشكلة */ }
+
+        // مفيش قالب محفوظ؟ ولّد محلياً (ذكي حسب المجال)
+        if (!template) {
+            const generated = buildEvaluationQuestions(field);
+            template = { questions: generated.questions, summary_question: generated.summary_question };
+            // حاول تحفظه للمرة الجاية (لو الجدول موجود)
+            try {
+                const { data: inserted } = await sb.from('ai_evaluation_templates').insert({
+                    field: field,
+                    questions: generated.questions,
+                    summary_question: generated.summary_question,
+                    use_count: 1,
+                    last_used_at: new Date().toISOString()
+                }).select().single();
+                if (inserted) template = inserted;
+            } catch (e) { /* مايتحفظش؟ نكمّل بالقالب المحلي عادي */ }
         }
-        
+
         renderEvalQuestions(template);
     } catch(err) {
         console.error(err);
-        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--warning);margin-bottom:14px;display:block"></i><h3 style="color:var(--text)">فشل توليد الأسئلة</h3><p style="margin-bottom:14px">' + esc(err.message) + '</p><button onclick="renderEvalTab()" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer">العودة</button></div>';
+        // حتى لو حصل أي خطأ، ولّد محلياً (مايفشلش أبداً)
+        try {
+            const generated = buildEvaluationQuestions((t.field || 'عام'));
+            renderEvalQuestions({ questions: generated.questions, summary_question: generated.summary_question });
+        } catch (e2) {
+            content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--warning);margin-bottom:14px;display:block"></i><h3 style="color:var(--text)">حصل خطأ</h3><button onclick="renderEvalTab()" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer;margin-top:14px">العودة</button></div>';
+        }
     }
 };
+
+// ============ مولّد أسئلة التقييم الذكي (محلي) ============
+function buildEvaluationQuestions(field) {
+    const f = String(field || '').toLowerCase();
+    let id = 0;
+    const nid = () => 'q' + (++id);
+
+    // أسئلة مشتركة لكل المجالات
+    const common = {
+        soft_skills: [
+            'مدى التزام المتدرب بمواعيد العمل والحضور',
+            'القدرة على التواصل والعمل ضمن فريق',
+            'تقبّل الملاحظات والتغذية الراجعة والتعلم منها',
+            'المبادرة وتحمّل المسؤولية في المهام'
+        ],
+        performance: [
+            'جودة العمل المُنجَز ودقته',
+            'الالتزام بتسليم المهام في وقتها',
+            'القدرة على حل المشكلات اللي بتواجهه'
+        ],
+        growth: [
+            'سرعة تعلّم المهارات والأدوات الجديدة',
+            'مدى التطوّر والتحسّن من بداية التدريب'
+        ]
+    };
+
+    // أسئلة تقنية حسب المجال
+    let technical = [];
+    if (/برمج|develop|software|كود|cod|web|ويب|front|back|تطوير|programming/.test(f)) {
+        technical = ['إتقان لغات البرمجة والأدوات المطلوبة', 'جودة الكود وتنظيمه وقابليته للقراءة', 'القدرة على تصحيح الأخطاء (debugging)', 'فهم المتطلبات التقنية وتطبيقها'];
+    } else if (/تسويق|market|سوشيال|social|محتوى|content|إعلان|ads/.test(f)) {
+        technical = ['فهم استراتيجيات التسويق الرقمي', 'القدرة على إنشاء محتوى جذّاب', 'تحليل بيانات الحملات والأداء', 'الإبداع في الأفكار التسويقية'];
+    } else if (/تصميم|design|جرافيك|graphic|ui|ux|موشن/.test(f)) {
+        technical = ['إتقان أدوات التصميم (Photoshop/Figma..)', 'الحس الجمالي وتناسق الألوان', 'فهم تجربة المستخدم (UX)', 'تنفيذ التصاميم حسب المتطلبات'];
+    } else if (/محاسب|account|مالي|financ|تمويل/.test(f)) {
+        technical = ['دقة العمليات المحاسبية', 'إتقان برامج المحاسبة', 'فهم التقارير والقوائم المالية', 'الالتزام بالمعايير المحاسبية'];
+    } else if (/مبيعات|sales|بيع/.test(f)) {
+        technical = ['مهارات الإقناع وإتمام الصفقات', 'معرفة المنتج والسوق', 'بناء علاقات مع العملاء', 'تحقيق المستهدفات البيعية'];
+    } else if (/موارد بشر|hr|human/.test(f)) {
+        technical = ['فهم إجراءات التوظيف والمقابلات', 'التعامل مع شؤون الموظفين', 'معرفة قوانين العمل', 'مهارات التواصل والوساطة'];
+    } else if (/هندس|engineer|ميكانيك|كهرب|مدني|civil|mechanic|electric/.test(f)) {
+        technical = ['الفهم الهندسي التطبيقي', 'إتقان البرامج الهندسية المتخصصة', 'دقة الحسابات والقياسات', 'الالتزام بمعايير السلامة والجودة'];
+    } else if (/data|بيانات|تحليل|analy/.test(f)) {
+        technical = ['إتقان أدوات تحليل البيانات', 'استخلاص رؤى مفيدة من البيانات', 'مهارات العرض والتصوّر البياني', 'الدقة في التعامل مع الأرقام'];
+    } else {
+        // مجال عام
+        technical = ['إتقان المهارات الأساسية للمجال', 'تطبيق المعرفة النظرية عملياً', 'استخدام الأدوات والتقنيات المطلوبة', 'جودة المخرجات في تخصصه'];
+    }
+
+    const questions = [];
+    technical.forEach(q => questions.push({ id: nid(), category: 'technical', question: q }));
+    common.soft_skills.forEach(q => questions.push({ id: nid(), category: 'soft_skills', question: q }));
+    common.performance.forEach(q => questions.push({ id: nid(), category: 'performance', question: q }));
+    common.growth.forEach(q => questions.push({ id: nid(), category: 'growth', question: q }));
+
+    return {
+        questions: questions,
+        summary_question: 'تقييم عام لأداء المتدرب في مجال ' + (field || 'التدريب') + ': نقاط القوة، نقاط تحتاج تحسين، والتوصية النهائية.'
+    };
+}
 
 function renderEvalQuestions(template) {
     const questions = template.questions || [];
@@ -1611,37 +1670,16 @@ async function renderRecTab() {
 window.generateRec = async () => {
     const t = allTrainees.find(x => x.id === currentTraineeId);
     if (!t || !t.evaluation) { showToast('قيّم الأداء أولاً', 'warning'); return; }
-    
+
     const content = document.getElementById('tabContent');
-    content.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="width:80px;height:80px;border:5px solid rgba(239,68,68,0.2);border-top-color:#ef4444;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px"></div><h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px">🤖 الـ AI بيحلل ويرشّح</h3><p style="color:var(--text-muted)">10-20 ثانية</p></div>';
-    
+    content.innerHTML = '<div style="text-align:center;padding:50px 20px"><div style="width:70px;height:70px;border:5px solid rgba(239,68,68,0.2);border-top-color:#ef4444;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px"></div><h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px">📊 بيتم تحليل الأداء والترشيح</h3><p style="color:var(--text-muted)">لحظة واحدة...</p></div>';
+
     try {
         const sb = await window.getSafeSupabase();
-        const { data: tasks } = await sb.from('task_reports').select('task_title, report_text, rating').eq('application_id', currentTraineeId);
-        const tasksSummary = (tasks || []).map(t => t.task_title + (t.rating ? ' (تقييم: ' + t.rating + '/5)' : '') + (t.report_text ? ' - ' + t.report_text.substring(0, 100) : '')).join('\n');
-        
-        const { data: { session } } = await sb.auth.getSession();
-        const resp = await fetch('https://jrwazyrdzmbcnddpxxrf.supabase.co/functions/v1/ai-job-recommendations', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + (session && session.access_token || ''),
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                student_name: t.student_name,
-                field: t.field,
-                overall_score: t.evaluation.overall_score,
-                category_scores: t.evaluation.category_scores || {},
-                evaluation_summary: t.evaluation.summary_feedback || '',
-                task_reports_summary: tasksSummary.substring(0, 1000)
-            })
-        });
-        
-        if (!resp.ok) throw new Error('فشل Edge Function');
-        const result = await resp.json();
-        if (!result.success) throw new Error(result.error || 'فشل التوليد');
-        
-        const { data: existing } = await sb.from('career_recommendations').select('id').eq('application_id', currentTraineeId).maybeSingle();
+
+        // ولّد الترشيحات محلياً حسب المجال والدرجة
+        const result = buildCareerRecommendations(t.field, t.evaluation);
+
         const recData = {
             application_id: currentTraineeId,
             student_user_id: t.student_user_id,
@@ -1651,21 +1689,81 @@ window.generateRec = async () => {
             improvement_areas: result.improvement_areas,
             evaluation_score: t.evaluation.overall_score
         };
-        
-        if (existing) {
-            await sb.from('career_recommendations').update(recData).eq('id', existing.id);
-        } else {
-            await sb.from('career_recommendations').insert(recData);
+
+        try {
+            const { data: existing } = await sb.from('career_recommendations').select('id').eq('application_id', currentTraineeId).maybeSingle();
+            if (existing) await sb.from('career_recommendations').update(recData).eq('id', existing.id);
+            else await sb.from('career_recommendations').insert(recData);
+            await loadAll();
+        } catch (e) {
+            // مايتحفظش؟ اعرضه على الأقل
+            const idx = allTrainees.findIndex(x => x.id === currentTraineeId);
+            if (idx >= 0) allTrainees[idx].recommendation = recData;
         }
-        
-        await loadAll();
+
         renderRecTab();
         showToast('✅ تم توليد الترشيحات', 'success');
     } catch(err) {
         console.error(err);
-        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--warning);margin-bottom:14px;display:block"></i><h3 style="color:var(--text)">فشل التوليد</h3><p style="margin-bottom:14px">' + esc(err.message) + '</p><button onclick="renderRecTab()" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer">العودة</button></div>';
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--warning);margin-bottom:14px;display:block"></i><h3 style="color:var(--text)">حصل خطأ</h3><button onclick="renderRecTab()" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer;margin-top:14px">العودة</button></div>';
     }
 };
+
+// ============ مولّد الترشيحات الوظيفية الذكي (محلي) ============
+function buildCareerRecommendations(field, evaluation) {
+    const f = String(field || '').toLowerCase();
+    const score = (evaluation && evaluation.overall_score) || 0;
+
+    // تقييم عام حسب الدرجة
+    let assessment;
+    if (score >= 4.5) assessment = 'أداء ممتاز ومتميّز. المتدرب أظهر كفاءة عالية وجاهز لتحمّل مسؤوليات أكبر في مجاله.';
+    else if (score >= 3.5) assessment = 'أداء جيد جداً. المتدرب يمتلك أساساً قوياً ويحتاج صقل بسيط للوصول للاحتراف الكامل.';
+    else if (score >= 2.5) assessment = 'أداء جيد مع وجود مجالات تحتاج تطوير. المتدرب واعد لكن يحتاج مزيد من الخبرة والتدريب.';
+    else assessment = 'المتدرب في بداية مشواره ويحتاج تطوير ملحوظ في المهارات الأساسية قبل التخصص.';
+
+    // وظائف مرشّحة حسب المجال
+    let jobs = [];
+    if (/برمج|develop|software|كود|web|ويب|front|back|تطوير/.test(f)) {
+        jobs = ['مطوّر واجهات أمامية (Frontend Developer)', 'مطوّر خلفي (Backend Developer)', 'مطوّر تطبيقات موبايل', 'مهندس برمجيات (Software Engineer)', 'مطوّر Full-Stack'];
+    } else if (/تسويق|market|سوشيال|social|محتوى|content/.test(f)) {
+        jobs = ['أخصائي تسويق رقمي', 'مدير محتوى (Content Manager)', 'أخصائي سوشيال ميديا', 'محلل حملات تسويقية', 'أخصائي SEO'];
+    } else if (/تصميم|design|جرافيك|graphic|ui|ux/.test(f)) {
+        jobs = ['مصمم جرافيك', 'مصمم واجهات (UI Designer)', 'مصمم تجربة مستخدم (UX Designer)', 'مصمم موشن جرافيك', 'مدير فني (Art Director)'];
+    } else if (/محاسب|account|مالي|financ/.test(f)) {
+        jobs = ['محاسب', 'محلل مالي', 'مدقق حسابات', 'أخصائي ضرائب', 'محاسب تكاليف'];
+    } else if (/مبيعات|sales|بيع/.test(f)) {
+        jobs = ['مندوب مبيعات', 'أخصائي تطوير أعمال', 'مدير حسابات العملاء', 'أخصائي مبيعات داخلية', 'مدير مبيعات إقليمي'];
+    } else if (/موارد بشر|hr|human/.test(f)) {
+        jobs = ['أخصائي موارد بشرية', 'أخصائي توظيف', 'أخصائي تدريب وتطوير', 'أخصائي علاقات موظفين', 'منسق شؤون موظفين'];
+    } else if (/هندس|engineer|ميكانيك|كهرب|مدني/.test(f)) {
+        jobs = ['مهندس مشاريع', 'مهندس موقع', 'مهندس جودة', 'مهندس تصميم', 'مهندس صيانة'];
+    } else if (/data|بيانات|تحليل|analy/.test(f)) {
+        jobs = ['محلل بيانات (Data Analyst)', 'مهندس بيانات', 'أخصائي ذكاء أعمال (BI)', 'عالم بيانات (Data Scientist)', 'محلل أعمال'];
+    } else {
+        jobs = ['وظيفة تخصصية في ' + (field || 'المجال'), 'منسق مشاريع', 'أخصائي في المجال', 'مساعد إداري متخصص', 'منسق عمليات'];
+    }
+
+    // رتّب حسب الدرجة (الأعلى ياخد وظائف أعلى مستوى)
+    const recommendations = jobs.slice(0, 5).map((title, i) => ({
+        title: title,
+        match: Math.max(60, Math.round(score * 20) - i * 5),  // نسبة تطابق
+        reason: i === 0 ? 'الأنسب بناءً على تقييم أدائه ومجال تدريبه' : 'مسار مناسب لمهاراته الحالية'
+    }));
+
+    // مجالات التحسين حسب أضعف فئة
+    const cs = (evaluation && evaluation.category_scores) || {};
+    const improvement = [];
+    if ((cs.technical || score) < 3.5) improvement.push('تطوير المهارات التقنية المتخصصة من خلال دورات وتطبيق عملي');
+    if ((cs.soft_skills || score) < 3.5) improvement.push('تحسين مهارات التواصل والعمل الجماعي');
+    if ((cs.performance || score) < 3.5) improvement.push('رفع جودة وسرعة إنجاز المهام');
+    if (improvement.length === 0) improvement.push('الاستمرار في التطوّر وتولّي مشاريع أكثر تحدياً للوصول لمستوى الخبرة');
+
+    return {
+        career_assessment: assessment,
+        recommendations: recommendations,
+        improvement_areas: improvement
+    };
+}
 
 window.regenerateRec = async () => {
     if (!confirm('إعادة توليد الترشيحات؟')) return;
