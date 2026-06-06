@@ -1183,6 +1183,7 @@ window.openTrainee = (appId) => {
                 '<button id="tab-eval" onclick="switchTab(&apos;eval&apos;)" style="flex:1;padding:10px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem"><i class="fas fa-chart-line"></i> تقارير الأداء</button>' +
                 '<button id="tab-tasks" onclick="switchTab(&apos;tasks&apos;)" style="flex:1;padding:10px;background:transparent;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem"><i class="fas fa-clipboard-list"></i> تقارير المهام</button>' +
                 '<button id="tab-rec" onclick="switchTab(&apos;rec&apos;)" style="flex:1;padding:10px;background:transparent;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem"><i class="fas fa-bullseye"></i> الترشيحات</button>' +
+                '<button id="tab-personality" onclick="switchTab(&apos;personality&apos;)" style="flex:1;padding:10px;background:transparent;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem"><i class="fas fa-brain"></i> تحليل الشخصية</button>' +
             '</div>' +
             '<div id="tabContent" style="min-height:300px"></div>' +
         '</div>' +
@@ -1201,7 +1202,7 @@ window.closeTraineeModal = () => {
 };
 
 window.switchTab = (tab) => {
-    ['eval', 'tasks', 'rec'].forEach(t => {
+    ['eval', 'tasks', 'rec', 'personality'].forEach(t => {
         const btn = document.getElementById('tab-' + t);
         if (!btn) return;
         if (t === tab) {
@@ -1216,6 +1217,7 @@ window.switchTab = (tab) => {
     if (tab === 'eval') renderEvalTab();
     else if (tab === 'tasks') renderTasksTab();
     else if (tab === 'rec') renderRecTab();
+    else if (tab === 'personality') renderPersonalityTab();
 };
 
 async function renderEvalTab() {
@@ -1769,6 +1771,90 @@ window.regenerateRec = async () => {
     if (!confirm('إعادة توليد الترشيحات؟')) return;
     generateRec();
 };
+
+// ============ تبويب تحليل الشخصية (Big Five) ============
+function renderPersonalityTab() {
+    const t = allTrainees.find(x => x.id === currentTraineeId);
+    const content = document.getElementById('tabContent');
+    if (!t) { content.innerHTML = ''; return; }
+
+    if (!t.evaluation) {
+        content.innerHTML = '<div style="text-align:center;padding:50px 20px"><i class="fas fa-brain" style="font-size:3.5rem;color:#667eea;margin-bottom:16px;display:block;opacity:.5"></i><h3 style="margin-bottom:8px">تحليل الشخصية</h3><p style="color:var(--text-muted);margin-bottom:20px;line-height:1.7">لازم تقيّم أداء المتدرب الأول (من تبويب تقارير الأداء) عشان النظام يحلّل شخصيته بناءً على الأداء الحقيقي.</p><button onclick="switchTab(&apos;eval&apos;)" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit"><i class="fas fa-chart-line"></i> روح قيّم الأداء</button></div>';
+        return;
+    }
+
+    content.innerHTML = '<div style="text-align:center;padding:40px"><div style="width:60px;height:60px;border:5px solid rgba(102,126,234,.2);border-top-color:#667eea;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px"></div><p style="color:var(--text-muted)">بيتم تحليل الشخصية...</p></div>';
+
+    setTimeout(() => {
+        const analysis = buildPersonalityAnalysis(t.field, t.evaluation);
+        const traitColors = { openness: '#667eea', conscientiousness: '#11998e', extraversion: '#f59e0b', agreeableness: '#38ef7d', stability: '#8b5cf6' };
+        const traitNames = { openness: 'الانفتاح والفضول', conscientiousness: 'الالتزام والمسؤولية', extraversion: 'التواصل الاجتماعي', agreeableness: 'التعاون', stability: 'الاتزان تحت الضغط' };
+
+        const traitsHtml = Object.entries(analysis.traits).map(function(entry) {
+            const key = entry[0], data = entry[1];
+            const color = traitColors[key] || '#667eea';
+            return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+                    '<span style="font-weight:800;font-size:1rem">' + traitNames[key] + '</span>' +
+                    '<span style="font-weight:800;color:' + color + ';font-size:1.1rem">' + data.score + '%</span>' +
+                '</div>' +
+                '<div style="height:8px;background:rgba(255,255,255,.06);border-radius:10px;overflow:hidden;margin-bottom:10px">' +
+                    '<div style="height:100%;width:' + data.score + '%;background:' + color + ';border-radius:10px"></div>' +
+                '</div>' +
+                '<div style="color:var(--text-muted);font-size:0.85rem;line-height:1.6">' + data.desc + '</div>' +
+            '</div>';
+        }).join('');
+
+        const strengthsHtml = analysis.strengths.map(function(s) { return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(16,185,129,.08);border-radius:10px;margin-bottom:8px"><i class="fas fa-check-circle" style="color:#10b981"></i><span style="font-size:0.88rem">' + s + '</span></div>'; }).join('');
+        const growthHtml = analysis.growth.map(function(g) { return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(245,158,11,.08);border-radius:10px;margin-bottom:8px"><i class="fas fa-arrow-trend-up" style="color:#f59e0b"></i><span style="font-size:0.88rem">' + g + '</span></div>'; }).join('');
+
+        content.innerHTML =
+            '<div style="background:linear-gradient(135deg,rgba(102,126,234,.12),rgba(118,75,162,.12));border:1px solid rgba(102,126,234,.25);border-radius:14px;padding:18px;margin-bottom:18px">' +
+                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><i class="fas fa-brain" style="color:#667eea;font-size:1.3rem"></i><span style="font-weight:800;font-size:1.05rem">الملخص الشخصي</span></div>' +
+                '<p style="color:var(--text-muted);line-height:1.8;font-size:0.9rem">' + analysis.summary + '</p>' +
+            '</div>' +
+            '<div style="font-weight:800;margin-bottom:12px;font-size:0.95rem"><i class="fas fa-chart-bar" style="color:#667eea"></i> سمات الشخصية (تحليل تقديري مبني على الأداء)</div>' +
+            traitsHtml +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px">' +
+                '<div><div style="font-weight:800;margin-bottom:10px;color:#10b981;font-size:0.9rem"><i class="fas fa-star"></i> نقاط القوة</div>' + strengthsHtml + '</div>' +
+                '<div><div style="font-weight:800;margin-bottom:10px;color:#f59e0b;font-size:0.9rem"><i class="fas fa-seedling"></i> فرص التطوّر</div>' + growthHtml + '</div>' +
+            '</div>' +
+            '<div style="background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:10px;padding:12px;margin-top:18px;font-size:0.78rem;color:var(--text-muted);text-align:center"><i class="fas fa-info-circle"></i> ده تحليل تقديري مبني على تقييم أداء المتدرب، مش بديل عن تقييم نفسي متخصص.</div>';
+    }, 600);
+}
+
+function buildPersonalityAnalysis(field, evaluation) {
+    const cs = (evaluation && evaluation.category_scores) || {};
+    const overall = (evaluation && evaluation.overall_score) || 3;
+    const toPercent = function(v, base) { return Math.min(98, Math.max(40, Math.round(((v || base) / 5) * 100))); };
+
+    const technical = cs.technical || overall;
+    const soft = cs.soft_skills || overall;
+    const performance = cs.performance || overall;
+    const growthScore = cs.growth || overall;
+
+    const traits = {
+        openness:          { score: toPercent((technical + growthScore) / 2, overall), desc: 'مدى انفتاحه على التعلم والأفكار والأدوات الجديدة. درجة عالية تعني فضول معرفي وقابلية للتطوّر.' },
+        conscientiousness: { score: toPercent(performance, overall), desc: 'مدى التزامه وتنظيمه ودقته في إنجاز المهام والمواعيد. أساس الاعتمادية في العمل.' },
+        extraversion:      { score: toPercent(soft, overall), desc: 'مدى راحته في التواصل والعمل ضمن فريق والمبادرة في النقاش.' },
+        agreeableness:     { score: toPercent((soft + growthScore) / 2, overall), desc: 'مدى تعاونه وتقبّله للملاحظات وتعامله الإيجابي مع الزملاء.' },
+        stability:         { score: toPercent((performance + soft) / 2, overall), desc: 'مدى ثباته الانفعالي وتعامله مع الضغط والمهام الصعبة بهدوء.' }
+    };
+
+    let summary;
+    if (overall >= 4.3) summary = 'المتدرب يُظهر ملمحاً شخصياً ناضجاً ومتوازناً، يجمع بين الكفاءة في العمل والقدرة على التعلّم والتعاون. مرشّح قوي لتحمّل مسؤوليات قيادية.';
+    else if (overall >= 3.3) summary = 'المتدرب يمتلك أساساً شخصياً جيداً مع نقاط قوة واضحة. مع التوجيه المناسب، لديه إمكانية نمو كبيرة في مجاله.';
+    else if (overall >= 2.3) summary = 'المتدرب في طور التشكّل المهني، ويُظهر بعض السمات الواعدة التي تحتاج دعماً وتدريباً لتتبلور بشكل أوضح.';
+    else summary = 'المتدرب في بداية رحلته، ويحتاج إلى توجيه ودعم مكثّف لبناء عاداته المهنية وتطوير مهاراته الأساسية.';
+
+    const sorted = Object.entries(traits).sort(function(a, b) { return b[1].score - a[1].score; });
+    const labelMap = { openness: 'الفضول وحب التعلّم', conscientiousness: 'الالتزام والتنظيم', extraversion: 'مهارات التواصل', agreeableness: 'روح التعاون', stability: 'الثبات تحت الضغط' };
+    const strengths = sorted.slice(0, 2).map(function(e) { return labelMap[e[0]]; });
+    if (overall >= 4) strengths.push('جاهزية لتولّي مهام أكبر');
+    const growthAreas = sorted.slice(-2).map(function(e) { return 'تعزيز ' + labelMap[e[0]]; });
+
+    return { traits: traits, summary: summary, strengths: strengths, growth: growthAreas };
+}
 
 window.sendRecToStudent = async (recId) => {
     const sb = await window.getSafeSupabase();
