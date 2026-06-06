@@ -264,7 +264,6 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
                     </select>
                     <select id="filterPrice">
                         <option value="">كل الفئات السعرية</option>
-                        <option value="free">مجاني</option>
                         <option value="0-500">حتى 500</option>
                         <option value="500-1000">500 - 1000</option>
                         <option value="1000-2000">1000 - 2000</option>
@@ -456,8 +455,6 @@ function renderInternshipCard(i) {
         // عرض سعر التدريب (اللي الطالب يدفعه)
         if (i.training_price && parseFloat(i.training_price) > 0) {
             features.push(`<div class="feature-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="fas fa-credit-card"></i> رسوم: ${i.training_price} ${i.training_currency || 'EGP'}</div>`);
-        } else {
-            features.push(`<div class="feature-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="fas fa-gift"></i> مجاني</div>`);
         }
         if (company.provides_certificate !== false) {
             features.push(`<div class="feature-icon"><i class="fas fa-certificate"></i> شهادة</div>`);
@@ -538,7 +535,7 @@ function renderInternshipCard(i) {
         if (priceFilter) {
             filtered = filtered.filter(i => {
                 const price = parseFloat(i.training_price || 0);
-                if (priceFilter === 'free') return price === 0;
+                if (priceFilter === 'free') return false; // لا يوجد تدريب مجاني
                 if (priceFilter === '0-500') return price > 0 && price <= 500;
                 if (priceFilter === '500-1000') return price > 500 && price <= 1000;
                 if (priceFilter === '1000-2000') return price > 1000 && price <= 2000;
@@ -708,7 +705,7 @@ function renderInternshipCard(i) {
                             </div>
                             <div class="info-item">
                                 <div class="info-label"><i class="fas fa-credit-card"></i> رسوم التدريب</div>
-                                <div class="info-value">${i.training_price && parseFloat(i.training_price) > 0 ? `${i.training_price} ${i.training_currency || 'EGP'}` : '<span style="color:#10b981">🎁 مجاني</span>'}</div>
+                                <div class="info-value">${i.training_price && parseFloat(i.training_price) > 0 ? `${i.training_price} ${i.training_currency || 'EGP'}` : '<span style="color:var(--text-muted)">سيتم تحديده</span>'}</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label"><i class="fas fa-map-marker-alt"></i> المكان</div>
@@ -1049,15 +1046,24 @@ function renderInternshipCard(i) {
                 appCountsByInternship[int.id] = int.current_applicants || 0;
             });
 
-            // اربط training_price - من internship نفسها إذا موجود، وإلا من company
+            // اربط training_price حسب النظام المالي:
+            // النظام الأول (first-time): المتدرب يدفع رسوم الشركة
+            // النظام الثاني (once-trained): مجاني تماماً — الشركة هي اللي بتدفع للمتدرب
+            // النظام الثالث (twice-trained): مجاني للمتدرب — الشركة هي اللي بتدفع للمنصة
             allInternships.forEach(int => {
                 const comp = allCompanies[int.company_user_id];
-                if (comp) {
-                    if (!int.training_price && comp.training_price) {
+                const type = int.trainee_type;
+                if (type === 'once-trained' || type === 'twice-trained') {
+                    // المتدرب مش بيدفع في النظام الثاني والثالث
+                    int.training_price = 0;
+                    int.training_currency = comp ? (comp.training_currency || 'EGP') : 'EGP';
+                } else {
+                    // النظام الأول: المتدرب بيدفع رسوم الشركة
+                    if (!int.training_price && comp && comp.training_price) {
                         int.training_price = comp.training_price;
                     }
                     if (!int.training_currency) {
-                        int.training_currency = comp.training_currency || 'EGP';
+                        int.training_currency = comp ? (comp.training_currency || 'EGP') : 'EGP';
                     }
                 }
             });
