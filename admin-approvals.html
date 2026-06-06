@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
-<link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
+    <link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
+
 <title>الموافقات - ProVance Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -87,83 +88,87 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 @keyframes spin { to { transform: rotate(360deg); } }
 .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
 @media (max-width: 1024px) {
-.sidebar { transform: translateX(100%); width: 280px; }
-.sidebar.open { transform: translateX(0); }
-.main { margin-right: 0; }
-.menu-toggle { display: flex; align-items: center; justify-content: center; }
+    .sidebar { transform: translateX(100%); width: 280px; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-right: 0; }
+    .menu-toggle { display: flex; align-items: center; justify-content: center; }
 }
 </style>
 </head>
 <body>
 <div class="bg-anim"></div>
 <div class="layout">
-<aside class="sidebar" id="sidebar">
-<div class="sidebar-logo">
-<div class="logo-wrapper">
-<div class="logo-icon">
-<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-<stop offset="0%" stop-color="#ef4444"/>
-<stop offset="100%" stop-color="#dc2626"/>
-</linearGradient>
-</defs>
-<path d="M16 2 L28 8 V20 Q28 26 16 30 Q4 26 4 20 V8 Z" fill="url(#logoGrad)" stroke="#fff" stroke-width="0.5" opacity="0.95"/>
-<text x="16" y="20" text-anchor="middle" font-family="Cairo, sans-serif" font-size="14" font-weight="900" fill="#fff">P</text>
-</svg>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-wrapper">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#ef4444"/>
+                                <stop offset="100%" stop-color="#dc2626"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M16 2 L28 8 V20 Q28 26 16 30 Q4 26 4 20 V8 Z" fill="url(#logoGrad)" stroke="#fff" stroke-width="0.5" opacity="0.95"/>
+                        <text x="16" y="20" text-anchor="middle" font-family="Cairo, sans-serif" font-size="14" font-weight="900" fill="#fff">P</text>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <div class="logo-brand">ProVance</div>
+                    <div class="logo-tagline">منصة التدريب</div>
+                </div>
+            </div>
+        </div>
+        <div class="admin-badge"><i class="fas fa-shield-alt"></i> ADMIN PANEL</div>
+        <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
+        <a href="admin-campany.html" class="nav-item"><i class="fas fa-building"></i> الشركات</a>
+        <a href="admin-trainees.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
+        <a href="admin-users.html" class="nav-item"><i class="fas fa-user-shield"></i> الأدمنز</a>
+        <a href="admin-approvals.html" class="nav-item active"><i class="fas fa-check-double"></i> الموافقات</a>
+        <a href="admin-support.html" class="nav-item"><i class="fas fa-headset"></i> دعم الشركات</a>
+            <a href="admin-notification.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+        <a href="#" onclick="logoutAdmin(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
+            <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+        </a>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="topbar-title"><i class="fas fa-check-double" style="color:var(--primary)"></i> الموافقات</h1>
+            <button class="btn btn-secondary btn-sm" onclick="loadApprovals()" style="flex:0">
+                <i class="fas fa-sync-alt"></i> تحديث
+            </button>
+        </div>
+
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab(event, 'pending')">
+                <i class="fas fa-clock"></i> قيد المراجعة <span class="tab-badge" id="pendingCount">0</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'approved')">
+                <i class="fas fa-check"></i> الموافق عليها <span class="tab-badge" id="approvedCount">0</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'rejected')">
+                <i class="fas fa-times"></i> المرفوضة <span class="tab-badge" id="rejectedCount">0</span>
+            </button>
+        </div>
+
+        <div id="tab-pending" class="tab-content active">
+            <div class="approval-grid" id="pendingGrid">
+                <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
+            </div>
+        </div>
+        <div id="tab-approved" class="tab-content">
+            <div class="approval-grid" id="approvedGrid"></div>
+        </div>
+        <div id="tab-rejected" class="tab-content">
+            <div class="approval-grid" id="rejectedGrid"></div>
+        </div>
+    </main>
 </div>
-<div class="logo-text">
-<div class="logo-brand">ProVance</div>
-<div class="logo-tagline">منصة التدريب</div>
-</div>
-</div>
-</div>
-<div class="admin-badge"><i class="fas fa-shield-alt"></i> ADMIN PANEL</div>
-<a href="admin-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
-<a href="admin-campany.html" class="nav-item"><i class="fas fa-building"></i> الشركات</a>
-<a href="admin-trainees.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
-<a href="admin-users.html" class="nav-item"><i class="fas fa-user-shield"></i> الأدمنز</a>
-<a href="admin-approvals.html" class="nav-item active"><i class="fas fa-check-double"></i> الموافقات</a>
-<a href="admin-support.html" class="nav-item"><i class="fas fa-headset"></i> دعم الشركات</a>
-<a href="admin-notification.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
-<a href="#" onclick="logoutAdmin(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
-<i class="fas fa-sign-out-alt"></i> تسجيل الخروج
-</a>
-</aside>
-<main class="main">
-<div class="topbar">
-<button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
-<i class="fas fa-bars"></i>
-</button>
-<h1 class="topbar-title"><i class="fas fa-check-double" style="color:var(--primary)"></i> الموافقات</h1>
-<button class="btn btn-secondary btn-sm" onclick="loadApprovals()" style="flex:0">
-<i class="fas fa-sync-alt"></i> تحديث
-</button>
-</div>
-<div class="tabs-container">
-<button class="tab-btn active" onclick="switchTab(event, 'pending')">
-<i class="fas fa-clock"></i> قيد المراجعة <span class="tab-badge" id="pendingCount">0</span>
-</button>
-<button class="tab-btn" onclick="switchTab(event, 'approved')">
-<i class="fas fa-check"></i> الموافق عليها <span class="tab-badge" id="approvedCount">0</span>
-</button>
-<button class="tab-btn" onclick="switchTab(event, 'rejected')">
-<i class="fas fa-times"></i> المرفوضة <span class="tab-badge" id="rejectedCount">0</span>
-</button>
-</div>
-<div id="tab-pending" class="tab-content active">
-<div class="approval-grid" id="pendingGrid">
-<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>
-</div>
-</div>
-<div id="tab-approved" class="tab-content">
-<div class="approval-grid" id="approvedGrid"></div>
-</div>
-<div id="tab-rejected" class="tab-content">
-<div class="approval-grid" id="rejectedGrid"></div>
-</div>
-</main>
-</div>
+
 <div id="modalsContainer"></div>
 <div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -171,122 +176,142 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
+    auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
 });
+
 let adminUserId = null;
 let allApprovals = [];
 let companiesMap = {};
+
 function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 function safeParse(value, fallback) {
-if (value === null || value === undefined) return fallback;
-if (typeof value === 'object') return value;
-if (typeof value !== 'string') return fallback;
-try { return JSON.parse(value); } catch { return fallback; }
+    if (value === null || value === undefined) return fallback;
+    if (typeof value === 'object') return value;
+    if (typeof value !== 'string') return fallback;
+    try { return JSON.parse(value); } catch { return fallback; }
 }
 function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleString('ar-EG'); }
+
 function showToast(msg, type = 'info') {
-const t = document.createElement('div');
-const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
-t.className = 'toast';
-t.style.background = c[type] || c.info;
-t.textContent = msg;
-document.body.appendChild(t);
-setTimeout(() => t.remove(), 4000);
+    const t = document.createElement('div');
+    const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+    t.className = 'toast';
+    t.style.background = c[type] || c.info;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
 }
+
 function renderModal(html) {
-document.getElementById('modalsContainer').innerHTML = html;
-document.body.style.overflow = 'hidden';
+    document.getElementById('modalsContainer').innerHTML = html;
+    document.body.style.overflow = 'hidden';
 }
 window.closeModal = (id) => {
-const el = document.getElementById(id);
-if (el) el.remove();
-document.body.style.overflow = '';
+    const el = document.getElementById(id);
+    if (el) el.remove();
+    document.body.style.overflow = '';
 };
+
 window.logoutAdmin = async (e) => {
-if (e) e.preventDefault();
-if (!confirm('هل تريد تسجيل الخروج؟')) return;
-try { await sb.auth.signOut(); } catch {}
-localStorage.clear();
-window.location.href = 'admin-login.html';
+    if (e) e.preventDefault();
+    if (!confirm('هل تريد تسجيل الخروج؟')) return;
+    try { await sb.auth.signOut(); } catch {}
+    localStorage.clear();
+    window.location.href = 'admin-login.html';
 };
+
 window.switchTab = (e, tab) => {
-document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-e.currentTarget.classList.add('active');
-document.getElementById('tab-' + tab).classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
 };
+
 function getDurationText(d) {
-return { '2-weeks': 'أسبوعين', '3-weeks': '3 أسابيع', '1-month': 'شهر واحد', '1.5-months': 'شهر ونصف', '2-months': 'شهرين', '2.5-months': 'شهرين ونصف' }[d] || d || '-';
+    return { '2-weeks': 'أسبوعين', '3-weeks': '3 أسابيع', '1-month': 'شهر واحد', '1.5-months': 'شهر ونصف', '2-months': 'شهرين', '2.5-months': 'شهرين ونصف' }[d] || d || '-';
 }
 function getSystemText(s) {
-return { 'first-time': 'النظام الأول', 'once-trained': 'النظام الثاني', 'twice-trained': 'النظام الثالث' }[s] || s;
+    return { 'first-time': 'النظام الأول', 'once-trained': 'النظام الثاني', 'twice-trained': 'النظام الثالث' }[s] || s;
 }
+
 async function loadApprovals() {
-try {
-const { data: sessData } = await sb.auth.getSession();
-if (!sessData || !sessData.session) {
-window.location.href = 'admin-login.html';
-return;
+    try {
+        const { data: sessData } = await sb.auth.getSession();
+        if (!sessData || !sessData.session) {
+            window.location.href = 'admin-login.html';
+            return;
         }
-adminUserId = sessData.session.user.id;
-const { data: adminCheck } = await sb.from('admins')
+        adminUserId = sessData.session.user.id;
+
+        // تأكد إنه أدمن
+        const { data: adminCheck } = await sb.from('admins')
             .select('*').eq('user_id', adminUserId).maybeSingle();
-if (!adminCheck) {
-showToast('غير مصرح', 'error');
-setTimeout(() => window.location.href = 'admin-login.html', 1500);
-return;
+        if (!adminCheck) {
+            showToast('غير مصرح', 'error');
+            setTimeout(() => window.location.href = 'admin-login.html', 1500);
+            return;
         }
-const results = await Promise.allSettled([
-sb.from('pending_approvals').select('*').order('created_at', { ascending: false }),
-sb.from('companies').select('user_id, company_name, email, status')
+
+        // اجلب الـ approvals + الشركات
+        const results = await Promise.allSettled([
+            sb.from('pending_approvals').select('*').order('created_at', { ascending: false }),
+            sb.from('companies').select('user_id, company_name, email, status')
         ]);
-if (results[0].status === 'rejected' || (results[0].value && results[0].value.error)) {
-const err = results[0].value?.error || results[0].reason;
-if (err && err.message && err.message.includes('pending_approvals')) {
-showToast('⚠️ شغّل SQL migration 18 الأول', 'error');
+
+        if (results[0].status === 'rejected' || (results[0].value && results[0].value.error)) {
+            const err = results[0].value?.error || results[0].reason;
+            if (err && err.message && err.message.includes('pending_approvals')) {
+                showToast('⚠️ شغّل SQL migration 18 الأول', 'error');
             }
-allApprovals = [];
+            allApprovals = [];
         } else {
-allApprovals = results[0].value.data || [];
+            allApprovals = results[0].value.data || [];
         }
-if (results[1].status === 'fulfilled') {
+
+        if (results[1].status === 'fulfilled') {
             (results[1].value.data || []).forEach(c => {
-companiesMap[c.user_id] = c;
+                companiesMap[c.user_id] = c;
             });
         }
-renderApprovals();
-document.getElementById('loadingOverlay').classList.add('hidden');
+
+        renderApprovals();
+        document.getElementById('loadingOverlay').classList.add('hidden');
     } catch (err) {
-console.error(err);
-showToast('خطأ: ' + err.message, 'error');
-document.getElementById('loadingOverlay').classList.add('hidden');
+        console.error(err);
+        showToast('خطأ: ' + err.message, 'error');
+        document.getElementById('loadingOverlay').classList.add('hidden');
     }
 }
+
 function renderApprovals() {
-const pending = allApprovals.filter(a => a.status === 'pending');
-const approved = allApprovals.filter(a => a.status === 'approved');
-const rejected = allApprovals.filter(a => a.status === 'rejected');
-document.getElementById('pendingCount').textContent = pending.length;
-document.getElementById('approvedCount').textContent = approved.length;
-document.getElementById('rejectedCount').textContent = rejected.length;
-document.getElementById('pendingGrid').innerHTML = pending.length === 0 
+    const pending = allApprovals.filter(a => a.status === 'pending');
+    const approved = allApprovals.filter(a => a.status === 'approved');
+    const rejected = allApprovals.filter(a => a.status === 'rejected');
+
+    document.getElementById('pendingCount').textContent = pending.length;
+    document.getElementById('approvedCount').textContent = approved.length;
+    document.getElementById('rejectedCount').textContent = rejected.length;
+
+    document.getElementById('pendingGrid').innerHTML = pending.length === 0 
         ? '<div class="empty-state"><i class="fas fa-inbox"></i><h3>لا توجد طلبات قيد المراجعة</h3></div>'
         : pending.map(createCard).join('');
-document.getElementById('approvedGrid').innerHTML = approved.length === 0
+    document.getElementById('approvedGrid').innerHTML = approved.length === 0
         ? '<div class="empty-state"><i class="fas fa-check"></i><h3>لا توجد طلبات موافق عليها</h3></div>'
         : approved.map(createCard).join('');
-document.getElementById('rejectedGrid').innerHTML = rejected.length === 0
+    document.getElementById('rejectedGrid').innerHTML = rejected.length === 0
         ? '<div class="empty-state"><i class="fas fa-times"></i><h3>لا توجد طلبات مرفوضة</h3></div>'
         : rejected.map(createCard).join('');
 }
+
 function createCard(appr) {
-const company = companiesMap[appr.company_user_id];
-const companyName = company ? company.company_name : '(شركة غير معروفة)';
-const data = safeParse(appr.data, {});
-const isDept = appr.type === 'department';
-let detailsRows = '';
-if (isDept) {
-detailsRows = `
+    const company = companiesMap[appr.company_user_id];
+    const companyName = company ? company.company_name : '(شركة غير معروفة)';
+    const data = safeParse(appr.data, {});
+    const isDept = appr.type === 'department';
+
+    let detailsRows = '';
+    if (isDept) {
+        detailsRows = `
             <div class="appr-data-row"><span class="appr-data-label">النظام:</span><span class="appr-data-value">${getSystemText(data.traineeSystem)}</span></div>
             <div class="appr-data-row"><span class="appr-data-label">المدة:</span><span class="appr-data-value">${getDurationText(data.duration)}</span></div>
             <div class="appr-data-row"><span class="appr-data-label">عدد المتدربين:</span><span class="appr-data-value">${data.count || '-'}</span></div>
@@ -294,16 +319,17 @@ detailsRows = `
             <div class="appr-data-row"><span class="appr-data-label">الراتب:</span><span class="appr-data-value">${data.minSalary || 0}-${data.maxSalary || 0} ${data.currency || 'EGP'}</span></div>
         `;
     } else {
-detailsRows = `
+        detailsRows = `
             <div class="appr-data-row"><span class="appr-data-label">العنوان:</span><span class="appr-data-value">${escapeHtml(data.fullAddress || '-')}</span></div>
             <div class="appr-data-row"><span class="appr-data-label">المدينة:</span><span class="appr-data-value">${escapeHtml(data.city || '-')}</span></div>
             <div class="appr-data-row"><span class="appr-data-label">الهاتف:</span><span class="appr-data-value">${escapeHtml(data.phone || '-')}</span></div>
             <div class="appr-data-row"><span class="appr-data-label">المدير:</span><span class="appr-data-value">${escapeHtml(data.manager || '-')}</span></div>
         `;
     }
-let actions = '';
-if (appr.status === 'pending') {
-actions = `
+
+    let actions = '';
+    if (appr.status === 'pending') {
+        actions = `
             <button class="btn btn-success btn-sm" onclick="openApproveModal('${appr.id}')">
                 <i class="fas fa-check"></i> موافقة
             </button>
@@ -312,19 +338,20 @@ actions = `
             </button>
         `;
     } else if (appr.status === 'approved') {
-actions = `
+        actions = `
             <div style="background:rgba(16,185,129,0.1);padding:8px 12px;border-radius:8px;color:var(--success);font-size:0.84rem;width:100%;text-align:center">
                 <i class="fas fa-check-circle"></i> تم القبول ${appr.training_price ? '- السعر: ' + appr.training_price + ' ' + (appr.training_currency || 'EGP') : ''}
             </div>
         `;
     } else {
-actions = `
+        actions = `
             <div style="background:rgba(239,68,68,0.1);padding:8px 12px;border-radius:8px;color:var(--error);font-size:0.84rem;width:100%;text-align:center">
                 <i class="fas fa-times-circle"></i> تم الرفض${appr.admin_notes ? '<br><small>' + escapeHtml(appr.admin_notes) + '</small>' : ''}
             </div>
         `;
     }
-return `
+
+    return `
         <div class="approval-card ${appr.status}">
             <div class="appr-header">
                 <div class="appr-icon"><i class="fas fa-${isDept ? 'cogs' : 'map-marker-alt'}"></i></div>
@@ -344,12 +371,14 @@ return `
         </div>
     `;
 }
+
 // === Approve Modal ===
 window.openApproveModal = (id) => {
-const appr = allApprovals.find(a => a.id === id);
-if (!appr) return;
-const isDept = appr.type === 'department';
-renderModal(`
+    const appr = allApprovals.find(a => a.id === id);
+    if (!appr) return;
+    const isDept = appr.type === 'department';
+
+    renderModal(`
         <div class="modal active" id="approveModal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -359,7 +388,7 @@ renderModal(`
                 <div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.2);padding:12px;border-radius:10px;margin-bottom:14px">
                     <strong>${escapeHtml(appr.item_name)}</strong>
                 </div>
-${isDept ? `
+                ${isDept ? `
                     <div class="field">
                         <label><i class="fas fa-money-bill-wave"></i> سعر التدريب (المتدرب يدفع للمنصة)</label>
                         <input type="number" id="trainingPrice" min="0" placeholder="مثال: 1500">
@@ -387,111 +416,132 @@ ${isDept ? `
         </div>
     `);
 };
+
 window.approveItem = async (id) => {
-const appr = allApprovals.find(a => a.id === id);
-if (!appr) return;
-const isDept = appr.type === 'department';
-const notes = document.getElementById('approveNotes').value.trim();
-let trainingPrice = null;
-let trainingCurrency = 'EGP';
-if (isDept) {
-const priceEl = document.getElementById('trainingPrice');
-const currEl = document.getElementById('trainingCurrency');
-trainingPrice = priceEl.value ? parseFloat(priceEl.value) : null;
-trainingCurrency = currEl.value;
-if (!trainingPrice || trainingPrice <= 0) {
-showToast('أدخل سعر التدريب', 'error');
-return;
+    const appr = allApprovals.find(a => a.id === id);
+    if (!appr) return;
+    const isDept = appr.type === 'department';
+    
+    const notes = document.getElementById('approveNotes').value.trim();
+    let trainingPrice = null;
+    let trainingCurrency = 'EGP';
+    
+    if (isDept) {
+        const priceEl = document.getElementById('trainingPrice');
+        const currEl = document.getElementById('trainingCurrency');
+        trainingPrice = priceEl.value ? parseFloat(priceEl.value) : null;
+        trainingCurrency = currEl.value;
+        if (!trainingPrice || trainingPrice <= 0) {
+            showToast('أدخل سعر التدريب', 'error');
+            return;
         }
     }
-try {
-await sb.from('pending_approvals').update({
-status: 'approved',
-admin_notes: notes,
-training_price: trainingPrice,
-training_currency: trainingCurrency,
-reviewed_at: new Date().toISOString(),
-reviewed_by: adminUserId
+
+    try {
+        // 1. حدث الـ approval
+        await sb.from('pending_approvals').update({
+            status: 'approved',
+            admin_notes: notes,
+            training_price: trainingPrice,
+            training_currency: trainingCurrency,
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: adminUserId
         }).eq('id', id);
-const { data: companyData } = await sb.from('companies').select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency, logo').eq('user_id', appr.company_user_id).maybeSingle();
-if (companyData) {
-const data = safeParse(appr.data, {});
-if (isDept) {
-let fields = safeParse(companyData.training_fields, []);
-let details = safeParse(companyData.training_details, {});
-if (!fields.includes(appr.item_name)) fields.push(appr.item_name);
-details[appr.item_name] = data;
-await sb.from('companies').update({
-training_fields: fields,
-training_details: details,
-training_price: trainingPrice,
-training_currency: trainingCurrency,
-updated_at: new Date().toISOString()
+
+        // 2. حدث بيانات الشركة (أضف القسم/الفرع للـ companies)
+        const { data: companyData } = await sb.from('companies').select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency').eq('user_id', appr.company_user_id).maybeSingle();
+
+        if (companyData) {
+            const data = safeParse(appr.data, {});
+            
+            if (isDept) {
+                // ضيف القسم
+                let fields = safeParse(companyData.training_fields, []);
+                let details = safeParse(companyData.training_details, {});
+                if (!fields.includes(appr.item_name)) fields.push(appr.item_name);
+                details[appr.item_name] = data;
+                
+                await sb.from('companies').update({
+                    training_fields: fields,
+                    training_details: details,
+                    training_price: trainingPrice,
+                    training_currency: trainingCurrency,
+                    updated_at: new Date().toISOString()
                 }).eq('user_id', appr.company_user_id);
-let location = companyData.company_location;
-if (data.branchId) {
-const branches = safeParse(companyData.branch_locations, []);
-const branch = branches.find(b => b.id === data.branchId);
-if (branch) location = (branch.city || '') + (branch.fullAddress ? ' - ' + branch.fullAddress : '');
+
+                // ضيف internship عشان يظهر للطلاب
+                let location = companyData.company_location;
+                if (data.branchId) {
+                    const branches = safeParse(companyData.branch_locations, []);
+                    const branch = branches.find(b => b.id === data.branchId);
+                    if (branch) location = (branch.city || '') + (branch.fullAddress ? ' - ' + branch.fullAddress : '');
                 }
-await sb.from('internships').insert({
-company_user_id: appr.company_user_id,
-company_name: companyData.company_name,
-company_logo: companyData.logo,
-company_location: location,
-title: appr.item_name,
-field: appr.item_name,
-description: data.knowledgeBenefits || '',
-duration: getDurationText(data.duration),
-max_applicants: parseInt(data.count) || 10,
-current_applicants: 0,
-trainee_type: data.traineeSystem || 'first-time',
-requirements: data.trainingRequirements || '',
-knowledge_benefits: data.knowledgeBenefits || '',
-financial_benefits: data.financialBenefits || '',
-salary_min: parseFloat(data.minSalary) || 0,
-salary_max: parseFloat(data.maxSalary) || 0,
-salary_currency: data.currency || 'EGP',
-training_price: trainingPrice,
-training_currency: trainingCurrency,
-status: 'active',
-created_at: new Date().toISOString(),
-updated_at: new Date().toISOString()
+                
+                await sb.from('internships').insert({
+                    company_user_id: appr.company_user_id,
+                    company_name: companyData.company_name,
+                    company_logo: companyData.logo,
+                    company_location: location,
+                    title: appr.item_name,
+                    field: appr.item_name,
+                    description: data.knowledgeBenefits || '',
+                    duration: getDurationText(data.duration),
+                    max_applicants: parseInt(data.count) || 10,
+                    current_applicants: 0,
+                    trainee_type: data.traineeSystem || 'first-time',
+                    requirements: data.trainingRequirements || '',
+                    knowledge_benefits: data.knowledgeBenefits || '',
+                    financial_benefits: data.financialBenefits || '',
+                    salary_min: parseFloat(data.minSalary) || 0,
+                    salary_max: parseFloat(data.maxSalary) || 0,
+                    salary_currency: data.currency || 'EGP',
+                    training_price: trainingPrice,
+                    training_currency: trainingCurrency,
+                    status: 'active',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
                 });
             } else {
-let branches = safeParse(companyData.branch_locations, []);
-const newBranch = { id: 'branch_' + Date.now(), ...data };
-branches.push(newBranch);
-await sb.from('companies').update({
-branch_locations: branches,
-updated_at: new Date().toISOString()
+                // ضيف الفرع
+                let branches = safeParse(companyData.branch_locations, []);
+                const newBranch = { id: 'branch_' + Date.now(), ...data };
+                branches.push(newBranch);
+                
+                await sb.from('companies').update({
+                    branch_locations: branches,
+                    updated_at: new Date().toISOString()
                 }).eq('user_id', appr.company_user_id);
             }
         }
-try {
-await sb.from('notifications').insert({
-user_id: appr.company_user_id,
-user_type: 'company',
-type: 'approval_accepted',
-title: '✅ تمت الموافقة',
-message: `تمت الموافقة على ${isDept ? 'القسم' : 'الفرع'}: ${appr.item_name}`,
-link: 'company-requests-control.html'
+
+        // 3. ابعت notification للشركة
+        try {
+            await sb.from('notifications').insert({
+                user_id: appr.company_user_id,
+                user_type: 'company',
+                type: 'approval_accepted',
+                title: '✅ تمت الموافقة',
+                message: `تمت الموافقة على ${isDept ? 'القسم' : 'الفرع'}: ${appr.item_name}`,
+                link: 'company-requests-control.html'
             });
         } catch(e) {}
-showToast('✅ تمت الموافقة بنجاح', 'success');
-closeModal('approveModal');
-await loadApprovals();
+
+        showToast('✅ تمت الموافقة بنجاح', 'success');
+        closeModal('approveModal');
+        await loadApprovals();
     } catch (err) {
-console.error(err);
-showToast('خطأ: ' + err.message, 'error');
+        console.error(err);
+        showToast('خطأ: ' + err.message, 'error');
     }
 };
+
 // === Reject Modal ===
 window.openRejectModal = (id) => {
-const appr = allApprovals.find(a => a.id === id);
-if (!appr) return;
-const isDept = appr.type === 'department';
-renderModal(`
+    const appr = allApprovals.find(a => a.id === id);
+    if (!appr) return;
+    const isDept = appr.type === 'department';
+
+    renderModal(`
         <div class="modal active" id="rejectModal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -515,44 +565,51 @@ renderModal(`
         </div>
     `);
 };
+
 window.rejectItem = async (id) => {
-const reason = document.getElementById('rejectReason').value.trim();
-if (!reason) { showToast('أدخل سبب الرفض', 'error'); return; }
-const appr = allApprovals.find(a => a.id === id);
-if (!appr) return;
-try {
-await sb.from('pending_approvals').update({
-status: 'rejected',
-admin_notes: reason,
-reviewed_at: new Date().toISOString(),
-reviewed_by: adminUserId
+    const reason = document.getElementById('rejectReason').value.trim();
+    if (!reason) { showToast('أدخل سبب الرفض', 'error'); return; }
+
+    const appr = allApprovals.find(a => a.id === id);
+    if (!appr) return;
+
+    try {
+        await sb.from('pending_approvals').update({
+            status: 'rejected',
+            admin_notes: reason,
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: adminUserId
         }).eq('id', id);
-try {
-await sb.from('notifications').insert({
-user_id: appr.company_user_id,
-user_type: 'company',
-type: 'approval_rejected',
-title: '❌ تم الرفض',
-message: `تم رفض ${appr.type === 'department' ? 'القسم' : 'الفرع'}: ${appr.item_name}. السبب: ${reason}`,
-link: 'company-requests-control.html'
+
+        // ابعت notification للشركة
+        try {
+            await sb.from('notifications').insert({
+                user_id: appr.company_user_id,
+                user_type: 'company',
+                type: 'approval_rejected',
+                title: '❌ تم الرفض',
+                message: `تم رفض ${appr.type === 'department' ? 'القسم' : 'الفرع'}: ${appr.item_name}. السبب: ${reason}`,
+                link: 'company-requests-control.html'
             });
         } catch(e) {}
-showToast('تم الرفض', 'success');
-closeModal('rejectModal');
-await loadApprovals();
+
+        showToast('تم الرفض', 'success');
+        closeModal('rejectModal');
+        await loadApprovals();
     } catch (err) {
-showToast('خطأ: ' + err.message, 'error');
+        showToast('خطأ: ' + err.message, 'error');
     }
 };
+
 document.addEventListener('DOMContentLoaded', loadApprovals);
 setTimeout(() => {
-const el = document.getElementById('loadingOverlay');
-if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
+    const el = document.getElementById('loadingOverlay');
+    if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
 }, 12000);
 document.addEventListener('keydown', (e) => {
-if (e.key === 'Escape') {
-const modals = document.querySelectorAll('.modal.active');
-if (modals.length > 0) closeModal(modals[modals.length - 1].id);
+    if (e.key === 'Escape') {
+        const modals = document.querySelectorAll('.modal.active');
+        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
     }
 });
 </script>
