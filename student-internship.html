@@ -1049,11 +1049,28 @@ function renderInternshipCard(i) {
             // رسوم التدريب موحّدة على مستوى الشركة كلها (الأدمن بيحددها للشركة مش للقسم)
             // فبنتجاهل أي training_price مخزّن في الـ internship وناخد دايماً من الشركة
             // المتدرب بيدفع نفس الرسوم في كل الأنظمة (الأول والثاني والثالث)
+            // fallback: لو الشركة مفيهاش سعر، نجيب من أي قسم تاني في نفس الشركة عنده سعر مخزّن (أقسام قديمة)
+            const companyPriceFallback = {};
+            allInternships.forEach(int => {
+                if (int.training_price && parseFloat(int.training_price) > 0 && !companyPriceFallback[int.company_user_id]) {
+                    companyPriceFallback[int.company_user_id] = {
+                        price: int.training_price,
+                        currency: int.training_currency || 'EGP'
+                    };
+                }
+            });
+
             allInternships.forEach(int => {
                 const comp = allCompanies[int.company_user_id];
+                const fallback = companyPriceFallback[int.company_user_id];
                 if (comp && comp.training_price) {
+                    // الأولوية لسعر الشركة الرسمي
                     int.training_price = comp.training_price;
                     int.training_currency = comp.training_currency || 'EGP';
+                } else if (fallback) {
+                    // الشركة مفيهاش سعر بس فيه قسم قديم متخزّن فيه سعر
+                    int.training_price = fallback.price;
+                    int.training_currency = fallback.currency;
                 } else {
                     int.training_price = null;
                     int.training_currency = comp ? (comp.training_currency || 'EGP') : 'EGP';
