@@ -6,12 +6,13 @@
     <link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
     <link rel="dns-prefetch" href="https://jrwazyrdzmbcnddpxxrf.supabase.co">
 
-    <title>إدارة الأقسام والفروع - ProVance</title>
+    <title>إدارة الشركات - ProVance Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-:root { --primary: #ef4444; --secondary: #dc2626; --gradient: linear-gradient(135deg, #ef4444, #dc2626); --bg: #0a0e27; --bg-2: #1a1535; --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6); --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe; --orange: #ff9800; }
+:root { --primary: #ef4444; --secondary: #dc2626; --gradient: linear-gradient(135deg, #ef4444, #dc2626); --bg: #0a0e27; --bg-2: #1a1535; --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6); --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe; --penalty: #ff9800; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 .bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%), var(--bg); }
@@ -62,109 +63,121 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
             color: var(--text-muted);
             font-weight: 600;
         }
+.admin-badge { background: var(--gradient); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; text-align: center; margin-bottom: 14px; }
 .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
 .nav-item:hover { background: var(--card); color: var(--text); }
 .nav-item.active { background: var(--gradient); color: #fff; }
 .nav-item i { width: 18px; }
+.nav-badge { margin-right: auto; background: rgba(255,255,255,0.2); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 800; }
 .main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
 .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
 .menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
 .topbar-title { font-size: 1.5rem; font-weight: 800; }
 .topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px; }
-.stat-mini { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 11px; transition: all .2s; }
-.stat-mini:hover { transform: translateY(-3px); border-color: var(--primary); }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.stat-mini { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 11px; }
 .stat-mini-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; color: #fff; flex-shrink: 0; }
-.stat-mini-icon.primary { background: var(--gradient); }
+.stat-mini-icon.red { background: var(--gradient); }
 .stat-mini-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
 .stat-mini-icon.warning { background: linear-gradient(135deg, #f59e0b, #f97316); }
 .stat-mini-icon.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
 .stat-mini-icon.info { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.stat-mini-icon.penalty { background: linear-gradient(135deg, #ff9800, #f57c00); }
 .stat-mini-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
 .stat-mini-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
-.section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 18px; }
-.section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
-.section-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; }
-.section-title { font-size: 1.15rem; font-weight: 800; margin: 0; }
-.section-subtitle { color: var(--text-muted); font-size: 0.86rem; margin-top: 3px; }
-.field { margin-bottom: 14px; }
-.field label { display: block; color: var(--text); font-size: 0.9rem; font-weight: 600; margin-bottom: 7px; }
-.field label i { color: var(--primary); margin-left: 4px; }
-.field label .req { color: var(--error); }
-.field input, .field select, .field textarea { width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.92rem; font-family: inherit; transition: all .2s; }
-.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.06); }
-.field textarea { resize: vertical; min-height: 80px; }
-.field-note { font-size: 0.78rem; color: var(--text-dim); margin-top: 4px; font-style: italic; }
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 11px 18px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.9rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
+.tabs-container { display: flex; gap: 8px; margin-bottom: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 6px; overflow-x: auto; }
+.tab-btn { padding: 11px 18px; background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.92rem; font-weight: 700; border-radius: 10px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; transition: all .2s; }
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.tab-btn.active { background: var(--gradient); color: #fff; box-shadow: 0 6px 16px rgba(239,68,68,0.3); }
+.tab-badge { background: rgba(255,255,255,0.15); padding: 1px 8px; border-radius: 10px; font-size: 0.72rem; }
+.tab-content { display: none; animation: fadeIn .3s; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.filters-bar { display: flex; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.filters-bar input, .filters-bar select { padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.9rem; }
+.filters-bar input { flex: 1; min-width: 200px; }
+.filters-bar input:focus, .filters-bar select:focus { outline: none; border-color: var(--primary); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 0.88rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
 .btn-primary { background: var(--gradient); color: #fff; }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(239,68,68,0.4); }
+.btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(239,68,68,0.4); }
 .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
 .btn-secondary:hover { background: var(--card-hover); }
 .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
-.btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
-.btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
+.btn-success:hover { background: rgba(16,185,129,0.25); }
 .btn-warning { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
-.btn-sm { padding: 7px 12px; font-size: 0.82rem; }
-.tabs-container { display: flex; gap: 8px; margin-bottom: 18px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 6px; overflow-x: auto; }
-.tab-btn { padding: 10px 16px; background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.9rem; font-weight: 700; border-radius: 10px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; transition: all .2s; }
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { background: var(--gradient); color: #fff; }
-.tab-badge { background: rgba(255,255,255,0.15); padding: 1px 8px; border-radius: 10px; font-size: 0.72rem; }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-.dept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
-.dept-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; transition: all .2s; position: relative; }
-.dept-card:hover { transform: translateY(-3px); border-color: var(--primary); }
-.dept-card.disabled { opacity: 0.6; }
-.dept-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.dept-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; flex-shrink: 0; }
-.dept-name { font-weight: 800; font-size: 1rem; }
-.dept-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; margin-top: 4px; }
-.dept-status.active { background: rgba(16,185,129,0.15); color: var(--success); }
-.dept-status.closed { background: rgba(239,68,68,0.15); color: var(--error); }
-.dept-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 10px; }
-.dept-meta-item { font-size: 0.8rem; color: var(--text-muted); }
-.dept-meta-item strong { color: var(--text); display: block; font-size: 0.9rem; margin-top: 2px; }
-.dept-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-.dept-actions .btn { flex: 1; justify-content: center; padding: 8px; min-width: 80px; font-size: 0.78rem; }
-.toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; flex-shrink: 0; }
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: rgba(255,255,255,0.1); transition: .4s; border-radius: 34px; }
-.toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; right: 4px; bottom: 4px; background: #fff; transition: .4s; border-radius: 50%; }
-input:checked + .toggle-slider { background: var(--gradient); }
-input:checked + .toggle-slider:before { transform: translateX(-24px); }
-.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; }
-.toggle-label { font-weight: 600; font-size: 0.92rem; flex: 1; }
-.system-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 14px; }
-.system-card { background: rgba(255,255,255,0.02); border: 2px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer; transition: all .2s; }
-.system-card:hover { transform: translateY(-3px); border-color: var(--primary); }
-.system-card.selected { border-color: var(--primary); background: rgba(239,68,68,0.05); }
-.system-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-.system-card-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; }
-.system-card-name { font-weight: 800; font-size: 0.95rem; }
-.system-card-desc { color: var(--text-muted); font-size: 0.8rem; margin-top: 2px; }
-.system-card-info { color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; margin: 8px 0; }
-.system-card-finance { margin: 8px 0; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; }
-.system-card-finance-title { font-size: 0.78rem; font-weight: 800; margin-bottom: 6px; }
-.system-card-finance ul { margin: 0; padding-right: 16px; }
-.system-card-finance li { font-size: 0.78rem; line-height: 1.7; color: var(--text-muted); }
-.system-card-finance li strong { color: var(--text); }
-.system-card-price { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); padding: 8px; border-radius: 8px; color: var(--primary); font-weight: 700; font-size: 0.84rem; text-align: center; }
-.salary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.fields-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; min-height: 50px; }
-.field-tag { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 6px; }
-.field-tag .remove { cursor: pointer; font-weight: 800; font-size: 1rem; color: var(--error); }
-.add-row { display: flex; gap: 8px; margin-top: 8px; }
-.add-row input { flex: 1; }
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+.btn-warning:hover { background: rgba(245,158,11,0.25); }
+.btn-danger { background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+.btn-danger:hover { background: rgba(239,68,68,0.2); }
+.btn-info { background: rgba(79,172,254,0.15); color: var(--info); border: 1px solid rgba(79,172,254,0.3); }
+.btn-info:hover { background: rgba(79,172,254,0.25); }
+.btn-penalty { background: rgba(255,152,0,0.15); color: var(--penalty); border: 1px solid rgba(255,152,0,0.3); }
+.btn-penalty:hover { background: rgba(255,152,0,0.25); }
+.btn-sm { padding: 7px 12px; font-size: 0.8rem; }
+.companies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+.company-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: all .25s; position: relative; }
+.company-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+.company-card.has-penalties { border-color: rgba(255,152,0,0.4); }
+.company-card.suspended { border-color: var(--warning); background: rgba(245,158,11,0.04); }
+.company-card.suspended::after { content: 'معلقة'; position: absolute; top: 12px; left: 12px; background: var(--warning); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 800; }
+.company-header { display: flex; align-items: center; gap: 12px; }
+.company-avatar { width: 56px; height: 56px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.3rem; flex-shrink: 0; overflow: hidden; }
+.company-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.company-info { flex: 1; min-width: 0; }
+.company-name { font-weight: 800; font-size: 1.05rem; }
+.company-field { color: var(--text-muted); font-size: 0.84rem; margin-top: 2px; }
+.status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.74rem; font-weight: 800; }
+.status-pending { background: rgba(245,158,11,0.15); color: var(--warning); }
+.status-approved { background: rgba(16,185,129,0.15); color: var(--success); }
+.status-rejected { background: rgba(239,68,68,0.15); color: var(--error); }
+.company-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.82rem; color: var(--text-muted); padding: 10px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.company-meta span { display: flex; align-items: center; gap: 4px; }
+.company-meta i { color: var(--primary); }
+.penalties-info { background: rgba(255,152,0,0.05); border: 1px solid rgba(255,152,0,0.2); border-radius: 8px; padding: 8px; font-size: 0.82rem; color: var(--penalty); display: flex; align-items: center; gap: 6px; }
+.company-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+.company-actions .btn { flex: 1; justify-content: center; padding: 9px; min-width: 90px; font-size: 0.82rem; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .25s; }
 .modal.active { display: flex; }
-.modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 700px; max-height: 92vh; overflow-y: auto; padding: 28px; }
+.modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 700px; max-height: 92vh; overflow-y: auto; padding: 28px; position: relative; animation: slideUp .3s ease-out; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .modal-title { font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
 .modal-title i { color: var(--primary); }
-.modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
 .modal-close:hover { background: var(--card-hover); transform: rotate(90deg); }
-.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+.field { margin-bottom: 16px; }
+.field label { display: block; color: var(--text); font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
+.field label i { color: var(--primary); margin-left: 4px; }
+.field label .req { color: var(--error); }
+.field input, .field select, .field textarea { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.95rem; font-family: inherit; transition: all .2s; }
+.field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--primary); background: rgba(255,255,255,0.06); }
+.modal-section { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.modal-section-title { font-size: 0.94rem; font-weight: 800; display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.modal-section-title i { color: var(--primary); }
+.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.info-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+.info-label { color: var(--text-muted); font-size: 0.76rem; display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+.info-label i { color: var(--primary); }
+.info-value { font-weight: 700; font-size: 0.92rem; word-break: break-word; }
+.detail-tabs { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 6px; }
+.detail-tab { padding: 8px 14px; background: var(--card); border: 1px solid var(--border); color: var(--text-muted); border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 0.82rem; font-weight: 700; white-space: nowrap; transition: all .2s; }
+.detail-tab.active { background: var(--gradient); color: #fff; border-color: transparent; }
+.detail-content { display: none; }
+.detail-content.active { display: block; }
+.field-section { background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.15); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+.field-section h4 { color: var(--primary); font-size: 0.95rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.penalty-card { background: rgba(255,152,0,0.05); border: 1px solid rgba(255,152,0,0.2); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+.penalty-card.warning-type { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.2); }
+.penalty-card.expired { opacity: 0.6; background: rgba(128,128,128,0.05); border-color: rgba(128,128,128,0.2); }
+.penalty-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.penalty-type-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.74rem; font-weight: 800; }
+.penalty-type-badge.warning { background: rgba(245,158,11,0.2); color: var(--warning); }
+.penalty-type-badge.fine { background: rgba(255,152,0,0.2); color: var(--penalty); }
+.penalty-type-badge.suspension { background: rgba(239,68,68,0.2); color: var(--error); }
+.penalty-type-badge.termination { background: rgba(127,29,29,0.3); color: #fca5a5; }
+.empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
 .empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
 .empty-state h3 { color: var(--text); margin-bottom: 6px; font-size: 1.1rem; }
 .loading-overlay { position: fixed; inset: 0; background: rgba(10,14,39,0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .3s; }
@@ -172,7 +185,28 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
 .loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
-.action-bar { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+/* ===== Dept Requests ===== */
+.dept-requests-grid { display: flex; flex-direction: column; gap: 14px; }
+.dept-req-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; transition: all .25s; }
+.dept-req-card:hover { border-color: var(--warning); transform: translateY(-2px); }
+.dept-req-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.dept-req-icon { width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg,#f59e0b,#f97316); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; flex-shrink: 0; }
+.dept-req-info { flex: 1; min-width: 0; }
+.dept-req-name { font-size: 1.1rem; font-weight: 800; }
+.dept-req-company { color: var(--text-muted); font-size: 0.84rem; margin-top: 2px; }
+.dept-req-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.dept-req-detail-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; }
+.dept-req-detail-label { color: var(--text-muted); font-size: 0.74rem; display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
+.dept-req-detail-label i { color: var(--primary); }
+.dept-req-detail-value { font-weight: 700; font-size: 0.88rem; }
+.dept-req-long { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; font-size: 0.84rem; color: var(--text-muted); line-height: 1.6; }
+.dept-req-long strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 0.82rem; }
+.dept-req-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.dept-req-actions .btn { flex: 1; justify-content: center; min-width: 100px; }
+.system-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; font-size: 0.74rem; font-weight: 800; }
+.system-tag.first-time { background: rgba(16,185,129,0.15); color: var(--success); }
+.system-tag.once-trained { background: rgba(79,172,254,0.15); color: var(--info); }
+.system-tag.twice-trained { background: rgba(239,68,68,0.15); color: var(--error); }
 @media (max-width: 1024px) {
     .sidebar { transform: translateX(100%); width: 280px; }
     .sidebar.open { transform: translateX(0); }
@@ -180,9 +214,10 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
     .menu-toggle { display: flex; align-items: center; justify-content: center; }
 }
 @media (max-width: 600px) {
-    .salary-row { grid-template-columns: 1fr; }
+    .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
+    .topbar-title { font-size: 1.2rem; }
     .stats-row { grid-template-columns: 1fr 1fr; }
-    .dept-grid { grid-template-columns: 1fr; }
+    .companies-grid { grid-template-columns: 1fr; }
 }
     </style>
 </head>
@@ -210,17 +245,17 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
                     </div>
                 </div>
             </div>
-            <a href="company-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
-            <a href="company-trainers.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
-            <a href="company-talent-search.html" class="nav-item"><i class="fas fa-search"></i> البحث عن المواهب</a>
-            <a href="company-requests-control.html" class="nav-item active"><i class="fas fa-cogs"></i> إدارة الأقسام والفروع</a>
-            <a href="company-applications.html" class="nav-item"><i class="fas fa-file-alt"></i> طلبات التقديم</a>
-            <a href="company-interviews.html" class="nav-item"><i class="fas fa-calendar-check"></i> المقابلات</a>
-            <a href="company-QR_Code.html" class="nav-item"><i class="fas fa-qrcode"></i> الحضور (QR)</a>
-            <a href="company-profile.html" class="nav-item"><i class="fas fa-building"></i> ملف الشركة</a>
-            <a href="company-support.html" class="nav-item"><i class="fas fa-headset"></i> التواصل مع الإدارة</a>
-            <a href="company-notifications.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
-            <a href="#" onclick="logoutCompany(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
+            <div class="admin-badge"><i class="fas fa-shield-alt"></i> ADMIN PANEL</div>
+            <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
+            <a href="admin-campany.html" class="nav-item active"><i class="fas fa-building"></i> الشركات <span class="nav-badge" id="pendingBadge" style="display:none">0</span></a>
+            <a href="admin-trainees.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
+            <a href="admin-violations.html" class="nav-item"><i class="fas fa-exclamation-triangle"></i> التجاوزات</a>
+            <a href="admin-users.html" class="nav-item"><i class="fas fa-user-shield"></i> الأدمنز</a>
+            <a href="admin-approvals.html" class="nav-item"><i class="fas fa-check-double"></i> الموافقات <span class="nav-badge" id="approvalsBadge" style="display:none">0</span></a>
+            <a href="admin-student-support.html" class="nav-item" id="navStudentSupport"><i class="fas fa-user-graduate"></i> دعم الطلاب</a>
+            <a href="admin-company-support.html" class="nav-item" id="navCompanySupport"><i class="fas fa-headset"></i> دعم الشركات</a>
+            <a href="admin-notification.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+            <a href="#" onclick="logoutAdmin(event)" class="nav-item" style="margin-top:auto; color:var(--error)">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
             </a>
         </aside>
@@ -230,106 +265,101 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
                 <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="topbar-title"><i class="fas fa-cogs" style="color:var(--primary)"></i> إدارة الأقسام والفروع</h1>
+                <h1 class="topbar-title"><i class="fas fa-building" style="color:var(--primary)"></i> إدارة الشركات</h1>
                 <div class="topbar-actions">
-                    <button class="btn btn-secondary btn-sm" onclick="openBranchesModal()">
-                        <i class="fas fa-map-marked-alt"></i> إدارة الفروع
+                    <button class="btn btn-secondary btn-sm" onclick="exportCSV()">
+                        <i class="fas fa-download"></i> تصدير
                     </button>
-                    <button class="btn btn-primary btn-sm" onclick="openAddDeptModal()">
-                        <i class="fas fa-plus"></i> إضافة قسم/مجال جديد
-                    </button>
-                    <button class="btn btn-secondary btn-sm" onclick="loadAll()">
+                    <button class="btn btn-secondary btn-sm" onclick="loadCompanies()">
                         <i class="fas fa-sync-alt"></i> تحديث
-                    </button>
-                    <button class="btn btn-secondary btn-sm" onclick="syncAllToInternships()" title="حدّث بيانات كل الأقسام في صفحة فرص التدريب (بعد تعديل اسم الشركة أو عنوانها)">
-                        <i class="fas fa-cloud-upload-alt"></i> مزامنة كل الأقسام
                     </button>
                 </div>
             </div>
 
-            <!-- Stats -->
             <div class="stats-row">
-                <div class="stat-mini">
-                    <div class="stat-mini-icon primary"><i class="fas fa-th-list"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statTotalDepts">0</div>
-                        <div class="stat-mini-label">إجمالي الأقسام</div>
-                    </div>
-                </div>
-                <div class="stat-mini">
-                    <div class="stat-mini-icon success"><i class="fas fa-door-open"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statActiveDepts">0</div>
-                        <div class="stat-mini-label">أقسام مفتوحة</div>
-                    </div>
-                </div>
-                <div class="stat-mini">
-                    <div class="stat-mini-icon error"><i class="fas fa-door-closed"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statClosedDepts">0</div>
-                        <div class="stat-mini-label">أقسام مغلقة</div>
-                    </div>
-                </div>
-                <div class="stat-mini">
-                    <div class="stat-mini-icon info"><i class="fas fa-file-alt"></i></div>
-                    <div>
-                        <div class="stat-mini-num" id="statTotalApps">0</div>
-                        <div class="stat-mini-label">إجمالي الطلبات</div>
-                    </div>
-                </div>
                 <div class="stat-mini">
                     <div class="stat-mini-icon warning"><i class="fas fa-clock"></i></div>
                     <div>
-                        <div class="stat-mini-num" id="statPendingApps">0</div>
-                        <div class="stat-mini-label">طلبات قيد المراجعة</div>
+                        <div class="stat-mini-num" id="statPending">0</div>
+                        <div class="stat-mini-label">قيد المراجعة</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon success"><i class="fas fa-check"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statApproved">0</div>
+                        <div class="stat-mini-label">معتمدة</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon error"><i class="fas fa-times"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statRejected">0</div>
+                        <div class="stat-mini-label">مرفوضة</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon red"><i class="fas fa-list"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statTotal">0</div>
+                        <div class="stat-mini-label">الإجمالي</div>
+                    </div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon penalty"><i class="fas fa-gavel"></i></div>
+                    <div>
+                        <div class="stat-mini-num" id="statPenalties">0</div>
+                        <div class="stat-mini-label">عليها عقوبات</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Branch Filter -->
-            <div class="section" style="margin-bottom:14px;padding:14px">
-                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-                    <label style="font-weight:700;font-size:0.9rem;display:flex;align-items:center;gap:6px;color:var(--text)">
-                        <i class="fas fa-map-marker-alt" style="color:var(--primary)"></i>
-                        الفرع الحالي:
-                    </label>
-                    <select id="branchFilter" onchange="onBranchChange()" style="flex:1;min-width:200px;padding:10px 14px;background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-size:0.92rem;font-family:inherit">
-                        <option value="">-- كل الفروع --</option>
-                    </select>
-                    <button class="btn btn-success btn-sm" onclick="openAddBranchModal()">
-                        <i class="fas fa-plus-circle"></i> إضافة فرع
-                    </button>
-                </div>
-                <div id="branchInfo" style="margin-top:10px;display:none"></div>
-            </div>
-
-            <!-- Tabs -->
             <div class="tabs-container">
-                <button class="tab-btn active" data-tab="all" onclick="switchTab(event, 'all')">
-                    <i class="fas fa-list"></i> كل الأقسام <span class="tab-badge" id="allCount">0</span>
+                <button class="tab-btn active" data-filter="all" onclick="switchFilter(event, 'all')">
+                    <i class="fas fa-list"></i> الكل
+                    <span class="tab-badge" id="badgeAll">0</span>
                 </button>
-                <button class="tab-btn" data-tab="active" onclick="switchTab(event, 'active')">
-                    <i class="fas fa-check"></i> المفعّلة <span class="tab-badge" id="activeCount">0</span>
+                <button class="tab-btn" data-filter="pending" onclick="switchFilter(event, 'pending')">
+                    <i class="fas fa-clock"></i> قيد المراجعة
+                    <span class="tab-badge" id="badgePending">0</span>
                 </button>
-                <button class="tab-btn" data-tab="closed" onclick="switchTab(event, 'closed')">
-                    <i class="fas fa-pause"></i> المغلقة <span class="tab-badge" id="closedCount">0</span>
+                <button class="tab-btn" data-filter="approved" onclick="switchFilter(event, 'approved')">
+                    <i class="fas fa-check"></i> معتمدة
+                    <span class="tab-badge" id="badgeApproved">0</span>
+                </button>
+                <button class="tab-btn" data-filter="rejected" onclick="switchFilter(event, 'rejected')">
+                    <i class="fas fa-times"></i> مرفوضة
+                    <span class="tab-badge" id="badgeRejected">0</span>
+                </button>
+                <button class="tab-btn" data-filter="penalties" onclick="switchFilter(event, 'penalties')">
+                    <i class="fas fa-gavel"></i> مع عقوبات
+                    <span class="tab-badge" id="badgePenaltiesTab">0</span>
+                </button>
+                <button class="tab-btn" data-filter="dept-requests" onclick="switchFilter(event, 'dept-requests')">
+                    <i class="fas fa-layer-group"></i> طلبات الأقسام
+                    <span class="tab-badge" id="badgeDeptRequests" style="background:rgba(245,158,11,0.3)">0</span>
                 </button>
             </div>
 
-            <!-- Departments Grid -->
-            <div id="tab-all" class="tab-content active">
-                <div class="dept-grid" id="deptGrid">
+            <div class="filters-bar">
+                <input type="text" id="searchInput" placeholder="🔍 ابحث بالاسم أو البريد أو المجال...">
+            </div>
+
+            <div class="companies-grid" id="companiesGrid">
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>جاري التحميل...</p>
+                </div>
+            </div>
+
+            <!-- طلبات الأقسام -->
+            <div id="deptRequestsSection" style="display:none">
+                <div class="dept-requests-grid" id="deptRequestsGrid">
                     <div class="empty-state">
                         <i class="fas fa-spinner fa-spin"></i>
                         <p>جاري التحميل...</p>
                     </div>
                 </div>
-            </div>
-            <div id="tab-active" class="tab-content">
-                <div class="dept-grid" id="activeGrid"></div>
-            </div>
-            <div id="tab-closed" class="tab-content">
-                <div class="dept-grid" id="closedGrid"></div>
             </div>
         </main>
     </div>
@@ -337,78 +367,93 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
     <div id="modalsContainer"></div>
     <div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="company-layout.js"></script>
     <script>
-
-        // ============================================================
-        // 🛡️ Resilient Supabase Client + Session
-        // ============================================================
-        if (!window.getSafeSupabase) {
-            window.getSafeSupabase = async function() {
-                if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
-                    try {
-                        const sb = await window.ProVance.waitForSupabaseClient(8000);
-                        if (sb && typeof sb.from === 'function') return sb;
-                    } catch(e) {}
-                }
-                try {
-                    const sb = window.ProVance && window.ProVance.sb;
-                    if (sb && typeof sb.from === 'function') return sb;
-                } catch(e) {}
-                if (typeof supabase !== 'undefined' && supabase.createClient) {
-                    try {
-                        return supabase.createClient(
-                            'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
-                            { auth: { persistSession: true, storage: window.localStorage } }
-                        );
-                    } catch(e) {}
-                }
-                return null;
-            };
-        }
-        async function getResilientSession(sb, maxRetries = 5) {
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const { data: { session } } = await sb.auth.getSession();
-                    if (session && session.user) return session;
-                } catch(e) {}
-                await new Promise(r => setTimeout(r, 500));
-            }
-            return null;
-        }
+console.log("📄 admin-campany.html version: 2026-05-26 (logo fix)");
 const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
 });
 
-let companyUserId = null;
-let companyData = null;
-let allInternships = [];
-let allApplications = [];
-let currentBranchId = ''; // الفرع المختار حالياً
-let allBranches = []; // قائمة كل الفروع
+
+// إخفاء support links حسب الصلاحيات
+function applyAdminPermissions(adminCheck) {
+    if (!adminCheck) return;
+    const isSuper = adminCheck.role === 'super_admin';
+    const perms = adminCheck.permissions || {};
+    if (!isSuper && !perms.reply_to_students) {
+        document.querySelectorAll('a[href="admin-student-support.html"]').forEach(a => a.style.display = 'none');
+    }
+    if (!isSuper && !perms.reply_to_companies) {
+        document.querySelectorAll('a[href="admin-company-support.html"]').forEach(a => a.style.display = 'none');
+    }
+}
+
+
+let allCompanies = [];
+let currentFilter = 'all';
+let selectedId = null;
 
 // ========== Helpers ==========
-function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-function safeParse(value, fallback) {
-    if (value === null || value === undefined) return fallback;
-    if (typeof value === 'object') return value;
-    if (typeof value !== 'string') return fallback;
-    try { return JSON.parse(value); } catch { return fallback; }
+function escapeHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
-function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
+function safeJSON(value, fallback) {
+    if (!value) return fallback;
+    if (typeof value === 'object') return value;
+    try { return JSON.parse(value); } catch (e) { return fallback; }
+}
+function formatDate(d) {
+    if (!d) return '-';
+    try { return new Date(d).toLocaleDateString('ar-EG'); } catch (e) { return '-'; }
+}
+function getInitial(name) { return (name || '?').charAt(0).toUpperCase(); }
+function getCurrencyText(c) {
+    return { EGP:'جنيه', USD:'دولار', EUR:'يورو', SAR:'ريال' }[c] || c || '';
+}
+function getDurationText(d) {
+    return { '2-weeks':'أسبوعين','3-weeks':'3 أسابيع','1-month':'شهر','1.5-months':'شهر ونصف','2-months':'شهرين','2.5-months':'شهرين ونصف' }[d] || d || '-';
+}
+function getPenaltyTypeText(t) {
+    return { warning:'إنذار', fine:'غرامة', suspension:'تعليق', termination:'إنهاء التعاقد' }[t] || 'عقوبة';
+}
 
 function showToast(msg, type = 'info') {
     const t = document.createElement('div');
-    const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+    const colors = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
     t.className = 'toast';
-    t.style.background = c[type] || c.info;
+    t.style.background = colors[type] || colors.info;
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 4000);
 }
+
+
+// إخفاء support links لو الأدمن مفيش عنده صلاحية
+function hideUnauthorizedNavLinks(adminCheck) {
+    if (!adminCheck) return;
+    const isSuper = adminCheck.is_super_admin === true || adminCheck.role === 'super_admin';
+    const perms = adminCheck.permissions || {};
+    
+    if (!isSuper && perms.reply_to_students !== true) {
+        const link = document.getElementById('navStudentSupport');
+        if (link) link.style.display = 'none';
+    }
+    if (!isSuper && perms.reply_to_companies !== true) {
+        const link = document.getElementById('navCompanySupport');
+        if (link) link.style.display = 'none';
+    }
+}
+
+window.logoutAdmin = async (e) => {
+    e.preventDefault();
+    if (!confirm('هل أنت متأكد من تسجيل الخروج؟')) return;
+    await sb.auth.signOut();
+    localStorage.clear();
+    window.location.href = 'index.html';
+};
 
 function renderModal(html) {
     document.getElementById('modalsContainer').innerHTML = html;
@@ -420,1088 +465,1219 @@ window.closeModal = (id) => {
     if (document.querySelectorAll('.modal').length === 0) document.body.style.overflow = '';
 };
 
-window.logoutCompany = async (e) => {
-    if (e) e.preventDefault();
-    if (!confirm('هل تريد تسجيل الخروج؟')) return;
+// ========== Auth ==========
+async function checkAdmin() {
     try {
-        await sb.auth.signOut();
-    } catch {}
-    localStorage.clear();
-    window.location.href = 'company-login.html';
-};
-
-window.switchTab = (e, tab) => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    e.currentTarget.classList.add('active');
-    document.getElementById('tab-' + tab).classList.add('active');
-};
-
-// ========== Get Duration Text ==========
-function getDurationText(d) {
-    return {
-        '2-weeks': 'أسبوعين', '3-weeks': '3 أسابيع', '1-month': 'شهر واحد',
-        '1.5-months': 'شهر ونصف', '2-months': 'شهرين', '2.5-months': 'شهرين ونصف'
-    }[d] || d || '-';
-}
-function getSystemText(s) {
-    return {
-        'first-time': 'متدرب لأول مرة (النظام الأول)',
-        'once-trained': 'متدرب ذو خبرة (النظام الثاني)',
-        'twice-trained': 'متدرب متمرس - Training (النظام الثالث)'
-    }[s] || s || '-';
-}
-function getSystemIcon(s) {
-    return { 'first-time': 'fa-star', 'once-trained': 'fa-user-graduate', 'twice-trained': 'fa-briefcase' }[s] || 'fa-cog';
-}
-function getBranchName(branchId) {
-    if (!branchId) return 'كل الفروع';
-    const b = allBranches.find(x => x.id === branchId);
-    return b ? b.name : 'فرع غير معروف';
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) { window.location.href = 'admin-login.html'; return null; }
+        const { data: admin } = await sb.from('admins').select('*').eq('user_id', session.user.id).maybeSingle();
+        applyAdminPermissions(admin);
+        if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        return admin;
+    } catch (e) { window.location.href = 'admin-login.html'; return null; }
 }
 
 // ========== Load Data ==========
-async function loadAll() {
+async function loadCompanies(retryCount = 0) {
+    const grid = document.getElementById('companiesGrid');
+    
+    // نحاول حتى 3 مرات
+    const MAX_RETRIES = 2;
+    
     try {
-        // Make sure sb is ready
-        const { data: sessData } = await sb.auth.getSession();
-        if (!sessData || !sessData.session) {
-            window.location.href = 'company-login.html';
-            return;
-        }
-        companyUserId = sessData.session.user.id;
-
-        // Company + Internships + Applications - Promise.allSettled to handle failures gracefully
-        const results = await Promise.allSettled([
-            sb.from('companies').select('*').eq('user_id', companyUserId).maybeSingle(),
-            sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, description, duration, max_applicants, current_applicants, trainee_type, requirements, knowledge_benefits, financial_benefits, salary_min, salary_max, salary_currency, status, start_date, end_date, created_at, updated_at').eq('company_user_id', companyUserId).order('created_at', { ascending: false }),
-            sb.from('applications').select('id, student_user_id, student_name, student_email, student_photo, student_university, student_cv_url, internship_id, company_name, internship_title, application_message, status, created_at, updated_at, interview_date, rejection_reason').eq('company_user_id', companyUserId).order('created_at', { ascending: false })
-        ]);
-
-        const companyRes = results[0].status === 'fulfilled' ? results[0].value : { data: null, error: results[0].reason };
-        const internshipsRes = results[1].status === 'fulfilled' ? results[1].value : { data: [] };
-        const applicationsRes = results[2].status === 'fulfilled' ? results[2].value : { data: [] };
-
-        companyData = companyRes.data;
-        allInternships = internshipsRes.data || [];
-        allApplications = applicationsRes.data || [];
-
-        if (!companyData) {
-            // لو الـ data null → ممكن بطء مؤقت → جرّب لحد 3 مرات قبل ما نيأس
-            window._companyRetries = (window._companyRetries || 0) + 1;
-            if (window._companyRetries <= 3) {
-                console.warn('companyData is null, retry ' + window._companyRetries + '/3...');
-                setTimeout(() => loadAll(), 1200 * window._companyRetries);
-                return;
+        // Timeout protection: لو الـ query طول أكتر من 15 ثانية، نلغيها
+        const queryPromise = sb.from('companies')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timeout بعد 15 ثانية')), 15000)
+        );
+        
+        const result = await Promise.race([queryPromise, timeoutPromise]);
+        const { data, error } = result;
+        
+        if (error) { 
+            console.error('Load error:', error);
+            // retry لو في فرصة
+            if (retryCount < MAX_RETRIES) {
+                console.log(`Retry ${retryCount + 1}/${MAX_RETRIES}...`);
+                await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
+                return loadCompanies(retryCount + 1);
             }
-            // بعد 3 محاولات → اعرض الخطأ الحقيقي لو فيه
-            const errMsg = (companyRes.error && companyRes.error.message) ? companyRes.error.message : 'لم يتم العثور على بيانات الشركة';
-            console.error('Company load failed:', companyRes.error);
-            showToast('تعذّر تحميل بيانات الشركة: ' + errMsg, 'error');
-            document.getElementById('loadingOverlay').classList.add('hidden');
-            return;
+            
+            if (grid) {
+                grid.innerHTML = `
+                    <div style="grid-column:1/-1;text-align:center;padding:60px 20px">
+                        <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:#f59e0b;margin-bottom:14px;display:block"></i>
+                        <h3 style="color:var(--text);margin-bottom:8px">⚠️ فشل تحميل البيانات</h3>
+                        <p style="color:var(--text-muted);margin-bottom:16px">${error.message || 'مشكلة في الاتصال بقاعدة البيانات'}</p>
+                        <button onclick="loadCompanies()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer">
+                            <i class="fas fa-sync-alt"></i> إعادة المحاولة
+                        </button>
+                    </div>
+                `;
+            }
+            return; 
         }
-        window._companyRetries = 0; // reset للمرة الجاية
-
-        // لو الشركة pending
-        if (companyData.status === 'pending') {
-            window.location.href = 'Company-pending.html';
-            return;
-        }
-
-        // تحميل الفروع
-        loadBranches();
-
-        renderDepartments();
+        
+        const list = data || [];
+        console.log('Loaded', list.length, 'companies');
+        
+        allCompanies = list.map(normalizeCompany);
         updateStats();
-
-        document.getElementById('loadingOverlay').classList.add('hidden');
-    } catch (err) {
-        console.error('═══════════ LOAD ERROR ═══════════');
-            console.error('Page:', window.location.pathname);
-            console.error('Error:', err);
-            console.error('Code:', err?.code);
-            console.error('Message:', err?.message);
-            console.error('Details:', err?.details);
-            console.error('Hint:', err?.hint);
-            console.error('═════════════════════════════════');
-        showToast('خطأ في تحميل البيانات', 'error');
-        document.getElementById('loadingOverlay').classList.add('hidden');
+        renderCompanies();
+    } catch (e) { 
+        console.error('Catch:', e);
+        
+        // retry لو في فرصة
+        if (retryCount < MAX_RETRIES) {
+            console.log(`Retry ${retryCount + 1}/${MAX_RETRIES} after error...`);
+            await new Promise(r => setTimeout(r, 1500 * (retryCount + 1)));
+            return loadCompanies(retryCount + 1);
+        }
+        
+        if (grid) {
+            grid.innerHTML = `
+                <div style="grid-column:1/-1;text-align:center;padding:60px 20px">
+                    <i class="fas fa-wifi" style="font-size:3rem;color:#f59e0b;margin-bottom:14px;display:block"></i>
+                    <h3 style="color:var(--text);margin-bottom:8px">⚠️ مشكلة في الاتصال</h3>
+                    <p style="color:var(--text-muted);margin-bottom:16px">${e.message || 'تأكد من الإنترنت وحاول مرة أخرى'}</p>
+                    <button onclick="loadCompanies()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer">
+                        <i class="fas fa-sync-alt"></i> إعادة المحاولة
+                    </button>
+                </div>
+            `;
+        }
     }
 }
 
-// ========== Build Departments from training_fields + training_details + internships ==========
-function getDepartments() {
-    if (!companyData) return [];
-
-    const trainingFields = safeParse(companyData.training_fields, []);
-    const trainingDetails = safeParse(companyData.training_details, {});
-
-    let depts = trainingFields.map(field => {
-        const details = trainingDetails[field] || {};
-        const existingInt = allInternships.find(i => i.field === field || i.title === field);
-
-        return {
-            field: field,
-            name: field,
-            details: details,
-            branchId: details.branchId || '',
-            internship: existingInt,
-            apps: allApplications.filter(a => a.internship_id === existingInt?.id || a.field === field),
-            active: !existingInt || existingInt.status === 'active'
-        };
-    });
-
-    // فلترة بالفرع المختار
-    if (currentBranchId) {
-        depts = depts.filter(d => d.branchId === currentBranchId);
-    }
-
-    return depts;
+function normalizeCompany(c) {
+    return {
+        id: c.user_id,
+        name: c.company_name || 'غير محدد',
+        field: c.company_field || 'غير محدد',
+        location: c.company_location || 'غير محدد',
+        email: c.email || '',
+        website: c.website || '',
+        bio: c.company_bio || '',
+        employeesCount: c.employees_count || '',
+        logo: c.logo,
+        primaryPhone: c.primary_phone || '',
+        secondaryPhone: c.secondary_phone || '',
+        whatsapp: c.whatsapp || '',
+        inquiryEmail: c.inquiry_email || '',
+        linkedin: c.linkedin || '',
+        facebook: c.facebook || '',
+        trainingFields: safeJSON(c.training_fields, []),
+        trainingDetails: safeJSON(c.training_details, {}),
+        branches: safeJSON(c.branch_locations, []),
+        isStartup: c.is_startup || false,
+        maxResponseDays: c.max_response_days || '',
+        equipment: c.equipment || '',
+        status: c.status || 'pending',
+        registeredAt: c.created_at || c.agreed_at,
+        approvedAt: c.approved_at,
+        rejectedAt: c.rejected_at,
+        rejectionReason: c.rejection_reason || '',
+        trainingPrice: c.training_price,
+        trainingCurrency: c.training_currency || 'EGP',
+        trainingNotes: c.training_notes || '',
+        penalties: (() => {
+            const p = safeJSON(c.penalties, []);
+            return Array.isArray(p) ? p : [];
+        })(),
+        suspended: c.suspended || false,
+        suspendedUntil: c.suspended_until,
+        agreedAt: c.agreed_at
+    };
 }
 
 function updateStats() {
-    const depts = getDepartments();
-    const active = depts.filter(d => d.active).length;
-    const closed = depts.length - active;
-    const pending = allApplications.filter(a => a.status === 'pending').length;
+    const pending = allCompanies.filter(c => c.status === 'pending').length;
+    const approved = allCompanies.filter(c => c.status === 'approved').length;
+    const rejected = allCompanies.filter(c => c.status === 'rejected').length;
+    const penalized = allCompanies.filter(c => c.penalties && c.penalties.length > 0).length;
 
-    document.getElementById('statTotalDepts').textContent = depts.length;
-    document.getElementById('statActiveDepts').textContent = active;
-    document.getElementById('statClosedDepts').textContent = closed;
-    document.getElementById('statTotalApps').textContent = allApplications.length;
-    document.getElementById('statPendingApps').textContent = pending;
+    document.getElementById('statPending').textContent = pending;
+    document.getElementById('statApproved').textContent = approved;
+    document.getElementById('statRejected').textContent = rejected;
+    document.getElementById('statTotal').textContent = allCompanies.length;
+    document.getElementById('statPenalties').textContent = penalized;
 
-    document.getElementById('allCount').textContent = depts.length;
-    document.getElementById('activeCount').textContent = active;
-    document.getElementById('closedCount').textContent = closed;
+    document.getElementById('badgeAll').textContent = allCompanies.length;
+    document.getElementById('badgePending').textContent = pending;
+    document.getElementById('badgeApproved').textContent = approved;
+    document.getElementById('badgeRejected').textContent = rejected;
+    document.getElementById('badgePenaltiesTab').textContent = penalized;
+
+    const sidebarBadge = document.getElementById('pendingBadge');
+    if (pending > 0) { sidebarBadge.textContent = pending; sidebarBadge.style.display = 'inline-block'; }
+    else { sidebarBadge.style.display = 'none'; }
 }
 
-// ========== Render Departments ==========
-function renderDepartments() {
-    const depts = getDepartments();
-
-    if (depts.length === 0) {
-        const empty = `
-            <div class="empty-state">
-                <i class="fas fa-th-list"></i>
-                <h3>لا توجد أقسام أو مجالات تدريبية</h3>
-                <p>اضغط "إضافة قسم/مجال جديد" لتبدأ</p>
-            </div>`;
-        document.getElementById('deptGrid').innerHTML = empty;
-        document.getElementById('activeGrid').innerHTML = empty;
-        document.getElementById('closedGrid').innerHTML = empty;
-        return;
-    }
-
-    const active = depts.filter(d => d.active);
-    const closed = depts.filter(d => !d.active);
-
-    document.getElementById('deptGrid').innerHTML = depts.map(createDeptCard).join('');
-    document.getElementById('activeGrid').innerHTML = active.length === 0
-        ? '<div class="empty-state"><i class="fas fa-check"></i><h3>لا توجد أقسام مفعّلة</h3></div>'
-        : active.map(createDeptCard).join('');
-    document.getElementById('closedGrid').innerHTML = closed.length === 0
-        ? '<div class="empty-state"><i class="fas fa-pause"></i><h3>لا توجد أقسام مغلقة</h3></div>'
-        : closed.map(createDeptCard).join('');
-}
-
-function createDeptCard(dept) {
-    const details = dept.details;
-    const appsCount = dept.apps.length;
-    const positionsCount = parseInt(details.count) || 0;
-    const traineeSystem = details.traineeSystem || 'first-time';
-
-    return `
-        <div class="dept-card ${!dept.active ? 'disabled' : ''}">
-            <div class="dept-card-header">
-                <div class="dept-icon"><i class="fas ${getSystemIcon(traineeSystem)}"></i></div>
-                <div style="flex:1">
-                    <div class="dept-name">${escapeHtml(dept.name)}</div>
-                    <span class="dept-status ${dept.active ? 'active' : 'closed'}">
-                        <i class="fas fa-${dept.active ? 'check-circle' : 'pause-circle'}"></i>
-                        ${dept.active ? 'مفتوح للتقديم' : 'مغلق'}
-                    </span>
-                </div>
-            </div>
-
-            <div class="dept-meta">
-                <div class="dept-meta-item">
-                    <i class="fas fa-users" style="color:var(--primary)"></i> الفرص
-                    <strong>${positionsCount}</strong>
-                </div>
-                <div class="dept-meta-item">
-                    <i class="fas fa-file-alt" style="color:var(--primary)"></i> الطلبات
-                    <strong>${appsCount}</strong>
-                </div>
-                <div class="dept-meta-item">
-                    <i class="fas fa-clock" style="color:var(--primary)"></i> المدة
-                    <strong>${getDurationText(details.duration)}</strong>
-                </div>
-                <div class="dept-meta-item">
-                    <i class="fas fa-dollar-sign" style="color:var(--primary)"></i> الراتب
-                    <strong>${details.minSalary || 0}-${details.maxSalary || 0} ${details.currency || 'EGP'}</strong>
-                </div>
-            </div>
-
-            <div style="padding:10px;background:rgba(255,255,255,0.02);border-radius:10px;margin-bottom:10px;font-size:0.82rem;color:var(--text-muted)">
-                <i class="fas ${getSystemIcon(traineeSystem)}" style="color:var(--primary)"></i>
-                ${getSystemText(traineeSystem)}
-            </div>
-            ${dept.branchId ? `
-                <div style="padding:8px 10px;background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:8px;margin-bottom:10px;font-size:0.8rem;color:var(--info)">
-                    <i class="fas fa-map-marker-alt"></i>
-                    ${escapeHtml(getBranchName(dept.branchId))}
-                </div>
-            ` : ''}
-
-            <div class="dept-actions">
-                <button class="btn btn-info btn-sm" onclick="editDept('${escapeHtml(dept.field)}')">
-                    <i class="fas fa-edit"></i> تعديل
-                </button>
-                <button class="btn ${dept.active ? 'btn-warning' : 'btn-success'} btn-sm" onclick="toggleDept('${escapeHtml(dept.field)}')">
-                    <i class="fas fa-${dept.active ? 'pause' : 'play'}"></i> ${dept.active ? 'إغلاق' : 'فتح'}
-                </button>
-                <button class="btn btn-danger btn-sm" onclick="deleteDept('${escapeHtml(dept.field)}')">
-                    <i class="fas fa-trash"></i> حذف
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-// ========== Toggle Department (active/closed) ==========
-window.toggleDept = async (field) => {
-    const depts = getDepartments();
-    const dept = depts.find(d => d.field === field);
-    if (!dept) return;
-
-    const newActive = !dept.active;
-    const msg = newActive ? 'فتح القسم للتقديم؟' : 'إغلاق القسم (المتدربين مش هيشوفوه)؟';
-    if (!confirm(msg)) return;
-
-    try {
-        // Update internship status لو موجود
-        if (dept.internship) {
-            await sb.from('internships').update({
-                status: newActive ? 'active' : 'closed',
-                updated_at: new Date().toISOString()
-            }).eq('id', dept.internship.id);
-        } else if (newActive) {
-            // اعمل internship جديد
-            await syncToInternship(field, dept.details);
-        }
-
-        showToast(newActive ? '✅ تم فتح القسم' : '⏸️ تم إغلاق القسم', 'success');
-        await loadAll();
-    } catch (err) {
-        showToast('خطأ: ' + err.message, 'error');
+window.switchFilter = (e, filter) => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    currentFilter = filter;
+    if (filter === 'dept-requests') {
+        document.getElementById('companiesGrid').style.display = 'none';
+        document.getElementById('deptRequestsSection').style.display = 'block';
+        loadDeptRequests();
+    } else {
+        document.getElementById('companiesGrid').style.display = '';
+        document.getElementById('deptRequestsSection').style.display = 'none';
+        renderCompanies();
     }
 };
 
-// ========== Delete Department ==========
-window.deleteDept = async (field) => {
-    if (!confirm(`هل تريد حذف القسم "${field}"؟\n⚠️ ده هيمسحه من المنصة و الطلاب مش هيشوفوه.`)) return;
+// ========== Department Requests ==========
+let allDeptRequests = [];
+
+async function loadDeptRequests() {
+    const grid = document.getElementById('deptRequestsGrid');
+    grid.innerHTML = `<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>`;
+    try {
+        const { data, error } = await sb
+            .from('pending_approvals')
+            .select('*')
+            .eq('type', 'department')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            grid.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>خطأ في التحميل</h3><p>${escapeHtml(error.message)}</p><button class="btn btn-secondary" onclick="loadDeptRequests()"><i class="fas fa-sync-alt"></i> إعادة المحاولة</button></div>`;
+            return;
+        }
+
+        allDeptRequests = data || [];
+
+        // تحديث الـ badge
+        const pendingCount = allDeptRequests.filter(r => r.status === 'pending').length;
+        const badge = document.getElementById('badgeDeptRequests');
+        badge.textContent = pendingCount;
+
+        renderDeptRequests();
+    } catch (e) {
+        grid.innerHTML = `<div class="empty-state"><i class="fas fa-wifi"></i><h3>مشكلة في الاتصال</h3><button class="btn btn-secondary" onclick="loadDeptRequests()"><i class="fas fa-sync-alt"></i> إعادة المحاولة</button></div>`;
+    }
+}
+
+function getSystemText(s) {
+    return { 'first-time': 'متدرب لأول مرة', 'once-trained': 'سبق له التدريب', 'twice-trained': 'متدرب متمرس' }[s] || s || '-';
+}
+function getSystemClass(s) {
+    return { 'first-time': 'first-time', 'once-trained': 'once-trained', 'twice-trained': 'twice-trained' }[s] || 'first-time';
+}
+
+function renderDeptRequests() {
+    const grid = document.getElementById('deptRequestsGrid');
+    const list = allDeptRequests;
+
+    if (list.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-layer-group"></i>
+                <h3>لا توجد طلبات أقسام</h3>
+                <p>لم تُرسل أي شركة طلب قسم جديد بعد</p>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = list.map(req => {
+        const d = req.data || {};
+        const company = allCompanies.find(c => c.id === req.company_user_id);
+        const companyName = company ? company.name : (req.company_user_id || 'شركة غير محددة');
+        const statusBadge = req.status === 'pending'
+            ? `<span class="status-badge status-pending"><i class="fas fa-clock"></i> قيد المراجعة</span>`
+            : req.status === 'approved'
+            ? `<span class="status-badge status-approved"><i class="fas fa-check"></i> تمت الموافقة</span>`
+            : `<span class="status-badge status-rejected"><i class="fas fa-times"></i> مرفوض</span>`;
+
+        const branchLabel = d.branchId ? `فرع: ${escapeHtml(d.branchId)}` : 'الفرع الرئيسي';
+
+        return `
+        <div class="dept-req-card" id="deptReq_${escapeHtml(req.id)}">
+            <div class="dept-req-header">
+                <div class="dept-req-icon"><i class="fas fa-layer-group"></i></div>
+                <div class="dept-req-info">
+                    <div class="dept-req-name">${escapeHtml(req.item_name)}</div>
+                    <div class="dept-req-company">
+                        <i class="fas fa-building" style="color:var(--primary)"></i> ${escapeHtml(companyName)}
+                        &nbsp;|&nbsp; <i class="fas fa-calendar" style="color:var(--primary)"></i> ${formatDate(req.created_at)}
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+                    ${statusBadge}
+                    <span class="system-tag ${getSystemClass(d.traineeSystem)}">${getSystemText(d.traineeSystem)}</span>
+                </div>
+            </div>
+
+            <div class="dept-req-details">
+                <div class="dept-req-detail-item">
+                    <div class="dept-req-detail-label"><i class="fas fa-map-marker-alt"></i> الفرع</div>
+                    <div class="dept-req-detail-value">${escapeHtml(branchLabel)}</div>
+                </div>
+                <div class="dept-req-detail-item">
+                    <div class="dept-req-detail-label"><i class="fas fa-clock"></i> المدة</div>
+                    <div class="dept-req-detail-value">${getDurationText(d.duration)}</div>
+                </div>
+                <div class="dept-req-detail-item">
+                    <div class="dept-req-detail-label"><i class="fas fa-users"></i> عدد المتدربين</div>
+                    <div class="dept-req-detail-value">${escapeHtml(d.count || '-')}</div>
+                </div>
+                <div class="dept-req-detail-item">
+                    <div class="dept-req-detail-label"><i class="fas fa-user-tie"></i> المشرف</div>
+                    <div class="dept-req-detail-value">${escapeHtml(d.supervisor || '-')}</div>
+                </div>
+                <div class="dept-req-detail-item">
+                    <div class="dept-req-detail-label"><i class="fas fa-money-bill-wave"></i> الراتب المتوقع</div>
+                    <div class="dept-req-detail-value">${d.minSalary || 0}–${d.maxSalary || 0} ${getCurrencyText(d.currency)}</div>
+                </div>
+            </div>
+
+            ${d.knowledgeBenefits ? `
+            <div class="dept-req-long">
+                <strong><i class="fas fa-brain" style="color:var(--info)"></i> الميزة المعرفية</strong>
+                ${escapeHtml(d.knowledgeBenefits)}
+            </div>` : ''}
+
+            ${d.financialBenefits ? `
+            <div class="dept-req-long" style="border-color:rgba(16,185,129,0.2)">
+                <strong><i class="fas fa-gift" style="color:var(--success)"></i> الميزة المادية</strong>
+                ${escapeHtml(d.financialBenefits)}
+            </div>` : ''}
+
+            ${d.trainingRequirements ? `
+            <div class="dept-req-long" style="border-color:rgba(245,158,11,0.2)">
+                <strong><i class="fas fa-clipboard-list" style="color:var(--warning)"></i> مواصفات المتدرب</strong>
+                ${escapeHtml(d.trainingRequirements)}
+            </div>` : ''}
+
+            ${req.status === 'pending' ? `
+            <div class="dept-req-actions">
+                <button class="btn btn-success" onclick="approveDeptRequest('${escapeHtml(req.id)}', '${escapeHtml(req.company_user_id)}', '${escapeHtml(req.item_name)}')">
+                    <i class="fas fa-check"></i> موافقة وإضافة القسم
+                </button>
+                <button class="btn btn-danger" onclick="rejectDeptRequest('${escapeHtml(req.id)}')">
+                    <i class="fas fa-times"></i> رفض الطلب
+                </button>
+            </div>` : `
+            <div style="color:var(--text-muted);font-size:0.82rem;text-align:center;padding:6px">
+                ${req.status === 'approved' ? '✅ تمت الموافقة' : '❌ تم الرفض'}
+                ${req.reviewed_at ? ' في ' + formatDate(req.reviewed_at) : ''}
+            </div>`}
+        </div>`;
+    }).join('');
+}
+
+window.approveDeptRequest = async (reqId, companyUserId, fieldName) => {
+    if (!confirm(`موافقة على إضافة قسم "${fieldName}" للشركة؟`)) return;
 
     try {
-        // 1. شيله من training_fields و training_details
-        const fields = safeParse(companyData.training_fields, []).filter(f => f !== field);
-        const details = safeParse(companyData.training_details, {});
-        delete details[field];
+        // 1. جيب بيانات الطلب
+        const req = allDeptRequests.find(r => r.id === reqId);
+        if (!req) { showToast('الطلب مش موجود', 'error'); return; }
+        const newDetails = req.data || {};
 
-        await sb.from('companies').update({
+        // 2. جيب بيانات الشركة الحالية
+        const { data: companyRow, error: compErr } = await sb.from('companies')
+            .select('training_fields, training_details')
+            .eq('user_id', companyUserId).maybeSingle();
+        if (compErr) { showToast('خطأ في جلب بيانات الشركة: ' + compErr.message, 'error'); return; }
+
+        let fields = [];
+        let details = {};
+        try { fields = JSON.parse(companyRow.training_fields || '[]'); } catch(e) { fields = companyRow.training_fields || []; }
+        try { details = JSON.parse(companyRow.training_details || '{}'); } catch(e) { details = companyRow.training_details || {}; }
+        if (!Array.isArray(fields)) fields = [];
+
+        // 3. أضف القسم لو مش موجود
+        if (!fields.includes(fieldName)) fields.push(fieldName);
+        details[fieldName] = newDetails;
+
+        // 4. حدّث جدول الشركات
+        const { error: upErr } = await sb.from('companies').update({
             training_fields: fields,
             training_details: details,
             updated_at: new Date().toISOString()
         }).eq('user_id', companyUserId);
+        if (upErr) { showToast('خطأ في تحديث الشركة: ' + upErr.message, 'error'); return; }
 
-        // 2. امسح الـ internship المرتبط
-        const dept = getDepartments().find(d => d.field === field);
-        if (dept && dept.internship) {
-            await sb.from('internships').delete().eq('id', dept.internship.id);
-        }
-
-        showToast('🗑️ تم حذف القسم', 'success');
-        await loadAll();
-    } catch (err) {
-        showToast('خطأ: ' + err.message, 'error');
-    }
-};
-
-// ========== مزامنة كل الأقسام دفعة واحدة (بعد تعديل بيانات الشركة) ==========
-window.syncAllToInternships = async () => {
-    if (!confirm('تحديث بيانات كل الأقسام في صفحة فرص التدريب؟\nهيستخدم آخر بيانات الشركة والفروع.')) return;
-    try {
-        // اجيب أحدث بيانات الشركة
-        const { data: fresh } = await sb.from('companies')
-            .select('company_name, company_location, training_fields, training_details, branch_locations')
-            .eq('user_id', companyUserId).maybeSingle();
-        if (fresh) {
-            companyData = { ...companyData, ...fresh };
-            allBranches = safeParse(fresh.branch_locations, allBranches);
-        }
-
-        const td = safeParse(companyData.training_details, {});
-        const fields = Object.keys(td);
-        if (fields.length === 0) { showToast('مفيش أقسام للمزامنة', 'warning'); return; }
-
-        let done = 0;
-        for (const field of fields) {
-            try { await syncToInternship(field, td[field]); done++; } catch(e) { console.warn('sync failed', field, e); }
-        }
-        showToast(`✅ تم تحديث ${done} قسم في صفحة فرص التدريب`, 'success');
-        await loadAll();
-    } catch (err) {
-        showToast('خطأ: ' + err.message, 'error');
-    }
-};
-
-// ========== Sync to Internships table (للظهور في صفحة الطالب) ==========
-async function syncToInternship(field, details) {
-    if (!companyData) return;
-
-    // لو فيه branchId، استخدم عنوان الفرع
-    let location = companyData.company_location;
-    if (details.branchId) {
-        const branch = allBranches.find(b => b.id === details.branchId);
-        if (branch) {
-            location = (branch.fullAddress || branch.name);
-            if (branch.city && !location.includes(branch.city)) {
-                location = branch.city + ' - ' + location;
+        // 5. أنشئ أو حدّث internship
+        const companyData = allCompanies.find(c => c.id === companyUserId);
+        if (companyData) {
+            let location = companyData.location;
+            if (newDetails.branchId && companyData.branches) {
+                const branch = companyData.branches.find(b => b.id === newDetails.branchId);
+                if (branch) location = (branch.city ? branch.city + ' - ' : '') + (branch.fullAddress || branch.name || location);
+            }
+            const internshipData = {
+                company_user_id: companyUserId,
+                company_name: companyData.name,
+                company_location: location,
+                title: fieldName, field: fieldName,
+                description: newDetails.knowledgeBenefits || '',
+                duration: getDurationText(newDetails.duration),
+                max_applicants: parseInt(newDetails.count) || 10,
+                current_applicants: 0,
+                trainee_type: newDetails.traineeSystem || 'first-time',
+                requirements: newDetails.trainingRequirements || '',
+                knowledge_benefits: newDetails.knowledgeBenefits || '',
+                financial_benefits: newDetails.financialBenefits || '',
+                salary_min: parseFloat(newDetails.minSalary) || 0,
+                salary_max: parseFloat(newDetails.maxSalary) || 0,
+                salary_currency: newDetails.currency || 'EGP',
+                // رسوم التدريب موحدة من الشركة لكل الأقسام
+                training_price: companyData.trainingPrice || null,
+                training_currency: companyData.trainingCurrency || 'EGP',
+                status: 'active',
+                updated_at: new Date().toISOString()
+            };
+            const { data: existingInternship } = await sb.from('internships')
+                .select('id').eq('company_user_id', companyUserId).eq('field', fieldName).maybeSingle();
+            if (existingInternship) {
+                await sb.from('internships').update(internshipData).eq('id', existingInternship.id);
+            } else {
+                internshipData.created_at = new Date().toISOString();
+                await sb.from('internships').insert(internshipData);
             }
         }
-    }
-    
-    const internshipData = {
-        company_user_id: companyUserId,
-        company_name: companyData.company_name,
-        // company_logo removed - شيلناه لتحسين السرعة، الـ logo يجي من companies table في الـ frontend
-        company_location: location,
-        title: field,
-        field: field,
-        description: details.knowledgeBenefits || '',
-        duration: getDurationText(details.duration),
-        max_applicants: parseInt(details.count) || 10,
-        current_applicants: 0,
-        trainee_type: details.traineeSystem || 'first-time',
-        requirements: details.trainingRequirements || '',
-        knowledge_benefits: details.knowledgeBenefits || '',
-        financial_benefits: details.financialBenefits || '',
-        salary_min: parseFloat(details.minSalary) || 0,
-        salary_max: parseFloat(details.maxSalary) || 0,
-        salary_currency: details.currency || 'EGP',
-        status: 'active',
-        updated_at: new Date().toISOString()
-    };
 
-    // شوف لو فيه واحد بالفعل
-    const { data: existing } = await sb.from('internships')
-        .select('id')
-        .eq('company_user_id', companyUserId)
-        .eq('field', field)
-        .maybeSingle();
+        // 6. حدّث حالة الطلب
+        await sb.from('pending_approvals').update({
+            status: 'approved',
+            reviewed_at: new Date().toISOString()
+        }).eq('id', reqId);
 
-    if (existing) {
-        await sb.from('internships').update(internshipData).eq('id', existing.id);
-    } else {
-        internshipData.created_at = new Date().toISOString();
-        await sb.from('internships').insert(internshipData);
+        // 7. إشعار للشركة
+        try {
+            await sb.from('notifications').insert({
+                user_id: companyUserId,
+                user_type: 'company',
+                type: 'dept_approved',
+                title: 'تمت الموافقة على قسمك',
+                message: `تمت الموافقة على إضافة قسم "${fieldName}" — سيظهر في صفحة فرص التدريب الآن`,
+                link: 'company-requests-control.html'
+            });
+        } catch(e) { /* ignore */ }
+
+        showToast('✅ تمت الموافقة وإضافة القسم بنجاح', 'success');
+        await loadDeptRequests();
+        await loadCompanies();
+    } catch (e) {
+        showToast('خطأ: ' + e.message, 'error');
     }
+};
+
+window.rejectDeptRequest = async (reqId) => {
+    const reason = prompt('سبب الرفض (اختياري):');
+    if (reason === null) return; // ضغط إلغاء
+
+    const req = allDeptRequests.find(r => r.id === reqId);
+    try {
+        await sb.from('pending_approvals').update({
+            status: 'rejected',
+            rejection_reason: reason || '',
+            reviewed_at: new Date().toISOString()
+        }).eq('id', reqId);
+
+        // إشعار للشركة
+        if (req) {
+            try {
+                await sb.from('notifications').insert({
+                    user_id: req.company_user_id,
+                    user_type: 'company',
+                    type: 'dept_rejected',
+                    title: 'تم رفض طلب القسم',
+                    message: `تم رفض طلب إضافة قسم "${req.item_name}"${reason ? '. السبب: ' + reason : ''}`,
+                    link: 'company-requests-control.html'
+                });
+            } catch(e) { /* ignore */ }
+        }
+
+        showToast('❌ تم رفض الطلب', 'warning');
+        await loadDeptRequests();
+    } catch (e) {
+        showToast('خطأ: ' + e.message, 'error');
+    }
+};
+
+function renderCompanies() {
+    const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+    let list = [...allCompanies];
+
+    if (search) {
+        list = list.filter(c =>
+            c.name.toLowerCase().includes(search) ||
+            (c.email || '').toLowerCase().includes(search) ||
+            c.field.toLowerCase().includes(search)
+        );
+    }
+
+    if (currentFilter === 'penalties') list = list.filter(c => c.penalties && c.penalties.length > 0);
+    else if (currentFilter !== 'all') list = list.filter(c => c.status === currentFilter);
+
+    const grid = document.getElementById('companiesGrid');
+    if (list.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-building"></i>
+                <h3>لا توجد شركات</h3>
+                <p>${search ? 'لم يتم العثور على نتائج' : 'لا توجد شركات في هذا القسم'}</p>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = list.map(c => createCard(c)).join('');
 }
 
-// ========== Add/Edit Department Modal ==========
-let editingField = null;
-let selectedSystem = null;
+function createCard(c) {
+    const photo = c.logo
+        ? `<img src="${escapeHtml(c.logo)}" alt="">`
+        : `<span>${getInitial(c.name)}</span>`;
 
-window.openAddDeptModal = () => {
-    editingField = null;
-    selectedSystem = 'first-time';
-    showDeptModal({}, '');
-};
+    let statusBadge = '';
+    if (c.status === 'pending') statusBadge = '<span class="status-badge status-pending"><i class="fas fa-clock"></i> قيد المراجعة</span>';
+    else if (c.status === 'approved') {
+        if (c.suspended) statusBadge = '<span class="status-badge status-pending"><i class="fas fa-pause"></i> معلقة</span>';
+        else statusBadge = '<span class="status-badge status-approved"><i class="fas fa-check"></i> معتمدة</span>';
+    }
+    else if (c.status === 'rejected') statusBadge = '<span class="status-badge status-rejected"><i class="fas fa-times"></i> مرفوضة</span>';
 
-window.editDept = (field) => {
-    const dept = getDepartments().find(d => d.field === field);
-    if (!dept) return;
-    editingField = field;
-    selectedSystem = dept.details.traineeSystem || 'first-time';
-    showDeptModal(dept.details, field);
-};
+    const penaltiesInfo = c.penalties && c.penalties.length > 0
+        ? `<div class="penalties-info"><i class="fas fa-gavel"></i> ${c.penalties.length} عقوبة/إنذار</div>`
+        : '';
 
-function showDeptModal(details, fieldName) {
-    const isEdit = !!editingField;
+    return `
+        <div class="company-card ${c.penalties && c.penalties.length > 0 ? 'has-penalties' : ''} ${c.suspended ? 'suspended' : ''}">
+            <div class="company-header">
+                <div class="company-avatar">${photo}</div>
+                <div class="company-info">
+                    <div class="company-name">${escapeHtml(c.name)}</div>
+                    <div class="company-field">${escapeHtml(c.field)}</div>
+                    <div style="margin-top:5px">${statusBadge}</div>
+                </div>
+            </div>
+
+            <div class="company-meta">
+                <span><i class="fas fa-envelope"></i> ${escapeHtml((c.email || '-').substring(0, 25))}${c.email && c.email.length > 25 ? '...' : ''}</span>
+                <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(c.location)}</span>
+                <span><i class="fas fa-calendar"></i> ${formatDate(c.registeredAt)}</span>
+            </div>
+
+            ${penaltiesInfo}
+
+            <div class="company-actions">
+                <button class="btn btn-info btn-sm" onclick="viewDetails('${c.id}')">
+                    <i class="fas fa-eye"></i> التفاصيل
+                </button>
+                ${c.status === 'pending' ? `
+                    <button class="btn btn-success btn-sm" onclick="openApprove('${c.id}')">
+                        <i class="fas fa-check"></i> اعتماد
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="openReject('${c.id}')">
+                        <i class="fas fa-times"></i> رفض
+                    </button>
+                ` : ''}
+                ${c.status === 'approved' && !c.suspended ? `
+                    <button class="btn btn-penalty btn-sm" onclick="openPenalty('${c.id}')">
+                        <i class="fas fa-gavel"></i> عقاب
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+// ========== View Details ==========
+window.viewDetails = (id) => {
+    const c = allCompanies.find(x => x.id === id);
+    if (!c) return;
+    selectedId = id;
+
+    const photo = c.logo
+        ? `<img src="${escapeHtml(c.logo)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:14px">`
+        : `<span style="font-size:2rem">${getInitial(c.name)}</span>`;
+
+    let statusText = '';
+    if (c.status === 'pending') statusText = '<span class="status-badge status-pending"><i class="fas fa-clock"></i> قيد المراجعة</span>';
+    else if (c.status === 'approved') statusText = c.suspended ? '<span class="status-badge status-pending">معلقة</span>' : '<span class="status-badge status-approved"><i class="fas fa-check"></i> معتمدة</span>';
+    else if (c.status === 'rejected') statusText = '<span class="status-badge status-rejected"><i class="fas fa-times"></i> مرفوضة</span>';
+
+    // Build training fields HTML
+    let trainingHTML = '';
+    if (c.trainingFields && c.trainingFields.length > 0) {
+        trainingHTML = c.trainingFields.map((field, i) => {
+            const det = (c.trainingDetails && c.trainingDetails[field]) || {};
+            return `
+                <div class="field-section">
+                    <h4><i class="fas fa-code"></i> ${escapeHtml(field)} (${i + 1})</h4>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label"><i class="fas fa-clock"></i> المدة</div>
+                            <div class="info-value">${getDurationText(det.duration)}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label"><i class="fas fa-users"></i> المتدربين</div>
+                            <div class="info-value">${escapeHtml(det.count || '-')}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label"><i class="fas fa-user"></i> المشرف</div>
+                            <div class="info-value">${escapeHtml(det.supervisor || '-')}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label"><i class="fas fa-money-bill"></i> الراتب</div>
+                            <div class="info-value">${det.minSalary || 0}-${det.maxSalary || 0} ${getCurrencyText(det.currency)}</div>
+                        </div>
+                    </div>
+                    ${det.knowledgeBenefits ? `<div style="margin-top:10px;font-size:0.86rem;color:var(--text-muted)"><strong>الميزة المعرفية:</strong> ${escapeHtml(det.knowledgeBenefits)}</div>` : ''}
+                    ${det.trainingRequirements ? `<div style="margin-top:5px;font-size:0.86rem;color:var(--text-muted)"><strong>المتطلبات:</strong> ${escapeHtml(det.trainingRequirements)}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+    } else {
+        trainingHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px">لا توجد مجالات تدريبية</p>';
+    }
+
+    // Branches
+    let branchesHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px">لا توجد فروع</p>';
+    if (c.branches && c.branches.length > 0) {
+        branchesHTML = c.branches.map((b, i) => {
+            const addr = typeof b === 'string' ? b : (b.fullAddress || b.address || JSON.stringify(b));
+            return `<div class="info-item">
+                <div class="info-label"><i class="fas fa-map-marker-alt"></i> فرع ${i + 1}</div>
+                <div class="info-value">${escapeHtml(addr)}</div>
+            </div>`;
+        }).join('');
+        branchesHTML = `<div class="info-grid">${branchesHTML}</div>`;
+    }
+
+    // Penalties
+    let penaltiesHTML = '<p style="text-align:center;color:var(--success);padding:20px"><i class="fas fa-shield-alt"></i> سجل نظيف</p>';
+    if (c.penalties && c.penalties.length > 0) {
+        penaltiesHTML = c.penalties.map(p => {
+            const isExpired = p.status === 'expired' || p.status === 'cancelled';
+            const isCancelled = p.status === 'cancelled';
+            const cls = p.type === 'warning' ? 'warning-type' : '';
+            const statusBadge = isCancelled
+                ? '<span style="background:rgba(148,163,184,0.15);color:#94a3b8;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">ملغية</span>'
+                : isExpired
+                ? '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">منتهية</span>'
+                : '<span style="background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">نشطة</span>';
+            
+            return `
+                <div class="penalty-card ${cls} ${isExpired ? 'expired' : ''}" style="margin-bottom:10px">
+                    <div class="penalty-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                            <span class="penalty-type-badge ${p.type}">${getPenaltyTypeText(p.type)}</span>
+                            ${statusBadge}
+                        </div>
+                        <span style="color:var(--text-muted);font-size:0.82rem">${formatDate(p.date)}</span>
+                    </div>
+                    <div style="font-weight:600;margin-bottom:6px">${escapeHtml(p.reason || '')}</div>
+                    ${p.amount ? `<div style="color:var(--penalty);font-weight:700">القيمة: ${p.amount} ${getCurrencyText(p.currency)}</div>` : ''}
+                    ${p.duration ? `<div style="color:var(--text-muted);font-size:0.84rem">المدة: ${p.duration} يوم</div>` : ''}
+                    ${p.endDate ? `<div style="color:var(--text-muted);font-size:0.84rem">ينتهي: ${formatDate(p.endDate)}</div>` : ''}
+                    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+                        ${!isCancelled && !isExpired ? `<button onclick="cancelPenalty('${c.id}', '${p.id}')" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);padding:6px 12px;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;font-family:inherit"><i class="fas fa-ban"></i> إلغاء العقوبة</button>` : ''}
+                        <button onclick="deletePenalty('${c.id}', '${p.id}')" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:6px 12px;border-radius:8px;font-weight:700;font-size:0.78rem;cursor:pointer;font-family:inherit"><i class="fas fa-trash"></i> حذف نهائي</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
 
     const html = `
-        <div class="modal active" id="deptModal">
+        <div class="modal active" id="detailsModal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div class="modal-title">
-                        <i class="fas fa-${isEdit ? 'edit' : 'plus-circle'}"></i>
-                        <span>${isEdit ? 'تعديل القسم' : 'إضافة قسم/مجال جديد'}</span>
-                    </div>
-                    <button class="modal-close" onclick="closeModal('deptModal')"><i class="fas fa-times"></i></button>
+                    <div class="modal-title"><i class="fas fa-building"></i><span>تفاصيل الشركة</span></div>
+                    <button class="modal-close" onclick="closeModal('detailsModal')"><i class="fas fa-times"></i></button>
                 </div>
 
-                <div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);padding:12px;border-radius:10px;margin-bottom:16px;font-size:0.86rem;color:var(--text-muted)">
-                    <i class="fas fa-info-circle" style="color:var(--info)"></i>
-                    الإعدادات اللي بتحطها هنا هتظهر للطلاب في صفحة الـ Internship
-                </div>
-
-                <div class="field">
-                    <label><i class="fas fa-tag"></i> اسم القسم/المجال التدريبي <span class="req">*</span></label>
-                    <input type="text" id="deptField" value="${escapeHtml(fieldName)}" placeholder="مثال: تطوير الويب، التسويق الرقمي..." ${isEdit ? 'readonly' : ''}>
-                    ${isEdit ? '<div class="field-note">اسم القسم لا يمكن تعديله بعد الإنشاء</div>' : ''}
-                </div>
-
-                <div class="field">
-                    <label><i class="fas fa-map-marker-alt"></i> الفرع <span class="req">*</span></label>
-                    <select id="deptBranch">
-                        <option value="">-- اختر الفرع --</option>
-                        ${allBranches.map(b => `<option value="${escapeHtml(b.id)}" ${details.branchId === b.id ? 'selected' : ''}>${escapeHtml(b.name)}${b.fullAddress ? ' - ' + escapeHtml(b.fullAddress) : ''}</option>`).join('')}
-                    </select>
-                    <div class="field-note">
-                        لو الفرع مش موجود، 
-                        <a href="#" onclick="event.preventDefault();closeModal('deptModal');openAddBranchModal()" style="color:var(--primary);font-weight:700">اضغط هنا لإضافة فرع جديد</a>
-                    </div>
-                </div>
-
-                <!-- Trainee System -->
-                <div class="field">
-                    <label><i class="fas fa-user-graduate"></i> نظام المتدربين <span class="req">*</span></label>
-                    <div class="system-cards">
-                        <div class="system-card ${selectedSystem === 'first-time' ? 'selected' : ''}" onclick="selectSystem('first-time')">
-                            <div class="system-card-header">
-                                <div class="system-card-icon"><i class="fas fa-star"></i></div>
-                                <div>
-                                    <div class="system-card-name">النظام الأول</div>
-                                    <div class="system-card-desc">متدرب لأول مرة</div>
-                                </div>
-                            </div>
-                            <div class="system-card-info">طالب أو خريج ليس لديه أي خبرة تدريب سابقة. هذا هو تدريبه الأول في بيئة عمل حقيقية</div>
-                            <div class="system-card-finance">
-                                <div class="system-card-finance-title" style="color:#10b981">💰 النظام المالي:</div>
-                                <ul>
-                                    <li>الشركة تحصل على <strong style="color:#10b981">25% من رسوم التدريب</strong></li>
-                                    <li>يدفع المتدرب رسوم التدريب لمنصة ProVance</li>
-                                    <li>الشركة تستفيد مالياً من كل متدرب</li>
-                                </ul>
-                            </div>
-                            <div class="system-card-price">الشركة تحصل على 25%</div>
-                        </div>
-
-                        <div class="system-card ${selectedSystem === 'once-trained' ? 'selected' : ''}" onclick="selectSystem('once-trained')">
-                            <div class="system-card-header">
-                                <div class="system-card-icon"><i class="fas fa-user-graduate"></i></div>
-                                <div>
-                                    <div class="system-card-name">النظام الثاني</div>
-                                    <div class="system-card-desc">متدرب ذو خبرة</div>
-                                </div>
-                            </div>
-                            <div class="system-card-info">متدرب سبق له التدريب في شركة واحدة فقط. لديه أساس معرفي بسيط في المجال ويفهم بيئة العمل</div>
-                            <div class="system-card-finance">
-                                <div class="system-card-finance-title" style="color:#4facfe">💰 النظام المالي:</div>
-                                <ul>
-                                    <li><strong>خدمة مجانية تماماً</strong> — لا تدفع الشركة أي رسوم للمنصة ولا تحصل على أي عائد مالي</li>
-                                    <li>الشركة هي من <strong>تقدّم للمتدرب</strong> مقابلاً مادياً (ليس بالضرورة مالاً، يمكن بدائل مثل مواصلات أو بدل معيشة)</li>
-                                    <li>تقدم الشركة الميزة المعرفية بالإضافة إلى الميزة المادية للمتدرب</li>
-                                </ul>
-                            </div>
-                            <div class="system-card-price">مجاني للمنصة • الشركة تدفع للمتدرب</div>
-                        </div>
-
-                        <div class="system-card ${selectedSystem === 'twice-trained' ? 'selected' : ''}" onclick="selectSystem('twice-trained')">
-                            <div class="system-card-header">
-                                <div class="system-card-icon"><i class="fas fa-briefcase"></i></div>
-                                <div>
-                                    <div class="system-card-name">النظام الثالث</div>
-                                    <div class="system-card-desc">متدرب متمرس (Training)</div>
-                                </div>
-                            </div>
-                            <div class="system-card-info">متدرب ذو خبرة تدريب في شركتين أو أكثر. يمتلك خبرة عملية جيدة وجاهز للإنتاجية. مدة التدريب اختيارية حتى 3 أسابيع كحد أقصى</div>
-                            <div class="system-card-finance">
-                                <div class="system-card-finance-title" style="color:#ef4444">💰 النظام المالي:</div>
-                                <ul>
-                                    <li>الشركة تدفع <strong style="color:#ef4444">25% من رسوم التدريب</strong></li>
-                                    <li>الشركة تقدم مقابل مادي (مواصلات، بدل معيشة، إلخ)</li>
-                                    <li>استثمار في موهبة جاهزة للتوظيف</li>
-                                    <li>تكلفة أقل من توظيف موظف جديد</li>
-                                    <li>مدة التدريب: اختيارية حتى 3 أسابيع كحد أقصى</li>
-                                </ul>
-                            </div>
-                            <div class="system-card-price">تدفع 25% + مقابل مادي</div>
+                <div style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:14px;margin-bottom:14px;flex-wrap:wrap">
+                    <div class="company-avatar" style="width:80px;height:80px">${photo}</div>
+                    <div style="flex:1;min-width:180px">
+                        <h3 style="font-size:1.3rem;font-weight:800">${escapeHtml(c.name)}</h3>
+                        <div style="color:var(--text-muted);font-size:0.88rem;margin-top:3px">${escapeHtml(c.field)}</div>
+                        <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                            ${statusText}
+                            ${c.suspended ? `<button onclick="unsuspendCompany('${c.id}')" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:0.82rem"><i class="fas fa-play"></i> فك التعليق الآن</button>` : ''}
                         </div>
                     </div>
                 </div>
 
-                <!-- Duration & Count -->
-                <div class="salary-row">
-                    <div class="field">
-                        <label><i class="fas fa-clock"></i> مدة التدريب <span class="req">*</span></label>
-                        <select id="deptDuration">
-                            <option value="">اختر المدة</option>
-                            <option value="2-weeks" ${details.duration === '2-weeks' ? 'selected' : ''}>أسبوعين</option>
-                            <option value="3-weeks" ${details.duration === '3-weeks' ? 'selected' : ''}>3 أسابيع</option>
-                            <option value="1-month" ${details.duration === '1-month' ? 'selected' : ''}>شهر</option>
-                            <option value="1.5-months" ${details.duration === '1.5-months' ? 'selected' : ''}>شهر ونصف</option>
-                            <option value="2-months" ${details.duration === '2-months' ? 'selected' : ''}>شهرين</option>
-                            <option value="2.5-months" ${details.duration === '2.5-months' ? 'selected' : ''}>شهرين ونصف</option>
+                <div class="detail-tabs">
+                    <button class="detail-tab active" onclick="switchDetailTab(event, 'basic')"><i class="fas fa-info-circle"></i> أساسية</button>
+                    <button class="detail-tab" onclick="switchDetailTab(event, 'contact')"><i class="fas fa-phone"></i> اتصال</button>
+                    <button class="detail-tab" onclick="switchDetailTab(event, 'training')"><i class="fas fa-graduation-cap"></i> تدريب</button>
+                    <button class="detail-tab" onclick="switchDetailTab(event, 'branches')"><i class="fas fa-map-marker-alt"></i> فروع</button>
+                    <button class="detail-tab" onclick="switchDetailTab(event, 'penalties')"><i class="fas fa-gavel"></i> عقوبات</button>
+                </div>
+
+                <div class="detail-content active" id="basicDetail">
+                    <div class="info-grid">
+                        <div class="info-item"><div class="info-label"><i class="fas fa-id-card"></i> اسم الشركة</div><div class="info-value">${escapeHtml(c.name)}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-industry"></i> المجال</div><div class="info-value">${escapeHtml(c.field)}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-envelope"></i> البريد</div><div class="info-value">${escapeHtml(c.email || '-')}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-globe"></i> الموقع الإلكتروني</div><div class="info-value">${c.website ? `<a href="${escapeHtml(c.website)}" target="_blank" style="color:var(--info)">${escapeHtml(c.website)}</a>` : '-'}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-map-marker"></i> العنوان</div><div class="info-value">${escapeHtml(c.location)}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-users"></i> الموظفين</div><div class="info-value">${escapeHtml(c.employeesCount || '-')}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-rocket"></i> النوع</div><div class="info-value">${c.isStartup ? 'شركة ناشئة' : 'شركة قائمة'}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-clock"></i> الحد الأقصى للرد</div><div class="info-value">${c.maxResponseDays ? c.maxResponseDays + ' أيام' : '-'}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-tools"></i> توفر المعدات</div><div class="info-value">${c.equipment === 'yes' ? '✓ نوفر' : c.equipment === 'no' ? '✗ يحتاج لمعداته' : '-'}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-calendar"></i> تاريخ التسجيل</div><div class="info-value">${formatDate(c.registeredAt)}</div></div>
+                        ${c.approvedAt ? `<div class="info-item"><div class="info-label"><i class="fas fa-check"></i> تاريخ الاعتماد</div><div class="info-value">${formatDate(c.approvedAt)}</div></div>` : ''}
+                        ${c.agreedAt ? `<div class="info-item"><div class="info-label"><i class="fas fa-handshake"></i> تاريخ الموافقة</div><div class="info-value">${formatDate(c.agreedAt)}</div></div>` : ''}
+                    </div>
+                    ${c.bio ? `<div class="modal-section" style="margin-top:14px"><div class="modal-section-title"><i class="fas fa-align-right"></i> النبذة</div><p>${escapeHtml(c.bio)}</p></div>` : ''}
+                    ${c.trainingPrice ? `<div class="modal-section" style="margin-top:14px;background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.2)"><div class="modal-section-title" style="color:var(--success)"><i class="fas fa-dollar-sign"></i> سعر التدريب</div><div style="font-size:1.4rem;font-weight:800;color:var(--success)">${c.trainingPrice} ${getCurrencyText(c.trainingCurrency)}</div>${c.trainingNotes ? `<div style="color:var(--text-muted);font-size:0.86rem;margin-top:5px">${escapeHtml(c.trainingNotes)}</div>` : ''}</div>` : ''}
+                    ${c.rejectionReason ? `<div class="modal-section" style="margin-top:14px;background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.2)"><div class="modal-section-title" style="color:var(--error)"><i class="fas fa-times-circle"></i> سبب الرفض</div><p>${escapeHtml(c.rejectionReason)}</p></div>` : ''}
+                </div>
+
+                <div class="detail-content" id="contactDetail">
+                    <div class="info-grid">
+                        <div class="info-item"><div class="info-label"><i class="fas fa-phone"></i> الهاتف الأساسي</div><div class="info-value">${escapeHtml(c.primaryPhone || '-')}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-phone-alt"></i> الهاتف البديل</div><div class="info-value">${escapeHtml(c.secondaryPhone || '-')}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fab fa-whatsapp"></i> واتساب</div><div class="info-value">${escapeHtml(c.whatsapp || '-')}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fas fa-envelope-open"></i> بريد الاستفسارات</div><div class="info-value">${escapeHtml(c.inquiryEmail || '-')}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fab fa-linkedin"></i> لينكدإن</div><div class="info-value">${escapeHtml(c.linkedin || '-')}</div></div>
+                        <div class="info-item"><div class="info-label"><i class="fab fa-facebook"></i> فيسبوك</div><div class="info-value">${escapeHtml(c.facebook || '-')}</div></div>
+                    </div>
+                </div>
+
+                <div class="detail-content" id="trainingDetail">${trainingHTML}</div>
+                <div class="detail-content" id="branchesDetail">${branchesHTML}</div>
+                <div class="detail-content" id="penaltiesDetail">
+                    ${c.suspended ? `
+                        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                            <div style="width:46px;height:46px;background:linear-gradient(135deg,#f59e0b,#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.3rem;flex-shrink:0"><i class="fas fa-pause"></i></div>
+                            <div style="flex:1;min-width:180px">
+                                <div style="font-weight:800;color:#f59e0b;font-size:0.95rem">⏸️ الشركة معلقة حالياً</div>
+                                ${c.suspendedUntil ? `<div style="color:var(--text-muted);font-size:0.82rem;margin-top:3px">ينتهي التعليق في: ${formatDate(c.suspendedUntil)}</div>` : ''}
+                            </div>
+                            <button onclick="unsuspendCompany('${c.id}')" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:9px 16px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap">
+                                <i class="fas fa-play"></i> فك التعليق
+                            </button>
+                        </div>
+                    ` : ''}
+                    ${penaltiesHTML}
+                    <button class="btn btn-penalty" onclick="closeModal('detailsModal');openPenalty('${c.id}')" style="width:100%;justify-content:center;margin-top:14px">
+                        <i class="fas fa-plus"></i> إضافة عقوبة جديدة
+                    </button>
+                </div>
+
+                <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap">
+                    ${c.status === 'pending' ? `
+                        <button class="btn btn-success" onclick="closeModal('detailsModal');openApprove('${c.id}')" style="flex:1;justify-content:center;min-width:120px">
+                            <i class="fas fa-check"></i> اعتماد
+                        </button>
+                        <button class="btn btn-danger" onclick="closeModal('detailsModal');openReject('${c.id}')" style="flex:1;justify-content:center;min-width:120px">
+                            <i class="fas fa-times"></i> رفض
+                        </button>
+                    ` : ''}
+                    <button class="btn btn-secondary" onclick="closeModal('detailsModal')" style="flex:1;justify-content:center;min-width:100px">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    `;
+    renderModal(html);
+};
+
+window.switchDetailTab = (e, tab) => {
+    document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.detail-content').forEach(c => c.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    document.getElementById(tab + 'Detail').classList.add('active');
+};
+
+// ========== Approve ==========
+window.openApprove = (id) => {
+    selectedId = id;
+    const c = allCompanies.find(x => x.id === id);
+    const html = `
+        <div class="modal active" id="approveModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title"><i class="fas fa-check-circle" style="color:var(--success)"></i><span>اعتماد الشركة</span></div>
+                    <button class="modal-close" onclick="closeModal('approveModal')"><i class="fas fa-times"></i></button>
+                </div>
+                <div style="padding:14px;background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.2);border-radius:12px;margin-bottom:16px">
+                    <strong>${escapeHtml(c.name)}</strong>
+                    <div style="color:var(--text-muted);font-size:0.86rem;margin-top:3px">${escapeHtml(c.email)}</div>
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-dollar-sign"></i> سعر التدريب الإجمالي <span class="req">*</span></label>
+                    <div style="display:flex;gap:8px">
+                        <input type="number" id="approvePrice" min="0" step="0.01" placeholder="مثال: 5000" style="flex:1">
+                        <select id="approveCurrency" style="width:130px">
+                            <option value="EGP">جنيه</option>
+                            <option value="USD">دولار</option>
+                            <option value="SAR">ريال سعودي</option>
+                            <option value="EUR">يورو</option>
                         </select>
                     </div>
-                    <div class="field">
-                        <label><i class="fas fa-users"></i> عدد المتدربين المتاح <span class="req">*</span></label>
-                        <input type="number" id="deptCount" min="1" value="${details.count || 5}">
-                    </div>
                 </div>
-
-                <!-- Supervisor -->
                 <div class="field">
-                    <label><i class="fas fa-user-tie"></i> المشرف المسؤول <span class="req">*</span></label>
-                    <input type="text" id="deptSupervisor" value="${escapeHtml(details.supervisor || '')}" placeholder="اسم المشرف على التدريب">
+                    <label><i class="fas fa-sticky-note"></i> ملاحظات (اختياري)</label>
+                    <textarea id="approveNotes" rows="3" placeholder="ملاحظات إضافية..."></textarea>
                 </div>
-
-                <!-- Salary Range -->
-                <div class="field">
-                    <label><i class="fas fa-money-bill-wave"></i> نطاق الراتب بعد التعيين (إلزامي في كل الأنظمة) <span class="req">*</span></label>
-                    <div class="salary-row">
-                        <input type="number" id="deptMinSalary" min="0" value="${details.minSalary || ''}" placeholder="الحد الأدنى">
-                        <input type="number" id="deptMaxSalary" min="0" value="${details.maxSalary || ''}" placeholder="الحد الأقصى">
-                    </div>
-                    <select id="deptCurrency" style="margin-top:8px">
-                        <option value="EGP" ${details.currency === 'EGP' ? 'selected' : ''}>جنيه مصري (EGP)</option>
-                        <option value="USD" ${details.currency === 'USD' ? 'selected' : ''}>دولار أمريكي (USD)</option>
-                        <option value="SAR" ${details.currency === 'SAR' ? 'selected' : ''}>ريال سعودي (SAR)</option>
-                        <option value="EUR" ${details.currency === 'EUR' ? 'selected' : ''}>يورو (EUR)</option>
-                    </select>
-                    <div class="field-note">يظهر للمتدرب الراتب المحتمل لو الشركة قررت تعيينه بعد التدريب</div>
-                </div>
-
-                <!-- Knowledge Benefits -->
-                <div class="field">
-                    <label><i class="fas fa-brain"></i> الميزة المعرفية <span class="req">*</span></label>
-                    <textarea id="deptKnowledge" placeholder="المهارات والمعرفة اللي هياخدها المتدرب">${escapeHtml(details.knowledgeBenefits || '')}</textarea>
-                </div>
-
-                <!-- Financial Benefits (Required for systems 2 & 3) -->
-                <div class="field" id="financialField" style="${selectedSystem === 'first-time' ? 'display:none' : ''}">
-                    <label><i class="fas fa-gift"></i> الميزة المادية <span class="req">*</span></label>
-                    <textarea id="deptFinancial" placeholder="بدل مواصلات، وجبات، مكافأة...">${escapeHtml(details.financialBenefits || '')}</textarea>
-                    <div class="field-note">إلزامي في النظام الثاني والثالث</div>
-                </div>
-
-                <!-- Requirements -->
-                <div class="field">
-                    <label><i class="fas fa-clipboard-list"></i> مواصفات المتدرب المطلوبة</label>
-                    <textarea id="deptRequirements" placeholder="المؤهلات والمهارات المطلوبة في المتدرب">${escapeHtml(details.trainingRequirements || '')}</textarea>
-                </div>
-
-                <div style="display:flex;gap:10px;margin-top:18px">
-                    <button class="btn btn-secondary" onclick="closeModal('deptModal')" style="flex:1;justify-content:center">إلغاء</button>
-                    <button class="btn btn-primary" onclick="saveDept()" style="flex:1;justify-content:center">
-                        <i class="fas fa-save"></i> ${isEdit ? 'حفظ التعديلات' : 'إضافة القسم'}
+                <div style="display:flex;gap:10px">
+                    <button class="btn btn-secondary" onclick="closeModal('approveModal')" style="flex:1;justify-content:center">إلغاء</button>
+                    <button class="btn btn-success" onclick="confirmApprove()" style="flex:1;justify-content:center">
+                        <i class="fas fa-check"></i> اعتماد
                     </button>
                 </div>
             </div>
         </div>
     `;
     renderModal(html);
-}
-
-window.selectSystem = (sys) => {
-    selectedSystem = sys;
-    document.querySelectorAll('.system-card').forEach(c => c.classList.remove('selected'));
-    event.currentTarget.classList.add('selected');
-
-    // إظهار/إخفاء الميزة المادية حسب النظام
-    const financialField = document.getElementById('financialField');
-    if (financialField) {
-        financialField.style.display = sys === 'first-time' ? 'none' : '';
-    }
 };
 
-window.saveDept = async () => {
-    const field = document.getElementById('deptField').value.trim();
-    const duration = document.getElementById('deptDuration').value;
-    const count = document.getElementById('deptCount').value;
-    const supervisor = document.getElementById('deptSupervisor').value.trim();
-    const minSalary = document.getElementById('deptMinSalary').value;
-    const maxSalary = document.getElementById('deptMaxSalary').value;
-    const currency = document.getElementById('deptCurrency').value;
-    const knowledge = document.getElementById('deptKnowledge').value.trim();
-    const financial = document.getElementById('deptFinancial').value.trim();
-    const requirements = document.getElementById('deptRequirements').value.trim();
-
-    // Validation
-    const branchId = document.getElementById('deptBranch').value;
-    
-    if (!field) { showToast('أدخل اسم القسم', 'error'); return; }
-    if (!branchId) { showToast('اختر الفرع', 'error'); return; }
-    if (!duration) { showToast('اختر مدة التدريب', 'error'); return; }
-    if (!count || parseInt(count) < 1) { showToast('أدخل عدد المتدربين', 'error'); return; }
-    if (!supervisor) { showToast('أدخل اسم المشرف', 'error'); return; }
-    if (!minSalary || !maxSalary) { showToast('أدخل نطاق الراتب', 'error'); return; }
-    if (!knowledge) { showToast('أدخل الميزة المعرفية', 'error'); return; }
-    if ((selectedSystem === 'once-trained' || selectedSystem === 'twice-trained') && !financial) {
-        showToast('الميزة المادية إلزامية في النظام المختار', 'error');
-        return;
-    }
-
-    const newDetails = {
-        traineeSystem: selectedSystem,
-        branchId: branchId,
-        duration, count: count.toString(), supervisor,
-        minSalary, maxSalary, currency,
-        knowledgeBenefits: knowledge,
-        financialBenefits: financial,
-        trainingRequirements: requirements,
-        otherCurrency: ''
-    };
+window.confirmApprove = async () => {
+    const price = parseFloat(document.getElementById('approvePrice').value);
+    const currency = document.getElementById('approveCurrency').value;
+    const notes = document.getElementById('approveNotes').value.trim();
+    if (!price || price <= 0) { showToast('أدخل سعر صحيح', 'error'); return; }
 
     try {
-        let allDetails = safeParse(companyData.training_details, {});
-        
-        if (editingField) {
-            // === تعديل قسم موجود - يعدّل مباشرة ===
-            allDetails[field] = newDetails;
-            await sb.from('companies').update({
-                training_details: allDetails,
-                updated_at: new Date().toISOString()
-            }).eq('user_id', companyUserId);
-            
-            await syncToInternship(field, newDetails);
-            
-            showToast('✅ تم حفظ التعديلات', 'success');
-            closeModal('deptModal');
-            await loadAll();
-        } else {
-            // === قسم جديد - يبعت للأدمن للموافقة ===
-            let fields = safeParse(companyData.training_fields, []);
-            if (fields.includes(field)) {
-                showToast('القسم ده موجود بالفعل', 'error');
+        const { error } = await sb.from('companies').update({
+            status: 'approved',
+            training_price: price,
+            training_currency: currency,
+            training_notes: notes,
+            approved_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        }).eq('user_id', selectedId);
+        if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
+        await sb.from('internships').update({ status: 'active' }).eq('company_user_id', selectedId);
+        showToast('✅ تم اعتماد الشركة', 'success');
+        closeModal('approveModal');
+        await loadCompanies();
+    } catch (e) { showToast('خطأ في الاتصال', 'error'); }
+};
+
+// ========== Reject ==========
+window.openReject = (id) => {
+    selectedId = id;
+    const c = allCompanies.find(x => x.id === id);
+    const html = `
+        <div class="modal active" id="rejectModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title"><i class="fas fa-times-circle" style="color:var(--error)"></i><span>رفض الطلب</span></div>
+                    <button class="modal-close" onclick="closeModal('rejectModal')"><i class="fas fa-times"></i></button>
+                </div>
+                <div style="padding:14px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:12px;margin-bottom:16px">
+                    <strong>${escapeHtml(c.name)}</strong>
+                    <div style="color:var(--text-muted);font-size:0.86rem;margin-top:3px">${escapeHtml(c.email)}</div>
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-comment"></i> سبب الرفض <span class="req">*</span></label>
+                    <textarea id="rejectReason" rows="4" placeholder="اشرح سبب الرفض..."></textarea>
+                </div>
+                <div style="display:flex;gap:10px">
+                    <button class="btn btn-secondary" onclick="closeModal('rejectModal')" style="flex:1;justify-content:center">إلغاء</button>
+                    <button class="btn btn-danger" onclick="confirmReject()" style="flex:1;justify-content:center">
+                        <i class="fas fa-times"></i> تأكيد الرفض
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    renderModal(html);
+};
+
+window.confirmReject = async () => {
+    const reason = document.getElementById('rejectReason').value.trim();
+    if (!reason) { showToast('أدخل سبب الرفض', 'error'); return; }
+    if (!confirm('هل أنت متأكد من رفض هذا الطلب؟')) return;
+
+    try {
+        const { error } = await sb.from('companies').update({
+            status: 'rejected',
+            rejection_reason: reason,
+            rejected_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        }).eq('user_id', selectedId);
+        if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
+        showToast('تم رفض الطلب', 'success');
+        closeModal('rejectModal');
+        await loadCompanies();
+    } catch (e) { showToast('خطأ في الاتصال', 'error'); }
+};
+
+// ========== Penalty ==========
+window.openPenalty = (id) => {
+    selectedId = id;
+    const c = allCompanies.find(x => x.id === id);
+    const html = `
+        <div class="modal active" id="penaltyModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title"><i class="fas fa-gavel" style="color:var(--penalty)"></i><span>إضافة عقوبة</span></div>
+                    <button class="modal-close" onclick="closeModal('penaltyModal')"><i class="fas fa-times"></i></button>
+                </div>
+                <div style="padding:14px;background:rgba(255,152,0,0.05);border:1px solid rgba(255,152,0,0.2);border-radius:12px;margin-bottom:16px">
+                    <strong>${escapeHtml(c.name)}</strong>
+                    <div style="color:var(--text-muted);font-size:0.86rem;margin-top:3px">${escapeHtml(c.email)}</div>
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-tag"></i> نوع العقوبة <span class="req">*</span></label>
+                    <select id="penType" onchange="onPenaltyTypeChange()">
+                        <option value="">-- اختر --</option>
+                        <option value="warning">إنذار</option>
+                        <option value="fine">غرامة مالية</option>
+                        <option value="suspension">تعليق مؤقت</option>
+                        <option value="termination">إنهاء التعاقد</option>
+                    </select>
+                </div>
+                <div class="field" id="penAmountField" style="display:none">
+                    <label><i class="fas fa-money-bill"></i> قيمة الغرامة</label>
+                    <div style="display:flex;gap:8px">
+                        <input type="number" id="penAmount" min="0" placeholder="القيمة" style="flex:1">
+                        <select id="penCurrency" style="width:130px">
+                            <option value="EGP">جنيه</option>
+                            <option value="USD">دولار</option>
+                            <option value="SAR">ريال</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field" id="penDurationField" style="display:none">
+                    <label><i class="fas fa-clock"></i> مدة التعليق (بالأيام)</label>
+                    <input type="number" id="penDuration" min="1" placeholder="عدد الأيام">
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-comment"></i> السبب <span class="req">*</span></label>
+                    <textarea id="penReason" rows="3" placeholder="اشرح سبب العقوبة..."></textarea>
+                </div>
+                <div style="display:flex;gap:10px">
+                    <button class="btn btn-secondary" onclick="closeModal('penaltyModal')" style="flex:1;justify-content:center">إلغاء</button>
+                    <button class="btn btn-penalty" onclick="confirmPenalty()" style="flex:1;justify-content:center">
+                        <i class="fas fa-gavel"></i> إضافة
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    renderModal(html);
+};
+
+window.onPenaltyTypeChange = () => {
+    const type = document.getElementById('penType').value;
+    document.getElementById('penAmountField').style.display = type === 'fine' ? 'block' : 'none';
+    document.getElementById('penDurationField').style.display = type === 'suspension' ? 'block' : 'none';
+};
+
+window.confirmPenalty = async () => {
+    const type = document.getElementById('penType').value;
+    const reason = document.getElementById('penReason').value.trim();
+    const amount = document.getElementById('penAmount').value;
+    const currency = document.getElementById('penCurrency').value;
+    const duration = document.getElementById('penDuration').value;
+
+    if (!type || !reason) { showToast('املأ الحقول المطلوبة', 'error'); return; }
+    if (type === 'fine' && (!amount || parseFloat(amount) <= 0)) { showToast('أدخل قيمة الغرامة', 'error'); return; }
+    if (type === 'suspension' && (!duration || parseInt(duration) <= 0)) { showToast('أدخل المدة', 'error'); return; }
+
+    const c = allCompanies.find(x => x.id === selectedId);
+    if (!c) return;
+
+    const penalty = {
+        id: 'pen-' + Date.now(),
+        type, reason,
+        date: new Date().toISOString().split('T')[0],
+        status: 'active'
+    };
+    if (type === 'fine') { penalty.amount = parseFloat(amount); penalty.currency = currency; }
+    if (type === 'suspension') {
+        penalty.duration = parseInt(duration);
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + parseInt(duration));
+        penalty.endDate = endDate.toISOString().split('T')[0];
+    }
+
+    const newPenalties = [...(c.penalties || []), penalty];
+    const updateData = { penalties: newPenalties, updated_at: new Date().toISOString() };
+    if (type === 'suspension') { updateData.suspended = true; updateData.suspended_until = penalty.endDate; }
+
+    try {
+        const { error } = await sb.from('companies').update(updateData).eq('user_id', c.id);
+        if (error) {
+            // معالجة خاصة لو الـ column مش موجود
+            if (error.message && (error.message.includes('penalties') || error.message.includes('column'))) {
+                showToast('⚠️ شغّل SQL Migration 38 الأول! (columns مفقودة)', 'error');
+                console.error('Missing columns. Run 38_companies_penalties_admin_permissions.sql');
                 return;
             }
-            
-            // شوف لو في طلب pending للقسم ده
-            try {
-                const { data: existing } = await sb.from('pending_approvals')
-                    .select('id')
-                    .eq('company_user_id', companyUserId)
-                    .eq('type', 'department')
-                    .eq('item_name', field)
-                    .eq('status', 'pending')
-                    .maybeSingle();
-                
-                if (existing) {
-                    showToast('⏳ القسم ده مستني موافقة الأدمن بالفعل', 'warning');
-                    closeModal('deptModal');
-                    await loadAll();
-                    return;
-                }
-            } catch(e) { /* table may not exist yet */ }
-            
-            // ابعت للأدمن
-            const { error: insertErr } = await sb.from('pending_approvals').insert({
-                company_user_id: companyUserId,
-                type: 'department',
-                item_name: field,
-                data: newDetails,
-                status: 'pending',
-                created_at: new Date().toISOString()
-            });
-            
-            if (insertErr) {
-                console.error(insertErr);
-                if (insertErr.message && insertErr.message.includes('pending_approvals')) {
-                    showToast('⚠️ جدول الموافقات مش موجود - شغّل SQL migration 18 الأول', 'error');
-                } else {
-                    showToast('خطأ: ' + insertErr.message, 'error');
-                }
-                return;
-            }
-            
-            // ابعت notification للأدمن
-            try {
-                await sb.from('notifications').insert({
-                    user_id: companyUserId,  // مؤقت - الأدمن يشوفها من query على pending_approvals
-                    user_type: 'admin',
-                    type: 'new_approval',
-                    title: 'طلب موافقة جديد',
-                    message: `الشركة "${companyData.company_name}" طلبت إضافة قسم: ${field}`,
-                    link: 'admin-approvals.html'
-                });
-            } catch(e) { /* notifications table may not exist */ }
-            
-            showToast('⏳ تم إرسال القسم للأدمن للمراجعة والموافقة', 'success');
-            closeModal('deptModal');
-            await loadAll();
+            showToast('خطأ: ' + error.message, 'error');
+            return;
         }
-    } catch (err) {
-        console.error(err);
-        showToast('خطأ: ' + err.message, 'error');
+        showToast('✅ تم إضافة العقوبة', 'warning');
+        const companyId = c.id;
+        closeModal('penaltyModal');
+        closeModal('detailsModal');
+        await loadCompanies();
+        
+        // أعد فتح details modal بعد قليل عشان البيانات الجديدة تتعرض
+        setTimeout(() => { 
+            if (typeof window.viewDetails === 'function') {
+                window.viewDetails(companyId);
+                // افتح tab العقوبات تلقائياً
+                setTimeout(() => {
+                    const penTab = document.querySelector('[onclick*="penalties"]');
+                    if (penTab) penTab.click();
+                }, 150);
+            }
+        }, 200);
+    } catch (e) { 
+        console.error(e);
+        showToast('خطأ: ' + e.message, 'error'); 
     }
 };
 
-
-// ========== Branches ==========
-function loadBranches() {
-    allBranches = safeParse(companyData.branch_locations, []);
+// ========== Unsuspend Company ==========
+window.unsuspendCompany = async (companyId) => {
+    if (!confirm('هل تريد فك التعليق عن هذه الشركة؟ ستصبح فعالة مرة أخرى.')) return;
+    const c = allCompanies.find(x => x.id === companyId);
+    if (!c) return;
     
-    // لو مفيش فروع، أنشئ "الفرع الرئيسي" تلقائياً
-    if (allBranches.length === 0) {
-        allBranches = [{ id: 'main', name: 'الفرع الرئيسي', fullAddress: companyData.company_location || '' }];
-    }
-    
-    // تأكد إن كل فرع له id
-    allBranches = allBranches.map((b, i) => {
-        if (typeof b === 'string') {
-            return { id: 'branch_' + i, name: 'فرع ' + (i + 1), fullAddress: b };
+    // تحديث الـ suspension في الـ penalties النشطة (نخليها expired)
+    const updatedPenalties = (c.penalties || []).map(p => {
+        if (p.type === 'suspension' && p.status === 'active') {
+            return { ...p, status: 'expired', expired_at: new Date().toISOString().split('T')[0] };
         }
-        if (!b.id) b.id = 'branch_' + i;
-        if (!b.name) b.name = b.fullAddress || ('فرع ' + (i + 1));
-        return b;
+        return p;
     });
     
-    // املأ الـ dropdown
-    const select = document.getElementById('branchFilter');
-    select.innerHTML = '<option value="">-- كل الفروع --</option>' +
-        allBranches.map(b => `<option value="${escapeHtml(b.id)}" ${currentBranchId === b.id ? 'selected' : ''}>${escapeHtml(b.name)}</option>`).join('');
-    
-    updateBranchInfo();
-}
-
-function updateBranchInfo() {
-    const info = document.getElementById('branchInfo');
-    if (!currentBranchId) {
-        info.style.display = 'none';
-        return;
-    }
-    const branch = allBranches.find(b => b.id === currentBranchId);
-    if (!branch) { info.style.display = 'none'; return; }
-    
-    info.style.display = 'block';
-    info.innerHTML = `
-        <div style="padding:10px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:10px;font-size:0.84rem">
-            <i class="fas fa-info-circle" style="color:var(--primary)"></i>
-            بتعرض دلوقتي أقسام: <strong>${escapeHtml(branch.name)}</strong>
-            ${branch.fullAddress ? ' - ' + escapeHtml(branch.fullAddress) : ''}
-            <button class="btn btn-secondary btn-sm" onclick="editBranch('${escapeHtml(branch.id)}')" style="margin-right:8px;padding:4px 10px;font-size:0.78rem">
-                <i class="fas fa-edit"></i> تعديل
-            </button>
-        </div>
-    `;
-}
-
-window.onBranchChange = () => {
-    currentBranchId = document.getElementById('branchFilter').value;
-    updateBranchInfo();
-    renderDepartments();
-    updateStats();
-};
-
-// ========== Add Branch Modal ==========
-window.openAddBranchModal = () => {
-    showBranchModal(null);
-};
-
-window.editBranch = (branchId) => {
-    const branch = allBranches.find(b => b.id === branchId);
-    if (branch) showBranchModal(branch);
-};
-
-function showBranchModal(branch) {
-    const isEdit = !!branch;
-    const html = `
-        <div class="modal active" id="branchModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">
-                        <i class="fas fa-${isEdit ? 'edit' : 'map-marked-alt'}"></i>
-                        <span>${isEdit ? 'تعديل الفرع' : 'إضافة فرع جديد'}</span>
-                    </div>
-                    <button class="modal-close" onclick="closeModal('branchModal')"><i class="fas fa-times"></i></button>
-                </div>
-
-                <div class="field">
-                    <label><i class="fas fa-building"></i> اسم الفرع <span class="req">*</span></label>
-                    <input type="text" id="branchName" value="${branch ? escapeHtml(branch.name) : ''}" placeholder="مثال: الفرع الرئيسي، فرع جدة، فرع التجمع...">
-                </div>
-
-                <div class="field">
-                    <label><i class="fas fa-map-marker-alt"></i> العنوان الكامل <span class="req">*</span></label>
-                    <input type="text" id="branchAddress" value="${branch ? escapeHtml(branch.fullAddress || '') : ''}" placeholder="العنوان التفصيلي للفرع">
-                </div>
-
-                <div class="salary-row">
-                    <div class="field">
-                        <label><i class="fas fa-city"></i> المدينة</label>
-                        <input type="text" id="branchCity" value="${branch ? escapeHtml(branch.city || '') : ''}" placeholder="القاهرة، الرياض...">
-                    </div>
-                    <div class="field">
-                        <label><i class="fas fa-phone"></i> هاتف الفرع</label>
-                        <input type="text" id="branchPhone" value="${branch ? escapeHtml(branch.phone || '') : ''}" placeholder="0123456789">
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label><i class="fas fa-user-tie"></i> مدير الفرع</label>
-                    <input type="text" id="branchManager" value="${branch ? escapeHtml(branch.manager || '') : ''}" placeholder="اسم مدير الفرع">
-                </div>
-
-                <div style="display:flex;gap:10px;margin-top:18px">
-                    <button class="btn btn-secondary" onclick="closeModal('branchModal')" style="flex:1;justify-content:center">إلغاء</button>
-                    ${isEdit ? `<button class="btn btn-danger" onclick="deleteBranch('${escapeHtml(branch.id)}')" style="flex:1;justify-content:center"><i class="fas fa-trash"></i> حذف الفرع</button>` : ''}
-                    <button class="btn btn-primary" onclick="saveBranch('${isEdit ? escapeHtml(branch.id) : ''}')" style="flex:1;justify-content:center">
-                        <i class="fas fa-save"></i> ${isEdit ? 'حفظ' : 'إضافة'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    renderModal(html);
-}
-
-window.saveBranch = async (existingId) => {
-    const name = document.getElementById('branchName').value.trim();
-    const address = document.getElementById('branchAddress').value.trim();
-    const city = document.getElementById('branchCity').value.trim();
-    const phone = document.getElementById('branchPhone').value.trim();
-    const manager = document.getElementById('branchManager').value.trim();
-
-    if (!name) { showToast('أدخل اسم الفرع', 'error'); return; }
-    if (!address) { showToast('أدخل عنوان الفرع', 'error'); return; }
-
     try {
-        if (existingId) {
-            // === تعديل فرع موجود - يعدّل مباشرة ===
-            let branches = [...allBranches];
-            const idx = branches.findIndex(b => b.id === existingId);
-            if (idx >= 0) {
-                branches[idx] = { id: existingId, name, fullAddress: address, city, phone, manager };
-            }
-            
-            await sb.from('companies').update({
-                branch_locations: branches,
-                updated_at: new Date().toISOString()
-            }).eq('user_id', companyUserId);
-
-            // حدّث الـ internships لكل قسم مربوط بالفرع ده (يحدّث الـ location)
-            companyData.branch_locations = branches;
-            allBranches = branches;
-            const td = safeParse(companyData.training_details, {});
-            const linked = Object.keys(td).filter(f => td[f].branchId === existingId);
-            for (const field of linked) {
-                try { await syncToInternship(field, td[field]); } catch(e) { console.warn('sync failed', field, e); }
-            }
-
-            showToast('✅ تم حفظ التعديلات وتحديث الأقسام المرتبطة', 'success');
-            closeModal('branchModal');
-            await loadAll();
-        } else {
-            // === فرع جديد - يبعت للأدمن للموافقة ===
-            const branchData = { name, fullAddress: address, city, phone, manager };
-            
-            // شوف لو في طلب pending للفرع ده
-            try {
-                const { data: existing } = await sb.from('pending_approvals')
-                    .select('id')
-                    .eq('company_user_id', companyUserId)
-                    .eq('type', 'branch')
-                    .eq('item_name', name)
-                    .eq('status', 'pending')
-                    .maybeSingle();
-                
-                if (existing) {
-                    showToast('⏳ الفرع ده مستني موافقة الأدمن بالفعل', 'warning');
-                    closeModal('branchModal');
-                    return;
-                }
-            } catch(e) { /* table may not exist */ }
-            
-            const { error: insertErr } = await sb.from('pending_approvals').insert({
-                company_user_id: companyUserId,
-                type: 'branch',
-                item_name: name,
-                data: branchData,
-                status: 'pending',
-                created_at: new Date().toISOString()
-            });
-            
-            if (insertErr) {
-                if (insertErr.message && insertErr.message.includes('pending_approvals')) {
-                    showToast('⚠️ جدول الموافقات مش موجود - شغّل SQL migration 18 الأول', 'error');
-                } else {
-                    showToast('خطأ: ' + insertErr.message, 'error');
-                }
+        const { error } = await sb.from('companies').update({
+            suspended: false,
+            suspended_until: null,
+            penalties: updatedPenalties,
+            updated_at: new Date().toISOString()
+        }).eq('user_id', c.id);
+        
+        if (error) {
+            if (error.message && error.message.includes('column')) {
+                showToast('⚠️ شغّل SQL Migration 40 الأول!', 'error');
                 return;
             }
-            
-            // ابعت notification للأدمن
-            try {
-                await sb.from('notifications').insert({
-                    user_id: companyUserId,
-                    user_type: 'admin',
-                    type: 'new_approval',
-                    title: 'طلب فرع جديد',
-                    message: `الشركة "${companyData.company_name}" طلبت إضافة فرع: ${name}`,
-                    link: 'admin-approvals.html'
-                });
-            } catch(e) { /* notifications table may not exist */ }
-            
-            showToast('⏳ تم إرسال الفرع للأدمن للموافقة', 'success');
-            closeModal('branchModal');
+            showToast('خطأ: ' + error.message, 'error');
+            return;
         }
-    } catch (err) {
-        showToast('خطأ: ' + err.message, 'error');
+        
+        // تأكد إن الـ internships رجعت active (في حالة كانت paused لأي سبب)
+        try {
+            await sb.from('internships').update({ status: 'active' }).eq('company_user_id', companyId).neq('status', 'closed');
+        } catch(e) { console.warn('Could not reactivate internships:', e); }
+        
+        showToast('✅ تم فك التعليق - الشركة فعالة الآن + التدريبات نشطة', 'success');
+        
+        // إشعار للشركة
+        try {
+            await sb.from('notifications').insert({
+                user_id: companyId,
+                user_type: 'company',
+                type: 'unsuspended',
+                title: '✅ تم فك التعليق',
+                message: 'تم رفع التعليق عن حسابك ورجعت التدريبات نشطة. مرحباً بعودتك!',
+                link: 'company-dashboard.html'
+            });
+        } catch(e) {}
+        
+        closeModal('detailsModal');
+        await loadCompanies();
+        // أعد فتح details + tab العقوبات
+        setTimeout(() => { 
+            viewDetails(companyId);
+            setTimeout(() => {
+                const penTab = document.querySelector('[onclick*="penalties"]');
+                if (penTab) penTab.click();
+            }, 150);
+        }, 200);
+    } catch (e) {
+        console.error(e);
+        showToast('خطأ: ' + e.message, 'error');
     }
 };
 
-window.deleteBranch = async (branchId) => {
-    // شوف لو في أقسام مرتبطة بالفرع
-    const trainingDetails = safeParse(companyData.training_details, {});
-    const linkedDepts = Object.keys(trainingDetails).filter(field => trainingDetails[field].branchId === branchId);
-
-    if (linkedDepts.length > 0) {
-        if (!confirm(`⚠️ في ${linkedDepts.length} قسم/أقسام مرتبطة بالفرع ده:\n${linkedDepts.join(', ')}\n\nهل تريد حذف الفرع؟ (الأقسام مش هتتمسح لكن مش هتكون مربوطة بفرع)`)) return;
-    } else {
-        if (!confirm('هل تريد حذف الفرع ده؟')) return;
+// ========== Cancel / Delete Penalty ==========
+window.cancelPenalty = async (companyId, penaltyId) => {
+    if (!confirm('هل تريد إلغاء هذه العقوبة؟ ستصبح غير فعالة لكن تبقى في السجل.')) return;
+    const c = allCompanies.find(x => x.id === companyId);
+    if (!c || !c.penalties) return;
+    
+    const updatedPenalties = c.penalties.map(p => 
+        p.id === penaltyId ? { ...p, status: 'cancelled', cancelled_at: new Date().toISOString() } : p
+    );
+    
+    // لو العقوبة كانت suspension، ارفع الـ suspended flag
+    const cancelledPenalty = c.penalties.find(p => p.id === penaltyId);
+    const updateData = { penalties: updatedPenalties, updated_at: new Date().toISOString() };
+    
+    if (cancelledPenalty && cancelledPenalty.type === 'suspension') {
+        // شوف لو في suspensions تانية نشطة
+        const stillSuspended = updatedPenalties.some(p => p.type === 'suspension' && p.status !== 'cancelled' && p.status !== 'expired');
+        if (!stillSuspended) {
+            updateData.suspended = false;
+            updateData.suspended_until = null;
+        }
     }
-
+    
+    // أمان إضافي: لو مفيش أي suspension نشطة، فك التعليق
+    const hasActiveSuspension = updatedPenalties.some(p => p.type === 'suspension' && p.status !== 'cancelled' && p.status !== 'expired');
+    if (!hasActiveSuspension && c.suspended) {
+        updateData.suspended = false;
+        updateData.suspended_until = null;
+    }
+    
     try {
-        const branches = allBranches.filter(b => b.id !== branchId);
-
-        // شيل الـ branchId من الأقسام
-        const newDetails = { ...trainingDetails };
-        linkedDepts.forEach(field => {
-            delete newDetails[field].branchId;
-        });
-
-        await sb.from('companies').update({
-            branch_locations: branches,
-            training_details: newDetails,
-            updated_at: new Date().toISOString()
-        }).eq('user_id', companyUserId);
-
-        // حدّث الـ internships للأقسام اللي كانت مربوطة بالفرع (يرجّع location لعنوان الشركة الرئيسي)
-        companyData.training_details = newDetails;
-        companyData.branch_locations = branches;
-        allBranches = branches;
-        for (const field of linkedDepts) {
-            try { await syncToInternship(field, newDetails[field]); } catch(e) { console.warn('sync failed for', field, e); }
+        const { error } = await sb.from('companies').update(updateData).eq('user_id', c.id);
+        if (error) {
+            if (error.message && error.message.includes('column')) {
+                showToast('⚠️ شغّل SQL Migration 38 الأول!', 'error');
+                return;
+            }
+            showToast('خطأ: ' + error.message, 'error');
+            return;
         }
-
-        if (currentBranchId === branchId) currentBranchId = '';
-
-        showToast('🗑️ تم حذف الفرع وتحديث الأقسام المرتبطة', 'success');
-        closeModal('branchModal');
-        await loadAll();
-    } catch (err) {
-        showToast('خطأ: ' + err.message, 'error');
+        showToast('✅ تم إلغاء العقوبة', 'success');
+        closeModal('detailsModal');
+        await loadCompanies();
+        // أعد فتح details + افتح tab العقوبات
+        setTimeout(() => { 
+            viewDetails(companyId);
+            setTimeout(() => {
+                const penTab = document.querySelector('[onclick*="penalties"]');
+                if (penTab) penTab.click();
+            }, 150);
+        }, 200);
+    } catch (e) {
+        showToast('خطأ في الاتصال', 'error');
     }
 };
 
-// ========== Branches Management Modal ==========
-window.openBranchesModal = () => {
-    const html = `
-        <div class="modal active" id="branchesModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <span>إدارة فروع الشركة</span>
-                    </div>
-                    <button class="modal-close" onclick="closeModal('branchesModal')"><i class="fas fa-times"></i></button>
-                </div>
+window.deletePenalty = async (companyId, penaltyId) => {
+    if (!confirm('هل أنت متأكد من الحذف النهائي؟ لا يمكن التراجع.')) return;
+    const c = allCompanies.find(x => x.id === companyId);
+    if (!c || !c.penalties) return;
+    
+    const updatedPenalties = c.penalties.filter(p => p.id !== penaltyId);
+    const updateData = { penalties: updatedPenalties, updated_at: new Date().toISOString() };
+    
+    // لو العقوبة المحذوفة كانت suspension، شوف لو في suspensions تانية نشطة
+    const deletedPenalty = c.penalties.find(p => p.id === penaltyId);
+    if (deletedPenalty && deletedPenalty.type === 'suspension') {
+        const stillSuspended = updatedPenalties.some(p => p.type === 'suspension' && p.status !== 'cancelled' && p.status !== 'expired');
+        if (!stillSuspended) {
+            updateData.suspended = false;
+            updateData.suspended_until = null;
+        }
+    }
+    
+    // أمان إضافي: لو مفيش أي suspension penalties نشطة في الـ array، فك التعليق
+    const hasActiveSuspension = updatedPenalties.some(p => p.type === 'suspension' && p.status !== 'cancelled' && p.status !== 'expired');
+    if (!hasActiveSuspension && c.suspended) {
+        updateData.suspended = false;
+        updateData.suspended_until = null;
+    }
+    
+    try {
+        const { error } = await sb.from('companies').update(updateData).eq('user_id', c.id);
+        if (error) {
+            if (error.message && error.message.includes('column')) {
+                showToast('⚠️ شغّل SQL Migration 38 الأول!', 'error');
+                return;
+            }
+            showToast('خطأ: ' + error.message, 'error');
+            return;
+        }
+        showToast('🗑️ تم حذف العقوبة نهائياً', 'success');
+        closeModal('detailsModal');
+        await loadCompanies();
+        setTimeout(() => { 
+            viewDetails(companyId);
+            setTimeout(() => {
+                const penTab = document.querySelector('[onclick*="penalties"]');
+                if (penTab) penTab.click();
+            }, 150);
+        }, 200);
+    } catch (e) {
+        showToast('خطأ في الاتصال', 'error');
+    }
+};
 
-                <div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);padding:12px;border-radius:10px;margin-bottom:16px;font-size:0.86rem;color:var(--text-muted)">
-                    <i class="fas fa-info-circle" style="color:var(--info)"></i>
-                    تقدر تضيف عدد غير محدود من الفروع وتربط كل قسم تدريبي بفرع معين
-                </div>
-
-                <div style="max-height:400px;overflow-y:auto;margin-bottom:14px">
-                    ${allBranches.length === 0 ? `
-                        <div style="text-align:center;padding:30px;color:var(--text-muted)">
-                            <i class="fas fa-map-marker-alt" style="font-size:3rem;opacity:0.3;display:block;margin-bottom:10px"></i>
-                            <p>لا توجد فروع مسجلة</p>
-                        </div>
-                    ` : allBranches.map(b => {
-                        const trainingDetails = safeParse(companyData.training_details, {});
-                        const deptsCount = Object.keys(trainingDetails).filter(f => trainingDetails[f].branchId === b.id).length;
-                        return `
-                            <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
-                                <div style="display:flex;align-items:center;gap:12px">
-                                    <div style="width:44px;height:44px;border-radius:12px;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;flex-shrink:0">
-                                        <i class="fas fa-building"></i>
-                                    </div>
-                                    <div style="flex:1;min-width:0">
-                                        <div style="font-weight:800;font-size:1rem">${escapeHtml(b.name)}</div>
-                                        <div style="color:var(--text-muted);font-size:0.84rem;margin-top:2px">
-                                            <i class="fas fa-map-marker-alt"></i> ${escapeHtml(b.fullAddress || '-')}
-                                        </div>
-                                        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;font-size:0.78rem">
-                                            ${b.city ? `<span style="color:var(--text-muted)"><i class="fas fa-city"></i> ${escapeHtml(b.city)}</span>` : ''}
-                                            ${b.phone ? `<span style="color:var(--text-muted)"><i class="fas fa-phone"></i> ${escapeHtml(b.phone)}</span>` : ''}
-                                            <span style="background:rgba(239,68,68,0.1);color:var(--primary);padding:2px 8px;border-radius:10px;font-weight:700">
-                                                ${deptsCount} قسم مرتبط
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-info btn-sm" onclick="closeModal('branchesModal');editBranch('${escapeHtml(b.id)}')">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-
-                <div style="display:flex;gap:10px">
-                    <button class="btn btn-secondary" onclick="closeModal('branchesModal')" style="flex:1;justify-content:center">إغلاق</button>
-                    <button class="btn btn-primary" onclick="closeModal('branchesModal');openAddBranchModal()" style="flex:1;justify-content:center">
-                        <i class="fas fa-plus"></i> إضافة فرع جديد
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    renderModal(html);
+// ========== Export CSV ==========
+window.exportCSV = () => {
+    if (allCompanies.length === 0) { showToast('لا توجد بيانات', 'info'); return; }
+    let csv = '\uFEFFاسم الشركة,المجال,البريد,الموقع,الحالة,سعر التدريب,تاريخ التسجيل\n';
+    allCompanies.forEach(c => {
+        const status = c.status === 'approved' ? 'معتمدة' : c.status === 'rejected' ? 'مرفوضة' : 'قيد المراجعة';
+        csv += `"${c.name}","${c.field}","${c.email}","${c.location}","${status}","${c.trainingPrice || '-'}","${formatDate(c.registeredAt)}"\n`;
+    });
+    const link = document.createElement('a');
+    link.href = encodeURI('data:text/csv;charset=utf-8,' + csv);
+    link.download = `companies_${Date.now()}.csv`;
+    link.click();
+    showToast('تم التصدير', 'success');
 };
 
 // ========== Init ==========
 async function init() {
-    try {
-        // انتظر sb لو لسه مش جاهز
-        if (!sb) {
-            showToast('فشل تحميل Supabase', 'error');
-            return;
-        }
-        await loadAll();
-    } catch (err) {
-        console.error('Init error:', err);
+    const admin = await checkAdmin();
+    if (!admin) {
         document.getElementById('loadingOverlay').classList.add('hidden');
+        return;
     }
+    
+    // Hide loading أول ما checkAdmin يخلص (السرعة المرئية)
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    
+    // ثم اللود (الـ retry mechanism بيهتم بالباقي)
+    await loadCompanies();
+    // اجيب عدد طلبات الأقسام المعلقة للـ badge
+    loadDeptRequestsBadge();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+async function loadDeptRequestsBadge() {
+    try {
+        const { data, error } = await sb.from('pending_approvals')
+            .select('id', { count: 'exact', head: false })
+            .eq('type', 'department')
+            .eq('status', 'pending');
+        if (!error && data) {
+            const badge = document.getElementById('badgeDeptRequests');
+            if (badge) {
+                badge.textContent = data.length;
+                if (data.length > 0) badge.style.background = 'rgba(245,158,11,0.6)';
+            }
+        }
+    } catch(e) { /* ignore */ }
+}
 
-// Safety: 12 ثانية ولو لسه بيحمل، أخفي الـ loading
-setTimeout(() => {
-    const el = document.getElementById('loadingOverlay');
-    if (el && !el.classList.contains('hidden')) {
-        console.warn('⚠️ Loading timeout');
-        el.classList.add('hidden');
-    }
-}, 12000);
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        const modals = document.querySelectorAll('.modal.active');
-        if (modals.length > 0) closeModal(modals[modals.length - 1].id);
-    }
-});
-    </script>
-<script>
-    // توحيد الـ sidebar والهيدر
-    document.addEventListener('DOMContentLoaded', function () {
-        if (window.ProVanceLayout) { try { ProVanceLayout.init({}); } catch(e) { console.warn('layout:', e); } }
+document.addEventListener('DOMContentLoaded', () => {
+    // Safety: hide loading overlay after 6s no matter what
+    setTimeout(() => {
+        const el = document.getElementById('loadingOverlay');
+        if (el && !el.classList.contains('hidden')) {
+            el.classList.add('hidden');
+            console.warn('Loading timeout - showing UI anyway');
+        }
+    }, 6000);
+    init();
+    let st;
+    document.getElementById('searchInput').addEventListener('input', () => {
+        clearTimeout(st);
+        st = setTimeout(renderCompanies, 300);
     });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modals = document.querySelectorAll('.modal.active');
+            if (modals.length > 0) closeModal(modals[modals.length - 1].id);
+        }
+    });
+});
     </script>
 </body>
 </html>
