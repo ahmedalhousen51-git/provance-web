@@ -1229,7 +1229,7 @@ async function renderEvalTab() {
     if (t.evaluation) {
         const e = t.evaluation;
         const cats = e.category_scores || {};
-        const catLabels = {technical:'🛠️ مهارات تقنية', soft_skills:'💼 مهارات شخصية', performance:'📊 الأداء', growth:'🌱 التطور'};
+        const catLabels = {technical:'🛠️ مهارات تقنية', soft_skills:'💼 مهارات شخصية', performance:'📊 الأداء', growth:'🌱 التطور', personality:'🧠 سمات الشخصية'};
         
         content.innerHTML = '<div style="text-align:center;background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(220,38,38,0.05));border:1px solid rgba(239,68,68,0.25);border-radius:14px;padding:24px;margin-bottom:14px">' +
             '<div style="font-size:3.5rem;font-weight:800;background:linear-gradient(135deg,#ef4444,#dc2626);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1">' + Number(e.overall_score || 0).toFixed(1) + '<span style="font-size:1.2rem">/100</span></div>' +
@@ -1306,46 +1306,67 @@ function buildEvaluationQuestions(field) {
     let id = 0;
     const nid = () => 'q' + (++id);
 
-    // أسئلة مشتركة لكل المجالات
+    // أسئلة مشتركة لكل المجالات (موسّعة)
     const common = {
         soft_skills: [
             'مدى التزام المتدرب بمواعيد العمل والحضور',
             'القدرة على التواصل والعمل ضمن فريق',
             'تقبّل الملاحظات والتغذية الراجعة والتعلم منها',
-            'المبادرة وتحمّل المسؤولية في المهام'
+            'المبادرة وتحمّل المسؤولية في المهام',
+            'مهارات التواصل الكتابي والشفهي بوضوح',
+            'إدارة الوقت وترتيب الأولويات',
+            'الاحترافية في التعامل مع الزملاء والعملاء'
         ],
         performance: [
             'جودة العمل المُنجَز ودقته',
             'الالتزام بتسليم المهام في وقتها',
-            'القدرة على حل المشكلات اللي بتواجهه'
+            'القدرة على حل المشكلات اللي بتواجهه',
+            'الإنتاجية وكمية العمل المُنجَز',
+            'الاستقلالية في تنفيذ المهام دون إشراف مستمر',
+            'الاتساق والثبات في مستوى الأداء'
         ],
         growth: [
             'سرعة تعلّم المهارات والأدوات الجديدة',
-            'مدى التطوّر والتحسّن من بداية التدريب'
+            'مدى التطوّر والتحسّن من بداية التدريب',
+            'السعي الذاتي للتعلّم خارج المطلوب منه',
+            'تطبيق الملاحظات السابقة في الأعمال اللاحقة',
+            'الطموح ووضوح الأهداف المهنية'
+        ],
+        // فئة الشخصية — تقيس السمات الخمس الكبرى (Big Five)
+        personality: [
+            'الفضول والرغبة في استكشاف أفكار وطرق جديدة (انفتاح)',
+            'الانفتاح على الأساليب غير التقليدية في حل المشكلات (انفتاح)',
+            'التنظيم والترتيب في إدارة المهام والوقت (ضمير حي)',
+            'الدقة والاهتمام بالتفاصيل والالتزام (ضمير حي)',
+            'الراحة في التعبير عن الرأي والمشاركة في النقاشات (انبساط)',
+            'المبادرة في التواصل وبناء العلاقات (انبساط)',
+            'التعاون ومساعدة الزملاء والتعامل بلطف (توافق)',
+            'تقبّل وجهات النظر المختلفة دون توتر (توافق)',
+            'الهدوء والثبات الانفعالي تحت الضغط أو عند الخطأ (اتزان)'
         ]
     };
 
-    // أسئلة تقنية حسب المجال
+    // أسئلة تقنية حسب المجال (موسّعة لـ 8 لكل مجال)
     let technical = [];
     if (/برمج|develop|software|كود|cod|web|ويب|front|back|تطوير|programming/.test(f)) {
-        technical = ['إتقان لغات البرمجة والأدوات المطلوبة', 'جودة الكود وتنظيمه وقابليته للقراءة', 'القدرة على تصحيح الأخطاء (debugging)', 'فهم المتطلبات التقنية وتطبيقها'];
+        technical = ['إتقان لغات البرمجة والأدوات المطلوبة', 'جودة الكود وتنظيمه وقابليته للقراءة', 'القدرة على تصحيح الأخطاء (debugging)', 'فهم المتطلبات التقنية وتطبيقها', 'استخدام أدوات إدارة الإصدارات (Git)', 'كتابة كود قابل لإعادة الاستخدام والصيانة', 'فهم قواعد البيانات والتعامل معها', 'الأمان وأفضل ممارسات البرمجة'];
     } else if (/تسويق|market|سوشيال|social|محتوى|content|إعلان|ads/.test(f)) {
-        technical = ['فهم استراتيجيات التسويق الرقمي', 'القدرة على إنشاء محتوى جذّاب', 'تحليل بيانات الحملات والأداء', 'الإبداع في الأفكار التسويقية'];
+        technical = ['فهم استراتيجيات التسويق الرقمي', 'القدرة على إنشاء محتوى جذّاب', 'تحليل بيانات الحملات والأداء', 'الإبداع في الأفكار التسويقية', 'إدارة منصات السوشيال ميديا', 'فهم الجمهور المستهدف واستهدافه', 'كتابة النصوص الإعلانية المؤثرة (copywriting)', 'متابعة اتجاهات السوق والمنافسين'];
     } else if (/تصميم|design|جرافيك|graphic|ui|ux|موشن/.test(f)) {
-        technical = ['إتقان أدوات التصميم (Photoshop/Figma..)', 'الحس الجمالي وتناسق الألوان', 'فهم تجربة المستخدم (UX)', 'تنفيذ التصاميم حسب المتطلبات'];
+        technical = ['إتقان أدوات التصميم (Photoshop/Figma..)', 'الحس الجمالي وتناسق الألوان', 'فهم تجربة المستخدم (UX)', 'تنفيذ التصاميم حسب المتطلبات', 'فهم مبادئ التكوين والتنسيق (layout)', 'اختيار الخطوط (typography) باحترافية', 'تقديم أفكار تصميمية مبتكرة', 'تجهيز الملفات للطباعة أو النشر الرقمي'];
     } else if (/محاسب|account|مالي|financ|تمويل/.test(f)) {
-        technical = ['دقة العمليات المحاسبية', 'إتقان برامج المحاسبة', 'فهم التقارير والقوائم المالية', 'الالتزام بالمعايير المحاسبية'];
+        technical = ['دقة العمليات المحاسبية', 'إتقان برامج المحاسبة', 'فهم التقارير والقوائم المالية', 'الالتزام بالمعايير المحاسبية', 'إعداد الميزانيات والموازنات', 'تحليل البيانات المالية واستخلاص النتائج', 'التعامل مع الضرائب والفواتير', 'الدقة في إدخال وتدقيق البيانات'];
     } else if (/مبيعات|sales|بيع/.test(f)) {
-        technical = ['مهارات الإقناع وإتمام الصفقات', 'معرفة المنتج والسوق', 'بناء علاقات مع العملاء', 'تحقيق المستهدفات البيعية'];
+        technical = ['مهارات الإقناع وإتمام الصفقات', 'معرفة المنتج والسوق', 'بناء علاقات مع العملاء', 'تحقيق المستهدفات البيعية', 'التعامل مع اعتراضات العملاء', 'متابعة العملاء المحتملين (follow-up)', 'مهارات التفاوض', 'فهم احتياجات العميل وتقديم الحلول'];
     } else if (/موارد بشر|hr|human/.test(f)) {
-        technical = ['فهم إجراءات التوظيف والمقابلات', 'التعامل مع شؤون الموظفين', 'معرفة قوانين العمل', 'مهارات التواصل والوساطة'];
+        technical = ['فهم إجراءات التوظيف والمقابلات', 'التعامل مع شؤون الموظفين', 'معرفة قوانين العمل', 'مهارات التواصل والوساطة', 'إعداد العقود والمستندات الرسمية', 'تقييم أداء الموظفين', 'حل النزاعات في بيئة العمل', 'السرية والمهنية في التعامل مع البيانات'];
     } else if (/هندس|engineer|ميكانيك|كهرب|مدني|civil|mechanic|electric/.test(f)) {
-        technical = ['الفهم الهندسي التطبيقي', 'إتقان البرامج الهندسية المتخصصة', 'دقة الحسابات والقياسات', 'الالتزام بمعايير السلامة والجودة'];
+        technical = ['الفهم الهندسي التطبيقي', 'إتقان البرامج الهندسية المتخصصة', 'دقة الحسابات والقياسات', 'الالتزام بمعايير السلامة والجودة', 'قراءة وفهم المخططات الفنية', 'حل المشكلات الهندسية عملياً', 'توثيق العمل الفني بدقة', 'العمل وفق المواصفات والمعايير'];
     } else if (/data|بيانات|تحليل|analy/.test(f)) {
-        technical = ['إتقان أدوات تحليل البيانات', 'استخلاص رؤى مفيدة من البيانات', 'مهارات العرض والتصوّر البياني', 'الدقة في التعامل مع الأرقام'];
+        technical = ['إتقان أدوات تحليل البيانات', 'استخلاص رؤى مفيدة من البيانات', 'مهارات العرض والتصوّر البياني', 'الدقة في التعامل مع الأرقام', 'تنظيف وتجهيز البيانات', 'استخدام SQL أو أدوات الاستعلام', 'بناء التقارير ولوحات المعلومات', 'فهم الإحصاء الأساسي وتطبيقه'];
     } else {
         // مجال عام
-        technical = ['إتقان المهارات الأساسية للمجال', 'تطبيق المعرفة النظرية عملياً', 'استخدام الأدوات والتقنيات المطلوبة', 'جودة المخرجات في تخصصه'];
+        technical = ['إتقان المهارات الأساسية للمجال', 'تطبيق المعرفة النظرية عملياً', 'استخدام الأدوات والتقنيات المطلوبة', 'جودة المخرجات في تخصصه', 'فهم متطلبات العمل وتنفيذها', 'حل المشكلات المرتبطة بالمجال', 'التطوّر في المهارات التخصصية', 'الالتزام بمعايير الجودة في المجال'];
     }
 
     const questions = [];
@@ -1353,6 +1374,7 @@ function buildEvaluationQuestions(field) {
     common.soft_skills.forEach(q => questions.push({ id: nid(), category: 'soft_skills', question: q }));
     common.performance.forEach(q => questions.push({ id: nid(), category: 'performance', question: q }));
     common.growth.forEach(q => questions.push({ id: nid(), category: 'growth', question: q }));
+    common.personality.forEach(q => questions.push({ id: nid(), category: 'personality', question: q }));
 
     return {
         questions: questions,
@@ -1363,7 +1385,7 @@ function buildEvaluationQuestions(field) {
 function renderEvalQuestions(template) {
     const questions = template.questions || [];
     const content = document.getElementById('tabContent');
-    const catLabels = {technical:'🛠️ مهارات تقنية', soft_skills:'💼 مهارات شخصية', performance:'📊 الأداء', growth:'🌱 التطور'};
+    const catLabels = {technical:'🛠️ مهارات تقنية', soft_skills:'💼 مهارات شخصية', performance:'📊 الأداء', growth:'🌱 التطور', personality:'🧠 سمات الشخصية'};
     
     const questionsHtml = questions.map((q, idx) => {
         const starsHtml = '<div style="display:flex;gap:6px;margin-top:10px" data-question="' + q.id + '">' +
@@ -1825,32 +1847,38 @@ function renderPersonalityTab() {
 
 function buildPersonalityAnalysis(field, evaluation) {
     const cs = (evaluation && evaluation.category_scores) || {};
-    const overall = (evaluation && evaluation.overall_score) || 3;
-    const toPercent = function(v, base) { return Math.min(98, Math.max(40, Math.round(((v || base) / 5) * 100))); };
+    // الدرجات مخزّنة على مقياس 0-100
+    const overall = Number((evaluation && evaluation.overall_score) || 60);
+    const clamp = function(v) { return Math.min(98, Math.max(35, Math.round(v))); };
 
-    const technical = cs.technical || overall;
-    const soft = cs.soft_skills || overall;
-    const performance = cs.performance || overall;
-    const growthScore = cs.growth || overall;
+    const technical = cs.technical != null ? Number(cs.technical) : overall;
+    const soft = cs.soft_skills != null ? Number(cs.soft_skills) : overall;
+    const performance = cs.performance != null ? Number(cs.performance) : overall;
+    const growthScore = cs.growth != null ? Number(cs.growth) : overall;
+    // فئة الشخصية المباشرة (من أسئلة الشخصية الجديدة) — أقوى إشارة
+    const pScore = cs.personality != null ? Number(cs.personality) : overall;
+
+    // كل سمة = مزيج من درجة الشخصية المباشرة + الفئة الأقرب لها
+    const blend = function(a, b) { return clamp((a * 0.6) + (b * 0.4)); };
 
     const traits = {
-        openness:          { score: toPercent((technical + growthScore) / 2, overall), desc: 'مدى انفتاحه على التعلم والأفكار والأدوات الجديدة. درجة عالية تعني فضول معرفي وقابلية للتطوّر.' },
-        conscientiousness: { score: toPercent(performance, overall), desc: 'مدى التزامه وتنظيمه ودقته في إنجاز المهام والمواعيد. أساس الاعتمادية في العمل.' },
-        extraversion:      { score: toPercent(soft, overall), desc: 'مدى راحته في التواصل والعمل ضمن فريق والمبادرة في النقاش.' },
-        agreeableness:     { score: toPercent((soft + growthScore) / 2, overall), desc: 'مدى تعاونه وتقبّله للملاحظات وتعامله الإيجابي مع الزملاء.' },
-        stability:         { score: toPercent((performance + soft) / 2, overall), desc: 'مدى ثباته الانفعالي وتعامله مع الضغط والمهام الصعبة بهدوء.' }
+        openness:          { score: blend(pScore, (technical + growthScore) / 2), desc: 'مدى انفتاحه على التعلم والأفكار والأدوات الجديدة. درجة عالية تعني فضول معرفي وقابلية للتطوّر.' },
+        conscientiousness: { score: blend(pScore, performance), desc: 'مدى التزامه وتنظيمه ودقته في إنجاز المهام والمواعيد. أساس الاعتمادية في العمل.' },
+        extraversion:      { score: blend(pScore, soft), desc: 'مدى راحته في التواصل والعمل ضمن فريق والمبادرة في النقاش.' },
+        agreeableness:     { score: blend(pScore, (soft + growthScore) / 2), desc: 'مدى تعاونه وتقبّله للملاحظات وتعامله الإيجابي مع الزملاء.' },
+        stability:         { score: blend(pScore, (performance + soft) / 2), desc: 'مدى ثباته الانفعالي وتعامله مع الضغط والمهام الصعبة بهدوء.' }
     };
 
     let summary;
-    if (overall >= 4.3) summary = 'المتدرب يُظهر ملمحاً شخصياً ناضجاً ومتوازناً، يجمع بين الكفاءة في العمل والقدرة على التعلّم والتعاون. مرشّح قوي لتحمّل مسؤوليات قيادية.';
-    else if (overall >= 3.3) summary = 'المتدرب يمتلك أساساً شخصياً جيداً مع نقاط قوة واضحة. مع التوجيه المناسب، لديه إمكانية نمو كبيرة في مجاله.';
-    else if (overall >= 2.3) summary = 'المتدرب في طور التشكّل المهني، ويُظهر بعض السمات الواعدة التي تحتاج دعماً وتدريباً لتتبلور بشكل أوضح.';
+    if (overall >= 85) summary = 'المتدرب يُظهر ملمحاً شخصياً ناضجاً ومتوازناً، يجمع بين الكفاءة في العمل والقدرة على التعلّم والتعاون. مرشّح قوي لتحمّل مسؤوليات قيادية.';
+    else if (overall >= 65) summary = 'المتدرب يمتلك أساساً شخصياً جيداً مع نقاط قوة واضحة. مع التوجيه المناسب، لديه إمكانية نمو كبيرة في مجاله.';
+    else if (overall >= 45) summary = 'المتدرب في طور التشكّل المهني، ويُظهر بعض السمات الواعدة التي تحتاج دعماً وتدريباً لتتبلور بشكل أوضح.';
     else summary = 'المتدرب في بداية رحلته، ويحتاج إلى توجيه ودعم مكثّف لبناء عاداته المهنية وتطوير مهاراته الأساسية.';
 
     const sorted = Object.entries(traits).sort(function(a, b) { return b[1].score - a[1].score; });
     const labelMap = { openness: 'الفضول وحب التعلّم', conscientiousness: 'الالتزام والتنظيم', extraversion: 'مهارات التواصل', agreeableness: 'روح التعاون', stability: 'الثبات تحت الضغط' };
     const strengths = sorted.slice(0, 2).map(function(e) { return labelMap[e[0]]; });
-    if (overall >= 4) strengths.push('جاهزية لتولّي مهام أكبر');
+    if (overall >= 80) strengths.push('جاهزية لتولّي مهام أكبر');
     const growthAreas = sorted.slice(-2).map(function(e) { return 'تعزيز ' + labelMap[e[0]]; });
 
     return { traits: traits, summary: summary, strengths: strengths, growth: growthAreas };
