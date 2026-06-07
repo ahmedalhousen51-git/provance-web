@@ -1263,28 +1263,50 @@ window.startNewEval = async () => {
         const sb = await window.getSafeSupabase();
         const field = t.field || 'عام';
 
-        let template = null;
-        // جرّب تلاقي قالب محفوظ للمجال ده (عشان نفس الأسئلة تتعاد)
+        // ولّد دايماً النسخة الحديثة (35 سؤال، حسب المجال) — دي مصدر الحقيقة
+        const generated = buildEvaluationQuestions(field);
+        let template = { questions: generated.questions, summary_question: generated.summary_question };
+
+        // شوف لو فيه قالب محفوظ للمجال ده
+        let savedTemplate = null;
         try {
             const { data: existing } = await sb.from('ai_evaluation_templates').select('*').eq('field', field).maybeSingle();
-            if (existing && existing.questions) template = existing;
+            if (existing && existing.questions) savedTemplate = existing;
         } catch (e) { /* الجدول ممكن مايكونش موجود — مش مشكلة */ }
 
-        // مفيش قالب محفوظ؟ ولّد محلياً (ذكي حسب المجال)
-        if (!template) {
-            const generated = buildEvaluationQuestions(field);
-            template = { questions: generated.questions, summary_question: generated.summary_question };
-            // حاول تحفظه للمرة الجاية (لو الجدول موجود)
+        // هل القالب المحفوظ حديث؟ (فيه فئة شخصية + عدد أسئلة كافٍ)
+        const isFresh = (tpl) => {
+            if (!tpl || !Array.isArray(tpl.questions)) return false;
+            const hasPersonality = tpl.questions.some(q => q.category === 'personality');
+            return hasPersonality && tpl.questions.length >= 30;
+        };
+
+        if (isFresh(savedTemplate)) {
+            // القالب المحفوظ حديث → استخدمه (عشان نفس الأسئلة تتعاد)
+            template = savedTemplate;
+        } else {
+            // قديم أو غير موجود → احفظ/حدّث بالنسخة الجديدة
             try {
-                const { data: inserted } = await sb.from('ai_evaluation_templates').insert({
-                    field: field,
-                    questions: generated.questions,
-                    summary_question: generated.summary_question,
-                    use_count: 1,
-                    last_used_at: new Date().toISOString()
-                }).select().single();
-                if (inserted) template = inserted;
-            } catch (e) { /* مايتحفظش؟ نكمّل بالقالب المحلي عادي */ }
+                if (savedTemplate && savedTemplate.id) {
+                    // حدّث القالب القديم بالأسئلة الجديدة
+                    const { data: updated } = await sb.from('ai_evaluation_templates').update({
+                        questions: generated.questions,
+                        summary_question: generated.summary_question,
+                        last_used_at: new Date().toISOString()
+                    }).eq('id', savedTemplate.id).select().single();
+                    if (updated) template = updated;
+                } else {
+                    // مفيش قالب → أنشئ جديد
+                    const { data: inserted } = await sb.from('ai_evaluation_templates').insert({
+                        field: field,
+                        questions: generated.questions,
+                        summary_question: generated.summary_question,
+                        use_count: 1,
+                        last_used_at: new Date().toISOString()
+                    }).select().single();
+                    if (inserted) template = inserted;
+                }
+            } catch (e) { /* مايتحفظش؟ نكمّل بالقالب المحلي الجديد عادي */ }
         }
 
         renderEvalQuestions(template);
