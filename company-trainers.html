@@ -1830,11 +1830,51 @@ function renderPersonalityTab() {
         const strengthsHtml = analysis.strengths.map(function(s) { return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(16,185,129,.08);border-radius:10px;margin-bottom:8px"><i class="fas fa-check-circle" style="color:#10b981"></i><span style="font-size:0.88rem">' + s + '</span></div>'; }).join('');
         const growthHtml = analysis.growth.map(function(g) { return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(245,158,11,.08);border-radius:10px;margin-bottom:8px"><i class="fas fa-arrow-trend-up" style="color:#f59e0b"></i><span style="font-size:0.88rem">' + g + '</span></div>'; }).join('');
 
+        // كارت ملاءمة المجال للشخصية
+        const cf = analysis.careerFit;
+        const requiredHtml = cf.required.map(function(r) {
+            const rc = r.score >= 70 ? '#10b981' : r.score >= 55 ? '#4facfe' : '#f59e0b';
+            return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:6px">' +
+                '<span style="font-size:0.85rem">' + r.label + '</span>' +
+                '<span style="font-weight:800;color:' + rc + ';font-size:0.9rem">' + r.score + '%</span>' +
+            '</div>';
+        }).join('');
+        const gapsHtml = cf.gaps.length > 0
+            ? '<div style="margin-top:10px;font-size:0.82rem;color:var(--text-muted)"><i class="fas fa-triangle-exclamation" style="color:#f59e0b"></i> سمات تحتاج تقوية للمجال: <strong>' + cf.gaps.join('، ') + '</strong></div>'
+            : '<div style="margin-top:10px;font-size:0.82rem;color:#10b981"><i class="fas fa-check"></i> كل السمات الأساسية للمجال قوية لديه</div>';
+        const altHtml = (cf.alternatives && cf.alternatives.length > 0)
+            ? '<div style="margin-top:12px;padding:12px;background:rgba(79,172,254,.06);border:1px solid rgba(79,172,254,.2);border-radius:10px;font-size:0.82rem"><i class="fas fa-lightbulb" style="color:#4facfe"></i> <strong>مجالات قد تناسب سماته أكثر:</strong> ' + cf.alternatives.join('، ') + '</div>'
+            : '';
+
+        const careerFitHtml =
+            '<div style="background:var(--bg-card);border:2px solid ' + cf.color + '40;border-radius:14px;padding:18px;margin-bottom:18px">' +
+                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><i class="fas fa-briefcase" style="color:' + cf.color + ';font-size:1.2rem"></i><span style="font-weight:800;font-size:1.05rem">هل المجال مناسب لشخصيته؟</span></div>' +
+                '<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap">' +
+                    '<div style="position:relative;width:84px;height:84px;flex-shrink:0">' +
+                        '<svg viewBox="0 0 36 36" style="width:84px;height:84px;transform:rotate(-90deg)">' +
+                            '<circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"></circle>' +
+                            '<circle cx="18" cy="18" r="15.9" fill="none" stroke="' + cf.color + '" stroke-width="3" stroke-dasharray="' + cf.fitScore + ', 100" stroke-linecap="round"></circle>' +
+                        '</svg>' +
+                        '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:1.3rem;font-weight:800;color:' + cf.color + '">' + cf.fitScore + '%</span></div>' +
+                    '</div>' +
+                    '<div style="flex:1;min-width:160px">' +
+                        '<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:' + cf.color + '20;color:' + cf.color + ';border-radius:20px;font-weight:800;font-size:0.85rem;margin-bottom:6px"><i class="fas ' + cf.icon + '"></i> ' + cf.verdict + '</div>' +
+                        '<div style="font-size:0.85rem;color:var(--text-muted);line-height:1.6">' + cf.message + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6"><i class="fas fa-circle-info" style="color:' + cf.color + '"></i> ' + cf.why + '</div>' +
+                '<div style="font-weight:700;font-size:0.85rem;margin-bottom:8px">السمات الأهم لمجال ' + esc(cf.profileName) + ':</div>' +
+                requiredHtml +
+                gapsHtml +
+                altHtml +
+            '</div>';
+
         content.innerHTML =
             '<div style="background:linear-gradient(135deg,rgba(102,126,234,.12),rgba(118,75,162,.12));border:1px solid rgba(102,126,234,.25);border-radius:14px;padding:18px;margin-bottom:18px">' +
                 '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><i class="fas fa-brain" style="color:#667eea;font-size:1.3rem"></i><span style="font-weight:800;font-size:1.05rem">الملخص الشخصي</span></div>' +
                 '<p style="color:var(--text-muted);line-height:1.8;font-size:0.9rem">' + analysis.summary + '</p>' +
             '</div>' +
+            careerFitHtml +
             '<div style="font-weight:800;margin-bottom:12px;font-size:0.95rem"><i class="fas fa-chart-bar" style="color:#667eea"></i> سمات الشخصية (تحليل تقديري مبني على الأداء)</div>' +
             traitsHtml +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px">' +
@@ -1881,7 +1921,80 @@ function buildPersonalityAnalysis(field, evaluation) {
     if (overall >= 80) strengths.push('جاهزية لتولّي مهام أكبر');
     const growthAreas = sorted.slice(-2).map(function(e) { return 'تعزيز ' + labelMap[e[0]]; });
 
-    return { traits: traits, summary: summary, strengths: strengths, growth: growthAreas };
+    // ===== تحليل ملاءمة المجال للشخصية =====
+    const careerFit = analyzeCareerFit(field, traits, labelMap);
+
+    return { traits: traits, summary: summary, strengths: strengths, growth: growthAreas, careerFit: careerFit };
+}
+
+// لكل مجال: السمات الشخصية الأهم لنجاح المتدرب فيه
+function getCareerProfile(field) {
+    const f = String(field || '').toLowerCase();
+    if (/برمج|develop|software|كود|cod|web|ويب|front|back|تطوير|programming/.test(f))
+        return { name: 'البرمجة والتطوير', key: ['conscientiousness', 'openness', 'stability'], why: 'البرمجة تحتاج دقة والتزام عالي، فضول لتعلّم التقنيات الجديدة، وهدوء عند حل المشكلات المعقّدة.' };
+    if (/تسويق|market|سوشيال|social|محتوى|content|إعلان|ads/.test(f))
+        return { name: 'التسويق', key: ['openness', 'extraversion', 'agreeableness'], why: 'التسويق يعتمد على الإبداع والأفكار الجديدة، والتواصل الجيد، وفهم الجمهور والتعاون مع الفريق.' };
+    if (/تصميم|design|جرافيك|graphic|ui|ux|موشن/.test(f))
+        return { name: 'التصميم', key: ['openness', 'conscientiousness', 'stability'], why: 'التصميم يحتاج حساً إبداعياً عالياً، دقة في التفاصيل، وثباتاً لتقبّل التعديلات المتكررة.' };
+    if (/محاسب|account|مالي|financ|تمويل/.test(f))
+        return { name: 'المحاسبة والمالية', key: ['conscientiousness', 'stability', 'agreeableness'], why: 'المحاسبة تتطلب دقة ونظاماً صارماً، ثباتاً تحت ضغط المواعيد، والتزاماً عالياً بالتفاصيل.' };
+    if (/مبيعات|sales|بيع/.test(f))
+        return { name: 'المبيعات', key: ['extraversion', 'agreeableness', 'stability'], why: 'المبيعات تعتمد بشكل أساسي على التواصل والإقناع، بناء العلاقات، والصمود أمام الرفض.' };
+    if (/موارد بشر|hr|human/.test(f))
+        return { name: 'الموارد البشرية', key: ['agreeableness', 'extraversion', 'stability'], why: 'الموارد البشرية تحتاج تعاطفاً وتعاوناً عالياً، تواصلاً ممتازاً، وهدوءاً في حل النزاعات.' };
+    if (/هندس|engineer|ميكانيك|كهرب|مدني|civil|mechanic|electric/.test(f))
+        return { name: 'الهندسة', key: ['conscientiousness', 'openness', 'stability'], why: 'الهندسة تتطلب دقة في الحسابات، قدرة على حل المشكلات بطرق مبتكرة، والتزاماً بمعايير السلامة.' };
+    if (/data|بيانات|تحليل|analy/.test(f))
+        return { name: 'تحليل البيانات', key: ['conscientiousness', 'openness', 'stability'], why: 'تحليل البيانات يحتاج دقة عالية مع الأرقام، فضولاً تحليلياً لاكتشاف الأنماط، وصبراً في التعامل مع التفاصيل.' };
+    return { name: 'المجال', key: ['conscientiousness', 'openness', 'agreeableness'], why: 'النجاح في أي مجال يحتاج التزاماً، رغبة في التعلّم، وقدرة على العمل مع الآخرين.' };
+}
+
+// يقارن شخصية المتدرب بالمطلوب للمجال
+function analyzeCareerFit(field, traits, labelMap) {
+    const profile = getCareerProfile(field);
+    const keyScores = profile.key.map(function(k) { return traits[k] ? traits[k].score : 60; });
+    const fitScore = Math.round(keyScores.reduce(function(a, b) { return a + b; }, 0) / keyScores.length);
+
+    let verdict, color, icon, message;
+    if (fitScore >= 75) {
+        verdict = 'ملاءمة عالية'; color = '#10b981'; icon = 'fa-circle-check';
+        message = 'شخصية المتدرب متوافقة بشكل ممتاز مع متطلبات ' + profile.name + '. السمات الأساسية للنجاح في المجال قوية لديه.';
+    } else if (fitScore >= 58) {
+        verdict = 'ملاءمة جيدة'; color = '#4facfe'; icon = 'fa-circle-check';
+        message = 'شخصية المتدرب مناسبة لمجال ' + profile.name + ' بشكل عام، مع وجود بعض السمات التي يمكن تقويتها لأداء أفضل.';
+    } else if (fitScore >= 45) {
+        verdict = 'ملاءمة متوسطة'; color = '#f59e0b'; icon = 'fa-circle-exclamation';
+        message = 'هناك توافق جزئي بين شخصية المتدرب ومجال ' + profile.name + '. يحتاج لتطوير بعض السمات الأساسية، أو قد يبرع أكثر في مجال يناسب سماته الحالية.';
+    } else {
+        verdict = 'ملاءمة محدودة'; color = '#ef4444'; icon = 'fa-circle-xmark';
+        message = 'سمات المتدرب الحالية لا تتوافق بقوة مع متطلبات ' + profile.name + '. يُنصح بمراجعة ما إذا كان هذا المجال هو الأنسب، أو بخطة تطوير مكثّفة للسمات المطلوبة.';
+    }
+
+    // السمات المطلوبة للمجال (مع درجة المتدرب فيها)
+    const required = profile.key.map(function(k) {
+        return { label: labelMap[k], score: traits[k] ? traits[k].score : 60 };
+    });
+    // الفجوات: سمات مطلوبة لكن ضعيفة
+    const gaps = profile.key.filter(function(k) { return traits[k] && traits[k].score < 58; }).map(function(k) { return labelMap[k]; });
+
+    // اقتراح مجالات بديلة لو الملاءمة ضعيفة (حسب أقوى سمتين)
+    let alternatives = [];
+    if (fitScore < 58) {
+        const sortedTraits = Object.entries(traits).sort(function(a, b) { return b[1].score - a[1].score; });
+        const topTwo = [sortedTraits[0][0], sortedTraits[1][0]];
+        const suggMap = {
+            extraversion: ['المبيعات', 'التسويق', 'العلاقات العامة'],
+            agreeableness: ['الموارد البشرية', 'خدمة العملاء', 'التسويق'],
+            conscientiousness: ['المحاسبة', 'تحليل البيانات', 'إدارة المشاريع'],
+            openness: ['التصميم', 'البرمجة', 'البحث والتطوير'],
+            stability: ['إدارة الأزمات', 'العمليات', 'الدعم الفني']
+        };
+        const set = {};
+        topTwo.forEach(function(t) { (suggMap[t] || []).forEach(function(s) { set[s] = true; }); });
+        alternatives = Object.keys(set).slice(0, 3);
+    }
+
+    return { profileName: profile.name, why: profile.why, fitScore: fitScore, verdict: verdict, color: color, icon: icon, message: message, required: required, gaps: gaps, alternatives: alternatives };
 }
 
 window.sendRecToStudent = async (recId) => {
