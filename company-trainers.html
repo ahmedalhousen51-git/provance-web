@@ -1467,6 +1467,11 @@ window.submitEvaluation = async (templateId) => {
         showToast('يجب تقييم كل الأسئلة', 'warning');
         return;
     }
+
+    // loading فوري على الزرار (تجاوب لحظي)
+    const btn = (typeof event !== 'undefined' && event && event.target) ? event.target.closest('button') : null;
+    let btnOriginal = '';
+    if (btn) { btnOriginal = btn.innerHTML; btn.disabled = true; btn.style.opacity = '0.7'; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'; }
     
     const summary = (document.getElementById('summaryFeedback') || {}).value || '';
     
@@ -1500,7 +1505,7 @@ window.submitEvaluation = async (templateId) => {
             await sb.from('ai_evaluations').delete().eq('id', t.evaluation.id);
         }
         
-        const { error } = await sb.from('ai_evaluations').insert({
+        const evalRow = {
             application_id: currentTraineeId,
             student_user_id: t.student_user_id,
             company_user_id: companyUserId,
@@ -1514,29 +1519,34 @@ window.submitEvaluation = async (templateId) => {
             status: 'sent',
             submitted_at: new Date().toISOString(),
             sent_to_student_at: new Date().toISOString()
-        });
+        };
+
+        const { data: inserted, error } = await sb.from('ai_evaluations').insert(evalRow).select().single();
         
         if (error) throw error;
         
+        // حدّث الحالة محلياً بدل ما نعيد تحميل كل المتدربين (سرعة)
+        t.evaluation = inserted || evalRow;
+
+        // الإشعار في الخلفية (مايعطّلش العرض)
         if (window.ProVance && window.ProVance.sendNotification) {
-            try {
-                await window.ProVance.sendNotification({
-                    userId: t.student_user_id,
-                    userType: 'student',
-                    title: '⭐ تم تقييمك',
-                    message: 'نتيجتك: ' + overallScore.toFixed(1) + '/100',
-                    type: overallScore >= 70 ? 'success' : 'info',
-                    link: 'student-profile.html'
-                });
-            } catch(e){}
+            window.ProVance.sendNotification({
+                userId: t.student_user_id,
+                userType: 'student',
+                title: '⭐ تم تقييمك',
+                message: 'نتيجتك: ' + overallScore.toFixed(1) + '/100',
+                type: overallScore >= 70 ? 'success' : 'info',
+                link: 'student-profile.html'
+            }).catch(function(){});
         }
         
-        showToast('✅ تم حفظ التقييم', 'success');
-        await loadAll();
-        openTrainee(currentTraineeId);
+        showToast('✅ تم حفظ التقييم وإرساله للطالب', 'success');
+        // اعرض النتيجة فوراً (من غير loadAll التقيلة)
+        renderEvalTab();
     } catch(err) {
         console.error(err);
         showToast('خطأ: ' + err.message, 'error');
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = btnOriginal; }
     }
 };
 
@@ -1903,9 +1913,87 @@ function renderPersonalityTab() {
                 '<div><div style="font-weight:800;margin-bottom:10px;color:#10b981;font-size:0.9rem"><i class="fas fa-star"></i> نقاط القوة</div>' + strengthsHtml + '</div>' +
                 '<div><div style="font-weight:800;margin-bottom:10px;color:#f59e0b;font-size:0.9rem"><i class="fas fa-seedling"></i> فرص التطوّر</div>' + growthHtml + '</div>' +
             '</div>' +
-            '<div style="background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:10px;padding:12px;margin-top:18px;font-size:0.78rem;color:var(--text-muted);text-align:center"><i class="fas fa-info-circle"></i> ده تحليل تقديري مبني على تقييم أداء المتدرب، مش بديل عن تقييم نفسي متخصص.</div>';
+            '<div style="background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:10px;padding:12px;margin-top:18px;font-size:0.78rem;color:var(--text-muted);text-align:center"><i class="fas fa-info-circle"></i> ده تحليل تقديري مبني على تقييم أداء المتدرب، مش بديل عن تقييم نفسي متخصص.</div>' +
+            '<button onclick="sendPersonalityToStudent()" id="sendPersonalityBtn" style="width:100%;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:14px;border-radius:12px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:14px;font-size:0.95rem"><i class="fas fa-paper-plane"></i> إرسال التحليل للطالب</button>';
     }, 600);
 }
+
+// إرسال تحليل الشخصية + ملاءمة المجال للطالب
+window.sendPersonalityToStudent = async () => {
+    const t = allTrainees.find(x => x.id === currentTraineeId);
+    if (!t || !t.evaluation) { showToast('لازم تقييم أداء الأول', 'warning'); return; }
+
+    const btn = document.getElementById('sendPersonalityBtn');
+    let original = '';
+    if (btn) { original = btn.innerHTML; btn.disabled = true; btn.style.opacity = '0.7'; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...'; }
+
+    try {
+        const analysis = buildPersonalityAnalysis(t.field, t.evaluation);
+        const cf = analysis.careerFit;
+        const sb = await window.getSafeSupabase();
+
+        const msg = 'تحليل شخصيتك: ' + analysis.summary +
+            ' | ملاءمة مجال ' + cf.profileName + ': ' + cf.fitScore + '% (' + cf.verdict + ').' +
+            (cf.gaps.length > 0 ? ' سمات للتطوير: ' + cf.gaps.join('، ') + '.' : '');
+
+        // حاول تحفظ التحليل (لو الجدول موجود) — best effort
+        try {
+            await sb.from('career_recommendations').insert({
+                application_id: currentTraineeId,
+                student_user_id: t.student_user_id,
+                company_user_id: companyUserId,
+                field: t.field,
+                personality_traits: analysis.traits,
+                personality_summary: analysis.summary,
+                career_fit_score: cf.fitScore,
+                career_fit_verdict: cf.verdict,
+                strengths: analysis.strengths,
+                growth_areas: analysis.growth,
+                created_at: new Date().toISOString()
+            });
+        } catch (e) { /* الجدول ممكن مايكونش موجود — الإشعار يكفي */ }
+
+        // إشعار للطالب (القناة المضمونة)
+        let sent = false;
+        if (window.ProVance && window.ProVance.sendNotification) {
+            try {
+                await window.ProVance.sendNotification({
+                    userId: t.student_user_id,
+                    userType: 'student',
+                    title: '🧠 تحليل شخصيتك المهنية',
+                    message: msg,
+                    type: cf.fitScore >= 58 ? 'success' : 'info',
+                    link: 'student-profile.html'
+                });
+                sent = true;
+            } catch(e) {}
+        }
+        if (!sent) {
+            try {
+                await sb.from('notifications').insert({
+                    user_id: t.student_user_id,
+                    user_type: 'student',
+                    type: 'personality_analysis',
+                    title: '🧠 تحليل شخصيتك المهنية',
+                    message: msg,
+                    link: 'student-profile.html'
+                });
+                sent = true;
+            } catch(e) {}
+        }
+
+        if (sent) {
+            showToast('✅ تم إرسال التحليل للطالب', 'success');
+            if (btn) { btn.style.opacity = '1'; btn.innerHTML = '<i class="fas fa-check"></i> تم الإرسال للطالب'; btn.style.background = 'linear-gradient(135deg,#10b981,#059669)'; }
+        } else {
+            throw new Error('تعذّر إرسال الإشعار');
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('خطأ: ' + err.message, 'error');
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = original; }
+    }
+};
 
 function buildPersonalityAnalysis(field, evaluation) {
     const cs = (evaluation && evaluation.category_scores) || {};
