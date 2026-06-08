@@ -893,6 +893,7 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
+    <script src="company-layout.js"></script>
 <style>
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
@@ -921,6 +922,19 @@ window.getSafeSupabase = async function() {
 };
 
 const esc = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// تطبيع النص العربي للمقارنة (يوحّد الحروف المتشابهة عشان المنصورة=المنصوره)
+function normalizeArabic(str) {
+    return String(str || '')
+        .trim()
+        .replace(/[\u064B-\u065F\u0670]/g, '')   // إزالة التشكيل
+        .replace(/\u0640/g, '')                   // إزالة التطويل
+        .replace(/[أإآ]/g, 'ا')                   // توحيد الألف
+        .replace(/ى/g, 'ي')                       // توحيد الياء
+        .replace(/ة/g, 'ه')                       // توحيد التاء المربوطة والهاء
+        .replace(/\s+/g, ' ')                     // توحيد المسافات
+        .toLowerCase();
+}
 const showToast = (m, t) => window.ProVance && window.ProVance.showToast ? window.ProVance.showToast(m, t) : console.log('toast:', m);
 
 let companyUserId = null;
@@ -993,6 +1007,29 @@ async function loadAll() {
         
         allStudents = (data || []).map(s => ({ ...s, completeness: calculateCompleteness(s) }));
         console.log('✓ Loaded', allStudents.length, 'students');
+
+        // حدّد الطلاب اللي بيتمرنوا فعلاً من جدول applications (عشان فلتر "يتدرب حالياً" يشتغل)
+        try {
+            const { data: apps } = await sb.from('applications')
+                .select('student_user_id, status')
+                .in('status', ['in_training', 'hired', 'accepted', 'completed']);
+            if (Array.isArray(apps) && apps.length > 0) {
+                const trainingMap = {}; // student_user_id → 'in_training' أو 'completed'
+                apps.forEach(a => {
+                    if (!a.student_user_id) return;
+                    if (a.status === 'completed') {
+                        if (!trainingMap[a.student_user_id]) trainingMap[a.student_user_id] = 'completed';
+                    } else {
+                        trainingMap[a.student_user_id] = 'in_training'; // تدريب حالي له أولوية
+                    }
+                });
+                allStudents.forEach(s => {
+                    const derived = trainingMap[s.user_id];
+                    // الاشتقاق من applications له الأولوية (الحقيقة الفعلية)
+                    if (derived) s.training_status = derived;
+                });
+            }
+        } catch (e) { console.warn('Could not derive training status from applications:', e); }
         
         populateFilters();
         applyFilters();
@@ -1007,7 +1044,7 @@ function populateFilters() {
     // اجلب كل القيم الفريدة
     const fields = new Set();
     const universities = new Set();
-    const cities = new Set();
+    const citiesMap = {}; // normalized → display (يوحّد المدن المتشابهة)
     
     allStudents.forEach(s => {
         if (Array.isArray(s.interested_fields)) {
@@ -1017,7 +1054,11 @@ function populateFilters() {
             });
         }
         if (s.university) universities.add(s.university);
-        if (s.city) cities.add(s.city);
+        if (s.city) {
+            const key = normalizeArabic(s.city);
+            // احتفظ بأول صيغة عرض (أو الأطول، عادةً الأصح إملائياً)
+            if (!citiesMap[key] || s.city.length > citiesMap[key].length) citiesMap[key] = s.city.trim();
+        }
     });
     
     // املأ السيلكتات
@@ -1029,9 +1070,11 @@ function populateFilters() {
     uniSelect.innerHTML = '<option value="">كل الجامعات</option>' + 
         [...universities].sort().map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join('');
     
+    // المدن: القيمة = الصيغة المطبّعة (للفلترة الموحّدة)، النص = صيغة العرض
     const citySelect = document.getElementById('filterCity');
+    const cityEntries = Object.keys(citiesMap).map(key => ({ key, display: citiesMap[key] })).sort((a, b) => a.display.localeCompare(b.display, 'ar'));
     citySelect.innerHTML = '<option value="">كل المدن</option>' + 
-        [...cities].sort().map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+        cityEntries.map(c => `<option value="${esc(c.key)}">${esc(c.display)}</option>`).join('');
 }
 
 window.addSkillFilter = () => {
@@ -1113,7 +1156,7 @@ window.applyFilters = () => {
         if (university && s.university !== university) return false;
         
         // City
-        if (city && s.city !== city) return false;
+        if (city && normalizeArabic(s.city) !== city) return false;
         
         // Study year
         if (studyYear) {
@@ -1349,6 +1392,12 @@ window.closeProfileModal = () => {
             }
         } catch(e) {}
     })();
+    </script>
+<script>
+    // توحيد الـ sidebar والهيدر
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.ProVanceLayout) { try { ProVanceLayout.init({}); } catch(e) { console.warn('layout:', e); } }
+    });
     </script>
 </body>
 </html>
