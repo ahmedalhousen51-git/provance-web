@@ -1010,6 +1010,113 @@ window.getSafeSupabase = async function() {
 };
 
 const esc = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ===== دوال مساعدة لمدة التدريب والتواريخ والحضور =====
+const AR_DAY_TO_NUM = { 'الأحد':0, 'الاثنين':1, 'الإثنين':1, 'الثلاثاء':2, 'الأربعاء':3, 'الخميس':4, 'الجمعة':5, 'السبت':6 };
+
+// نص المدة بالعربي
+function getDurationText(d) {
+    const map = {
+        '1-month': 'شهر', '1.5-months': 'شهر ونصف', '2-months': 'شهرين', '2.5-months': 'شهرين ونصف',
+        '3-months': '3 أشهر', '4-months': '4 أشهر', '5-months': '5 أشهر', '6-months': '6 أشهر',
+        '1-week': 'أسبوع', '2-weeks': 'أسبوعين', '3-weeks': '3 أسابيع', '4-weeks': '4 أسابيع'
+    };
+    return map[d] || d || 'غير محدد';
+}
+
+// عدد أيام المدة (لحساب تاريخ النهاية)
+function durationToDays(d) {
+    const map = {
+        '1-week': 7, '2-weeks': 14, '3-weeks': 21, '4-weeks': 28,
+        '1-month': 30, '1.5-months': 45, '2-months': 60, '2.5-months': 75,
+        '3-months': 90, '4-months': 120, '5-months': 150, '6-months': 180
+    };
+    return map[d] || 0;
+}
+
+// احسب تاريخ بداية التدريب ونهايته
+function getTrainingDates(t) {
+    const sched = t.training_schedule || {};
+    // البداية: من جدول التدريب، أو من تاريخ المقابلة، أو تاريخ القبول
+    let start = sched.start_date ? new Date(sched.start_date)
+              : (t.interview_date ? new Date(t.interview_date)
+              : (t.updated_at ? new Date(t.updated_at) : null));
+    if (!start || isNaN(start)) return { start: null, end: null, daysLeft: null, progress: null };
+
+    // النهاية: من الجدول إن وُجدت، وإلا احسبها من المدة
+    let end;
+    if (sched.end_date) {
+        end = new Date(sched.end_date);
+    } else {
+        const days = durationToDays(t.duration);
+        if (days > 0) { end = new Date(start); end.setDate(end.getDate() + days); }
+        else end = null;
+    }
+
+    let daysLeft = null, progress = null;
+    if (end && !isNaN(end)) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const s = new Date(start); s.setHours(0,0,0,0);
+        const e = new Date(end); e.setHours(0,0,0,0);
+        daysLeft = Math.round((e - today) / 86400000);
+        const totalDays = Math.round((e - s) / 86400000);
+        const passedDays = Math.round((today - s) / 86400000);
+        progress = totalDays > 0 ? Math.max(0, Math.min(100, Math.round((passedDays / totalDays) * 100))) : null;
+    }
+    return { start, end, daysLeft, progress };
+}
+
+// احسب نسبة الحضور للمتدرب
+function getAttendanceRate(t) {
+    const daily = (t.attendance || []).filter(a => !a.attendance_type || a.attendance_type === 'daily_attendance');
+    const sched = t.training_schedule || {};
+    const workDayNames = Array.isArray(sched.training_days) ? sched.training_days : null;
+    const workDayNums = workDayNames ? workDayNames.map(d => AR_DAY_TO_NUM[d]).filter(n => n !== undefined) : null;
+
+    // أيام الحضور الفعلية (مجمّعة باليوم)
+    const attendedDays = {};
+    daily.forEach(a => {
+        if (!a.scanned_at) return;
+        const d = new Date(a.scanned_at).toISOString().slice(0, 10);
+        if (!attendedDays[d]) attendedDays[d] = a.status || 'on_time';
+    });
+    const presentDaysCount = Object.keys(attendedDays).length;
+    const onTime = daily.filter(a => a.status === 'on_time').length;
+    const late = daily.filter(a => a.status === 'late').length;
+
+    let expectedWorkDays = 0, realAbsent = 0;
+    if (sched.start_date && workDayNums && workDayNums.length) {
+        const start = new Date(sched.start_date); start.setHours(0,0,0,0);
+        const today = new Date(); today.setHours(0,0,0,0);
+        const end = sched.end_date ? new Date(sched.end_date) : today;
+        const lastDay = end < today ? end : today;
+        for (let dt = new Date(start); dt <= lastDay; dt.setDate(dt.getDate()+1)) {
+            if (workDayNums.includes(dt.getDay())) {
+                expectedWorkDays++;
+                const key = dt.toISOString().slice(0,10);
+                if (!attendedDays[key]) realAbsent++;
+            }
+        }
+    }
+
+    let rate, total, absent;
+    if (expectedWorkDays > 0) {
+        absent = realAbsent; total = expectedWorkDays;
+        rate = Math.min(100, Math.round((presentDaysCount / expectedWorkDays) * 100));
+    } else {
+        absent = daily.filter(a => a.status === 'absent').length;
+        total = presentDaysCount + absent;
+        rate = total > 0 ? Math.round((presentDaysCount / total) * 100) : (presentDaysCount > 0 ? 100 : 0);
+    }
+    return { rate, present: presentDaysCount, onTime, late, absent, total, hasData: daily.length > 0 || expectedWorkDays > 0 };
+}
+
+// تنسيق التاريخ بالعربي
+function fmtDate(d) {
+    if (!d || isNaN(new Date(d))) return '-';
+    try { return new Date(d).toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' }); }
+    catch(e){ return '-'; }
+}
 const showToast = (m, t) => window.ProVance && window.ProVance.showToast ? window.ProVance.showToast(m, t) : console.log('toast:', m);
 
 let companyUserId = null;
@@ -1057,7 +1164,7 @@ async function loadAll() {
         companyUserId = session.user.id;
         
         const { data: apps, error } = await sb.from('applications')
-            .select('id, student_user_id, student_name, student_email, student_university, student_photo, internship_id, internship_title, status, created_at, updated_at')
+            .select('id, student_user_id, student_name, student_email, student_university, student_photo, internship_id, internship_title, status, created_at, updated_at, interview_date, training_schedule')
             .eq('company_user_id', companyUserId)
             .in('status', ['hired', 'in_training', 'completed', 'accepted'])
             .order('updated_at', { ascending: false });
@@ -1072,7 +1179,7 @@ async function loadAll() {
         const intIds = [...new Set((apps || []).map(a => a.internship_id).filter(Boolean))];
         let internships = {};
         if (intIds.length > 0) {
-            const { data: intData } = await sb.from('internships').select('id, field').in('id', intIds);
+            const { data: intData } = await sb.from('internships').select('id, field, duration, trainee_type').in('id', intIds);
             (intData || []).forEach(i => { internships[i.id] = i; });
         }
         
@@ -1096,13 +1203,32 @@ async function loadAll() {
             .eq('company_user_id', companyUserId);
         const recsByApp = {};
         (recs || []).forEach(r => { recsByApp[r.application_id] = r; });
+
+        // سجلات الحضور لكل المتدربين (لحساب نسبة الحضور)
+        const appIds = (apps || []).map(a => a.id);
+        let attByApp = {};
+        if (appIds.length > 0) {
+            try {
+                const { data: attLogs } = await sb.from('attendance_logs')
+                    .select('application_id, student_user_id, scanned_at, status, attendance_type')
+                    .in('application_id', appIds);
+                (attLogs || []).forEach(l => {
+                    if (l.attendance_type && l.attendance_type !== 'daily_attendance') return;
+                    if (!attByApp[l.application_id]) attByApp[l.application_id] = [];
+                    attByApp[l.application_id].push(l);
+                });
+            } catch(e) { /* جدول الحضور ممكن يكون فاضي */ }
+        }
         
         allTrainees = (apps || []).map(a => ({
             ...a,
             field: internships[a.internship_id] && internships[a.internship_id].field || a.internship_title || 'عام',
+            duration: internships[a.internship_id] && internships[a.internship_id].duration || null,
+            trainee_type: internships[a.internship_id] && internships[a.internship_id].trainee_type || null,
             evaluation: evalsByApp[a.id],
             tasks: tasksByApp[a.id] || [],
-            recommendation: recsByApp[a.id]
+            recommendation: recsByApp[a.id],
+            attendance: attByApp[a.id] || []
         }));
         
         updateStats();
@@ -1273,6 +1399,28 @@ function renderTrainees() {
         
         const tasksCount = t.tasks.length;
         const hasRec = !!t.recommendation;
+
+        // تاريخ النهاية ونسبة الحضور (للمتدربين النشطين)
+        const dates = getTrainingDates(t);
+        const att = getAttendanceRate(t);
+        let trainingInfo = '';
+        if (t.status === 'in_training' || t.status === 'hired') {
+            const endTxt = dates.end ? fmtDate(dates.end) : 'غير محدد';
+            const leftBadge = (dates.daysLeft != null)
+                ? (dates.daysLeft > 0
+                    ? '<span style="color:#10b981">باقي ' + dates.daysLeft + ' يوم</span>'
+                    : (dates.daysLeft === 0 ? '<span style="color:#f59e0b">آخر يوم اليوم</span>' : '<span style="color:#4facfe">انتهى التدريب</span>'))
+                : '';
+            const attBadge = att.hasData
+                ? '<span style="color:' + (att.rate >= 75 ? '#10b981' : att.rate >= 50 ? '#f59e0b' : '#ef4444') + '"><i class="fas fa-user-check"></i> حضور ' + att.rate + '%</span>'
+                : '<span style="color:var(--text-muted)"><i class="fas fa-user-check"></i> لا حضور</span>';
+            trainingInfo =
+                '<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:0.74rem;color:var(--text-muted);background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:8px 10px">' +
+                    '<span><i class="fas fa-flag-checkered" style="color:#10b981"></i> ينتهي: ' + endTxt + '</span>' +
+                    (leftBadge ? '<span>' + leftBadge + '</span>' : '') +
+                    attBadge +
+                '</div>';
+        }
         
         return '<div onclick="openTrainee(&apos;' + t.id + '&apos;)" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:12px">' +
             '<div style="display:flex;align-items:center;gap:12px">' +
@@ -1283,6 +1431,7 @@ function renderTrainees() {
                 '</div>' +
             '</div>' +
             '<div style="display:flex;gap:6px;flex-wrap:wrap">' + statusBadge + scoreDisplay + '</div>' +
+            trainingInfo +
             '<div style="display:flex;gap:10px;padding-top:10px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--text-muted)">' +
                 '<span><i class="fas fa-clipboard-list" style="color:var(--primary)"></i> ' + tasksCount + ' مهمة</span>' +
                 '<span><i class="fas fa-' + (hasRec ? 'check-circle' : 'magic') + '" style="color:' + (hasRec ? '#10b981' : 'var(--primary)') + '"></i> ' + (hasRec ? 'رشحت' : 'لم ترشح') + '</span>' +
@@ -1290,6 +1439,98 @@ function renderTrainees() {
             '<button style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:8px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer;width:100%"><i class="fas fa-arrow-left"></i> فتح الملف</button>' +
         '</div>';
     }).join('');
+}
+
+// بطاقة معلومات التدريب (البداية، النهاية، التقدم، الحضور، رابط QR)
+function buildTrainingInfoCard(t) {
+    // تظهر للمتدربين النشطين والمكتملين فقط
+    if (!['in_training', 'hired', 'completed'].includes(t.status)) return '';
+
+    const dates = getTrainingDates(t);
+    const att = getAttendanceRate(t);
+    const sched = t.training_schedule || {};
+
+    const startTxt = dates.start ? fmtDate(dates.start) : '<span style="color:var(--text-muted)">غير محدد</span>';
+    const endTxt = dates.end ? fmtDate(dates.end) : '<span style="color:var(--text-muted)">غير محدد</span>';
+    const durTxt = getDurationText(t.duration);
+
+    // حالة الوقت المتبقي
+    let leftHtml = '';
+    if (dates.daysLeft != null) {
+        if (dates.daysLeft > 0) leftHtml = '<span style="color:#10b981;font-weight:800">باقي ' + dates.daysLeft + ' يوم</span>';
+        else if (dates.daysLeft === 0) leftHtml = '<span style="color:#f59e0b;font-weight:800">آخر يوم اليوم</span>';
+        else leftHtml = '<span style="color:#4facfe;font-weight:800">انتهت المدة</span>';
+    }
+
+    // شريط التقدم
+    let progressHtml = '';
+    if (dates.progress != null) {
+        const pc = dates.progress;
+        progressHtml =
+            '<div style="margin-top:14px">' +
+                '<div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px"><span style="color:var(--text-muted)">تقدّم التدريب</span><strong style="color:#10b981">' + pc + '%</strong></div>' +
+                '<div style="height:8px;background:rgba(255,255,255,0.08);border-radius:10px;overflow:hidden"><div style="height:100%;width:' + pc + '%;background:linear-gradient(90deg,#10b981,#059669);border-radius:10px;transition:width .6s"></div></div>' +
+            '</div>';
+    }
+
+    // نسبة الحضور
+    const attColor = att.rate >= 75 ? '#10b981' : att.rate >= 50 ? '#f59e0b' : '#ef4444';
+    let attHtml;
+    if (att.hasData) {
+        attHtml =
+            '<div style="display:flex;align-items:center;gap:14px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">' +
+                '<div style="position:relative;width:62px;height:62px;flex-shrink:0">' +
+                    '<svg viewBox="0 0 36 36" style="width:62px;height:62px;transform:rotate(-90deg)">' +
+                        '<circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"></circle>' +
+                        '<circle cx="18" cy="18" r="15.9" fill="none" stroke="' + attColor + '" stroke-width="3" stroke-dasharray="' + att.rate + ', 100" stroke-linecap="round"></circle>' +
+                    '</svg>' +
+                    '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.85rem;color:' + attColor + '">' + att.rate + '%</div>' +
+                '</div>' +
+                '<div style="flex:1">' +
+                    '<div style="font-weight:800;font-size:0.9rem;margin-bottom:4px"><i class="fas fa-user-check" style="color:' + attColor + '"></i> نسبة الحضور</div>' +
+                    '<div style="font-size:0.78rem;color:var(--text-muted);line-height:1.7">' +
+                        'حضر <strong style="color:#10b981">' + att.present + '</strong> يوم' +
+                        (att.late > 0 ? ' • <strong style="color:#f59e0b">' + att.late + '</strong> متأخر' : '') +
+                        (att.absent > 0 ? ' • <strong style="color:#ef4444">' + att.absent + '</strong> غياب' : '') +
+                    '</div>' +
+                '</div>' +
+                '<a href="company-QR_Code.html" style="background:rgba(79,172,254,0.12);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-size:0.8rem;text-decoration:none;white-space:nowrap;flex-shrink:0"><i class="fas fa-qrcode"></i> سجل الحضور</a>' +
+            '</div>';
+    } else {
+        attHtml =
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);flex-wrap:wrap">' +
+                '<span style="font-size:0.82rem;color:var(--text-muted)"><i class="fas fa-user-check"></i> لا توجد بيانات حضور بعد</span>' +
+                '<a href="company-QR_Code.html" style="background:rgba(79,172,254,0.12);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-size:0.8rem;text-decoration:none"><i class="fas fa-qrcode"></i> صفحة الحضور (QR)</a>' +
+            '</div>';
+    }
+
+    // أيام العمل
+    const workDays = Array.isArray(sched.training_days) && sched.training_days.length
+        ? sched.training_days.join('، ') : null;
+
+    return '<div style="background:linear-gradient(135deg,rgba(16,185,129,0.06),rgba(5,150,105,0.02));border:1px solid rgba(16,185,129,0.2);border-radius:16px;padding:18px;margin-bottom:18px">' +
+        '<div style="display:flex;align-items:center;gap:8px;font-weight:800;margin-bottom:14px;color:#10b981"><i class="fas fa-calendar-check"></i> متابعة التدريب</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">' +
+            '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:11px 13px">' +
+                '<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px"><i class="fas fa-play" style="color:#10b981"></i> أول يوم</div>' +
+                '<div style="font-weight:700;font-size:0.86rem">' + startTxt + '</div>' +
+            '</div>' +
+            '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:11px 13px">' +
+                '<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px"><i class="fas fa-flag-checkered" style="color:#ef4444"></i> آخر يوم</div>' +
+                '<div style="font-weight:700;font-size:0.86rem">' + endTxt + '</div>' +
+            '</div>' +
+            '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:11px 13px">' +
+                '<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px"><i class="fas fa-hourglass-half" style="color:#f59e0b"></i> المدة</div>' +
+                '<div style="font-weight:700;font-size:0.86rem">' + durTxt + (leftHtml ? ' <span style="font-size:0.74rem">(' + leftHtml + ')</span>' : '') + '</div>' +
+            '</div>' +
+            (workDays ? '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:11px 13px">' +
+                '<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px"><i class="fas fa-calendar-week" style="color:#4facfe"></i> أيام العمل</div>' +
+                '<div style="font-weight:700;font-size:0.8rem">' + esc(workDays) + '</div>' +
+            '</div>' : '') +
+        '</div>' +
+        progressHtml +
+        attHtml +
+    '</div>';
 }
 
 window.openTrainee = (appId) => {
@@ -1312,6 +1553,7 @@ window.openTrainee = (appId) => {
                 '</div>' +
                 '<button onclick="closeTraineeModal()" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>' +
             '</div>' +
+            buildTrainingInfoCard(t) +
             '<div style="display:flex;gap:4px;background:var(--bg-card);padding:4px;border-radius:12px;margin-bottom:18px">' +
                 '<button id="tab-eval" onclick="switchTab(&apos;eval&apos;)" style="flex:1;padding:10px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem"><i class="fas fa-chart-line"></i> تقارير الأداء</button>' +
                 '<button id="tab-tasks" onclick="switchTab(&apos;tasks&apos;)" style="flex:1;padding:10px;background:transparent;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem"><i class="fas fa-clipboard-list"></i> تقارير المهام</button>' +
