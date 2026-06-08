@@ -1647,21 +1647,23 @@
                                 <span style="color:var(--text-muted);font-size:.85rem;margin-right:8px">${esc(interview?.internship_title || '')}</span>
                             </div>
 
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-                                <div>
-                                    <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px"><i class="fas fa-calendar-alt" style="color:var(--primary)"></i> تاريخ بداية التدريب</label>
-                                    <input type="date" id="trainStartDate" value="${today}" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text)">
-                                </div>
-                                <div>
-                                    <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px"><i class="fas fa-calendar-check" style="color:var(--primary)"></i> تاريخ نهاية التدريب</label>
-                                    <input type="date" id="trainEndDate" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text)">
+                            <div style="margin-bottom:12px">
+                                <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px"><i class="fas fa-calendar-alt" style="color:var(--primary)"></i> تاريخ بداية التدريب</label>
+                                <input type="date" id="trainStartDate" value="${today}" oninput="updateComputedEnd('${appId}')" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text)">
+                            </div>
+
+                            <div id="computedEndBox" style="background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:11px 13px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+                                <i class="fas fa-flag-checkered" style="color:#10b981;font-size:1.1rem"></i>
+                                <div style="flex:1">
+                                    <div style="font-size:.74rem;color:var(--text-muted)">نهاية التدريب (تُحسب تلقائياً)</div>
+                                    <div id="computedEndText" style="font-weight:800;font-size:.92rem;color:#10b981">—</div>
                                 </div>
                             </div>
 
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
                                 <div>
                                     <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px"><i class="fas fa-clock" style="color:var(--primary)"></i> وقت الحضور اليومي</label>
-                                    <input type="time" id="trainDailyTime" value="09:00" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text)">
+                                    <input type="time" id="trainDailyTime" value="09:00" step="900" style="width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;color-scheme:dark">
                                 </div>
                                 <div>
                                     <label style="font-weight:700;font-size:.85rem;display:block;margin-bottom:6px"><i class="fas fa-calendar-week" style="color:var(--primary)"></i> أيام التدريب في الأسبوع</label>
@@ -1699,6 +1701,27 @@
                     </div>
                 </div>`;
                 renderModal(html);
+                // احسب واعرض تاريخ النهاية أول ما المودال يفتح
+                setTimeout(() => { try { updateComputedEnd(appId); } catch(e){} }, 30);
+            }
+        };
+
+        // حدّث عرض تاريخ نهاية التدريب المحسوب
+        window.updateComputedEnd = (appId) => {
+            const startEl = document.getElementById('trainStartDate');
+            const txtEl = document.getElementById('computedEndText');
+            const box = document.getElementById('computedEndBox');
+            if (!startEl || !txtEl) return;
+            const interview = State.allInterviews.find(i => i.id === appId);
+            const duration = interview && interview.internship_duration;
+            const durTxt = getDurationText(duration);
+            const end = computeEndDate(startEl.value, duration);
+            if (end) {
+                txtEl.textContent = fmtDateAr(end) + ' (المدة: ' + durTxt + ')';
+                if (box) { box.style.borderColor = 'rgba(16,185,129,.2)'; box.style.background = 'rgba(16,185,129,.07)'; }
+            } else {
+                txtEl.innerHTML = '<span style="color:var(--warning)">مدة المجال غير محددة — أدخلها في «إدارة الأقسام»</span>';
+                if (box) { box.style.borderColor = 'rgba(245,158,11,.25)'; box.style.background = 'rgba(245,158,11,.06)'; }
             }
         };
 
@@ -1709,15 +1732,58 @@
             await window.rejectStudent(appId, reason);
         };
 
+        // ===== حساب مدة التدريب (يقبل الكود أو النص العربي) =====
+        function durationToDays(d) {
+            if (!d) return 0;
+            const s = String(d).trim();
+            const codeMap = { '1-week':7,'2-weeks':14,'3-weeks':21,'4-weeks':28,'1-month':30,'1.5-months':45,'2-months':60,'2.5-months':75,'3-months':90,'4-months':120,'5-months':150,'6-months':180 };
+            if (codeMap[s] != null) return codeMap[s];
+            const arMap = { 'أسبوع':7,'اسبوع':7,'أسبوعين':14,'اسبوعين':14,'3 أسابيع':21,'4 أسابيع':28,'شهر':30,'شهر ونصف':45,'شهر ونص':45,'شهرين':60,'شهرين ونصف':75,'شهرين ونص':75,'3 أشهر':90,'3 شهور':90,'4 أشهر':120,'5 أشهر':150,'6 أشهر':180,'6 شهور':180 };
+            if (arMap[s] != null) return arMap[s];
+            const num = parseFloat((s.match(/[\d.]+/) || [])[0]);
+            if (!isNaN(num)) {
+                if (/أسبوع|اسبوع|week/i.test(s)) return Math.round(num*7);
+                if (/شهر|شهور|month/i.test(s)) return Math.round(num*30);
+            }
+            return 0;
+        }
+        function getDurationText(d) {
+            if (!d) return 'غير محددة';
+            const s = String(d).trim();
+            const map = { '1-month':'شهر','1.5-months':'شهر ونصف','2-months':'شهرين','2.5-months':'شهرين ونصف','3-months':'3 أشهر','4-months':'4 أشهر','5-months':'5 أشهر','6-months':'6 أشهر','1-week':'أسبوع','2-weeks':'أسبوعين','3-weeks':'3 أسابيع','4-weeks':'4 أسابيع' };
+            return map[s] || s;
+        }
+        // احسب تاريخ النهاية من البداية + المدة
+        function computeEndDate(startStr, duration) {
+            const days = durationToDays(duration);
+            if (!startStr || !days) return null;
+            const start = new Date(startStr);
+            if (isNaN(start)) return null;
+            const end = new Date(start);
+            end.setDate(end.getDate() + days);
+            return end.toISOString().slice(0,10);
+        }
+        function fmtDateAr(str) {
+            if (!str) return '-';
+            try { return new Date(str).toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' }); }
+            catch(e){ return str; }
+        }
+
         window.submitAcceptDecision = async (appId) => {
             const startDate  = document.getElementById('trainStartDate')?.value;
-            const endDate    = document.getElementById('trainEndDate')?.value;
             const dailyTime  = document.getElementById('trainDailyTime')?.value;
             const daysPerWeek = document.getElementById('trainDaysPerWeek')?.value;
             const notes      = document.getElementById('trainNotes')?.value?.trim();
             const checkedDays = [...document.querySelectorAll('input[name="trainDays"]:checked')].map(c => c.value);
 
             if (!startDate) { window.ProVance.showToast('حدد تاريخ بداية التدريب', 'warning'); return; }
+            if (!dailyTime) { window.ProVance.showToast('حدد وقت الحضور اليومي', 'warning'); return; }
+            if (checkedDays.length === 0) { window.ProVance.showToast('اختر أيام التدريب', 'warning'); return; }
+
+            // احسب تاريخ النهاية تلقائياً من مدة المجال
+            const interview = State.allInterviews.find(i => i.id === appId);
+            const duration = interview && interview.internship_duration;
+            const endDate = computeEndDate(startDate, duration); // ممكن يرجع null لو المدة مش معروفة
 
             closeModal('acceptDecisionModal');
 
@@ -1728,6 +1794,7 @@
                 const trainingSchedule = {
                     start_date:   startDate,
                     end_date:     endDate || null,
+                    duration:     duration || null,
                     daily_time:   dailyTime,
                     days_per_week: parseInt(daysPerWeek),
                     training_days: checkedDays,
@@ -1740,20 +1807,20 @@
                     updated_at: new Date().toISOString()
                 }).eq('id', appId);
 
-                const interview = State.allInterviews.find(i => i.id === appId);
                 if (interview && window.ProVance.sendNotification) {
                     const daysStr = checkedDays.join('، ');
+                    const endStr = endDate ? ` — ينتهي ${fmtDateAr(endDate)}` : '';
                     await window.ProVance.sendNotification({
                         userId:   interview.student_user_id,
                         userType: 'student',
                         title:    '🎉 مبروك! تم قبولك في التدريب',
-                        message:  `تم قبولك في "${esc(interview.internship_title)}". يبدأ التدريب ${startDate} — أيام التدريب: ${daysStr} — وقت الحضور: ${dailyTime}${notes ? ' — ' + notes : ''}`,
+                        message:  `تم قبولك في "${esc(interview.internship_title)}". يبدأ التدريب ${fmtDateAr(startDate)}${endStr} — أيام التدريب: ${daysStr} — وقت الحضور: ${dailyTime}${notes ? ' — ' + notes : ''}`,
                         type:     'success',
                         link:     'student-applications.html'
                     });
                 }
 
-                addLog('قبول طالب', `تم قبول ${interview?.student_name} — بداية التدريب: ${startDate}`);
+                addLog('قبول طالب', `تم قبول ${interview?.student_name} — بداية التدريب: ${startDate}${endDate ? ' — النهاية: ' + endDate : ''}`);
                 window.ProVance.showToast('🎉 تم قبول الطالب وإرسال جدول التدريب!', 'success');
                 window.dispatchEvent(new CustomEvent('reload-interviews'));
             } catch (err) {
@@ -2322,6 +2389,22 @@
             const interviews = appsRes.data || [];
             console.log('🎯 كل الطلبات اللي رجعت:', interviews.length);
             if (appsRes.error) console.error('❌ خطأ في جلب الطلبات:', appsRes.error);
+
+            // جيب مدة كل مجال (internship) عشان نحسب نهاية التدريب تلقائياً
+            try {
+                const intIds = [...new Set(interviews.map(a => a.internship_id).filter(Boolean))];
+                if (intIds.length > 0) {
+                    const { data: intData } = await sb.from('internships').select('id, duration, trainee_type').in('id', intIds);
+                    const durMap = {};
+                    (intData || []).forEach(i => { durMap[i.id] = { duration: i.duration, trainee_type: i.trainee_type }; });
+                    window._internshipDurations = durMap;
+                    // اربط المدة بكل طلب
+                    interviews.forEach(a => {
+                        const info = durMap[a.internship_id];
+                        if (info) { a.internship_duration = info.duration; a.trainee_type = info.trainee_type; }
+                    });
+                }
+            } catch(e) { console.warn('durations:', e); }
 
             const qrCodes = qrRes.data || [];
             const myAppIds = new Set(interviews.map(a => a.id));
