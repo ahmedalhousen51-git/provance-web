@@ -762,6 +762,19 @@
                 </div>
             </div>
 
+            <!-- تحليل بيانات الشركة -->
+            <div class="section" id="analyticsSection" style="margin-top:8px">
+                <div class="section-head">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-pie" style="color:var(--primary)"></i>
+                        تحليل بيانات الشركة
+                    </h2>
+                </div>
+                <div id="analyticsContent">
+                    <div class="empty"><i class="fas fa-spinner fa-spin"></i><p>جاري تحليل البيانات...</p></div>
+                </div>
+            </div>
+
             <!-- إحصائيات الأقسام المنفصلة -->
             <div class="section" id="deptStatsSection" style="display:none">
                 <div class="section-head">
@@ -1211,10 +1224,17 @@
         // ========================================================
         // Stats
         // ========================================================
+        // ========================================================
+        // تصنيف موحّد لحالات الطلبات
+        const ACCEPTED_STATUSES = ['accepted','interview_scheduled','interview_done','hired','completed','in_training','evaluated'];
+        const WITHDRAWN_STATUSES = ['withdrawn','cancelled','canceled','withdrawn_by_student','student_cancelled'];
+        function isWithdrawn(a) { return WITHDRAWN_STATUSES.includes(a.status); }
+        function isAccepted(a) { return ACCEPTED_STATUSES.includes(a.status); }
+
         function updateStats() {
             const apps = state.applications;
-            const pending = apps.filter(a => a.status === 'pending').length;
-            const accepted = apps.filter(a => ['accepted','interview_scheduled','interview_done','hired','completed'].includes(a.status)).length;
+            const pending = apps.filter(a => a.status === 'pending' || a.status === 'reviewing').length;
+            const accepted = apps.filter(isAccepted).length;
             const interviews = apps.filter(a =>
                 a.status === 'interview_scheduled'
                 && a.interview_date
@@ -1229,7 +1249,108 @@
             const badge = document.getElementById('pendingBadge');
             if (badge) badge.textContent = pending > 0 ? pending : '';
 
+            try { renderAnalytics(); } catch(e) { console.error('renderAnalytics:', e); }
             try { renderDeptStats(); } catch(e) { console.error('renderDeptStats:', e); }
+        }
+
+        // ========================================================
+        // تحليل بيانات الشركة (ملخص شامل)
+        // ========================================================
+        function renderAnalytics() {
+            const box = document.getElementById('analyticsContent');
+            if (!box) return;
+            const apps = state.applications || [];
+            const total = apps.length;
+
+            if (total === 0) {
+                box.innerHTML = emptyState('لا توجد بيانات بعد', 'ستظهر التحليلات بعد استلام أول طلب تدريب', 'chart-pie');
+                return;
+            }
+
+            const pending   = apps.filter(a => a.status === 'pending' || a.status === 'reviewing').length;
+            const accepted  = apps.filter(isAccepted).length;
+            const rejected  = apps.filter(a => a.status === 'rejected').length;
+            const withdrawn = apps.filter(isWithdrawn).length;
+            const interviews = apps.filter(a => a.status === 'interview_scheduled').length;
+            const hired     = apps.filter(a => a.status === 'hired' || a.status === 'completed' || a.status === 'in_training').length;
+
+            // المعدّلات
+            const decided = accepted + rejected; // الطلبات اللي اتبتّ فيها
+            const acceptRate = decided > 0 ? Math.round((accepted / decided) * 100) : 0;
+            const withdrawRate = total > 0 ? Math.round((withdrawn / total) * 100) : 0;
+            const responseRate = total > 0 ? Math.round(((total - pending) / total) * 100) : 0;
+
+            // عدد الأقسام
+            const depts = new Set(apps.map(a => a.internship_title || 'تدريب عام')).size;
+
+            // أكثر قسم عليه طلبات
+            const deptCounts = {};
+            apps.forEach(a => { const d = a.internship_title || 'تدريب عام'; deptCounts[d] = (deptCounts[d]||0)+1; });
+            let topDept = '-', topDeptCount = 0;
+            Object.keys(deptCounts).forEach(d => { if (deptCounts[d] > topDeptCount) { topDeptCount = deptCounts[d]; topDept = d; } });
+
+            // طلبات هذا الشهر
+            const now = new Date();
+            const thisMonth = apps.filter(a => {
+                if (!a.created_at) return false;
+                const d = new Date(a.created_at);
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            }).length;
+
+            const card = (icon, color, value, label, sub) => `
+                <div style="background:var(--card,rgba(255,255,255,.03));border:1px solid var(--border);border-radius:14px;padding:16px">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                        <div style="width:36px;height:36px;border-radius:10px;background:${color}22;display:flex;align-items:center;justify-content:center;color:${color};flex-shrink:0"><i class="fas ${icon}"></i></div>
+                        <div style="font-size:.82rem;color:var(--text-muted);font-weight:600">${label}</div>
+                    </div>
+                    <div style="font-size:1.7rem;font-weight:900;color:${color};line-height:1">${value}</div>
+                    ${sub ? `<div style="font-size:.74rem;color:var(--text-muted);margin-top:5px">${sub}</div>` : ''}
+                </div>`;
+
+            const bar = (label, count, color) => {
+                const pct = total > 0 ? Math.round((count/total)*100) : 0;
+                return `
+                    <div style="margin-bottom:12px">
+                        <div style="display:flex;justify-content:space-between;font-size:.83rem;font-weight:700;margin-bottom:5px">
+                            <span>${label}</span><span style="color:${color}">${count} (${pct}%)</span>
+                        </div>
+                        <div style="height:8px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden">
+                            <div style="height:100%;width:${pct}%;background:${color};border-radius:10px;transition:width .6s"></div>
+                        </div>
+                    </div>`;
+            };
+
+            box.innerHTML = `
+                <!-- بطاقات الأرقام -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px">
+                    ${card('fa-file-alt', '#4facfe', total, 'إجمالي الطلبات', `${thisMonth} هذا الشهر`)}
+                    ${card('fa-check-circle', '#10b981', accepted, 'مقبول', `معدّل القبول ${acceptRate}%`)}
+                    ${card('fa-clock', '#f59e0b', pending, 'بانتظار الرد', `نسبة الرد ${responseRate}%`)}
+                    ${card('fa-user-slash', '#a855f7', withdrawn, 'سحبوا الطلب', `${withdrawRate}% من الإجمالي`)}
+                    ${card('fa-times-circle', '#ef4444', rejected, 'مرفوض', null)}
+                    ${card('fa-user-check', '#14b8a6', hired, 'تم توظيفهم', null)}
+                </div>
+
+                <!-- توزيع الحالات -->
+                <div style="background:var(--card,rgba(255,255,255,.02));border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px">
+                    <div style="font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px"><i class="fas fa-chart-bar" style="color:var(--primary)"></i> توزيع حالات الطلبات</div>
+                    ${bar('بانتظار الرد', pending, '#f59e0b')}
+                    ${bar('مقبول / قيد التدريب', accepted, '#10b981')}
+                    ${bar('مرفوض', rejected, '#ef4444')}
+                    ${bar('سحبوا الطلب', withdrawn, '#a855f7')}
+                </div>
+
+                <!-- رؤى سريعة -->
+                <div style="background:linear-gradient(135deg,rgba(79,172,254,.06),rgba(79,172,254,.02));border:1px solid rgba(79,172,254,.2);border-radius:14px;padding:16px 18px">
+                    <div style="font-weight:800;color:#4facfe;margin-bottom:10px;display:flex;align-items:center;gap:8px"><i class="fas fa-lightbulb"></i> رؤى سريعة</div>
+                    <ul style="padding-right:20px;margin:0;line-height:2;font-size:.88rem;color:var(--text)">
+                        <li>عدد أقسام التدريب النشطة: <strong>${depts}</strong></li>
+                        <li>أكثر قسم عليه إقبال: <strong>${esc(topDept)}</strong> (${topDeptCount} طلب)</li>
+                        ${withdrawn > 0 ? `<li><strong style="color:#a855f7">${withdrawn}</strong> ${withdrawn === 1 ? 'طالب سحب' : 'طلاب سحبوا'} طلب التقديم (${withdrawRate}% من الإجمالي)</li>` : '<li style="color:#10b981">لم يسحب أي طالب طلبه — مؤشر إيجابي 👍</li>'}
+                        ${pending > 0 ? `<li style="color:#f59e0b">لديك <strong>${pending}</strong> ${pending === 1 ? 'طلب' : 'طلبات'} بانتظار الرد — راجعها لتحسين تجربة المتقدمين</li>` : '<li style="color:#10b981">رددت على كل الطلبات 👏</li>'}
+                    </ul>
+                </div>
+            `;
         }
 
         // ========================================================
@@ -1261,9 +1382,10 @@
             grid.innerHTML = deptNames.map((dept, i) => {
                 const list = byDept[dept];
                 const total = list.length;
-                const pending = list.filter(a => a.status === 'pending').length;
+                const pending = list.filter(a => a.status === 'pending' || a.status === 'reviewing').length;
                 const accepted = list.filter(a => acceptedStatuses.includes(a.status)).length;
                 const rejected = list.filter(a => a.status === 'rejected').length;
+                const withdrawn = list.filter(a => WITHDRAWN_STATUSES.includes(a.status)).length;
                 const interviews = list.filter(a => a.status === 'interview_scheduled' && a.interview_date && new Date(a.interview_date) > new Date()).length;
                 const color = palette[i % palette.length];
 
@@ -1291,7 +1413,10 @@
                                 <div style="font-size:.75rem;color:var(--text-muted)">مقابلات قادمة</div>
                             </div>
                         </div>
-                        ${rejected > 0 ? `<div style="margin-top:8px;font-size:.78rem;color:#ef4444;text-align:center"><i class="fas fa-times-circle"></i> ${rejected} مرفوض</div>` : ''}
+                        ${(rejected > 0 || withdrawn > 0) ? `<div style="margin-top:8px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:.78rem">
+                            ${rejected > 0 ? `<span style="color:#ef4444"><i class="fas fa-times-circle"></i> ${rejected} مرفوض</span>` : ''}
+                            ${withdrawn > 0 ? `<span style="color:#a855f7"><i class="fas fa-user-slash"></i> ${withdrawn} سحب الطلب</span>` : ''}
+                        </div>` : ''}
                     </div>
                 `;
             }).join('');
@@ -1307,11 +1432,12 @@
 
             const apps = state.applications;
             const counts = {
-                pending:  apps.filter(a => a.status === 'pending').length,
-                accepted: apps.filter(a => ['accepted','interview_scheduled','interview_done','hired','completed'].includes(a.status)).length,
-                rejected: apps.filter(a => a.status === 'rejected').length
+                pending:  apps.filter(a => a.status === 'pending' || a.status === 'reviewing').length,
+                accepted: apps.filter(a => ['accepted','interview_scheduled','interview_done','hired','completed','in_training','evaluated'].includes(a.status)).length,
+                rejected: apps.filter(a => a.status === 'rejected').length,
+                withdrawn: apps.filter(a => WITHDRAWN_STATUSES.includes(a.status)).length
             };
-            const total = counts.pending + counts.accepted + counts.rejected;
+            const total = counts.pending + counts.accepted + counts.rejected + counts.withdrawn;
 
             if (state.statusChart) state.statusChart.destroy();
 
@@ -1323,10 +1449,10 @@
             state.statusChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['بانتظار الرد', 'مقبول', 'مرفوض'],
+                    labels: ['بانتظار الرد', 'مقبول', 'مرفوض', 'سحبوا الطلب'],
                     datasets: [{
-                        data: [counts.pending, counts.accepted, counts.rejected],
-                        backgroundColor: ['#f59e0b', '#10b981', '#ef4444'],
+                        data: [counts.pending, counts.accepted, counts.rejected, counts.withdrawn],
+                        backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#a855f7'],
                         borderWidth: 2,
                         borderColor: '#1e293b'
                     }]
