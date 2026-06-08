@@ -1920,15 +1920,18 @@ async function renderPersonaTab() {
     let recRow = null;
     try {
         const sb = await window.getSafeSupabase();
-        const res = await sb.from('career_recommendations').select('id, sent_to_student, approved_recommendations, company_recommendations, company_opinions').eq('application_id', currentTraineeId).maybeSingle();
+        // اطلب * عشان لو في أعمدة إضافية مش موجودة الاستعلام مايفشلش
+        const res = await sb.from('career_recommendations').select('*').eq('application_id', currentTraineeId).maybeSingle();
         recRow = res.data;
         // اضمن إن _recState متظبط عشان زر الحفظ يشتغل حتى لو الشركة فتحت تاب الشخصية مباشرة
         if (recRow && (!window._recState || window._recState.recId !== recRow.id)) {
+            // اقرأ الاعتمادات/الآراء من الأعمدة أو من الـ meta جوه recommendations
+            const metaItem = Array.isArray(recRow.recommendations) ? recRow.recommendations.find(x => x && x.__meta) : null;
             window._recState = {
                 recId: recRow.id,
-                approved: recRow.approved_recommendations || [],
-                companyRecs: recRow.company_recommendations || [],
-                opinions: (recRow.company_opinions && typeof recRow.company_opinions === 'object') ? recRow.company_opinions : {},
+                approved: (recRow.approved_recommendations && recRow.approved_recommendations.length) ? recRow.approved_recommendations : ((metaItem && metaItem.approved) || []),
+                companyRecs: (recRow.company_recommendations && recRow.company_recommendations.length) ? recRow.company_recommendations : ((metaItem && metaItem.companyRecs) || []),
+                opinions: (recRow.company_opinions && typeof recRow.company_opinions === 'object') ? recRow.company_opinions : ((metaItem && metaItem.opinions) || {}),
                 _aiFields: (window._recState && window._recState._aiFields) || []
             };
         }
