@@ -718,6 +718,24 @@
         .persona-weak-area { font-weight: 800; font-size: 0.9rem; margin-bottom: 6px; color: var(--warning); }
         .persona-weak-tip { color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; }
         .persona-weak-tip i { color: #f59e0b; margin-left: 4px; }
+        /* تحليل المهام */
+        .persona-task-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+        .persona-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
+        .persona-stat-num { font-size: 1.6rem; font-weight: 800; background: linear-gradient(135deg,#ef4444,#dc2626); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+        .persona-stat-label { color: var(--text-muted); font-size: 0.76rem; margin-top: 6px; }
+        .persona-task-insights { background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.2); border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+        .persona-task-insights-title { font-weight: 800; color: #10b981; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .persona-task-insights ul { padding-right: 20px; color: var(--text); font-size: 0.88rem; line-height: 1.9; margin: 0; }
+        .persona-task-recent-title { font-weight: 800; font-size: 0.92rem; margin: 16px 0 10px; color: var(--text-muted); }
+        .persona-task-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+        .persona-task-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+        .persona-task-title { font-weight: 800; font-size: 0.92rem; }
+        .persona-task-row { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-top: 6px; }
+        .persona-task-row strong { color: var(--text); }
+        .persona-task-row.done { background: rgba(16,185,129,0.05); border-right: 3px solid #10b981; padding: 7px 10px; border-radius: 6px; }
+        .persona-task-row.done strong { color: #10b981; }
+        .persona-task-empty { text-align: center; padding: 24px 20px; color: var(--text-muted); background: rgba(255,255,255,0.02); border: 1px dashed var(--border); border-radius: 14px; margin: 16px 0; font-size: 0.9rem; line-height: 1.7; }
+        .persona-task-empty i { font-size: 2rem; display: block; margin-bottom: 10px; color: rgba(148,163,184,0.4); }
         .rec-improve { background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.2); border-radius: 14px; padding: 16px; margin: 20px 0; }
         .rec-improve-title { font-weight: 800; margin-bottom: 8px; color: var(--warning); display: flex; align-items: center; gap: 6px; }
         .rec-improve ul { padding-right: 20px; color: var(--text-muted); font-size: 0.88rem; line-height: 1.9; margin: 0; }
@@ -1739,7 +1757,7 @@ window.deleteTask = async (taskId) => {
 
 // ============ مولّد تحليل الشخصية المعمّق (محلي) ============
 // الدرجات من 100
-function buildPersonaAnalysis(field, evaluation) {
+function buildPersonaAnalysis(field, evaluation, tasks) {
     const score = (evaluation && evaluation.overall_score) || 0;
     const cs = (evaluation && evaluation.category_scores) || {};
     const tech = (cs.technical != null) ? cs.technical : score;
@@ -1784,16 +1802,92 @@ function buildPersonaAnalysis(field, evaluation) {
         strengths.push(best.n + ' يمكن البناء عليها مع التدريب المناسب');
     }
 
-    // ===== نقاط الضعف وفرص التطوير =====
+    // ===== نقاط الضعف وفرص التطوير (تطلع دايماً نقاط حقيقية = أضعف الفئات) =====
     const weaknesses = [];
-    if (tech < 60) weaknesses.push({ area: 'المهارات التقنية', tip: 'الالتحاق بدورات متخصصة والتطبيق العملي المكثّف لسد الفجوة التقنية' });
-    if (soft < 60) weaknesses.push({ area: 'مهارات التواصل', tip: 'المشاركة في أنشطة جماعية وورش عمل لتطوير الثقة في التعامل مع الآخرين' });
-    if (perf < 60) weaknesses.push({ area: 'الإنتاجية والالتزام', tip: 'استخدام أدوات تنظيم المهام وتقسيم العمل لأهداف صغيرة قابلة للقياس' });
-    if (grow < 60) weaknesses.push({ area: 'سرعة التعلّم', tip: 'تخصيص وقت ثابت للتعلّم الذاتي والاستفادة من التغذية الراجعة المستمرة' });
-    if (weaknesses.length === 0) weaknesses.push({ area: 'الارتقاء للمستوى التالي', tip: 'تولّي مهام أكثر تحدياً ومسؤوليات قيادية صغيرة لتنمية الخبرة' });
+    const tipFor = (area, v) => {
+        const maps = {
+            'tech': v < 45 ? 'البدء بدورات أساسية وتطبيق عملي يومي لبناء القاعدة التقنية' : v < 65 ? 'الالتحاق بدورات متخصصة والتدرّب على مشاريع حقيقية لسد الفجوة التقنية' : 'التعمّق في الأدوات المتقدمة والتخصص في مجال تقني دقيق',
+            'soft': v < 45 ? 'التدرّب على التواصل من خلال أنشطة جماعية بسيطة وتقديم عروض قصيرة' : v < 65 ? 'المشاركة في أنشطة جماعية وورش عمل لتطوير الثقة في التعامل' : 'تولّي أدوار تنسيقية صغيرة لصقل مهارات القيادة والتواصل',
+            'perf': v < 45 ? 'تقسيم المهام لخطوات صغيرة جداً ومتابعة يومية لبناء عادة الإنجاز' : v < 65 ? 'استخدام أدوات تنظيم المهام وتحديد أولويات واضحة لرفع الإنتاجية' : 'رفع سقف الجودة وتولّي مهام أكثر تعقيداً مع الحفاظ على المواعيد',
+            'grow': v < 45 ? 'تخصيص وقت ثابت يومياً للتعلّم والاستعانة بمرشد يتابع التقدّم' : v < 65 ? 'تخصيص وقت للتعلّم الذاتي والاستفادة من التغذية الراجعة المستمرة' : 'استكشاف مهارات جديدة خارج نطاق الراحة لتسريع التطوّر'
+        };
+        return maps[area];
+    };
+    // رتّب الفئات من الأضعف للأقوى
+    const ranked = [
+        { area: 'المهارات التقنية', key: 'tech', v: tech },
+        { area: 'مهارات التواصل', key: 'soft', v: soft },
+        { area: 'الإنتاجية والالتزام', key: 'perf', v: perf },
+        { area: 'سرعة التعلّم', key: 'grow', v: grow }
+    ].sort((a, b) => a.v - b.v);
+    // اعرض أضعف فئتين دايماً (نقاط ضعف حقيقية مكتوبة)
+    ranked.slice(0, 2).forEach(r => {
+        const sev = r.v < 45 ? 'ضعف واضح' : r.v < 65 ? 'يحتاج تحسين' : 'مجال للتطوير';
+        weaknesses.push({ area: r.area + ' (' + Math.round(r.v) + '% — ' + sev + ')', tip: tipFor(r.key, r.v) });
+    });
+
+    // ===== تحليل المهام (لو الشركة كتبت مهام) =====
+    let taskAnalysis = null;
+    const taskList = Array.isArray(tasks) ? tasks : [];
+    if (taskList.length > 0) {
+        const total = taskList.length;
+        const withReport = taskList.filter(x => x.report_text && x.report_text.trim()).length;
+        const rated = taskList.filter(x => x.rating != null && x.rating > 0);
+        const avgRating = rated.length ? (rated.reduce((s, x) => s + Number(x.rating), 0) / rated.length) : 0;
+        const completionRate = Math.round((withReport / total) * 100);
+        const withFiles = taskList.filter(x => x.file_url).length;
+
+        // متوسط طول التقارير (مؤشر على التفصيل والاجتهاد)
+        const reportLengths = taskList.filter(x => x.report_text).map(x => x.report_text.trim().length);
+        const avgReportLen = reportLengths.length ? Math.round(reportLengths.reduce((a, b) => a + b, 0) / reportLengths.length) : 0;
+
+        // رؤى مبنية على المهام
+        const insights = [];
+        if (completionRate >= 80) insights.push('معدّل إنجاز مرتفع — قدّم تقارير عن ' + withReport + ' من أصل ' + total + ' مهمة، ما يعكس التزاماً قوياً.');
+        else if (completionRate >= 50) insights.push('معدّل إنجاز متوسط — أنجز ' + withReport + ' من ' + total + ' مهمة، ويُنصح بمتابعة أوثق لرفع نسبة الإكمال.');
+        else insights.push('معدّل إنجاز منخفض — قدّم تقارير عن ' + withReport + ' من ' + total + ' مهمة فقط، ويحتاج إلى دعم لرفع الالتزام.');
+
+        if (avgRating > 0) {
+            if (avgRating >= 4) insights.push('جودة تنفيذ المهام عالية (متوسط تقييم ' + avgRating.toFixed(1) + '/5) — يُظهر إتقاناً واضحاً في التنفيذ.');
+            else if (avgRating >= 2.5) insights.push('جودة تنفيذ المهام مقبولة (متوسط ' + avgRating.toFixed(1) + '/5) — هناك مجال لتحسين دقة التنفيذ.');
+            else insights.push('جودة تنفيذ المهام تحتاج تطوير (متوسط ' + avgRating.toFixed(1) + '/5) — يُنصح بمراجعة أسلوب العمل.');
+        }
+
+        if (avgReportLen >= 200) insights.push('تقاريره مفصّلة وموثّقة جيداً، ما يدل على اهتمام بالشرح والتوثيق.');
+        else if (avgReportLen > 0 && avgReportLen < 80) insights.push('تقاريره مختصرة جداً — يُنصح بتشجيعه على توثيق خطوات عمله بتفصيل أكبر.');
+
+        if (withFiles > 0) insights.push('أرفق ملفات/أعمال في ' + withFiles + ' مهمة، ما يعكس قدرته على تسليم مخرجات ملموسة.');
+
+        // عيّنة من أبرز المهام (آخر 3)
+        const recentTasks = taskList.slice(-3).reverse().map(x => ({
+            title: x.task_title || 'مهمة',
+            asked: x.task_description || '',
+            done: x.report_text || '',
+            rating: x.rating || 0
+        }));
+
+        taskAnalysis = {
+            total: total,
+            with_report: withReport,
+            completion_rate: completionRate,
+            avg_rating: avgRating,
+            insights: insights,
+            recent_tasks: recentTasks
+        };
+
+        // اضبط النظرة العامة عشان تذكر المهام
+        if (completionRate >= 80 && avgRating >= 4) {
+            overview += ' وبالنظر إلى أدائه في المهام الموكلة إليه، يتّضح أنه ينقل مهاراته إلى تطبيق عملي فعّال ويسلّم أعمالاً بجودة عالية.';
+        } else if (completionRate < 50) {
+            overview += ' غير أن أداءه في المهام الموكلة يكشف عن فجوة بين القدرة النظرية والتطبيق العملي، ما يستدعي متابعة أقرب.';
+        } else {
+            overview += ' ويُظهر أداؤه في المهام الموكلة قدرة جيدة على التطبيق العملي مع وجود مساحة للتحسين.';
+        }
+    }
 
     return {
         overview: overview,
+        task_analysis: taskAnalysis,
         traits: traits,
         work_style: workStyle,
         detailed_strengths: strengths,
@@ -1818,7 +1912,7 @@ async function renderPersonaTab() {
         return;
     }
 
-    const a = buildPersonaAnalysis(t.field, t.evaluation);
+    const a = buildPersonaAnalysis(t.field, t.evaluation, t.tasks);
 
     const dimsHTML = a.dimensions.map(d =>
         '<div class="rec-skillbar"><div class="rec-skillbar-head"><span>' + d.name + ' <span style="color:var(--text-muted);font-weight:600">— ' + d.level + '</span></span><strong>' + d.value + '%</strong></div>' +
@@ -1835,6 +1929,34 @@ async function renderPersonaTab() {
         '<div class="persona-weak-item"><div class="persona-weak-area"><i class="fas fa-circle-dot"></i> ' + esc(w.area) + '</div><div class="persona-weak-tip"><i class="fas fa-lightbulb"></i> ' + esc(w.tip) + '</div></div>'
     ).join('');
 
+    // تحليل المهام (لو موجود)
+    let taskHTML = '';
+    if (a.task_analysis) {
+        const ta = a.task_analysis;
+        const insightsHTML = ta.insights.map(i => '<li>' + esc(i) + '</li>').join('');
+        const recentHTML = ta.recent_tasks.map(rt => {
+            const stars = rt.rating ? [1,2,3,4,5].map(n => '<span style="color:' + (n <= rt.rating ? '#fbbf24' : 'rgba(148,163,184,0.3)') + '">★</span>').join('') : '<span style="color:var(--text-muted);font-size:0.78rem">لم تُقيّم</span>';
+            return '<div class="persona-task-item">' +
+                '<div class="persona-task-head"><span class="persona-task-title">' + esc(rt.title) + '</span><span>' + stars + '</span></div>' +
+                (rt.asked ? '<div class="persona-task-row"><strong>المطلوب:</strong> ' + esc(rt.asked.length > 120 ? rt.asked.substring(0,120)+'…' : rt.asked) + '</div>' : '') +
+                (rt.done ? '<div class="persona-task-row done"><strong>ما نفّذه المتدرب:</strong> ' + esc(rt.done.length > 160 ? rt.done.substring(0,160)+'…' : rt.done) + '</div>' : '<div class="persona-task-row" style="color:var(--warning)"><i class="fas fa-exclamation-circle"></i> لم يقدّم تقريراً عن هذه المهمة</div>') +
+            '</div>';
+        }).join('');
+
+        taskHTML =
+            '<div class="persona-section-title"><i class="fas fa-clipboard-check"></i> تحليل المهام والتنفيذ</div>' +
+            '<div class="persona-task-stats">' +
+                '<div class="persona-stat"><div class="persona-stat-num">' + ta.total + '</div><div class="persona-stat-label">إجمالي المهام</div></div>' +
+                '<div class="persona-stat"><div class="persona-stat-num">' + ta.completion_rate + '%</div><div class="persona-stat-label">نسبة الإنجاز</div></div>' +
+                '<div class="persona-stat"><div class="persona-stat-num">' + (ta.avg_rating > 0 ? ta.avg_rating.toFixed(1) : '—') + '</div><div class="persona-stat-label">متوسط الجودة /5</div></div>' +
+            '</div>' +
+            '<div class="persona-task-insights"><div class="persona-task-insights-title"><i class="fas fa-magnifying-glass-chart"></i> ماذا تكشف المهام عن المتدرب</div><ul>' + insightsHTML + '</ul></div>' +
+            '<div class="persona-task-recent-title">آخر المهام المنفّذة</div>' +
+            recentHTML;
+    } else {
+        taskHTML = '<div class="persona-task-empty"><i class="fas fa-clipboard-list"></i> لم تُضف مهام لهذا المتدرب بعد. إضافة المهام في تاب «تقارير المهام» تجعل تحليل الشخصية أدقّ بكثير.</div>';
+    }
+
     content.innerHTML =
         // نظرة عامة
         '<div class="persona-overview"><div class="persona-overview-title"><i class="fas fa-brain"></i> النظرة العامة على الشخصية المهنية</div>' +
@@ -1842,6 +1964,9 @@ async function renderPersonaTab() {
 
         // الأبعاد (بارات)
         '<div class="rec-profile"><div class="rec-profile-title"><i class="fas fa-chart-simple"></i> أبعاد التقييم</div>' + dimsHTML + '</div>' +
+
+        // تحليل المهام
+        taskHTML +
 
         // سمات الشخصية
         '<div class="persona-section-title"><i class="fas fa-fingerprint"></i> سمات الشخصية</div>' +
@@ -2477,6 +2602,14 @@ function buildCareerRecommendations(field, evaluation) {
     // رتّب تنازلياً حسب نسبة التوافق وخُد أعلى 5
     recommendations.sort((a, b) => b.match - a.match);
     const top5 = recommendations.slice(0, 5);
+
+    // افرض فرق 5 درجات على الأقل بين كل مجال والتالي (عشان النسب ما تبقاش متقاربة)
+    for (let k = 1; k < top5.length; k++) {
+        if (top5[k - 1].match - top5[k].match < 5) {
+            top5[k].match = Math.max(40, top5[k - 1].match - 5);
+            top5[k].match_score = top5[k].match;
+        }
+    }
 
     // ====== نقاط القوة حسب أعلى الفئات (من 100) ======
     const techScore = (cs.technical != null) ? cs.technical : score;
