@@ -935,6 +935,106 @@ function normalizeArabic(str) {
         .replace(/\s+/g, ' ')                     // توحيد المسافات
         .toLowerCase();
 }
+
+// ===== قاموس مدن ومحافظات مصر (مع صيغ مختلفة وأسماء إنجليزية) =====
+const EGYPT_CITIES = [
+    { name: 'القاهرة', aliases: ['القاهرة','قاهرة','مصر','cairo','elcairo','alcairo','kairo'] },
+    { name: 'الجيزة', aliases: ['الجيزة','جيزة','giza','elgiza','gizah'] },
+    { name: 'الإسكندرية', aliases: ['الإسكندرية','الاسكندرية','اسكندرية','اسكندريه','alexandria','alex','eskندria'] },
+    { name: 'المنصورة', aliases: ['المنصورة','منصورة','mansoura','elmansoura','mansurah','mansura'] },
+    { name: 'طنطا', aliases: ['طنطا','tanta'] },
+    { name: 'الزقازيق', aliases: ['الزقازيق','زقازيق','zagazig','elzagazig'] },
+    { name: 'أسيوط', aliases: ['أسيوط','اسيوط','asyut','assiut','assyut'] },
+    { name: 'المنيا', aliases: ['المنيا','منيا','minya','elminya','menia'] },
+    { name: 'سوهاج', aliases: ['سوهاج','sohag','suhaj'] },
+    { name: 'بني سويف', aliases: ['بني سويف','بنى سويف','banisweif','benisuef','banisuwayf'] },
+    { name: 'الفيوم', aliases: ['الفيوم','فيوم','fayoum','elfayoum','faiyum'] },
+    { name: 'قنا', aliases: ['قنا','qena','qina'] },
+    { name: 'أسوان', aliases: ['أسوان','اسوان','aswan'] },
+    { name: 'الأقصر', aliases: ['الأقصر','الاقصر','اقصر','luxor','loksor'] },
+    { name: 'بورسعيد', aliases: ['بورسعيد','بور سعيد','portsaid','borsaid'] },
+    { name: 'السويس', aliases: ['السويس','سويس','suez','elsuez'] },
+    { name: 'الإسماعيلية', aliases: ['الإسماعيلية','الاسماعيلية','اسماعيلية','اسماعيليه','ismailia','ismailiya'] },
+    { name: 'دمياط', aliases: ['دمياط','damietta','dumyat'] },
+    { name: 'كفر الشيخ', aliases: ['كفر الشيخ','كفرالشيخ','kafrelsheikh','kafralsheikh'] },
+    { name: 'الغربية', aliases: ['الغربية','غربية','gharbia','elgharbia'] },
+    { name: 'المنوفية', aliases: ['المنوفية','منوفية','menoufia','monufia'] },
+    { name: 'القليوبية', aliases: ['القليوبية','قليوبية','qalyubia','kalyoubia'] },
+    { name: 'الشرقية', aliases: ['الشرقية','شرقية','sharqia','elsharkia'] },
+    { name: 'البحيرة', aliases: ['البحيرة','بحيرة','beheira','elbeheira'] },
+    { name: 'الدقهلية', aliases: ['الدقهلية','دقهلية','dakahlia','daqahliya'] },
+    { name: 'مطروح', aliases: ['مطروح','مرسى مطروح','marsamatrouh','matrouh','matruh'] },
+    { name: 'البحر الأحمر', aliases: ['البحر الأحمر','البحر الاحمر','الغردقة','غردقة','hurghada','redsea','elgouna'] },
+    { name: 'الوادي الجديد', aliases: ['الوادي الجديد','وادي جديد','newvalley','elkharga'] },
+    { name: 'شمال سيناء', aliases: ['شمال سيناء','العريش','عريش','northsinai','arish'] },
+    { name: 'جنوب سيناء', aliases: ['جنوب سيناء','شرم الشيخ','شرم','southsinai','sharmelsheikh','sharm','dahab'] },
+    { name: 'المحلة الكبرى', aliases: ['المحلة الكبرى','المحلة','محلة','mahalla','elmahalla'] },
+    { name: 'دمنهور', aliases: ['دمنهور','damanhour','damanhur'] },
+    { name: 'بنها', aliases: ['بنها','banha','benha'] },
+    { name: 'شبرا الخيمة', aliases: ['شبرا الخيمة','شبرا الخيمه','شبرالخيمة','shubraelkheima','shobraelkhima'] }
+];
+
+// مفتاح المطابقة: تطبيع + إزالة "ال" التعريف + إزالة المسافات
+function cityMatchKey(s) {
+    let n = normalizeArabic(s);
+    n = n.replace(/^ال/, '');      // شيل "ال" التعريف من الأول
+    n = n.replace(/\s/g, '');       // شيل كل المسافات للمطابقة
+    return n;
+}
+
+// مسافة التعديل (Levenshtein) — كام حرف فرق بين كلمتين
+function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    if (m === 0) return n;
+    if (n === 0) return m;
+    let prev = Array.from({ length: n + 1 }, (_, i) => i);
+    let cur = new Array(n + 1);
+    for (let i = 1; i <= m; i++) {
+        cur[0] = i;
+        for (let j = 1; j <= n; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+        }
+        [prev, cur] = [cur, prev];
+    }
+    return prev[n];
+}
+
+// كام حرف فرق مسموح حسب طول الكلمة (الكلمات القصيرة أكثر صرامة)
+function allowedCityDist(len) {
+    if (len <= 3) return 0;   // قصيرة جداً → مطابقة تامة فقط
+    if (len <= 6) return 1;   // حرف واحد فرق
+    return 2;                 // طويلة → حرفين فرق
+}
+
+// جهّز مفاتيح القاموس مرة واحدة
+const _cityAliasIndex = [];
+EGYPT_CITIES.forEach(c => {
+    c.aliases.forEach(a => _cityAliasIndex.push({ key: cityMatchKey(a), name: c.name }));
+});
+
+// يحوّل أي كتابة لاسم المدينة الرسمي (حتى لو فيها زيادة/نقص حرف)
+function resolveCity(input) {
+    if (!input) return '';
+    const key = cityMatchKey(input);
+    if (!key) return String(input).trim();
+
+    // 1) مطابقة تامة مع القاموس
+    for (const entry of _cityAliasIndex) {
+        if (entry.key === key) return entry.name;
+    }
+    // 2) مطابقة تقريبية (زيادة/نقص/تغيير حرف)
+    let best = null, bestDist = 99;
+    for (const entry of _cityAliasIndex) {
+        const d = levenshtein(key, entry.key);
+        const tol = allowedCityDist(Math.min(key.length, entry.key.length));
+        if (d <= tol && d < bestDist) { bestDist = d; best = entry.name; }
+    }
+    if (best) return best;
+
+    // 3) مش في القاموس → رجّع الكتابة الأصلية منظّفة
+    return String(input).trim();
+}
 const showToast = (m, t) => window.ProVance && window.ProVance.showToast ? window.ProVance.showToast(m, t) : console.log('toast:', m);
 
 let companyUserId = null;
@@ -1055,9 +1155,10 @@ function populateFilters() {
         }
         if (s.university) universities.add(s.university);
         if (s.city) {
-            const key = normalizeArabic(s.city);
-            // احتفظ بأول صيغة عرض (أو الأطول، عادةً الأصح إملائياً)
-            if (!citiesMap[key] || s.city.length > citiesMap[key].length) citiesMap[key] = s.city.trim();
+            const canonical = resolveCity(s.city);     // الاسم الرسمي (لو معروف)
+            const key = normalizeArabic(canonical);     // مفتاح التوحيد
+            // فضّل أسماء القاموس النظيفة كصيغة عرض
+            if (!citiesMap[key]) citiesMap[key] = canonical;
         }
     });
     
@@ -1156,7 +1257,7 @@ window.applyFilters = () => {
         if (university && s.university !== university) return false;
         
         // City
-        if (city && normalizeArabic(s.city) !== city) return false;
+        if (city && normalizeArabic(resolveCity(s.city)) !== city) return false;
         
         // Study year
         if (studyYear) {
