@@ -749,6 +749,8 @@
         .rec-send-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(124,108,255,0.3); }
         .rec-regen-btn { width: 100%; background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 12px; border-radius: 12px; font-weight: 700; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .rec-regen-btn:hover { border-color: var(--text-muted); }
+        .rec-send-hint { text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 8px; line-height: 1.6; }
+        .rec-send-hint i { color: #7c6cff; margin-left: 4px; }
         .rec-sent { text-align: center; padding: 14px; background: rgba(16,185,129,0.05); border-radius: 12px; color: #10b981; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; }
         /* شارات نوع المجال */
         .rec-rel-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; }
@@ -1914,6 +1916,24 @@ async function renderPersonaTab() {
 
     const a = buildPersonaAnalysis(t.field, t.evaluation, t.tasks);
 
+    // جيب سجل الترشيحات لمعرفة حالة الإرسال والـ id (للزر)
+    let recRow = null;
+    try {
+        const sb = await window.getSafeSupabase();
+        const res = await sb.from('career_recommendations').select('id, sent_to_student, approved_recommendations, company_recommendations, company_opinions').eq('application_id', currentTraineeId).maybeSingle();
+        recRow = res.data;
+        // اضمن إن _recState متظبط عشان زر الحفظ يشتغل حتى لو الشركة فتحت تاب الشخصية مباشرة
+        if (recRow && (!window._recState || window._recState.recId !== recRow.id)) {
+            window._recState = {
+                recId: recRow.id,
+                approved: recRow.approved_recommendations || [],
+                companyRecs: recRow.company_recommendations || [],
+                opinions: (recRow.company_opinions && typeof recRow.company_opinions === 'object') ? recRow.company_opinions : {},
+                _aiFields: (window._recState && window._recState._aiFields) || []
+            };
+        }
+    } catch(e) { recRow = null; }
+
     const dimsHTML = a.dimensions.map(d =>
         '<div class="rec-skillbar"><div class="rec-skillbar-head"><span>' + d.name + ' <span style="color:var(--text-muted);font-weight:600">— ' + d.level + '</span></span><strong>' + d.value + '%</strong></div>' +
         '<div class="rec-skillbar-track"><div class="rec-skillbar-fill" style="width:' + d.value + '%;background:' + d.color + '"></div></div></div>'
@@ -1980,7 +2000,19 @@ async function renderPersonaTab() {
         '<div class="rec-strength"><div class="rec-strength-title"><i class="fas fa-star"></i> نقاط القوة</div><ul>' + strengthsHTML + '</ul></div>' +
 
         // نقاط الضعف وفرص التطوير
-        '<div class="persona-weak"><div class="persona-weak-title"><i class="fas fa-triangle-exclamation"></i> نقاط الضعف وفرص التطوير</div>' + weakHTML + '</div>';
+        '<div class="persona-weak"><div class="persona-weak-title"><i class="fas fa-triangle-exclamation"></i> نقاط الضعف وفرص التطوير</div>' + weakHTML + '</div>' +
+
+        // أزرار الحفظ والإرسال (التقرير الكامل)
+        '<div class="rec-actions">' +
+            (recRow && recRow.sent_to_student
+                ? '<div class="rec-sent"><i class="fas fa-check-circle"></i> تم إرسال التقرير الكامل للطالب</div>'
+                : '') +
+            '<button class="rec-save-btn" onclick="saveCompanyRecs()"><i class="fas fa-save"></i> حفظ التقدم</button>' +
+            (recRow && !recRow.sent_to_student
+                ? '<button class="rec-send-btn" onclick="sendFullReportToStudent(&apos;' + recRow.id + '&apos;)"><i class="fas fa-paper-plane"></i> إرسال التقرير الكامل للطالب</button>'
+                : (!recRow ? '<div class="rec-send-hint"><i class="fas fa-info-circle"></i> ولّد الترشيحات أولاً من تاب «الترشيحات» لتفعيل الإرسال</div>' : '')) +
+            (recRow && !recRow.sent_to_student ? '<div class="rec-send-hint"><i class="fas fa-paper-plane"></i> الإرسال يبعت للطالب: تقييم الأداء + الترشيحات + تحليل الشخصية دفعة واحدة</div>' : '') +
+        '</div>';
 }
 
 async function renderRecTab() {
@@ -2155,11 +2187,10 @@ async function renderRecTab() {
 
             // Actions
             '<div class="rec-actions">' +
-                '<button class="rec-save-btn" onclick="saveCompanyRecs()"><i class="fas fa-save"></i> حفظ ترشيحات الشركة</button>' +
-                (rec.sent_to_student
-                    ? '<div class="rec-sent"><i class="fas fa-check-circle"></i> تم إرسال الترشيحات للطالب</div>'
-                    : '<button class="rec-send-btn" onclick="sendRecToStudent(&apos;' + rec.id + '&apos;)"><i class="fas fa-paper-plane"></i> إرسال الترشيحات المعتمدة للطالب</button>') +
-                '<button class="rec-regen-btn" onclick="regenerateRec()"><i class="fas fa-redo"></i> إعادة التوليد</button>' +
+                (rec.sent_to_student ? '<div class="rec-sent"><i class="fas fa-check-circle"></i> تم إرسال التقرير الكامل للطالب</div>' : '') +
+                '<button class="rec-save-btn" onclick="saveCompanyRecs()"><i class="fas fa-save"></i> حفظ التقدم</button>' +
+                '<button class="rec-regen-btn" onclick="regenerateRec()"><i class="fas fa-redo"></i> إعادة توليد الترشيحات</button>' +
+                (!rec.sent_to_student ? '<div class="rec-send-hint"><i class="fas fa-info-circle"></i> الإرسال النهائي للطالب من تاب «تحليل الشخصية»</div>' : '') +
             '</div>';
     } else {
         if (!t.evaluation) {
@@ -2674,31 +2705,67 @@ window.regenerateRec = async () => {
 };
 
 window.sendRecToStudent = async (recId) => {
+    return window.sendFullReportToStudent(recId);
+};
+
+// إرسال التقرير الكامل للطالب (تقييم + ترشيحات + تحليل شخصية) دفعة واحدة
+window.sendFullReportToStudent = async (recId) => {
+    if (!confirm('إرسال التقرير الكامل للطالب؟\nسيتمكّن الطالب من رؤية: تقييم الأداء، الترشيحات الوظيفية، وتحليل الشخصية. لا يمكن التراجع.')) return;
+
     const sb = await window.getSafeSupabase();
     const t = allTrainees.find(x => x.id === currentTraineeId);
-    
+
+    // 1) احفظ آخر تقدّم (الاعتمادات والآراء وترشيحات الشركة) قبل الإرسال
+    try {
+        if (window._recState && window._recState.recId) {
+            let { error: saveErr } = await sb.from('career_recommendations').update({
+                approved_recommendations: window._recState.approved,
+                company_recommendations: window._recState.companyRecs,
+                company_opinions: window._recState.opinions || {}
+            }).eq('id', window._recState.recId);
+            if (saveErr && /column|does not exist|schema/i.test(saveErr.message || '')) {
+                const { data: cur } = await sb.from('career_recommendations').select('recommendations').eq('id', window._recState.recId).maybeSingle();
+                let recsArr = (cur && cur.recommendations) || [];
+                if (!Array.isArray(recsArr)) recsArr = [];
+                recsArr = recsArr.filter(x => !x.__meta);
+                recsArr.push({ __meta: true, approved: window._recState.approved, companyRecs: window._recState.companyRecs, opinions: window._recState.opinions || {} });
+                await sb.from('career_recommendations').update({ recommendations: recsArr }).eq('id', window._recState.recId);
+            }
+        }
+    } catch(e) { /* تجاهل خطأ الحفظ، أكمل الإرسال */ }
+
+    // 2) علّم التقرير كمُرسَل
     const { error } = await sb.from('career_recommendations').update({
         sent_to_student: true,
         sent_at: new Date().toISOString()
     }).eq('id', recId);
-    
-    if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
-    
+
+    if (error) { showToast('خطأ في الإرسال: ' + error.message, 'error'); return; }
+
+    // 3) علّم التقييم كمُرسَل كمان (لو مش متعلّم)
+    try {
+        if (t && t.evaluation && t.evaluation.id) {
+            await sb.from('ai_evaluations').update({ status: 'sent', sent_to_student_at: new Date().toISOString() }).eq('id', t.evaluation.id);
+        }
+    } catch(e) {}
+
+    // 4) إشعار شامل للطالب
     if (window.ProVance && window.ProVance.sendNotification && t) {
         try {
             await window.ProVance.sendNotification({
                 userId: t.student_user_id,
                 userType: 'student',
-                title: '🎯 ترشيحات وظيفية',
-                message: 'الشركة أرسلت لك 5 ترشيحات وظيفية',
+                title: '📋 تقريرك الكامل جاهز',
+                message: 'الشركة أرسلت تقييم أدائك، الترشيحات الوظيفية، وتحليل شخصيتك المهنية',
                 type: 'success',
                 link: 'student-profile.html'
             });
         } catch(e){}
     }
-    
-    showToast('✅ تم الإرسال للطالب', 'success');
-    renderRecTab();
+
+    showToast('✅ تم إرسال التقرير الكامل للطالب', 'success');
+    await loadAll();
+    renderPersonaTab();
 };
 
 (async () => {
