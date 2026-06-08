@@ -651,6 +651,13 @@
         .rec-match-bar { height: 7px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
         .rec-match-fill { height: 100%; border-radius: 10px; transition: width .5s; }
         .rec-source { font-size: 0.76rem; color: var(--text-muted); margin-bottom: 14px; opacity: 0.85; }
+        .rec-level-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; background: rgba(168,85,247,0.15); color: #c084fc; }
+        .rec-skills { font-size: 0.82rem; margin-bottom: 10px; line-height: 1.9; }
+        .rec-skill-chip { display: inline-block; background: rgba(239,68,68,0.1); color: #ef4444; padding: 3px 9px; border-radius: 10px; font-size: 0.74rem; font-weight: 700; margin-left: 4px; margin-bottom: 4px; }
+        .rec-meta-line { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 8px; line-height: 1.6; }
+        .rec-meta-label { color: var(--text); font-weight: 700; }
+        .rec-salary { color: #10b981; }
+        .rec-salary .rec-meta-label { color: #10b981; }
         .rec-approve-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; font-size: 0.86rem; font-weight: 700; padding: 8px 0; user-select: none; }
         .rec-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; transition: all .2s; flex-shrink: 0; color: #fff; font-size: 0.72rem; }
         .rec-checkbox.checked { background: #10b981; border-color: #10b981; }
@@ -1703,6 +1710,18 @@ async function renderRecTab() {
         const approved = (rec.approved_recommendations && rec.approved_recommendations.length) ? rec.approved_recommendations : metaApproved;   // أسماء المجالات المعتمدة
         const companyRecs = (rec.company_recommendations && rec.company_recommendations.length) ? rec.company_recommendations : metaCompany;  // ترشيحات الشركة الإضافية
 
+        // تطبيع الترشيحات القديمة: وحّد اسم المجال وصحّح أي نسبة خارج 0-100
+        recs = recs.map(r => {
+            const rr = {...r};
+            if (!rr.field) rr.field = rr.title || rr.job_title || 'مجال';
+            let m = (rr.match != null) ? rr.match : (rr.match_score != null ? rr.match_score : 0);
+            m = Number(m) || 0;
+            while (m > 100) m = Math.round(m / 10); // 1000→100, 800→80
+            if (m < 0) m = 0;
+            rr.match = m;
+            return rr;
+        });
+
         // خزّن الحالة في الذاكرة عشان نعدّل عليها قبل الحفظ
         window._recState = {
             recId: rec.id,
@@ -1725,12 +1744,14 @@ async function renderRecTab() {
             const isApproved = approved.includes(fieldName);
             const m = r.match || r.match_score || 0;
             const savedOpinion = (window._recState.opinions && window._recState.opinions[fieldName]) || '';
+            const lvlLabel = r.level_label || ({entry:'مبتدئ', mid:'متوسط', senior:'متقدم'}[r.level] || '');
             return '<div class="rec-card ' + (isApproved ? 'rec-approved' : '') + '" id="recCard_' + idx + '">' +
                 (isApproved ? '<div class="rec-check-corner"><i class="fas fa-check"></i></div>' : '') +
                 '<div class="rec-card-head">' +
                     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' +
                         '<span class="rec-ai-badge"><i class="fas fa-robot"></i> ترشيح AI</span>' +
                         relBadge(r.relation) +
+                        (lvlLabel ? '<span class="rec-level-badge"><i class="fas fa-layer-group"></i> ' + esc(lvlLabel) + '</span>' : '') +
                     '</div>' +
                     '<div class="rec-field-name">' + esc(fieldName) + '</div>' +
                 '</div>' +
@@ -1739,6 +1760,9 @@ async function renderRecTab() {
                     '<span class="rec-match-label">نسبة التوافق ' + m + '%</span>' +
                     '<div class="rec-match-bar"><div class="rec-match-fill" style="width:' + m + '%;background:' + matchColor(m) + '"></div></div>' +
                 '</div>' +
+                (r.key_skills && r.key_skills.length ? '<div class="rec-skills"><span class="rec-meta-label">المهارات المطلوبة:</span> ' + r.key_skills.map(s => '<span class="rec-skill-chip">' + esc(s) + '</span>').join('') + '</div>' : '') +
+                (r.growth_path ? '<div class="rec-meta-line"><i class="fas fa-route" style="color:#4facfe"></i> <span class="rec-meta-label">المسار:</span> ' + esc(r.growth_path) + '</div>' : '') +
+                (r.salary_range_egp ? '<div class="rec-meta-line rec-salary"><i class="fas fa-money-bill-wave"></i> <span class="rec-meta-label">الراتب المتوقع:</span> ' + esc(r.salary_range_egp) + '</div>' : '') +
                 (r.source ? '<div class="rec-source">المصدر: ' + esc(r.source) + '</div>' : '') +
                 // مربع رأي الشركة على الترشيح
                 '<div class="rec-opinion-box">' +
@@ -1958,111 +1982,116 @@ window.generateRec = async () => {
 };
 
 // ============ مولّد الترشيحات الوظيفية الذكي (محلي) ============
+// الدرجات (overall_score و category_scores) مُخزّنة من 100
 function buildCareerRecommendations(field, evaluation) {
     const f = String(field || '').toLowerCase();
-    const score = (evaluation && evaluation.overall_score) || 0;
-    const cs = (evaluation && evaluation.category_scores) || {};
+    const score = (evaluation && evaluation.overall_score) || 0;   // من 100
+    const cs = (evaluation && evaluation.category_scores) || {};   // كل فئة من 100
 
-    // تقييم عام حسب الدرجة
+    // تقييم عام حسب الدرجة (من 100)
     let assessment;
-    if (score >= 4.5) assessment = 'أداء ممتاز ومتميّز. المتدرب أظهر كفاءة عالية وجاهز لتحمّل مسؤوليات أكبر في مجاله.';
-    else if (score >= 3.5) assessment = 'أداء جيد جداً. المتدرب يمتلك أساساً قوياً ويحتاج صقل بسيط للوصول للاحتراف الكامل.';
-    else if (score >= 2.5) assessment = 'أداء جيد مع وجود مجالات تحتاج تطوير. المتدرب واعد لكن يحتاج مزيد من الخبرة والتدريب.';
+    if (score >= 90) assessment = 'أداء ممتاز ومتميّز. المتدرب أظهر كفاءة عالية وجاهز لتحمّل مسؤوليات أكبر في مجاله.';
+    else if (score >= 70) assessment = 'أداء جيد جداً. المتدرب يمتلك أساساً قوياً ويحتاج صقل بسيط للوصول للاحتراف الكامل.';
+    else if (score >= 50) assessment = 'أداء جيد مع وجود مجالات تحتاج تطوير. المتدرب واعد لكن يحتاج مزيد من الخبرة والتدريب.';
     else assessment = 'المتدرب في بداية مشواره ويحتاج تطوير ملحوظ في المهارات الأساسية قبل التخصص.';
 
-    // ====== خريطة المجالات: كل مجال له (وظائف في نفس التخصص) + (مجالات قريبة تناسبه) ======
-    // كل عنصر: { title, related: درجة القرب من مجال المتدرب (1 = نفس المجال، 0.x = مجال قريب) }
+    // مستوى الوظيفة المناسب حسب الدرجة
+    const jobLevel = score >= 80 ? 'senior' : score >= 55 ? 'mid' : 'entry';
+
+    // ====== خريطة المجالات: وظائف في نفس التخصص + مجالات قريبة + مسارات بديلة ======
+    // rel: قرب المجال (SAME=نفس مجاله، NEAR=قريب، FAR=بديل)
+    // skills: مهارات مفتاحية، grow: المسار المهني، pay: نطاق الراتب التقريبي بالجنيه
+    const SAME = 1, NEAR = 0.82, FAR = 0.65;
     let pool = [];
-    const SAME = 1, NEAR = 0.78, FAR = 0.6;
 
     if (/برمج|develop|software|كود|web|ويب|front|back|تطوير|program/.test(f)) {
         pool = [
-            { title: 'مطوّر واجهات أمامية (Frontend Developer)', rel: SAME, why: 'إتقان بناء الواجهات والتفكير المنطقي يجعله مرشّحاً قوياً لتطوير الواجهات.' },
-            { title: 'مطوّر خلفي (Backend Developer)', rel: SAME, why: 'القدرة على التعامل مع المنطق والبيانات تؤهّله لتطوير الأنظمة الخلفية.' },
-            { title: 'مهندس برمجيات (Software Engineer)', rel: SAME, why: 'التفكير المنهجي والاهتمام بالتفاصيل أساس قوي لهندسة البرمجيات.' },
-            { title: 'مطوّر تطبيقات موبايل', rel: NEAR, why: 'مهارات البرمجة تنتقل بسهولة لتطوير تطبيقات الهواتف.' },
-            { title: 'محلل بيانات (Data Analyst)', rel: NEAR, why: 'الخلفية البرمجية ميزة كبيرة في تحليل ومعالجة البيانات.' },
-            { title: 'مهندس DevOps', rel: FAR, why: 'فهمه للأنظمة يساعده على دخول مجال أتمتة النشر والبنية التحتية.' },
-            { title: 'مدير منتج تقني (Technical PM)', rel: FAR, why: 'الجمع بين الفهم التقني والتنظيم يفتح له باب إدارة المنتجات.' }
+            { title: 'مطوّر واجهات أمامية (Frontend Developer)', rel: SAME, why: 'إتقان بناء الواجهات والتفكير المنطقي يجعله مرشّحاً قوياً لتطوير الواجهات.', skills: ['HTML/CSS', 'JavaScript', 'React'], grow: 'مطوّر واجهات → Senior Frontend → Tech Lead', pay: '8,000 - 25,000' },
+            { title: 'مطوّر خلفي (Backend Developer)', rel: SAME, why: 'القدرة على التعامل مع المنطق والبيانات تؤهّله لتطوير الأنظمة الخلفية.', skills: ['Node.js/Python', 'قواعد البيانات', 'APIs'], grow: 'مطوّر خلفي → Senior Backend → Solutions Architect', pay: '9,000 - 28,000' },
+            { title: 'مهندس برمجيات (Software Engineer)', rel: SAME, why: 'التفكير المنهجي والاهتمام بالتفاصيل أساس قوي لهندسة البرمجيات.', skills: ['هياكل البيانات', 'أنماط التصميم', 'Git'], grow: 'مهندس برمجيات → Senior → Engineering Manager', pay: '10,000 - 30,000' },
+            { title: 'مطوّر تطبيقات موبايل', rel: NEAR, why: 'مهارات البرمجة تنتقل بسهولة لتطوير تطبيقات الهواتف.', skills: ['Flutter/React Native', 'UI Mobile', 'APIs'], grow: 'مطوّر موبايل → Senior Mobile → Mobile Lead', pay: '9,000 - 27,000' },
+            { title: 'محلل بيانات (Data Analyst)', rel: NEAR, why: 'الخلفية البرمجية ميزة كبيرة في تحليل ومعالجة البيانات.', skills: ['SQL', 'Excel/BI', 'Python'], grow: 'محلل بيانات → Senior Analyst → Data Scientist', pay: '8,000 - 24,000' },
+            { title: 'مهندس DevOps', rel: FAR, why: 'فهمه للأنظمة يساعده على دخول مجال أتمتة النشر والبنية التحتية.', skills: ['Linux', 'Docker', 'CI/CD'], grow: 'DevOps → Senior DevOps → Platform Engineer', pay: '12,000 - 35,000' },
+            { title: 'مدير منتج تقني (Technical PM)', rel: FAR, why: 'الجمع بين الفهم التقني والتنظيم يفتح له باب إدارة المنتجات.', skills: ['إدارة المنتج', 'Agile', 'تحليل المتطلبات'], grow: 'PM → Senior PM → Head of Product', pay: '15,000 - 40,000' }
         ];
     } else if (/تسويق|market|سوشيال|social|محتوى|content|اعلان|advertis/.test(f)) {
         pool = [
-            { title: 'أخصائي تسويق رقمي', rel: SAME, why: 'الفهم الجيد لقنوات التسويق الرقمي يؤهّله لقيادة الحملات.' },
-            { title: 'أخصائي سوشيال ميديا', rel: SAME, why: 'الإبداع وفهم الجمهور يجعلانه مناسباً لإدارة منصات التواصل.' },
-            { title: 'مدير محتوى (Content Manager)', rel: SAME, why: 'القدرة على صياغة رسائل مؤثرة تؤهّله لإدارة المحتوى.' },
-            { title: 'أخصائي تحسين محركات البحث (SEO)', rel: NEAR, why: 'الميل للتحليل ومتابعة الأداء ميزة في تخصص الـ SEO.' },
-            { title: 'محلل حملات تسويقية', rel: NEAR, why: 'القدرة على قراءة الأرقام تساعده في تحليل أداء الحملات.' },
-            { title: 'أخصائي علاقات عامة', rel: FAR, why: 'مهارات التواصل تنقله بسلاسة لمجال العلاقات العامة.' },
-            { title: 'مدير تطوير أعمال', rel: FAR, why: 'فهم السوق والعملاء يؤهّله لتطوير الأعمال.' }
+            { title: 'أخصائي تسويق رقمي', rel: SAME, why: 'الفهم الجيد لقنوات التسويق الرقمي يؤهّله لقيادة الحملات.', skills: ['إعلانات ممولة', 'Google Ads', 'تحليل أداء'], grow: 'أخصائي → Senior → Marketing Manager', pay: '7,000 - 22,000' },
+            { title: 'أخصائي سوشيال ميديا', rel: SAME, why: 'الإبداع وفهم الجمهور يجعلانه مناسباً لإدارة منصات التواصل.', skills: ['إدارة منصات', 'كتابة محتوى', 'تفاعل'], grow: 'أخصائي → Senior → Social Media Lead', pay: '6,000 - 18,000' },
+            { title: 'مدير محتوى (Content Manager)', rel: SAME, why: 'القدرة على صياغة رسائل مؤثرة تؤهّله لإدارة المحتوى.', skills: ['استراتيجية محتوى', 'SEO', 'تحرير'], grow: 'كاتب → Content Manager → Head of Content', pay: '8,000 - 24,000' },
+            { title: 'أخصائي تحسين محركات البحث (SEO)', rel: NEAR, why: 'الميل للتحليل ومتابعة الأداء ميزة في تخصص الـ SEO.', skills: ['SEO', 'تحليل كلمات', 'Analytics'], grow: 'SEO Specialist → Senior → SEO Manager', pay: '7,000 - 21,000' },
+            { title: 'محلل حملات تسويقية', rel: NEAR, why: 'القدرة على قراءة الأرقام تساعده في تحليل أداء الحملات.', skills: ['تحليل بيانات', 'تقارير', 'KPIs'], grow: 'محلل → Senior Analyst → Marketing Analyst Lead', pay: '8,000 - 23,000' },
+            { title: 'أخصائي علاقات عامة', rel: FAR, why: 'مهارات التواصل تنقله بسلاسة لمجال العلاقات العامة.', skills: ['تواصل', 'كتابة', 'إدارة سمعة'], grow: 'أخصائي PR → Senior → PR Manager', pay: '7,000 - 20,000' },
+            { title: 'مدير تطوير أعمال', rel: FAR, why: 'فهم السوق والعملاء يؤهّله لتطوير الأعمال.', skills: ['تطوير أعمال', 'تفاوض', 'تحليل سوق'], grow: 'BD → Senior BD → BD Director', pay: '10,000 - 30,000' }
         ];
     } else if (/تصميم|design|جرافيك|graphic|ui|ux|موشن|motion/.test(f)) {
         pool = [
-            { title: 'مصمم واجهات (UI Designer)', rel: SAME, why: 'الحس الجمالي والدقة يجعلانه مناسباً لتصميم الواجهات.' },
-            { title: 'مصمم تجربة مستخدم (UX Designer)', rel: SAME, why: 'فهم احتياجات المستخدم أساس قوي لتصميم التجربة.' },
-            { title: 'مصمم جرافيك', rel: SAME, why: 'الإبداع البصري يؤهّله للعمل في التصميم الجرافيكي.' },
-            { title: 'مصمم موشن جرافيك', rel: NEAR, why: 'المهارات البصرية تنتقل بسهولة للتصميم المتحرك.' },
-            { title: 'مدير فني (Art Director)', rel: NEAR, why: 'الرؤية الفنية تؤهّله لقيادة الفريق الإبداعي مستقبلاً.' },
-            { title: 'مطوّر واجهات أمامية (Frontend)', rel: FAR, why: 'فهمه للتصميم ميزة قوية لو طوّر مهاراته البرمجية.' },
-            { title: 'أخصائي تصميم منتجات (Product Designer)', rel: FAR, why: 'الجمع بين التصميم وفهم المنتج مسار واعد له.' }
+            { title: 'مصمم واجهات (UI Designer)', rel: SAME, why: 'الحس الجمالي والدقة يجعلانه مناسباً لتصميم الواجهات.', skills: ['Figma', 'تصميم واجهات', 'Design Systems'], grow: 'UI Designer → Senior → Design Lead', pay: '8,000 - 24,000' },
+            { title: 'مصمم تجربة مستخدم (UX Designer)', rel: SAME, why: 'فهم احتياجات المستخدم أساس قوي لتصميم التجربة.', skills: ['User Research', 'Wireframing', 'Prototyping'], grow: 'UX Designer → Senior UX → UX Lead', pay: '9,000 - 27,000' },
+            { title: 'مصمم جرافيك', rel: SAME, why: 'الإبداع البصري يؤهّله للعمل في التصميم الجرافيكي.', skills: ['Photoshop', 'Illustrator', 'هوية بصرية'], grow: 'مصمم → Senior → Art Director', pay: '6,000 - 18,000' },
+            { title: 'مصمم موشن جرافيك', rel: NEAR, why: 'المهارات البصرية تنتقل بسهولة للتصميم المتحرك.', skills: ['After Effects', 'أنيميشن', 'سرد بصري'], grow: 'Motion Designer → Senior → Motion Lead', pay: '8,000 - 23,000' },
+            { title: 'مدير فني (Art Director)', rel: NEAR, why: 'الرؤية الفنية تؤهّله لقيادة الفريق الإبداعي مستقبلاً.', skills: ['رؤية إبداعية', 'قيادة', 'هوية'], grow: 'Designer → Art Director → Creative Director', pay: '14,000 - 38,000' },
+            { title: 'مطوّر واجهات أمامية (Frontend)', rel: FAR, why: 'فهمه للتصميم ميزة قوية لو طوّر مهاراته البرمجية.', skills: ['HTML/CSS', 'JavaScript', 'تصميم متجاوب'], grow: 'مطوّر واجهات → Senior → Tech Lead', pay: '8,000 - 25,000' },
+            { title: 'مصمم منتجات (Product Designer)', rel: FAR, why: 'الجمع بين التصميم وفهم المنتج مسار واعد له.', skills: ['UX/UI', 'تفكير منتج', 'بحث مستخدم'], grow: 'Product Designer → Senior → Head of Design', pay: '12,000 - 33,000' }
         ];
     } else if (/محاسب|account|مالي|financ|ضرائب|tax/.test(f)) {
         pool = [
-            { title: 'محاسب', rel: SAME, why: 'الدقة والالتزام يجعلانه مناسباً للعمل المحاسبي.' },
-            { title: 'محلل مالي', rel: SAME, why: 'القدرة على التعامل مع الأرقام تؤهّله للتحليل المالي.' },
-            { title: 'مدقق حسابات', rel: SAME, why: 'الاهتمام بالتفاصيل أساس قوي لتدقيق الحسابات.' },
-            { title: 'أخصائي تخطيط مالي', rel: NEAR, why: 'فهم الأرقام يساعده في التخطيط والميزانيات.' },
-            { title: 'محاسب تكاليف', rel: NEAR, why: 'القدرة التحليلية تؤهّله لمحاسبة التكاليف.' },
-            { title: 'محلل بيانات مالية', rel: FAR, why: 'لو طوّر مهارات التحليل يدخل مجال البيانات المالية.' },
-            { title: 'أخصائي مخاطر مالية', rel: FAR, why: 'التفكير الدقيق يفتح له مجال إدارة المخاطر.' }
+            { title: 'محاسب', rel: SAME, why: 'الدقة والالتزام يجعلانه مناسباً للعمل المحاسبي.', skills: ['قيود محاسبية', 'Excel', 'تسويات'], grow: 'محاسب → Senior → Chief Accountant', pay: '6,000 - 18,000' },
+            { title: 'محلل مالي', rel: SAME, why: 'القدرة على التعامل مع الأرقام تؤهّله للتحليل المالي.', skills: ['تحليل مالي', 'نماذج مالية', 'تقارير'], grow: 'محلل → Senior → Finance Manager', pay: '8,000 - 25,000' },
+            { title: 'مدقق حسابات', rel: SAME, why: 'الاهتمام بالتفاصيل أساس قوي لتدقيق الحسابات.', skills: ['تدقيق', 'معايير محاسبية', 'تحليل مخاطر'], grow: 'مدقق → Senior Auditor → Audit Manager', pay: '7,000 - 22,000' },
+            { title: 'أخصائي تخطيط مالي', rel: NEAR, why: 'فهم الأرقام يساعده في التخطيط والميزانيات.', skills: ['ميزانيات', 'تنبؤ مالي', 'Excel'], grow: 'أخصائي → Senior → FP&A Manager', pay: '8,000 - 24,000' },
+            { title: 'محاسب تكاليف', rel: NEAR, why: 'القدرة التحليلية تؤهّله لمحاسبة التكاليف.', skills: ['تحليل تكاليف', 'تسعير', 'تقارير'], grow: 'محاسب تكاليف → Senior → Cost Manager', pay: '7,000 - 20,000' },
+            { title: 'محلل بيانات مالية', rel: FAR, why: 'لو طوّر مهارات التحليل يدخل مجال البيانات المالية.', skills: ['SQL', 'BI', 'تحليل بيانات'], grow: 'محلل → Senior → Data Analyst Lead', pay: '9,000 - 26,000' },
+            { title: 'أخصائي مخاطر مالية', rel: FAR, why: 'التفكير الدقيق يفتح له مجال إدارة المخاطر.', skills: ['تقييم مخاطر', 'تحليل', 'امتثال'], grow: 'أخصائي → Senior → Risk Manager', pay: '10,000 - 30,000' }
         ];
     } else if (/مبيعات|sales|بيع/.test(f)) {
         pool = [
-            { title: 'مندوب مبيعات', rel: SAME, why: 'مهارات الإقناع والتواصل تؤهّله للمبيعات.' },
-            { title: 'مدير حسابات العملاء', rel: SAME, why: 'بناء العلاقات مع العملاء نقطة قوة لديه.' },
-            { title: 'أخصائي تطوير أعمال', rel: SAME, why: 'فهم احتياجات العميل يؤهّله لتطوير الأعمال.' },
-            { title: 'أخصائي مبيعات داخلية (Inside Sales)', rel: NEAR, why: 'مهارات التواصل تنتقل بسهولة للمبيعات عبر الهاتف.' },
-            { title: 'أخصائي خدمة عملاء', rel: NEAR, why: 'القدرة على التعامل مع الناس ميزة في خدمة العملاء.' },
-            { title: 'أخصائي تسويق', rel: FAR, why: 'فهمه للعملاء يساعده لو اتجه للتسويق.' },
-            { title: 'مدير مبيعات إقليمي', rel: FAR, why: 'مع الخبرة يمكنه قيادة فرق المبيعات.' }
+            { title: 'مندوب مبيعات', rel: SAME, why: 'مهارات الإقناع والتواصل تؤهّله للمبيعات.', skills: ['إقناع', 'تفاوض', 'إدارة عملاء'], grow: 'مندوب → Senior → Sales Manager', pay: '6,000 - 20,000 + عمولة' },
+            { title: 'مدير حسابات العملاء', rel: SAME, why: 'بناء العلاقات مع العملاء نقطة قوة لديه.', skills: ['إدارة حسابات', 'علاقات', 'متابعة'], grow: 'Account Manager → Senior → Key Account Director', pay: '9,000 - 26,000' },
+            { title: 'أخصائي تطوير أعمال', rel: SAME, why: 'فهم احتياجات العميل يؤهّله لتطوير الأعمال.', skills: ['تطوير أعمال', 'تحليل سوق', 'تفاوض'], grow: 'BD → Senior BD → BD Manager', pay: '9,000 - 28,000' },
+            { title: 'أخصائي مبيعات داخلية (Inside Sales)', rel: NEAR, why: 'مهارات التواصل تنتقل بسهولة للمبيعات عبر الهاتف.', skills: ['اتصال', 'CRM', 'متابعة'], grow: 'Inside Sales → Senior → Team Lead', pay: '6,000 - 18,000 + عمولة' },
+            { title: 'أخصائي خدمة عملاء', rel: NEAR, why: 'القدرة على التعامل مع الناس ميزة في خدمة العملاء.', skills: ['تواصل', 'حل مشكلات', 'صبر'], grow: 'CS → Senior → CS Manager', pay: '5,000 - 15,000' },
+            { title: 'أخصائي تسويق', rel: FAR, why: 'فهمه للعملاء يساعده لو اتجه للتسويق.', skills: ['تسويق رقمي', 'محتوى', 'تحليل'], grow: 'أخصائي → Senior → Marketing Manager', pay: '7,000 - 22,000' },
+            { title: 'مدير مبيعات إقليمي', rel: FAR, why: 'مع الخبرة يمكنه قيادة فرق المبيعات.', skills: ['قيادة فريق', 'استراتيجية', 'تحقيق أهداف'], grow: 'Sales Manager → Regional → Sales Director', pay: '15,000 - 45,000' }
         ];
     } else if (/موارد بشر|hr|human|توظيف|recruit/.test(f)) {
         pool = [
-            { title: 'أخصائي موارد بشرية', rel: SAME, why: 'فهم الناس والتنظيم يؤهّلانه للموارد البشرية.' },
-            { title: 'أخصائي توظيف', rel: SAME, why: 'القدرة على تقييم الأشخاص ميزة في التوظيف.' },
-            { title: 'أخصائي تدريب وتطوير', rel: SAME, why: 'الاهتمام بتطوير الآخرين نقطة قوة لديه.' },
-            { title: 'أخصائي علاقات موظفين', rel: NEAR, why: 'مهارات التواصل تساعده في علاقات الموظفين.' },
-            { title: 'منسق شؤون إدارية', rel: NEAR, why: 'التنظيم يؤهّله للتنسيق الإداري.' },
-            { title: 'أخصائي ثقافة مؤسسية', rel: FAR, why: 'فهمه للناس يفتح مجال بناء ثقافة الشركة.' },
-            { title: 'شريك أعمال موارد بشرية (HRBP)', rel: FAR, why: 'مع الخبرة يمكنه الربط بين الموارد البشرية والأعمال.' }
+            { title: 'أخصائي موارد بشرية', rel: SAME, why: 'فهم الناس والتنظيم يؤهّلانه للموارد البشرية.', skills: ['توظيف', 'علاقات موظفين', 'سياسات'], grow: 'أخصائي → Senior → HR Manager', pay: '6,000 - 18,000' },
+            { title: 'أخصائي توظيف', rel: SAME, why: 'القدرة على تقييم الأشخاص ميزة في التوظيف.', skills: ['مقابلات', 'فرز سير ذاتية', 'مصادر توظيف'], grow: 'Recruiter → Senior → Recruitment Lead', pay: '6,000 - 19,000' },
+            { title: 'أخصائي تدريب وتطوير', rel: SAME, why: 'الاهتمام بتطوير الآخرين نقطة قوة لديه.', skills: ['تصميم تدريب', 'تيسير', 'تقييم'], grow: 'أخصائي → Senior → L&D Manager', pay: '7,000 - 21,000' },
+            { title: 'أخصائي علاقات موظفين', rel: NEAR, why: 'مهارات التواصل تساعده في علاقات الموظفين.', skills: ['تواصل', 'حل نزاعات', 'سياسات'], grow: 'أخصائي → Senior → ER Manager', pay: '7,000 - 20,000' },
+            { title: 'منسق شؤون إدارية', rel: NEAR, why: 'التنظيم يؤهّله للتنسيق الإداري.', skills: ['تنظيم', 'متابعة', 'مستندات'], grow: 'منسق → Senior → Admin Manager', pay: '5,000 - 15,000' },
+            { title: 'أخصائي ثقافة مؤسسية', rel: FAR, why: 'فهمه للناس يفتح مجال بناء ثقافة الشركة.', skills: ['تفاعل موظفين', 'فعاليات', 'تواصل'], grow: 'أخصائي → Senior → Culture Lead', pay: '8,000 - 22,000' },
+            { title: 'شريك أعمال موارد بشرية (HRBP)', rel: FAR, why: 'مع الخبرة يمكنه الربط بين الموارد البشرية والأعمال.', skills: ['شراكة أعمال', 'استراتيجية', 'تحليل'], grow: 'HRBP → Senior → HR Director', pay: '12,000 - 35,000' }
         ];
     } else if (/هندس|engineer|ميكانيك|كهرب|مدني|civil|mechanic|electric/.test(f)) {
         pool = [
-            { title: 'مهندس مشاريع', rel: SAME, why: 'الفهم التقني والتنظيم يؤهّلانه لإدارة المشاريع.' },
-            { title: 'مهندس موقع', rel: SAME, why: 'المعرفة الميدانية تؤهّله للإشراف على المواقع.' },
-            { title: 'مهندس تصميم', rel: SAME, why: 'القدرة التحليلية أساس قوي للتصميم الهندسي.' },
-            { title: 'مهندس جودة', rel: NEAR, why: 'الدقة والاهتمام بالمعايير ميزة في ضبط الجودة.' },
-            { title: 'مهندس صيانة', rel: NEAR, why: 'الفهم التقني يؤهّله لأعمال الصيانة.' },
-            { title: 'مدير مشاريع تقني', rel: FAR, why: 'مع تطوير مهارات الإدارة يقود مشاريع أكبر.' },
-            { title: 'أخصائي سلامة مهنية', rel: FAR, why: 'الالتزام بالمعايير يفتح مجال السلامة المهنية.' }
+            { title: 'مهندس مشاريع', rel: SAME, why: 'الفهم التقني والتنظيم يؤهّلانه لإدارة المشاريع.', skills: ['إدارة مشاريع', 'تخطيط', 'متابعة'], grow: 'مهندس → Senior → Project Manager', pay: '8,000 - 26,000' },
+            { title: 'مهندس موقع', rel: SAME, why: 'المعرفة الميدانية تؤهّله للإشراف على المواقع.', skills: ['إشراف ميداني', 'جودة تنفيذ', 'سلامة'], grow: 'مهندس موقع → Senior → Site Manager', pay: '7,000 - 22,000' },
+            { title: 'مهندس تصميم', rel: SAME, why: 'القدرة التحليلية أساس قوي للتصميم الهندسي.', skills: ['AutoCAD', 'حسابات', 'تصميم'], grow: 'مهندس تصميم → Senior → Design Lead', pay: '8,000 - 25,000' },
+            { title: 'مهندس جودة', rel: NEAR, why: 'الدقة والاهتمام بالمعايير ميزة في ضبط الجودة.', skills: ['ضبط جودة', 'معايير', 'تفتيش'], grow: 'QC → Senior → QA Manager', pay: '8,000 - 23,000' },
+            { title: 'مهندس صيانة', rel: NEAR, why: 'الفهم التقني يؤهّله لأعمال الصيانة.', skills: ['صيانة', 'تشخيص أعطال', 'سلامة'], grow: 'مهندس صيانة → Senior → Maintenance Manager', pay: '7,000 - 21,000' },
+            { title: 'مدير مشاريع تقني', rel: FAR, why: 'مع تطوير مهارات الإدارة يقود مشاريع أكبر.', skills: ['إدارة', 'ميزانيات', 'فرق'], grow: 'PM → Senior PM → Program Manager', pay: '14,000 - 40,000' },
+            { title: 'أخصائي سلامة مهنية', rel: FAR, why: 'الالتزام بالمعايير يفتح مجال السلامة المهنية.', skills: ['OSHA', 'تقييم مخاطر', 'تدريب'], grow: 'أخصائي → Senior → HSE Manager', pay: '8,000 - 24,000' }
         ];
     } else if (/data|بيانات|تحليل|analy|ذكاء|ai|machine/.test(f)) {
         pool = [
-            { title: 'محلل بيانات (Data Analyst)', rel: SAME, why: 'القدرة على قراءة الأرقام واستخلاص الرؤى تؤهّله للتحليل.' },
-            { title: 'أخصائي ذكاء أعمال (BI)', rel: SAME, why: 'فهم البيانات وتحويلها لقرارات نقطة قوة لديه.' },
-            { title: 'مهندس بيانات (Data Engineer)', rel: SAME, why: 'التفكير المنطقي يؤهّله لبناء أنظمة البيانات.' },
-            { title: 'عالم بيانات (Data Scientist)', rel: NEAR, why: 'مع تطوير المهارات الإحصائية يدخل علم البيانات.' },
-            { title: 'محلل أعمال (Business Analyst)', rel: NEAR, why: 'الربط بين البيانات والأعمال ميزة لديه.' },
-            { title: 'مطوّر برمجيات', rel: FAR, why: 'مهارات البرمجة تنقله لتطوير البرمجيات.' },
-            { title: 'أخصائي تعلّم آلة (ML)', rel: FAR, why: 'مع الخبرة في البيانات يتجه للذكاء الاصطناعي.' }
+            { title: 'محلل بيانات (Data Analyst)', rel: SAME, why: 'القدرة على قراءة الأرقام واستخلاص الرؤى تؤهّله للتحليل.', skills: ['SQL', 'Excel/BI', 'Python'], grow: 'محلل → Senior → Analytics Lead', pay: '8,000 - 25,000' },
+            { title: 'أخصائي ذكاء أعمال (BI)', rel: SAME, why: 'فهم البيانات وتحويلها لقرارات نقطة قوة لديه.', skills: ['Power BI/Tableau', 'SQL', 'تصور بيانات'], grow: 'BI → Senior BI → BI Manager', pay: '9,000 - 27,000' },
+            { title: 'مهندس بيانات (Data Engineer)', rel: SAME, why: 'التفكير المنطقي يؤهّله لبناء أنظمة البيانات.', skills: ['Python', 'ETL', 'قواعد بيانات'], grow: 'Data Engineer → Senior → Data Architect', pay: '11,000 - 32,000' },
+            { title: 'عالم بيانات (Data Scientist)', rel: NEAR, why: 'مع تطوير المهارات الإحصائية يدخل علم البيانات.', skills: ['إحصاء', 'Machine Learning', 'Python'], grow: 'Data Scientist → Senior → Lead DS', pay: '12,000 - 38,000' },
+            { title: 'محلل أعمال (Business Analyst)', rel: NEAR, why: 'الربط بين البيانات والأعمال ميزة لديه.', skills: ['تحليل متطلبات', 'تقارير', 'تواصل'], grow: 'BA → Senior BA → BA Lead', pay: '9,000 - 26,000' },
+            { title: 'مطوّر برمجيات', rel: FAR, why: 'مهارات البرمجة تنقله لتطوير البرمجيات.', skills: ['برمجة', 'هياكل بيانات', 'Git'], grow: 'مطوّر → Senior → Tech Lead', pay: '9,000 - 28,000' },
+            { title: 'أخصائي تعلّم آلة (ML Engineer)', rel: FAR, why: 'مع الخبرة في البيانات يتجه للذكاء الاصطناعي.', skills: ['ML', 'Python', 'نماذج'], grow: 'ML Engineer → Senior → ML Lead', pay: '14,000 - 42,000' }
         ];
     } else {
         pool = [
-            { title: 'وظيفة تخصصية في ' + (field || 'المجال'), rel: SAME, why: 'الأداء في التدريب يؤهّله للتخصص في نفس المجال.' },
-            { title: 'منسق مشاريع', rel: SAME, why: 'التنظيم والمتابعة يؤهّلانه لتنسيق المشاريع.' },
-            { title: 'أخصائي عمليات', rel: NEAR, why: 'القدرة على المتابعة ميزة في إدارة العمليات.' },
-            { title: 'مساعد إداري متخصص', rel: NEAR, why: 'التنظيم يؤهّله للأعمال الإدارية.' },
-            { title: 'أخصائي خدمة عملاء', rel: FAR, why: 'مهارات التواصل تفتح مجال خدمة العملاء.' },
-            { title: 'منسق جودة', rel: FAR, why: 'الاهتمام بالتفاصيل يساعده في ضبط الجودة.' }
+            { title: 'وظيفة تخصصية في ' + (field || 'المجال'), rel: SAME, why: 'الأداء في التدريب يؤهّله للتخصص في نفس المجال.', skills: ['مهارات المجال', 'تطبيق عملي', 'أدوات متخصصة'], grow: 'مبتدئ → متخصص → خبير', pay: '6,000 - 18,000' },
+            { title: 'منسق مشاريع', rel: SAME, why: 'التنظيم والمتابعة يؤهّلانه لتنسيق المشاريع.', skills: ['تنظيم', 'متابعة', 'تواصل'], grow: 'منسق → Senior → Project Manager', pay: '7,000 - 20,000' },
+            { title: 'أخصائي عمليات', rel: NEAR, why: 'القدرة على المتابعة ميزة في إدارة العمليات.', skills: ['عمليات', 'تحسين', 'تنظيم'], grow: 'أخصائي → Senior → Operations Manager', pay: '7,000 - 21,000' },
+            { title: 'مساعد إداري متخصص', rel: NEAR, why: 'التنظيم يؤهّله للأعمال الإدارية.', skills: ['تنظيم', 'مستندات', 'تنسيق'], grow: 'مساعد → Senior → Admin Lead', pay: '5,000 - 14,000' },
+            { title: 'أخصائي خدمة عملاء', rel: FAR, why: 'مهارات التواصل تفتح مجال خدمة العملاء.', skills: ['تواصل', 'حل مشكلات', 'صبر'], grow: 'CS → Senior → CS Manager', pay: '5,000 - 15,000' },
+            { title: 'منسق جودة', rel: FAR, why: 'الاهتمام بالتفاصيل يساعده في ضبط الجودة.', skills: ['ضبط جودة', 'معايير', 'تفتيش'], grow: 'منسق → Senior → QA Lead', pay: '6,000 - 18,000' }
         ];
     }
 
@@ -2073,41 +2102,47 @@ function buildCareerRecommendations(field, evaluation) {
         'نظام تحليل المهارات - الذكاء الاصطناعي',
         'نموذج التوصية الوظيفية - تحليل البيانات'
     ];
+    const levelLabels = { entry: 'مبتدئ', mid: 'متوسط', senior: 'متقدم' };
 
-    // ====== حساب نسبة التطابق: تعتمد على درجة التقييم + قرب المجال ======
-    // الأساس من التقييم (0-5 → 0-100)، ثم نضربه في قرب المجال
-    const baseFromScore = Math.round((score / 5) * 100); // مثلاً score=4 → 80
+    // ====== حساب نسبة التوافق (من 100): الأساس من التقييم × قرب المجال ======
     const recommendations = pool.map((job, i) => {
-        // نسبة التطابق = الأساس × قرب المجال، مع تعديل بسيط لإبراز الترتيب
-        let match = Math.round(baseFromScore * job.rel);
-        // حد أدنى وأقصى منطقي
-        match = Math.max(45, Math.min(98, match));
+        let match = Math.round(score * job.rel);   // score من 100، rel نسبة قرب
+        match = Math.max(45, Math.min(98, match)); // حدود منطقية
+        // المستوى المرشّح يقل قليلاً للمجالات الأبعد
+        const lvl = job.rel === SAME ? jobLevel : (jobLevel === 'senior' ? 'mid' : jobLevel === 'mid' ? 'entry' : 'entry');
         return {
             field: job.title,
+            job_title: job.title,
             match: match,
+            match_score: match,
+            level: lvl,
+            level_label: levelLabels[lvl],
             relation: job.rel === SAME ? 'same' : job.rel === NEAR ? 'near' : 'far',
             description: job.why,
+            reason: job.why,
+            key_skills: job.skills || [],
+            growth_path: job.grow || '',
+            salary_range_egp: job.pay ? (job.pay + ' ج/شهر') : '',
             source: sources[i % sources.length],
             ai: true
         };
     });
 
-    // رتّب تنازلياً حسب نسبة التطابق وخُد أعلى 5
+    // رتّب تنازلياً حسب نسبة التوافق وخُد أعلى 5
     recommendations.sort((a, b) => b.match - a.match);
     const top5 = recommendations.slice(0, 5);
 
-    // ====== نقاط القوة حسب أعلى الفئات ======
-    const strengths = [];
+    // ====== نقاط القوة حسب أعلى الفئات (من 100) ======
     const techScore = (cs.technical != null) ? cs.technical : score;
     const softScore = (cs.soft_skills != null) ? cs.soft_skills : score;
     const perfScore = (cs.performance != null) ? cs.performance : score;
     const growthScore = (cs.growth != null) ? cs.growth : score;
-    if (techScore >= 3.5) strengths.push('مهارات تقنية قوية وإتقان جيد لأدوات المجال');
-    if (softScore >= 3.5) strengths.push('تواصل فعّال وقدرة عالية على العمل ضمن فريق');
-    if (perfScore >= 3.5) strengths.push('جودة عالية في إنجاز المهام والالتزام بالمواعيد');
-    if (growthScore >= 3.5) strengths.push('سرعة في تعلّم المهارات الجديدة وقابلية واضحة للتطوّر');
+    const strengths = [];
+    if (techScore >= 70) strengths.push('مهارات تقنية قوية وإتقان جيد لأدوات المجال');
+    if (softScore >= 70) strengths.push('تواصل فعّال وقدرة عالية على العمل ضمن فريق');
+    if (perfScore >= 70) strengths.push('جودة عالية في إنجاز المهام والالتزام بالمواعيد');
+    if (growthScore >= 70) strengths.push('سرعة في تعلّم المهارات الجديدة وقابلية واضحة للتطوّر');
     if (strengths.length === 0) {
-        // لو مفيش فئة قوية، اطلع أعلى فئة كنقطة قوة نسبية
         const cats = [
             { k: 'مهارات تقنية واعدة قابلة للتطوير', v: techScore },
             { k: 'استعداد للتواصل والعمل الجماعي', v: softScore },
@@ -2117,12 +2152,12 @@ function buildCareerRecommendations(field, evaluation) {
         strengths.push(cats[0].k);
     }
 
-    // ====== مجالات التحسين حسب أضعف فئة ======
+    // ====== مجالات التطوير حسب أضعف فئة (من 100) ======
     const improvement = [];
-    if (techScore < 3.5) improvement.push('تطوير المهارات التقنية المتخصصة من خلال دورات وتطبيق عملي');
-    if (softScore < 3.5) improvement.push('تحسين مهارات التواصل والعمل الجماعي');
-    if (perfScore < 3.5) improvement.push('رفع جودة وسرعة إنجاز المهام');
-    if (growthScore < 3.5) improvement.push('زيادة سرعة استيعاب المهارات والأدوات الجديدة');
+    if (techScore < 70) improvement.push('تطوير المهارات التقنية المتخصصة من خلال دورات وتطبيق عملي');
+    if (softScore < 70) improvement.push('تحسين مهارات التواصل والعمل الجماعي');
+    if (perfScore < 70) improvement.push('رفع جودة وسرعة إنجاز المهام');
+    if (growthScore < 70) improvement.push('زيادة سرعة استيعاب المهارات والأدوات الجديدة');
     if (improvement.length === 0) improvement.push('الاستمرار في التطوّر وتولّي مشاريع أكثر تحدياً للوصول لمستوى الخبرة');
 
     return {
