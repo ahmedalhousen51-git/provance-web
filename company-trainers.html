@@ -1708,6 +1708,21 @@ async function renderRecTab() {
 
     const content = document.getElementById('tabContent');
 
+    // كشف الترشيحات القديمة: لو ناقصة الحقول الجديدة أو النسب كلها متساوية → أعد التوليد تلقائياً
+    if (rec && rec.recommendations && t.evaluation && !rec.sent_to_student) {
+        const realRecs = (rec.recommendations || []).filter(x => x && !x.__meta);
+        const hasNewFields = realRecs.length > 0 && realRecs.every(r => r.match_reason && r.key_skills && r.relation);
+        const matches = realRecs.map(r => Number(r.match || r.match_score || 0));
+        const allSame = matches.length > 1 && matches.every(v => v === matches[0]);
+        const hasProfile = rec.skill_profile && typeof rec.skill_profile === 'object';
+        if (!hasNewFields || allSame || !hasProfile) {
+            // ترشيحات قديمة — أعد توليدها بالنظام الجديد (بدون تأكيد، تلقائي)
+            content.innerHTML = '<div style="text-align:center;padding:50px 20px"><div style="width:60px;height:60px;border:5px solid rgba(239,68,68,0.2);border-top-color:#ef4444;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px"></div><h3 style="font-weight:800;margin-bottom:6px">🔄 تحديث الترشيحات</h3><p style="color:var(--text-muted)">جاري إعادة توليد الترشيحات بالنظام المُحسّن...</p></div>';
+            await generateRec(true); // silent regenerate
+            return;
+        }
+    }
+
     if (rec && rec.recommendations) {
         let recs = rec.recommendations || [];
         // افصل الـ meta (لو اتحفظت كـ fallback جوه recommendations)
@@ -1718,6 +1733,11 @@ async function renderRecTab() {
             metaCompany = metaItem.companyRecs || [];
             recs = recs.filter(x => !x.__meta);
         }
+        // الحقول الإضافية: من الأعمدة أو من الـ meta (fallback)
+        if (!rec.skill_profile && metaItem && metaItem.skill_profile) rec.skill_profile = metaItem.skill_profile;
+        if ((!rec.strength_areas || !rec.strength_areas.length) && metaItem && metaItem.strength_areas) rec.strength_areas = metaItem.strength_areas;
+        if ((!rec.improvement_areas || !rec.improvement_areas.length) && metaItem && metaItem.improvement_areas) rec.improvement_areas = metaItem.improvement_areas;
+        if (!rec.career_assessment && metaItem && metaItem.career_assessment) rec.career_assessment = metaItem.career_assessment;
         const approved = (rec.approved_recommendations && rec.approved_recommendations.length) ? rec.approved_recommendations : metaApproved;   // أسماء المجالات المعتمدة
         const companyRecs = (rec.company_recommendations && rec.company_recommendations.length) ? rec.company_recommendations : metaCompany;  // ترشيحات الشركة الإضافية
 
@@ -1964,12 +1984,14 @@ window.saveCompanyRecs = async () => {
     }
 };
 
-window.generateRec = async () => {
+window.generateRec = async (silent) => {
     const t = allTrainees.find(x => x.id === currentTraineeId);
-    if (!t || !t.evaluation) { showToast('قيّم الأداء أولاً', 'warning'); return; }
+    if (!t || !t.evaluation) { if (!silent) showToast('قيّم الأداء أولاً', 'warning'); return; }
 
     const content = document.getElementById('tabContent');
-    content.innerHTML = '<div style="text-align:center;padding:50px 20px"><div style="width:70px;height:70px;border:5px solid rgba(239,68,68,0.2);border-top-color:#ef4444;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px"></div><h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px">📊 بيتم تحليل الأداء والترشيح</h3><p style="color:var(--text-muted)">لحظة واحدة...</p></div>';
+    if (!silent) {
+        content.innerHTML = '<div style="text-align:center;padding:50px 20px"><div style="width:70px;height:70px;border:5px solid rgba(239,68,68,0.2);border-top-color:#ef4444;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px"></div><h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px">📊 بيتم تحليل الأداء والترشيح</h3><p style="color:var(--text-muted)">لحظة واحدة...</p></div>';
+    }
 
     try {
         const sb = await window.getSafeSupabase();
@@ -1977,31 +1999,56 @@ window.generateRec = async () => {
         // ولّد الترشيحات محلياً حسب المجال والدرجة
         const result = buildCareerRecommendations(t.field, t.evaluation);
 
-        const recData = {
+        // الحقول الأساسية المضمونة وجودها
+        const baseData = {
             application_id: currentTraineeId,
             student_user_id: t.student_user_id,
             company_user_id: companyUserId,
             career_assessment: result.career_assessment,
             recommendations: result.recommendations,
-            strength_areas: result.strength_areas,
-            improvement_areas: result.improvement_areas,
-            skill_profile: result.skill_profile,
             evaluation_score: t.evaluation.overall_score
         };
+        // الحقول الإضافية (ممكن متكونش موجودة كأعمدة)
+        const extraData = {
+            strength_areas: result.strength_areas,
+            improvement_areas: result.improvement_areas,
+            skill_profile: result.skill_profile
+        };
+
+        // احفظ skill_profile و strength_areas جوه recommendations كـ meta كمان (ضمان استرجاعها)
+        const recsWithMeta = result.recommendations.concat([{
+            __meta: true,
+            approved: [],
+            companyRecs: [],
+            opinions: {},
+            skill_profile: result.skill_profile,
+            strength_areas: result.strength_areas,
+            improvement_areas: result.improvement_areas,
+            career_assessment: result.career_assessment
+        }]);
 
         try {
             const { data: existing } = await sb.from('career_recommendations').select('id').eq('application_id', currentTraineeId).maybeSingle();
-            if (existing) await sb.from('career_recommendations').update(recData).eq('id', existing.id);
-            else await sb.from('career_recommendations').insert(recData);
+            // جرّب بكل الأعمدة
+            let full = Object.assign({}, baseData, extraData);
+            let res;
+            if (existing) res = await sb.from('career_recommendations').update(full).eq('id', existing.id);
+            else res = await sb.from('career_recommendations').insert(full);
+
+            // لو فشل بسبب عمود مفقود، احفظ الأساسي + meta جوه recommendations
+            if (res.error && /column|does not exist|schema/i.test(res.error.message || '')) {
+                const fallback = Object.assign({}, baseData, { recommendations: recsWithMeta });
+                if (existing) res = await sb.from('career_recommendations').update(fallback).eq('id', existing.id);
+                else res = await sb.from('career_recommendations').insert(fallback);
+            }
             await loadAll();
         } catch (e) {
-            // مايتحفظش؟ اعرضه على الأقل
             const idx = allTrainees.findIndex(x => x.id === currentTraineeId);
-            if (idx >= 0) allTrainees[idx].recommendation = recData;
+            if (idx >= 0) allTrainees[idx].recommendation = Object.assign({}, baseData, extraData);
         }
 
         renderRecTab();
-        showToast('✅ تم توليد الترشيحات', 'success');
+        if (!silent) showToast('✅ تم توليد الترشيحات', 'success');
     } catch(err) {
         console.error(err);
         content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--warning);margin-bottom:14px;display:block"></i><h3 style="color:var(--text)">حصل خطأ</h3><button onclick="renderRecTab()" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer;margin-top:14px">العودة</button></div>';
