@@ -682,6 +682,17 @@
         .rec-assessment { background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(220,38,38,0.05)); border: 1px solid rgba(239,68,68,0.25); border-radius: 14px; padding: 16px; margin-bottom: 20px; }
         .rec-assessment-title { font-weight: 800; margin-bottom: 8px; color: var(--primary); display: flex; align-items: center; gap: 6px; }
         .rec-assessment-body { line-height: 1.7; color: var(--text-muted); font-size: 0.92rem; }
+        /* الملخص الذكي */
+        .rec-smart { display: flex; gap: 14px; align-items: flex-start; background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(249,115,22,0.04)); border: 1px solid rgba(245,158,11,0.25); border-radius: 14px; padding: 16px 18px; margin-bottom: 20px; }
+        .rec-smart-icon { width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #f59e0b, #f97316); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; flex-shrink: 0; }
+        .rec-smart-title { font-weight: 800; color: #f59e0b; margin-bottom: 5px; }
+        .rec-smart-text { line-height: 1.75; color: var(--text); font-size: 0.92rem; }
+        /* هيدر AI + أدوات */
+        .rec-ai-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 24px 0 14px; }
+        .rec-ai-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .rec-approved-count { color: #10b981; font-weight: 800; font-size: 0.86rem; }
+        .rec-approve-all-btn { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); padding: 8px 16px; border-radius: 10px; font-weight: 800; font-family: inherit; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all .2s; }
+        .rec-approve-all-btn:hover { background: rgba(16,185,129,0.2); }
         .rec-improve { background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.2); border-radius: 14px; padding: 16px; margin: 20px 0; }
         .rec-improve-title { font-weight: 800; margin-bottom: 8px; color: var(--warning); display: flex; align-items: center; gap: 6px; }
         .rec-improve ul { padding-right: 20px; color: var(--text-muted); font-size: 0.88rem; line-height: 1.9; margin: 0; }
@@ -1704,22 +1715,44 @@ async function renderRecTab() {
     if (!t) return;
 
     const sb = await window.getSafeSupabase();
-    const { data: rec } = await sb.from('career_recommendations').select('*').eq('application_id', currentTraineeId).maybeSingle();
+    let rec = null;
+    try {
+        const res = await sb.from('career_recommendations').select('*').eq('application_id', currentTraineeId).maybeSingle();
+        rec = res.data;
+    } catch(e) { rec = null; }
 
     const content = document.getElementById('tabContent');
 
-    // كشف الترشيحات القديمة: لو ناقصة الحقول الجديدة أو النسب كلها متساوية → أعد التوليد تلقائياً
+    // كشف الترشيحات القديمة وتحديثها محلياً (بدون loop)
     if (rec && rec.recommendations && t.evaluation && !rec.sent_to_student) {
         const realRecs = (rec.recommendations || []).filter(x => x && !x.__meta);
         const hasNewFields = realRecs.length > 0 && realRecs.every(r => r.match_reason && r.key_skills && r.relation);
         const matches = realRecs.map(r => Number(r.match || r.match_score || 0));
         const allSame = matches.length > 1 && matches.every(v => v === matches[0]);
-        const hasProfile = rec.skill_profile && typeof rec.skill_profile === 'object';
+        const metaOld = (rec.recommendations || []).find(x => x && x.__meta);
+        const hasProfile = (rec.skill_profile && typeof rec.skill_profile === 'object') || (metaOld && metaOld.skill_profile);
         if (!hasNewFields || allSame || !hasProfile) {
-            // ترشيحات قديمة — أعد توليدها بالنظام الجديد (بدون تأكيد، تلقائي)
-            content.innerHTML = '<div style="text-align:center;padding:50px 20px"><div style="width:60px;height:60px;border:5px solid rgba(239,68,68,0.2);border-top-color:#ef4444;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px"></div><h3 style="font-weight:800;margin-bottom:6px">🔄 تحديث الترشيحات</h3><p style="color:var(--text-muted)">جاري إعادة توليد الترشيحات بالنظام المُحسّن...</p></div>';
-            await generateRec(true); // silent regenerate
-            return;
+            // ولّد الجديد محلياً واستبدله في الذاكرة فوراً (مفيش loop، مفيش انتظار حفظ)
+            const fresh = buildCareerRecommendations(t.field, t.evaluation);
+            // احتفظ بالاعتمادات والآراء القديمة لو موجودة
+            const oldMeta = metaOld || {};
+            const keepApproved = (rec.approved_recommendations && rec.approved_recommendations.length) ? rec.approved_recommendations : (oldMeta.approved || []);
+            const keepCompany = (rec.company_recommendations && rec.company_recommendations.length) ? rec.company_recommendations : (oldMeta.companyRecs || []);
+            const keepOpinions = (rec.company_opinions && typeof rec.company_opinions === 'object') ? rec.company_opinions : (oldMeta.opinions || {});
+
+            rec.recommendations = fresh.recommendations;
+            rec.career_assessment = fresh.career_assessment;
+            rec.smart_summary = fresh.smart_summary;
+            rec.strength_areas = fresh.strength_areas;
+            rec.improvement_areas = fresh.improvement_areas;
+            rec.skill_profile = fresh.skill_profile;
+            rec.approved_recommendations = keepApproved;
+            rec.company_recommendations = keepCompany;
+            rec.company_opinions = keepOpinions;
+
+            // احفظ في الخلفية (بدون انتظار، ومايأثرش على العرض لو فشل)
+            saveFreshRec(rec.id, fresh, keepApproved, keepCompany, keepOpinions).catch(() => {});
+            // كمل العرض بالبيانات الجديدة من الذاكرة (مفيش return لـ generateRec)
         }
     }
 
@@ -1738,6 +1771,7 @@ async function renderRecTab() {
         if ((!rec.strength_areas || !rec.strength_areas.length) && metaItem && metaItem.strength_areas) rec.strength_areas = metaItem.strength_areas;
         if ((!rec.improvement_areas || !rec.improvement_areas.length) && metaItem && metaItem.improvement_areas) rec.improvement_areas = metaItem.improvement_areas;
         if (!rec.career_assessment && metaItem && metaItem.career_assessment) rec.career_assessment = metaItem.career_assessment;
+        if (!rec.smart_summary && metaItem && metaItem.smart_summary) rec.smart_summary = metaItem.smart_summary;
         const approved = (rec.approved_recommendations && rec.approved_recommendations.length) ? rec.approved_recommendations : metaApproved;   // أسماء المجالات المعتمدة
         const companyRecs = (rec.company_recommendations && rec.company_recommendations.length) ? rec.company_recommendations : metaCompany;  // ترشيحات الشركة الإضافية
 
@@ -1758,7 +1792,8 @@ async function renderRecTab() {
             recId: rec.id,
             approved: [...approved],
             companyRecs: companyRecs.map(c => ({...c})),
-            opinions: (rec.company_opinions && typeof rec.company_opinions === 'object') ? {...rec.company_opinions} : ((metaItem && metaItem.opinions) ? {...metaItem.opinions} : {})
+            opinions: (rec.company_opinions && typeof rec.company_opinions === 'object') ? {...rec.company_opinions} : ((metaItem && metaItem.opinions) ? {...metaItem.opinions} : {}),
+            _aiFields: recs.map(r => r.field || r.title || r.job_title || 'مجال')
         };
 
         const matchColor = (m) => m >= 85 ? '#10b981' : m >= 70 ? '#4facfe' : 'var(--warning)';
@@ -1829,6 +1864,9 @@ async function renderRecTab() {
         content.innerHTML =
             (rec.career_assessment ? '<div class="rec-assessment"><div class="rec-assessment-title"><i class="fas fa-user-tie"></i> تقييم الشخصية المهنية</div><div class="rec-assessment-body">' + esc(rec.career_assessment) + '</div></div>' : '') +
 
+            // الملخص الذكي: أفضل مسار
+            (rec.smart_summary ? '<div class="rec-smart"><div class="rec-smart-icon"><i class="fas fa-lightbulb"></i></div><div class="rec-smart-body"><div class="rec-smart-title">خلاصة الترشيح</div><div class="rec-smart-text">' + esc(rec.smart_summary) + '</div></div></div>' : '') +
+
             // بروفايل مهارات الطالب (بارات)
             (rec.skill_profile ? (function(sp){
                 const bar = (label, val, color) => {
@@ -1850,7 +1888,10 @@ async function renderRecTab() {
             (rec.improvement_areas && rec.improvement_areas.length ? '<div class="rec-improve"><div class="rec-improve-title"><i class="fas fa-arrow-up"></i> نقاط تحتاج تطوير</div><ul>' + rec.improvement_areas.map(a => '<li>' + esc(a) + '</li>').join('') + '</ul></div>' : '') +
 
             // AI Recommendations
-            '<div class="rec-section-title"><i class="fas fa-robot"></i> ترشيحات الذكاء الاصطناعي</div>' +
+            '<div class="rec-ai-header"><div class="rec-section-title" style="margin:0"><i class="fas fa-robot"></i> ترشيحات الذكاء الاصطناعي</div>' +
+                '<div class="rec-ai-tools"><span class="rec-approved-count" id="recApprovedCount">' + (approved.length ? ('<i class="fas fa-check-circle"></i> ' + approved.length + ' معتمد') : '') + '</span>' +
+                '<button class="rec-approve-all-btn" onclick="approveAllRecs()"><i class="fas fa-check-double"></i> اعتماد الكل</button></div>' +
+            '</div>' +
             '<div class="rec-grid">' + aiCardsHTML + '</div>' +
 
             // Company Recommendations
@@ -1917,6 +1958,32 @@ window.toggleApproveRec = (e, idx, fieldName) => {
         const btn = card.querySelector('.rec-approved-btn');
         if (btn) btn.remove();
     }
+    updateApprovedCount();
+};
+
+// تحديث عداد المعتمدة
+function updateApprovedCount() {
+    const el = document.getElementById('recApprovedCount');
+    if (!el || !window._recState) return;
+    const n = window._recState.approved.length;
+    el.innerHTML = n ? ('<i class="fas fa-check-circle"></i> ' + n + ' معتمد') : '';
+}
+
+// ===== اعتماد كل الترشيحات دفعة واحدة =====
+window.approveAllRecs = () => {
+    if (!window._recState) return;
+    const cards = document.querySelectorAll('[id^="recCard_"]');
+    // لو الكل معتمد بالفعل → ألغِ الكل (toggle)
+    const allApproved = window._recState._aiFields && window._recState._aiFields.length &&
+        window._recState._aiFields.every(f => window._recState.approved.includes(f));
+    if (allApproved) {
+        window._recState.approved = window._recState.approved.filter(f => !window._recState._aiFields.includes(f));
+    } else {
+        (window._recState._aiFields || []).forEach(f => {
+            if (!window._recState.approved.includes(f)) window._recState.approved.push(f);
+        });
+    }
+    renderRecTab(); // أعد الرسم لتحديث كل الكروت
 };
 
 // ===== تحديث رأي الشركة على ترشيح AI =====
@@ -1983,6 +2050,40 @@ window.saveCompanyRecs = async () => {
         showToast('خطأ: ' + e.message, 'error');
     }
 };
+
+// حفظ الترشيحات المُحدّثة في الخلفية (آمن — لا يكسر العرض لو فشل)
+async function saveFreshRec(recId, fresh, approved, companyRecs, opinions) {
+    if (!recId) return;
+    const sb = await window.getSafeSupabase();
+    const recsWithMeta = fresh.recommendations.concat([{
+        __meta: true,
+        approved: approved || [],
+        companyRecs: companyRecs || [],
+        opinions: opinions || {},
+        skill_profile: fresh.skill_profile,
+        strength_areas: fresh.strength_areas,
+        improvement_areas: fresh.improvement_areas,
+        career_assessment: fresh.career_assessment,
+        smart_summary: fresh.smart_summary
+    }]);
+
+    // جرّب بالأعمدة الكاملة
+    let res = await sb.from('career_recommendations').update({
+        recommendations: fresh.recommendations,
+        career_assessment: fresh.career_assessment,
+        strength_areas: fresh.strength_areas,
+        improvement_areas: fresh.improvement_areas,
+        skill_profile: fresh.skill_profile
+    }).eq('id', recId);
+
+    // لو في عمود مفقود، احفظ الأساسي + meta جوه recommendations
+    if (res.error && /column|does not exist|schema/i.test(res.error.message || '')) {
+        await sb.from('career_recommendations').update({
+            recommendations: recsWithMeta,
+            career_assessment: fresh.career_assessment
+        }).eq('id', recId);
+    }
+}
 
 window.generateRec = async (silent) => {
     const t = allTrainees.find(x => x.id === currentTraineeId);
@@ -2276,8 +2377,23 @@ function buildCareerRecommendations(field, evaluation) {
     if (growthScore < 70) improvement.push('زيادة سرعة استيعاب المهارات والأدوات الجديدة');
     if (improvement.length === 0) improvement.push('الاستمرار في التطوّر وتولّي مشاريع أكثر تحدياً للوصول لمستوى الخبرة');
 
+    // ====== ملخص ذكي: أفضل مسار للطالب ======
+    const best = top5[0];
+    const topCat = [
+        { n: 'المهارات التقنية', v: techScore },
+        { n: 'مهارات التواصل', v: softScore },
+        { n: 'جودة الأداء', v: perfScore },
+        { n: 'سرعة التعلّم', v: growthScore }
+    ].sort((a, b) => b.v - a.v)[0];
+    let smartSummary = 'بناءً على تقييم الأداء، أنسب مسار للمتدرب هو «' + best.field + '» بنسبة توافق ' + best.match + '%';
+    smartSummary += '، حيث يتميّز بـ' + topCat.n + ' (' + Math.round(topCat.v) + '%). ';
+    const sameFields = top5.filter(r => r.relation === 'same').length;
+    if (sameFields >= 2) smartSummary += 'كما توجد عدة فرص قوية في نفس تخصصه، مع إمكانية استكشاف مسارات قريبة للتوسّع المهني.';
+    else smartSummary += 'وهناك مسارات بديلة قد تناسب ميوله ومهاراته الحالية.';
+
     return {
         career_assessment: assessment,
+        smart_summary: smartSummary,
         recommendations: top5,
         strength_areas: strengths,
         improvement_areas: improvement,
