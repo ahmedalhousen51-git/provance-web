@@ -651,6 +651,17 @@
         .rec-match-bar { height: 7px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
         .rec-match-fill { height: 100%; border-radius: 10px; transition: width .5s; }
         .rec-source { font-size: 0.76rem; color: var(--text-muted); margin-bottom: 14px; opacity: 0.85; }
+        /* بروفايل مهارات الطالب */
+        .rec-profile { background: linear-gradient(135deg, rgba(124,108,255,0.06), rgba(168,85,247,0.03)); border: 1px solid rgba(124,108,255,0.2); border-radius: 14px; padding: 16px 18px; margin-bottom: 20px; }
+        .rec-profile-title { font-weight: 800; margin-bottom: 14px; color: #a855f7; display: flex; align-items: center; gap: 6px; }
+        .rec-skillbar { margin-bottom: 11px; }
+        .rec-skillbar:last-child { margin-bottom: 0; }
+        .rec-skillbar-head { display: flex; justify-content: space-between; font-size: 0.84rem; font-weight: 700; margin-bottom: 5px; }
+        .rec-skillbar-track { height: 9px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+        .rec-skillbar-fill { height: 100%; border-radius: 10px; transition: width .6s ease; }
+        /* سبب التطابق */
+        .rec-match-reason { font-size: 0.78rem; color: var(--text-muted); background: rgba(79,172,254,0.06); border-right: 3px solid #4facfe; padding: 7px 10px; border-radius: 6px; margin-bottom: 12px; line-height: 1.55; }
+        .rec-match-reason i { color: #4facfe; margin-left: 3px; }
         .rec-level-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 0.68rem; font-weight: 800; background: rgba(168,85,247,0.15); color: #c084fc; }
         .rec-skills { font-size: 0.82rem; margin-bottom: 10px; line-height: 1.9; }
         .rec-skill-chip { display: inline-block; background: rgba(239,68,68,0.1); color: #ef4444; padding: 3px 9px; border-radius: 10px; font-size: 0.74rem; font-weight: 700; margin-left: 4px; margin-bottom: 4px; }
@@ -1760,6 +1771,7 @@ async function renderRecTab() {
                     '<span class="rec-match-label">نسبة التوافق ' + m + '%</span>' +
                     '<div class="rec-match-bar"><div class="rec-match-fill" style="width:' + m + '%;background:' + matchColor(m) + '"></div></div>' +
                 '</div>' +
+                (r.match_reason ? '<div class="rec-match-reason"><i class="fas fa-circle-info"></i> ' + esc(r.match_reason) + '</div>' : '') +
                 (r.key_skills && r.key_skills.length ? '<div class="rec-skills"><span class="rec-meta-label">المهارات المطلوبة:</span> ' + r.key_skills.map(s => '<span class="rec-skill-chip">' + esc(s) + '</span>').join('') + '</div>' : '') +
                 (r.growth_path ? '<div class="rec-meta-line"><i class="fas fa-route" style="color:#4facfe"></i> <span class="rec-meta-label">المسار:</span> ' + esc(r.growth_path) + '</div>' : '') +
                 (r.salary_range_egp ? '<div class="rec-meta-line rec-salary"><i class="fas fa-money-bill-wave"></i> <span class="rec-meta-label">الراتب المتوقع:</span> ' + esc(r.salary_range_egp) + '</div>' : '') +
@@ -1796,6 +1808,20 @@ async function renderRecTab() {
 
         content.innerHTML =
             (rec.career_assessment ? '<div class="rec-assessment"><div class="rec-assessment-title"><i class="fas fa-user-tie"></i> تقييم الشخصية المهنية</div><div class="rec-assessment-body">' + esc(rec.career_assessment) + '</div></div>' : '') +
+
+            // بروفايل مهارات الطالب (بارات)
+            (rec.skill_profile ? (function(sp){
+                const bar = (label, val, color) => {
+                    val = Math.round(val || 0);
+                    return '<div class="rec-skillbar"><div class="rec-skillbar-head"><span>' + label + '</span><strong>' + val + '%</strong></div><div class="rec-skillbar-track"><div class="rec-skillbar-fill" style="width:' + val + '%;background:' + color + '"></div></div></div>';
+                };
+                return '<div class="rec-profile"><div class="rec-profile-title"><i class="fas fa-chart-simple"></i> بروفايل مهارات المتدرب</div>' +
+                    bar('المهارات التقنية', sp.technical, 'linear-gradient(90deg,#7c6cff,#a855f7)') +
+                    bar('مهارات التواصل', sp.soft_skills, 'linear-gradient(90deg,#4facfe,#00c2ff)') +
+                    bar('جودة الأداء', sp.performance, 'linear-gradient(90deg,#10b981,#059669)') +
+                    bar('سرعة التعلّم', sp.growth, 'linear-gradient(90deg,#f59e0b,#f97316)') +
+                '</div>';
+            })(rec.skill_profile) : '') +
 
             // نقاط القوة
             (rec.strength_areas && rec.strength_areas.length ? '<div class="rec-strength"><div class="rec-strength-title"><i class="fas fa-star"></i> نقاط القوة</div><ul>' + rec.strength_areas.map(a => '<li>' + esc(a) + '</li>').join('') + '</ul></div>' : '') +
@@ -1959,6 +1985,7 @@ window.generateRec = async () => {
             recommendations: result.recommendations,
             strength_areas: result.strength_areas,
             improvement_areas: result.improvement_areas,
+            skill_profile: result.skill_profile,
             evaluation_score: t.evaluation.overall_score
         };
 
@@ -2104,12 +2131,53 @@ function buildCareerRecommendations(field, evaluation) {
     ];
     const levelLabels = { entry: 'مبتدئ', mid: 'متوسط', senior: 'متقدم' };
 
-    // ====== حساب نسبة التوافق (من 100): الأساس من التقييم × قرب المجال ======
+    // ====== درجات الطالب في كل فئة (من 100) ======
+    const stuTech = (cs.technical != null) ? cs.technical : score;
+    const stuSoft = (cs.soft_skills != null) ? cs.soft_skills : score;
+    const stuPerf = (cs.performance != null) ? cs.performance : score;
+    const stuGrow = (cs.growth != null) ? cs.growth : score;
+
+    // ====== بروفايل المهارات المطلوبة لكل وظيفة (أوزان: أهمية كل فئة للوظيفة) ======
+    // نستنتج البروفايل من عنوان الوظيفة عشان نحسب تطابق واقعي ومختلف لكل مجال
+    function jobProfile(title) {
+        const t = String(title).toLowerCase();
+        if (/مدير|manager|director|lead|رئيس|head|architect/.test(t)) return { tech: 0.30, soft: 0.30, perf: 0.20, grow: 0.20 };
+        if (/senior|متقدم|خبير/.test(t)) return { tech: 0.45, soft: 0.20, perf: 0.25, grow: 0.10 };
+        if (/مطوّر|مهندس|develop|engineer|برمج|تقني|technical|devops|ml|data scientist|عالم بيانات/.test(t)) return { tech: 0.50, soft: 0.12, perf: 0.23, grow: 0.15 };
+        if (/مبيعات|sales|عملاء|علاقات|تطوير أعمال|bd|account/.test(t)) return { tech: 0.15, soft: 0.45, perf: 0.30, grow: 0.10 };
+        if (/خدمة عملاء|تواصل|علاقات عامة|pr|ثقافة|موظفين/.test(t)) return { tech: 0.10, soft: 0.50, perf: 0.25, grow: 0.15 };
+        if (/تسويق|market|محتوى|content|سوشيال|social|إبداع|تصميم|design|جرافيك|موشن/.test(t)) return { tech: 0.32, soft: 0.30, perf: 0.20, grow: 0.18 };
+        if (/محلل|analy|تحليل|seo|بيانات|bi|مالي|محاسب|تدقيق|جودة|quality|qc/.test(t)) return { tech: 0.42, soft: 0.15, perf: 0.30, grow: 0.13 };
+        if (/منسق|مساعد|إداري|عمليات|توظيف|موارد|hr|تدريب/.test(t)) return { tech: 0.20, soft: 0.35, perf: 0.30, grow: 0.15 };
+        return { tech: 0.30, soft: 0.25, perf: 0.25, grow: 0.20 };
+    }
+
+    // ====== حساب نسبة التوافق الحقيقية: تطابق مهارات الطالب مع بروفايل الوظيفة ======
     const recommendations = pool.map((job, i) => {
-        let match = Math.round(score * job.rel);   // score من 100، rel نسبة قرب
-        match = Math.max(45, Math.min(98, match)); // حدود منطقية
-        // المستوى المرشّح يقل قليلاً للمجالات الأبعد
+        const p = jobProfile(job.title);
+        // التوافق = مجموع (درجة الطالب في الفئة × وزن الفئة في الوظيفة)
+        let fit = (stuTech * p.tech) + (stuSoft * p.soft) + (stuPerf * p.perf) + (stuGrow * p.grow);
+        // عدّل حسب قرب المجال من تخصص الطالب
+        fit = fit * (0.80 + 0.20 * job.rel); // SAME≈×1.0، NEAR≈×0.96، FAR≈×0.93
+        // لمسة تمييز بسيطة حسب الترتيب عشان متبقاش النسب متساوية
+        fit = fit - (i * 1.5);
+        let match = Math.round(fit);
+        match = Math.max(40, Math.min(97, match)); // حدود واقعية
         const lvl = job.rel === SAME ? jobLevel : (jobLevel === 'senior' ? 'mid' : jobLevel === 'mid' ? 'entry' : 'entry');
+
+        // سبب التطابق: إيه أهم فئة للوظيفة وإزاي الطالب فيها
+        const weights = [
+            { name: 'المهارات التقنية', w: p.tech, v: stuTech },
+            { name: 'مهارات التواصل', w: p.soft, v: stuSoft },
+            { name: 'جودة الأداء', w: p.perf, v: stuPerf },
+            { name: 'سرعة التعلّم', w: p.grow, v: stuGrow }
+        ].sort((a, b) => b.w - a.w);
+        const topNeed = weights[0]; // أهم فئة للوظيفة
+        let matchReason;
+        if (topNeed.v >= 80) matchReason = 'هذا المجال يعتمد على ' + topNeed.name + '، والمتدرب قوي فيها (' + Math.round(topNeed.v) + '%) — توافق عالٍ.';
+        else if (topNeed.v >= 60) matchReason = 'هذا المجال يحتاج ' + topNeed.name + '، ومستوى المتدرب فيها جيد (' + Math.round(topNeed.v) + '%).';
+        else matchReason = 'هذا المجال يحتاج ' + topNeed.name + '، والمتدرب يحتاج تطويرها (' + Math.round(topNeed.v) + '%) — توافق أقل.';
+
         return {
             field: job.title,
             job_title: job.title,
@@ -2120,6 +2188,7 @@ function buildCareerRecommendations(field, evaluation) {
             relation: job.rel === SAME ? 'same' : job.rel === NEAR ? 'near' : 'far',
             description: job.why,
             reason: job.why,
+            match_reason: matchReason,
             key_skills: job.skills || [],
             growth_path: job.grow || '',
             salary_range_egp: job.pay ? (job.pay + ' ج/شهر') : '',
@@ -2164,7 +2233,13 @@ function buildCareerRecommendations(field, evaluation) {
         career_assessment: assessment,
         recommendations: top5,
         strength_areas: strengths,
-        improvement_areas: improvement
+        improvement_areas: improvement,
+        skill_profile: {
+            technical: Math.round(stuTech),
+            soft_skills: Math.round(stuSoft),
+            performance: Math.round(stuPerf),
+            growth: Math.round(stuGrow)
+        }
     };
 }
 
