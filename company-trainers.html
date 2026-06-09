@@ -2021,6 +2021,99 @@ window.deleteTask = async (taskId) => {
     renderTasksTab();
 };
 
+// ============ نداء الذكاء الاصطناعي الحقيقي (Claude عبر Supabase Edge Function) ============
+const AI_FN_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co/functions/v1/ai-analyze';
+const AI_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+
+// كاش بسيط عشان منعيدش نفس النداء لنفس المتدرب
+window._aiAnalysisCache = window._aiAnalysisCache || {};
+
+async function callAIAnalysis(t) {
+    if (!t || !t.evaluation) return null;
+    const cacheKey = t.id + '_' + (t.evaluation.overall_score || 0) + '_' + (t.tasks || []).length;
+    if (window._aiAnalysisCache[cacheKey]) return window._aiAnalysisCache[cacheKey];
+
+    try {
+        const payload = {
+            student_name: t.student_name,
+            field: t.field,
+            overall_score: t.evaluation.overall_score,
+            category_scores: t.evaluation.category_scores || {},
+            summary_feedback: t.evaluation.summary_feedback || '',
+            tasks: (t.tasks || []).map(tk => ({
+                task_title: tk.task_title,
+                task_description: tk.task_description,
+                report_text: tk.report_text,
+                rating: tk.rating
+            })),
+            mode: 'full'
+        };
+
+        const res = await fetch(AI_FN_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + AI_ANON_KEY
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) { console.warn('AI fn status', res.status); return null; }
+        const data = await res.json();
+        if (data && data.ok && data.analysis) {
+            window._aiAnalysisCache[cacheKey] = data.analysis;
+            return data.analysis;
+        }
+        return null;
+    } catch (e) {
+        console.warn('AI analysis failed, using local fallback:', e);
+        return null;
+    }
+}
+
+// حوّل ناتج الـ AI لصيغة buildPersonaAnalysis المتوقّعة
+function aiToPersona(ai, t) {
+    const cs = (t.evaluation && t.evaluation.category_scores) || {};
+    const score = (t.evaluation && t.evaluation.overall_score) || 0;
+    const lvl = (v) => v >= 85 ? 'ممتاز' : v >= 70 ? 'قوي' : v >= 55 ? 'جيد' : v >= 40 ? 'متوسط' : 'يحتاج تطوير';
+    const val = (k) => cs[k] != null ? cs[k] : score;
+
+    let taskAnalysis = null;
+    if (Array.isArray(ai.task_insights) && ai.task_insights.length && (t.tasks||[]).length) {
+        const tasks = t.tasks || [];
+        const withReport = tasks.filter(x => x.report_text && x.report_text.trim()).length;
+        const rated = tasks.filter(x => x.rating > 0);
+        const avg = rated.length ? rated.reduce((s,x)=>s+Number(x.rating),0)/rated.length : 0;
+        taskAnalysis = {
+            total: tasks.length,
+            with_report: withReport,
+            completion_rate: Math.round((withReport/tasks.length)*100),
+            avg_rating: avg,
+            insights: ai.task_insights,
+            recent_tasks: tasks.slice(-3).reverse().map(x => ({
+                title: x.task_title || 'مهمة', asked: x.task_description || '',
+                done: x.report_text || '', rating: x.rating || 0
+            }))
+        };
+    }
+
+    return {
+        overview: ai.overview || '',
+        task_analysis: taskAnalysis,
+        traits: (ai.traits || []).map(tr => ({ icon: tr.icon || 'fa-circle', label: tr.label || '', desc: tr.desc || '' })),
+        work_style: ai.work_style || '',
+        detailed_strengths: ai.strengths || [],
+        detailed_weaknesses: (ai.weaknesses || []).map(w => ({ area: w.area || '', tip: w.tip || '' })),
+        dimensions: [
+            { name: 'المهارات التقنية', value: Math.round(val('technical')), level: lvl(val('technical')), color: 'linear-gradient(90deg,#7c6cff,#a855f7)' },
+            { name: 'مهارات التواصل', value: Math.round(val('soft_skills')), level: lvl(val('soft_skills')), color: 'linear-gradient(90deg,#4facfe,#00c2ff)' },
+            { name: 'جودة الأداء', value: Math.round(val('performance')), level: lvl(val('performance')), color: 'linear-gradient(90deg,#10b981,#059669)' },
+            { name: 'سرعة التعلّم', value: Math.round(val('growth')), level: lvl(val('growth')), color: 'linear-gradient(90deg,#f59e0b,#f97316)' }
+        ],
+        _ai: true
+    };
+}
+
 // ============ مولّد تحليل الشخصية المعمّق (محلي) ============
 // الدرجات من 100
 function buildPersonaAnalysis(field, evaluation, tasks) {
@@ -2178,7 +2271,19 @@ async function renderPersonaTab() {
         return;
     }
 
-    const a = buildPersonaAnalysis(t.field, t.evaluation, t.tasks);
+    // اعرض loader أثناء تحليل الـ AI
+    content.innerHTML = '<div style="text-align:center;padding:50px 20px"><div style="width:64px;height:64px;border:5px solid rgba(168,85,247,0.2);border-top-color:#a855f7;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px"></div><h3 style="font-weight:800;margin-bottom:6px"><i class="fas fa-brain" style="color:#a855f7"></i> الذكاء الاصطناعي يحلّل المتدرب</h3><p style="color:var(--text-muted)">قراءة التقييم والمهام وتوليد التحليل...</p></div>';
+
+    // جرّب الـ AI الحقيقي أولاً، وإلا استخدم التحليل المحلي
+    let a;
+    const aiResult = await callAIAnalysis(t);
+    if (aiResult) {
+        a = aiToPersona(aiResult, t);
+        window._lastAIAnalysis = aiResult; // نخزّنه للترشيحات كمان
+    } else {
+        a = buildPersonaAnalysis(t.field, t.evaluation, t.tasks);
+        window._lastAIAnalysis = null;
+    }
 
     // جيب سجل الترشيحات لمعرفة حالة الإرسال والـ id (للزر)
     let recRow = null;
@@ -2246,7 +2351,9 @@ async function renderPersonaTab() {
 
     content.innerHTML =
         // نظرة عامة
-        '<div class="persona-overview"><div class="persona-overview-title"><i class="fas fa-brain"></i> النظرة العامة على الشخصية المهنية</div>' +
+        '<div class="persona-overview"><div class="persona-overview-title"><i class="fas fa-brain"></i> النظرة العامة على الشخصية المهنية' +
+        (a._ai ? ' <span style="margin-right:auto;font-size:0.7rem;background:linear-gradient(135deg,#7c6cff,#a855f7);color:#fff;padding:3px 10px;border-radius:20px;font-weight:800"><i class="fas fa-robot"></i> تحليل AI</span>' : '') +
+        '</div>' +
         '<div class="persona-overview-body">' + esc(a.overview) + '</div></div>' +
 
         // الأبعاد (بارات)
@@ -2305,7 +2412,7 @@ async function renderRecTab() {
         const hasProfile = (rec.skill_profile && typeof rec.skill_profile === 'object') || (metaOld && metaOld.skill_profile);
         if (!hasNewFields || allSame || !hasProfile) {
             // ولّد الجديد محلياً واستبدله في الذاكرة فوراً (مفيش loop، مفيش انتظار حفظ)
-            const fresh = buildCareerRecommendations(t.field, t.evaluation);
+            const fresh = await getRecommendationsAIfirst(t);
             // احتفظ بالاعتمادات والآراء القديمة لو موجودة
             const oldMeta = metaOld || {};
             const keepApproved = (rec.approved_recommendations && rec.approved_recommendations.length) ? rec.approved_recommendations : (oldMeta.approved || []);
@@ -2649,8 +2756,8 @@ window.generateRec = async (silent) => {
     try {
         const sb = await window.getSafeSupabase();
 
-        // ولّد الترشيحات محلياً حسب المجال والدرجة
-        const result = buildCareerRecommendations(t.field, t.evaluation);
+        // ولّد الترشيحات: جرّب الـ AI الحقيقي أولاً، وإلا المحلي
+        const result = await getRecommendationsAIfirst(t);
 
         // الحقول الأساسية المضمونة وجودها
         const baseData = {
@@ -2707,6 +2814,44 @@ window.generateRec = async (silent) => {
         content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--warning);margin-bottom:14px;display:block"></i><h3 style="color:var(--text)">حصل خطأ</h3><button onclick="renderRecTab()" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer;margin-top:14px">العودة</button></div>';
     }
 };
+
+// يجمع ترشيحات الـ AI (لو متاحة) في صيغة buildCareerRecommendations، وإلا المحلي
+async function getRecommendationsAIfirst(t) {
+    let ai = window._lastAIAnalysis;
+    if (!ai) ai = await callAIAnalysis(t); // لو متاب الشخصية مفتحش الأول
+    if (ai && Array.isArray(ai.recommendations) && ai.recommendations.length) {
+        // فرض فرق 5 درجات (حماية)
+        const recs = ai.recommendations.map(r => ({
+            field: r.field, job_title: r.field,
+            match: r.match, match_score: r.match,
+            level: r.level || 'mid',
+            level_label: ({entry:'مبتدئ',mid:'متوسط',senior:'متقدم'}[r.level] || 'متوسط'),
+            relation: r.relation || 'same',
+            description: r.description || '', reason: r.description || '',
+            match_reason: r.match_reason || '',
+            key_skills: r.key_skills || [],
+            growth_path: r.growth_path || '',
+            salary_range_egp: r.salary_range_egp ? (String(r.salary_range_egp).includes('ج') ? r.salary_range_egp : r.salary_range_egp + ' ج/شهر') : '',
+            source: 'الذكاء الاصطناعي — Claude', ai: true
+        }));
+        recs.sort((a,b) => b.match - a.match);
+        for (let k=1;k<recs.length;k++){ if(recs[k-1].match-recs[k].match<5){recs[k].match=Math.max(40,recs[k-1].match-5);recs[k].match_score=recs[k].match;} }
+        return {
+            career_assessment: ai.overview || '',
+            smart_summary: ai.smart_summary || '',
+            recommendations: recs.slice(0,5),
+            strength_areas: ai.strengths || [],
+            improvement_areas: (ai.weaknesses || []).map(w => w.area + (w.tip ? ' — ' + w.tip : '')),
+            skill_profile: (function(){
+                const cs=(t.evaluation&&t.evaluation.category_scores)||{}, s=(t.evaluation&&t.evaluation.overall_score)||0;
+                return { technical:Math.round(cs.technical??s), soft_skills:Math.round(cs.soft_skills??s), performance:Math.round(cs.performance??s), growth:Math.round(cs.growth??s) };
+            })(),
+            _ai: true
+        };
+    }
+    // fallback محلي
+    return buildCareerRecommendations(t.field, t.evaluation);
+}
 
 // ============ مولّد الترشيحات الوظيفية الذكي (محلي) ============
 // الدرجات (overall_score و category_scores) مُخزّنة من 100
