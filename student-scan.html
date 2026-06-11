@@ -926,14 +926,16 @@ async function processQR(qrData) {
       department,
       delay_minutes:   delayMinutes
     };
-    /* صف مبسّط احتياطي (بدون الأعمدة الاختيارية) */
+    /* صف مبسّط احتياطي (بدون الأعمدة الاختيارية، لكن مع attendance_type المهم) */
     const baseRow = {
       qr_code_id:      qr.id,
       company_user_id: qr.company_user_id,
       student_user_id: studentUserId,
       student_name:    (studentData && studentData.full_name) || null,
       status,
-      scanned_at:      now.toISOString()
+      scanned_at:      now.toISOString(),
+      attendance_type: attendanceType,
+      purpose
     };
 
     console.log('💾 INSERT attendance_logs ←', fullRow);
@@ -941,8 +943,21 @@ async function processQR(qrData) {
 
     if (insErr) {
       console.warn('⚠️ fullRow failed → try baseRow:', insErr.message);
-      const { error: insErr2 } = await sb.from('attendance_logs').insert(baseRow);
-      insErr = insErr2;
+      const r2 = await sb.from('attendance_logs').insert(baseRow);
+      insErr = r2.error;
+    }
+    if (insErr) {
+      // مستوى أخير: أقل أعمدة ممكنة (مضمون يشتغل)
+      console.warn('⚠️ baseRow failed → try minimalRow:', insErr.message);
+      const minimalRow = {
+        qr_code_id:      qr.id,
+        company_user_id: qr.company_user_id,
+        student_user_id: studentUserId,
+        status,
+        scanned_at:      now.toISOString()
+      };
+      const r3 = await sb.from('attendance_logs').insert(minimalRow);
+      insErr = r3.error;
     }
 
     if (insErr) {
