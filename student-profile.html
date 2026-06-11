@@ -1350,12 +1350,15 @@
             return;
         }
 
-        // أيام الحضور الفعلية (مجمّعة)
+        // أيام الحضور الفعلية (مجمّعة) — بس السجلات اللي بحالة حضور حقيقية
+        const PRESENT_STATUSES = ['on_time', 'late', 'early'];
         const attendedDays = {};
         daily.forEach(a => {
             if (!a.scanned_at) return;
+            // تجاهل أي سجل مش حضور فعلي (غياب/حالة فاضية/شبحي)
+            if (a.status && !PRESENT_STATUSES.includes(a.status)) return;
             const d = localDateKey(a.scanned_at);
-            if (!attendedDays[d]) attendedDays[d] = a.status;
+            if (!attendedDays[d]) attendedDays[d] = a.status || 'on_time';
         });
 
         const onTime = daily.filter(a => a.status === 'on_time').length;
