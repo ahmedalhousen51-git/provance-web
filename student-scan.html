@@ -725,24 +725,19 @@ function scanLoop(video) {
       return;
     }
     const vw = video.videoWidth, vh = video.videoHeight;
-    canvas.width  = vw;
-    canvas.height = vh;
-    ctx.drawImage(video, 0, 0);
+    // تصغير الصورة للسرعة (الـ QR يتقري كويس على دقة أقل، وأسرع 5-10 مرات)
+    const maxDim = 540;
+    const scale = Math.min(1, maxDim / Math.max(vw, vh));
+    const cw = Math.max(1, Math.round(vw * scale));
+    const ch = Math.max(1, Math.round(vh * scale));
+    canvas.width  = cw;
+    canvas.height = ch;
+    ctx.drawImage(video, 0, 0, cw, ch);
     frames++;
     try {
-      // محاولة 1: الإطار كامل
-      let code = null;
-      const imageData = ctx.getImageData(0, 0, vw, vh);
-      code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
-
-      // محاولة 2: المنطقة الوسطى المربعة (الـ QR غالباً في النص) — أوضح وأدق
-      if (!code) {
-        const side = Math.floor(Math.min(vw, vh) * 0.7);
-        const sx = Math.floor((vw - side) / 2);
-        const sy = Math.floor((vh - side) / 2);
-        const center = ctx.getImageData(sx, sy, side, side);
-        code = jsQR(center.data, center.width, center.height, { inversionAttempts: 'attemptBoth' });
-      }
+      // معالجة واحدة على الإطار المصغّر (سريعة)
+      const imageData = ctx.getImageData(0, 0, cw, ch);
+      let code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
 
       if (code && code.data) {
         console.log('✅ QR detected:', code.data);
@@ -758,7 +753,7 @@ function scanLoop(video) {
         statusEl.style.color = '#4facfe';
       }
     } catch (e) { console.warn('scan frame error:', e); }
-  }, 120); // ~8 fps
+  }, 60); // ~16 fps (المعالجة بقت خفيفة بعد التصغير)
 }
 
 /* ════════════════════════════════════════════════
