@@ -1361,14 +1361,14 @@
             if (!attendedDays[d]) attendedDays[d] = a.status || 'on_time';
         });
 
-        const onTime = daily.filter(a => a.status === 'on_time').length;
-        const late = daily.filter(a => a.status === 'late').length;
         const presentDaysCount = Object.keys(attendedDays).length;
 
-        // ── الحساب الذكي للغياب: نعدّ أيام العمل المفروضة فقط (نتجاهل إجازات الشركة) ──
+        // ── الحساب الذكي: نعدّ أيام العمل المجدولة فقط، ونصنّف الحضور حسبها ──
         let expectedWorkDays = 0;
         let realAbsent = 0;
         let companyHolidays = 0;
+        let attendedOnTime = 0;   // أيام عمل حضرها في الوقت
+        let attendedLate = 0;     // أيام عمل حضرها متأخر
 
         if (sched && sched.start_date && workDayNums && workDayNums.length) {
             const start = new Date(sched.start_date);
@@ -1384,7 +1384,10 @@
                 if (workDayNums.includes(dayNum)) {
                     // يوم عمل مفروض
                     expectedWorkDays++;
-                    if (!attendedDays[dayKey]) realAbsent++;  // مفروض يحضر ومحضرش = غياب حقيقي
+                    const st = attendedDays[dayKey];
+                    if (!st) realAbsent++;                 // مفروض يحضر ومحضرش = غياب
+                    else if (st === 'late') attendedLate++; // حضر متأخر
+                    else attendedOnTime++;                  // حضر في الوقت (on_time/early)
                 } else {
                     // يوم إجازة شركة (مش مفروض يحضر) — مايتحسبش غياب
                     companyHolidays++;
@@ -1392,20 +1395,27 @@
             }
         }
 
-        // النسبة العادلة: على أساس أيام العمل المفروضة فقط
-        let rate, total, absent;
+        // كل الأرقام من نفس المصدر عشان تبقى متسقة (مفيش تناقض)
+        let rate, total, absent, onTime, late, present;
         if (expectedWorkDays > 0) {
+            // فيه جدول: النسبة = أيام العمل اللي اتحضرت ÷ أيام العمل المفروضة
+            onTime = attendedOnTime;
+            late = attendedLate;
+            present = attendedOnTime + attendedLate;  // أيام العمل اللي اتحضرت فعلاً
             absent = realAbsent;
             total = expectedWorkDays;
-            rate = Math.round((presentDaysCount / expectedWorkDays) * 100);
+            rate = Math.round((present / expectedWorkDays) * 100);
             if (rate > 100) rate = 100;
+            if (rate < 0) rate = 0;
         } else {
-            // مفيش جدول — احسب بالطريقة البسيطة
+            // مفيش جدول — احسب بالطريقة البسيطة (على أساس السجلات)
+            onTime = daily.filter(a => a.status === 'on_time').length;
+            late = daily.filter(a => a.status === 'late').length;
+            present = presentDaysCount;
             absent = daily.filter(a => a.status === 'absent').length;
             total = presentDaysCount + absent;
             rate = total > 0 ? Math.round((presentDaysCount / total) * 100) : (presentDaysCount > 0 ? 100 : 0);
         }
-        const present = onTime + late;
 
         // آخر 14 يوم للأعمدة
         const byDay = {};
