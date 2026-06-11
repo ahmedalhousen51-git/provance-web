@@ -647,12 +647,12 @@ window.startScanner = async () => {
   scanning = true;
   console.log('🎬 الكاميرا اشتغلت — readyState:', video.readyState, video.videoWidth, 'x', video.videoHeight);
 
-  if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
-    scanLoop(video);
-  } else {
-    video.addEventListener('playing', () => { if (scanning) scanLoop(video); }, { once: true });
-    setTimeout(() => { if (scanning && !loopRunning) scanLoop(video); }, 1200);
-  }
+  // أظهر رسالة الحالة فوراً (تأكيد إن الحلقة بدأت)
+  const _st = document.getElementById('scanStatus');
+  if (_st) { _st.style.display = 'block'; _st.innerHTML = '<i class="fas fa-search"></i> وجّه الكاميرا نحو الكود...'; _st.style.color = '#4facfe'; }
+
+  // ابدأ حلقة المسح (requestAnimationFrame — الأكثر موثوقية)
+  requestAnimationFrame(scanTick);
 };
 
 /* ─── Fallback UI عند فشل الكاميرا ─── */
@@ -700,74 +700,54 @@ window.stopScanner = () => {
 /* ════════════════════════════════════════════════
    🔁  Scan Loop (jsQR)
 ════════════════════════════════════════════════ */
-function scanLoop(video) {
-  if (!scanning || loopRunning) return;
-  loopRunning = true;
+/* حلقة المسح — requestAnimationFrame (موثوقة، مابتعلقش) */
+const _scanCanvas = document.createElement('canvas');
+const _scanCtx = _scanCanvas.getContext('2d', { willReadFrequently: true });
+let _scanFrames = 0;
+
+function scanTick() {
+  if (!scanning) return; // اتوقف لو المسح توقف
 
   if (typeof jsQR === 'undefined') {
-    alert('مكتبة قراءة QR لم تُحمّل. تأكد من الإنترنت وأعد تحميل الصفحة.');
-    loopRunning = false;
+    const st = document.getElementById('scanStatus');
+    if (st) { st.innerHTML = '<i class="fas fa-triangle-exclamation"></i> مكتبة القراءة لم تُحمّل — أعد تحميل الصفحة'; st.style.color = '#ef4444'; }
+    requestAnimationFrame(scanTick);
     return;
   }
 
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  let frames = 0;
+  const video = document.getElementById('qr-video');
+  const st = document.getElementById('scanStatus');
 
-  const statusEl = document.getElementById('scanStatus');
-  if (statusEl) statusEl.style.display = 'block';
-
-  if (scanInterval) clearInterval(scanInterval);
-  scanInterval = setInterval(() => {
-    if (!scanning) { clearInterval(scanInterval); loopRunning = false; return; }
-    if (video.readyState < 2 || video.videoWidth === 0) {
-      if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تشغيل الكاميرا...';
-      return;
-    }
+  if (video && video.readyState >= 2 && video.videoWidth > 0) {
+    _scanFrames++;
     const vw = video.videoWidth, vh = video.videoHeight;
-    frames++;
+    _scanCanvas.width = vw;
+    _scanCanvas.height = vh;
+    _scanCtx.drawImage(video, 0, 0, vw, vh);
     try {
-      let code = null;
-
-      // محاولة 1: قص المنطقة الوسطى (مكان وضع الـ QR) وتصغيرها لدقة كويسة
-      // ده بيخلّي الـ QR واضح (مش بيصغّره أوي) + سريع (مساحة أقل)
-      const side = Math.floor(Math.min(vw, vh) * 0.85);
-      const sx = Math.floor((vw - side) / 2);
-      const sy = Math.floor((vh - side) / 2);
-      const target = 600;
-      canvas.width = target;
-      canvas.height = target;
-      ctx.drawImage(video, sx, sy, side, side, 0, 0, target, target); // قص + تصغير في خطوة واحدة
-      const centerImg = ctx.getImageData(0, 0, target, target);
-      code = jsQR(centerImg.data, centerImg.width, centerImg.height, { inversionAttempts: 'attemptBoth' });
-
-      // محاولة 2 (لو الـ QR مش متمركز): الإطار الكامل بتصغير معتدل
-      if (!code) {
-        const fscale = Math.min(1, 800 / Math.max(vw, vh));
-        const fw = Math.max(1, Math.round(vw * fscale));
-        const fh = Math.max(1, Math.round(vh * fscale));
-        canvas.width = fw;
-        canvas.height = fh;
-        ctx.drawImage(video, 0, 0, fw, fh);
-        const fullImg = ctx.getImageData(0, 0, fw, fh);
-        code = jsQR(fullImg.data, fullImg.width, fullImg.height, { inversionAttempts: 'dontInvert' });
-      }
-
+      const img = _scanCtx.getImageData(0, 0, vw, vh);
+      const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
       if (code && code.data) {
         console.log('✅ QR detected:', code.data);
-        if (statusEl) { statusEl.textContent = '✅ تم التقاط الكود!'; statusEl.style.color = '#10b981'; }
-        clearInterval(scanInterval);
+        if (st) { st.textContent = '✅ تم التقاط الكود!'; st.style.color = '#10b981'; }
+        scanning = false;
         stopScanner();
         processQR(code.data);
-        return;
-      }
-      if (frames % 4 === 0 && statusEl) {
-        const dots = '.'.repeat((Math.floor(frames / 4) % 4));
-        statusEl.innerHTML = '<i class="fas fa-search"></i> جاري البحث عن الكود' + dots;
-        statusEl.style.color = '#4facfe';
+        return; // وقف الحلقة
       }
     } catch (e) { console.warn('scan frame error:', e); }
-  }, 100); // ~10 fps (متوازن: محاولتين لكل إطار)
+
+    // حدّث رسالة البحث كل ~15 إطار
+    if (_scanFrames % 15 === 0 && st) {
+      const dots = '.'.repeat((Math.floor(_scanFrames / 15) % 4));
+      st.innerHTML = '<i class="fas fa-search"></i> جاري البحث عن الكود' + dots;
+      st.style.color = '#4facfe';
+    }
+  } else if (st) {
+    st.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تشغيل الكاميرا...';
+  }
+
+  requestAnimationFrame(scanTick); // الإطار الجاي
 }
 
 /* ════════════════════════════════════════════════
