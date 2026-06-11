@@ -704,6 +704,7 @@ window.stopScanner = () => {
 const _scanCanvas = document.createElement('canvas');
 const _scanCtx = _scanCanvas.getContext('2d', { willReadFrequently: true });
 let _scanFrames = 0;
+let _lastScanTime = 0;
 
 function scanTick() {
   if (!scanning) return; // اتوقف لو المسح توقف
@@ -719,29 +720,39 @@ function scanTick() {
   const st = document.getElementById('scanStatus');
 
   if (video && video.readyState >= 2 && video.videoWidth > 0) {
-    _scanFrames++;
-    const vw = video.videoWidth, vh = video.videoHeight;
-    _scanCanvas.width = vw;
-    _scanCanvas.height = vh;
-    _scanCtx.drawImage(video, 0, 0, vw, vh);
-    try {
-      const img = _scanCtx.getImageData(0, 0, vw, vh);
-      const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
-      if (code && code.data) {
-        console.log('✅ QR detected:', code.data);
-        if (st) { st.textContent = '✅ تم التقاط الكود!'; st.style.color = '#10b981'; }
-        scanning = false;
-        stopScanner();
-        processQR(code.data);
-        return; // وقف الحلقة
-      }
-    } catch (e) { console.warn('scan frame error:', e); }
+    // معالجة كل ~80ms كحد أقصى (مش كل إطار) — بيخفّف الحمل جداً والـ rAF يفضل سلس
+    const now = (performance && performance.now) ? performance.now() : Date.now();
+    if (now - _lastScanTime >= 70) {
+      _lastScanTime = now;
+      _scanFrames++;
+      const vw = video.videoWidth, vh = video.videoHeight;
+      // تصغير لـ 720px — لسه واضح للكود، بكسلات أقل = أسرع
+      const scale = Math.min(1, 720 / Math.max(vw, vh));
+      const cw = Math.max(1, Math.round(vw * scale));
+      const ch = Math.max(1, Math.round(vh * scale));
+      _scanCanvas.width = cw;
+      _scanCanvas.height = ch;
+      _scanCtx.drawImage(video, 0, 0, cw, ch);
+      try {
+        const img = _scanCtx.getImageData(0, 0, cw, ch);
+        // dontInvert: jsQR يشتغل مرة واحدة (أسرع 2x) — الـ QR العادي غامق على فاتح
+        const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+        if (code && code.data) {
+          console.log('✅ QR detected:', code.data);
+          if (st) { st.textContent = '✅ تم التقاط الكود!'; st.style.color = '#10b981'; }
+          scanning = false;
+          stopScanner();
+          processQR(code.data);
+          return; // وقف الحلقة
+        }
+      } catch (e) { console.warn('scan frame error:', e); }
 
-    // حدّث رسالة البحث كل ~15 إطار
-    if (_scanFrames % 15 === 0 && st) {
-      const dots = '.'.repeat((Math.floor(_scanFrames / 15) % 4));
-      st.innerHTML = '<i class="fas fa-search"></i> جاري البحث عن الكود' + dots;
-      st.style.color = '#4facfe';
+      // حدّث رسالة البحث كل ~12 معالجة
+      if (_scanFrames % 12 === 0 && st) {
+        const dots = '.'.repeat((Math.floor(_scanFrames / 12) % 4));
+        st.innerHTML = '<i class="fas fa-search"></i> جاري البحث عن الكود' + dots;
+        st.style.color = '#4facfe';
+      }
     }
   } else if (st) {
     st.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تشغيل الكاميرا...';
