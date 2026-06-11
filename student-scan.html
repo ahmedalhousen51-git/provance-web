@@ -725,19 +725,33 @@ function scanLoop(video) {
       return;
     }
     const vw = video.videoWidth, vh = video.videoHeight;
-    // تصغير الصورة للسرعة (الـ QR يتقري كويس على دقة أقل، وأسرع 5-10 مرات)
-    const maxDim = 540;
-    const scale = Math.min(1, maxDim / Math.max(vw, vh));
-    const cw = Math.max(1, Math.round(vw * scale));
-    const ch = Math.max(1, Math.round(vh * scale));
-    canvas.width  = cw;
-    canvas.height = ch;
-    ctx.drawImage(video, 0, 0, cw, ch);
     frames++;
     try {
-      // معالجة واحدة على الإطار المصغّر (سريعة)
-      const imageData = ctx.getImageData(0, 0, cw, ch);
-      let code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+      let code = null;
+
+      // محاولة 1: قص المنطقة الوسطى (مكان وضع الـ QR) وتصغيرها لدقة كويسة
+      // ده بيخلّي الـ QR واضح (مش بيصغّره أوي) + سريع (مساحة أقل)
+      const side = Math.floor(Math.min(vw, vh) * 0.85);
+      const sx = Math.floor((vw - side) / 2);
+      const sy = Math.floor((vh - side) / 2);
+      const target = 600;
+      canvas.width = target;
+      canvas.height = target;
+      ctx.drawImage(video, sx, sy, side, side, 0, 0, target, target); // قص + تصغير في خطوة واحدة
+      const centerImg = ctx.getImageData(0, 0, target, target);
+      code = jsQR(centerImg.data, centerImg.width, centerImg.height, { inversionAttempts: 'attemptBoth' });
+
+      // محاولة 2 (لو الـ QR مش متمركز): الإطار الكامل بتصغير معتدل
+      if (!code) {
+        const fscale = Math.min(1, 800 / Math.max(vw, vh));
+        const fw = Math.max(1, Math.round(vw * fscale));
+        const fh = Math.max(1, Math.round(vh * fscale));
+        canvas.width = fw;
+        canvas.height = fh;
+        ctx.drawImage(video, 0, 0, fw, fh);
+        const fullImg = ctx.getImageData(0, 0, fw, fh);
+        code = jsQR(fullImg.data, fullImg.width, fullImg.height, { inversionAttempts: 'dontInvert' });
+      }
 
       if (code && code.data) {
         console.log('✅ QR detected:', code.data);
@@ -753,7 +767,7 @@ function scanLoop(video) {
         statusEl.style.color = '#4facfe';
       }
     } catch (e) { console.warn('scan frame error:', e); }
-  }, 60); // ~16 fps (المعالجة بقت خفيفة بعد التصغير)
+  }, 100); // ~10 fps (متوازن: محاولتين لكل إطار)
 }
 
 /* ════════════════════════════════════════════════
