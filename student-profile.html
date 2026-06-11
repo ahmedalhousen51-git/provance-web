@@ -1326,7 +1326,10 @@
     function renderAttendanceSummary() {
         const box = document.getElementById('attendanceSummary');
         if (!box) return;
-        const daily = allAttendance.filter(a => a.attendance_type === 'daily_attendance');
+        // الصفوف اللي اتسجلت بالصف الاحتياطي (بدون attendance_type) تُعتبر حضور يومي
+        const daily = allAttendance.filter(a =>
+            a.attendance_type === 'daily_attendance' ||
+            (!a.attendance_type && a.purpose !== 'interview'));
 
         // هات جدول التدريب النشط (أيام العمل اللي الشركة حددتها)
         const activeTraining = allApplications.find(a =>
@@ -1340,55 +1343,71 @@
             return;
         }
 
-        // أيام الحضور الفعلية (مجمّعة)
+        // ⚠️ مفتاح اليوم بالتوقيت المحلي (مش UTC) — toISOString كان بيرجّع اليوم 3 ساعات
+        //    فيوم العمل 6 يونيو كان بيتقارن بمفتاح "06-05" والحضور عمره ما بيتطابق
+        const localDayKey = (d) => {
+            const x = (d instanceof Date) ? d : new Date(d);
+            return x.getFullYear() + '-' +
+                   String(x.getMonth() + 1).padStart(2, '0') + '-' +
+                   String(x.getDate()).padStart(2, '0');
+        };
+
+        // أيام الحضور الفعلية (مجمّعة بالتوقيت المحلي)
         const attendedDays = {};
         daily.forEach(a => {
             if (!a.scanned_at) return;
-            const d = new Date(a.scanned_at).toISOString().slice(0, 10);
+            const d = localDayKey(a.scanned_at);
             if (!attendedDays[d]) attendedDays[d] = a.status;
         });
 
         const onTime = daily.filter(a => a.status === 'on_time').length;
         const late = daily.filter(a => a.status === 'late').length;
-        const presentDaysCount = Object.keys(attendedDays).length;
+        const allAttendedCount = Object.keys(attendedDays).length;
 
-        // ── الحساب الذكي للغياب: نعدّ أيام العمل المفروضة فقط (نتجاهل إجازات الشركة) ──
+        // ── الحساب الموحّد: البسط والمقام والغياب كلهم على أساس أيام العمل المجدولة ──
         let expectedWorkDays = 0;
-        let realAbsent = 0;
+        let attendedScheduled = 0;   // حضر في يوم عمل مجدول ✓
+        let realAbsent = 0;          // يوم عمل مجدول ومحضرش ✗
         let companyHolidays = 0;
+        let outsideSchedule = 0;     // حضور خارج الجدول (قبل البداية / يوم إجازة)
 
         if (sched && sched.start_date && workDayNums && workDayNums.length) {
-            const start = new Date(sched.start_date);
+            const start = new Date(sched.start_date + 'T00:00:00');
             start.setHours(0, 0, 0, 0);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const end = sched.end_date ? new Date(sched.end_date) : today;
+            const end = sched.end_date ? new Date(sched.end_date + 'T00:00:00') : today;
             const lastDay = end < today ? end : today;
 
+            const scheduledDayKeys = new Set();
             for (let dt = new Date(start); dt <= lastDay; dt.setDate(dt.getDate() + 1)) {
-                const dayKey = dt.toISOString().slice(0, 10);
+                const dayKey = localDayKey(dt);
                 const dayNum = dt.getDay();
                 if (workDayNums.includes(dayNum)) {
-                    // يوم عمل مفروض
+                    scheduledDayKeys.add(dayKey);
                     expectedWorkDays++;
-                    if (!attendedDays[dayKey]) realAbsent++;  // مفروض يحضر ومحضرش = غياب حقيقي
+                    if (attendedDays[dayKey]) attendedScheduled++;
+                    else realAbsent++;  // مفروض يحضر ومحضرش = غياب حقيقي
                 } else {
-                    // يوم إجازة شركة (مش مفروض يحضر) — مايتحسبش غياب
-                    companyHolidays++;
+                    companyHolidays++;  // يوم إجازة شركة — مايتحسبش غياب
                 }
             }
+            // حضور في أيام مش مجدولة (قبل بداية التدريب أو يوم إجازة)
+            outsideSchedule = Object.keys(attendedDays).filter(k => !scheduledDayKeys.has(k)).length;
         }
 
-        // النسبة العادلة: على أساس أيام العمل المفروضة فقط
-        let rate, total, absent;
+        // النسبة العادلة: حضر كام يوم من أيام العمل المفروضة
+        let rate, total, absent, presentDaysCount;
         if (expectedWorkDays > 0) {
             absent = realAbsent;
             total = expectedWorkDays;
-            rate = Math.round((presentDaysCount / expectedWorkDays) * 100);
+            presentDaysCount = attendedScheduled;
+            rate = Math.round((attendedScheduled / expectedWorkDays) * 100);
             if (rate > 100) rate = 100;
         } else {
             // مفيش جدول — احسب بالطريقة البسيطة
             absent = daily.filter(a => a.status === 'absent').length;
+            presentDaysCount = allAttendedCount;
             total = presentDaysCount + absent;
             rate = total > 0 ? Math.round((presentDaysCount / total) * 100) : (presentDaysCount > 0 ? 100 : 0);
         }
@@ -1398,7 +1417,7 @@
         const byDay = {};
         daily.forEach(a => {
             if (!a.scanned_at) return;
-            const d = new Date(a.scanned_at).toISOString().slice(0, 10);
+            const d = localDayKey(a.scanned_at);
             if (!byDay[d]) byDay[d] = { date: d, status: a.status };
         });
         const days = Object.values(byDay).sort((x, y) => x.date.localeCompare(y.date)).slice(-14);
@@ -1457,6 +1476,13 @@
                 <i class="fas fa-shield-alt" style="color:#8b5cf6;font-size:1.1rem"></i>
                 <div style="font-size:.82rem;line-height:1.6">
                     <strong style="color:#8b5cf6">حساب عادل ✓</strong> — تم استبعاد <strong>${companyHolidays}</strong> يوم إجازة رسمية للشركة من حساب الغياب. غيابك محسوب على أيام العمل الفعلية فقط (${workDayNames ? workDayNames.join('، ') : ''}).
+                </div>
+            </div>` : ''}
+            ${outsideSchedule > 0 ? `
+            <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+                <i class="fas fa-info-circle" style="color:#f59e0b;font-size:1.1rem"></i>
+                <div style="font-size:.82rem;line-height:1.6">
+                    لديك <strong>${outsideSchedule}</strong> يوم حضور مسجّل <strong>خارج أيام التدريب المجدولة</strong> (قبل بداية التدريب أو في يوم إجازة) — هذه الأيام لا تُحتسب في نسبة الحضور.
                 </div>
             </div>` : ''}
             <!-- الأعمدة البيانية -->
