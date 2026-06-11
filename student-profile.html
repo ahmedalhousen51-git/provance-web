@@ -1323,6 +1323,15 @@
     // تحويل اسم اليوم العربي لرقم JS (الأحد=0)
     const AR_DAY_TO_NUM = { 'الأحد': 0, 'الإثنين': 1, 'الاثنين': 1, 'الثلاثاء': 2, 'الأربعاء': 3, 'الخميس': 4, 'الجمعة': 5, 'السبت': 6 };
 
+    // تاريخ محلي موحّد YYYY-MM-DD (يتجنّب مشكلة فرق التوقيت UTC)
+    function localDateKey(d) {
+        const dt = new Date(d);
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, '0');
+        const day = String(dt.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + day;
+    }
+
     function renderAttendanceSummary() {
         const box = document.getElementById('attendanceSummary');
         if (!box) return;
@@ -1345,7 +1354,7 @@
         const attendedDays = {};
         daily.forEach(a => {
             if (!a.scanned_at) return;
-            const d = new Date(a.scanned_at).toISOString().slice(0, 10);
+            const d = localDateKey(a.scanned_at);
             if (!attendedDays[d]) attendedDays[d] = a.status;
         });
 
@@ -1367,7 +1376,7 @@
             const lastDay = end < today ? end : today;
 
             for (let dt = new Date(start); dt <= lastDay; dt.setDate(dt.getDate() + 1)) {
-                const dayKey = dt.toISOString().slice(0, 10);
+                const dayKey = localDateKey(dt);
                 const dayNum = dt.getDay();
                 if (workDayNums.includes(dayNum)) {
                     // يوم عمل مفروض
@@ -1399,7 +1408,7 @@
         const byDay = {};
         daily.forEach(a => {
             if (!a.scanned_at) return;
-            const d = new Date(a.scanned_at).toISOString().slice(0, 10);
+            const d = localDateKey(a.scanned_at);
             if (!byDay[d]) byDay[d] = { date: d, status: a.status };
         });
         const days = Object.values(byDay).sort((x, y) => x.date.localeCompare(y.date)).slice(-14);
