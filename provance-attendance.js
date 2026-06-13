@@ -64,9 +64,11 @@
       if (!attendedDays[k]) attendedDays[k] = a.status || 'on_time';
     });
 
-    var onTime = daily.filter(function (a) { return a.status === 'on_time'; }).length;
-    var late = daily.filter(function (a) { return a.status === 'late'; }).length;
     var presentDaysCount = Object.keys(attendedDays).length;
+    // عُدّ "في الوقت" و"متأخر" بالأيام المميزة (مش السكانات الخام) عشان التكرار مايأثرش
+    var dayStatuses = Object.keys(attendedDays).map(function (k) { return attendedDays[k]; });
+    var onTime = dayStatuses.filter(function (s) { return s === 'on_time'; }).length;
+    var late = dayStatuses.filter(function (s) { return s === 'late'; }).length;
 
     var workDayNames = (sched && Array.isArray(sched.training_days)) ? sched.training_days : null;
     var workDayNums = workDayNames
