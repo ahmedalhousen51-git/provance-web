@@ -1323,20 +1323,29 @@
     // تحويل اسم اليوم العربي لرقم JS (الأحد=0)
     const AR_DAY_TO_NUM = { 'الأحد': 0, 'الإثنين': 1, 'الاثنين': 1, 'الثلاثاء': 2, 'الأربعاء': 3, 'الخميس': 4, 'الجمعة': 5, 'السبت': 6 };
 
-    // تاريخ محلي موحّد YYYY-MM-DD (يتجنّب مشكلة فرق التوقيت UTC)
-    function localDateKey(d) {
-        const dt = new Date(d);
+    // مفتاح اليوم بالتوقيت المحلي (مش UTC) — يمنع انزلاق اليوم عند منتصف الليل في القاهرة
+    function localDayKey(d) {
+        const dt = (d instanceof Date) ? d : new Date(d);
         const y = dt.getFullYear();
         const m = String(dt.getMonth() + 1).padStart(2, '0');
         const day = String(dt.getDate()).padStart(2, '0');
-        return y + '-' + m + '-' + day;
+        return `${y}-${m}-${day}`;
+    }
+
+    // يفسّر "YYYY-MM-DD" كمنتصف ليل محلي (مش UTC) عشان مايزحفش يوم
+    function parseLocalDate(s) {
+        if (s instanceof Date) { const d = new Date(s); d.setHours(0,0,0,0); return d; }
+        if (typeof s === 'string') {
+            const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (m) return new Date(+m[1], +m[2] - 1, +m[3], 0, 0, 0, 0);
+        }
+        const d = new Date(s); d.setHours(0,0,0,0); return d;
     }
 
     function renderAttendanceSummary() {
         const box = document.getElementById('attendanceSummary');
         if (!box) return;
-        // أي سجل مش مقابلة = حضور يومي (يشمل السجلات القديمة اللي مفيهاش attendance_type)
-        const daily = allAttendance.filter(a => a.attendance_type !== 'interview' && a.purpose !== 'interview');
+        const daily = allAttendance.filter(a => a.attendance_type === 'daily_attendance');
 
         // هات جدول التدريب النشط (أيام العمل اللي الشركة حددتها)
         const activeTraining = allApplications.find(a =>
@@ -1350,44 +1359,42 @@
             return;
         }
 
-        // أيام الحضور الفعلية (مجمّعة) — بس السجلات اللي بحالة حضور حقيقية
-        const PRESENT_STATUSES = ['on_time', 'late', 'early'];
+        // أيام الحضور الفعلية (مجمّعة) — بمفتاح محلي
         const attendedDays = {};
         daily.forEach(a => {
             if (!a.scanned_at) return;
-            // تجاهل أي سجل مش حضور فعلي (غياب/حالة فاضية/شبحي)
-            if (a.status && !PRESENT_STATUSES.includes(a.status)) return;
-            const d = localDateKey(a.scanned_at);
-            if (!attendedDays[d]) attendedDays[d] = a.status || 'on_time';
+            const d = localDayKey(a.scanned_at);
+            if (!attendedDays[d]) attendedDays[d] = a.status;
         });
 
+        const onTime = daily.filter(a => a.status === 'on_time').length;
+        const late = daily.filter(a => a.status === 'late').length;
         const presentDaysCount = Object.keys(attendedDays).length;
 
-        // ── الحساب الذكي: نعدّ أيام العمل المجدولة فقط، ونصنّف الحضور حسبها ──
+        // ── الحساب الذكي للغياب: نعدّ أيام العمل المفروضة فقط (نتجاهل إجازات الشركة) ──
         let expectedWorkDays = 0;
         let realAbsent = 0;
         let companyHolidays = 0;
-        let attendedOnTime = 0;   // أيام عمل حضرها في الوقت
-        let attendedLate = 0;     // أيام عمل حضرها متأخر
+        let presentOnWorkDays = 0;
 
         if (sched && sched.start_date && workDayNums && workDayNums.length) {
-            const start = new Date(sched.start_date);
-            start.setHours(0, 0, 0, 0);
+            const start = parseLocalDate(sched.start_date);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const end = sched.end_date ? new Date(sched.end_date) : today;
+            const end = sched.end_date ? parseLocalDate(sched.end_date) : today;
             const lastDay = end < today ? end : today;
 
             for (let dt = new Date(start); dt <= lastDay; dt.setDate(dt.getDate() + 1)) {
-                const dayKey = localDateKey(dt);
+                const dayKey = localDayKey(dt);
                 const dayNum = dt.getDay();
                 if (workDayNums.includes(dayNum)) {
                     // يوم عمل مفروض
                     expectedWorkDays++;
-                    const st = attendedDays[dayKey];
-                    if (!st) realAbsent++;                 // مفروض يحضر ومحضرش = غياب
-                    else if (st === 'late') attendedLate++; // حضر متأخر
-                    else attendedOnTime++;                  // حضر في الوقت (on_time/early)
+                    if (attendedDays[dayKey]) {
+                        presentOnWorkDays++;           // حضر في يوم عمل مفروض
+                    } else {
+                        realAbsent++;                  // مفروض يحضر ومحضرش = غياب حقيقي
+                    }
                 } else {
                     // يوم إجازة شركة (مش مفروض يحضر) — مايتحسبش غياب
                     companyHolidays++;
@@ -1395,33 +1402,29 @@
             }
         }
 
-        // كل الأرقام من نفس المصدر عشان تبقى متسقة (مفيش تناقض)
-        let rate, total, absent, onTime, late, present;
+        // النسبة العادلة: على أساس أيام العمل المفروضة فقط
+        let rate, total, absent;
         if (expectedWorkDays > 0) {
-            // فيه جدول: النسبة = أيام العمل اللي اتحضرت ÷ أيام العمل المفروضة
-            onTime = attendedOnTime;
-            late = attendedLate;
-            present = attendedOnTime + attendedLate;  // أيام العمل اللي اتحضرت فعلاً
             absent = realAbsent;
             total = expectedWorkDays;
-            rate = Math.round((present / expectedWorkDays) * 100);
+            // الحاضر = أيام العمل المفروضة ناقص الغياب (متسق دايماً: حاضر + غياب = أيام العمل)
+            const presentForRate = expectedWorkDays - realAbsent;
+            rate = Math.round((presentForRate / expectedWorkDays) * 100);
             if (rate > 100) rate = 100;
             if (rate < 0) rate = 0;
         } else {
-            // مفيش جدول — احسب بالطريقة البسيطة (على أساس السجلات)
-            onTime = daily.filter(a => a.status === 'on_time').length;
-            late = daily.filter(a => a.status === 'late').length;
-            present = presentDaysCount;
+            // مفيش جدول — احسب بالطريقة البسيطة
             absent = daily.filter(a => a.status === 'absent').length;
             total = presentDaysCount + absent;
             rate = total > 0 ? Math.round((presentDaysCount / total) * 100) : (presentDaysCount > 0 ? 100 : 0);
         }
+        const present = onTime + late;
 
         // آخر 14 يوم للأعمدة
         const byDay = {};
         daily.forEach(a => {
             if (!a.scanned_at) return;
-            const d = localDateKey(a.scanned_at);
+            const d = localDayKey(a.scanned_at);
             if (!byDay[d]) byDay[d] = { date: d, status: a.status };
         });
         const days = Object.values(byDay).sort((x, y) => x.date.localeCompare(y.date)).slice(-14);
@@ -2130,17 +2133,173 @@
         };
 
         // ============ QR SCANNER ============
-        // ⚠️ الماسح القديم اتلغى — كل المسح بقى من student-scan.html (ماسح واحد موحّد)
-        // ده بيمنع تسجيل حضور بمنطق مختلف/معطوب
         window.openQRScanner = () => {
-            window.location.href = 'student-scan.html';
+            const html = `
+                <div class="modal active" id="qrScannerModal">
+                    <div class="modal-content" style="max-width:500px">
+                        <div class="modal-header">
+                            <div class="modal-title"><i class="fas fa-qrcode"></i><span>مسح QR Code</span></div>
+                            <button class="modal-close" onclick="closeModal('qrScannerModal')"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div class="qr-scanner-wrap" id="scannerWrap">
+                            <video id="qrVideo" autoplay playsinline muted></video>
+                            <div class="qr-scanner-overlay"></div>
+                        </div>
+
+                        <p style="text-align:center;color:var(--text-muted);font-size:0.86rem;margin-bottom:14px">
+                            <i class="fas fa-info-circle"></i> وجّه الكاميرا نحو الـ QR Code
+                        </p>
+
+                        <div class="qr-input-fallback">
+                            <label style="display:block;margin-bottom:8px;font-weight:600;font-size:0.88rem">
+                                <i class="fas fa-keyboard"></i> أو أدخل الكود يدوياً
+                            </label>
+                            <div style="display:flex;gap:8px">
+                                <input type="text" id="manualQrCode" placeholder="مثال: INT-A1B2C3D4..." style="flex:1;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Courier New',monospace">
+                                <button class="btn btn-primary btn-sm" onclick="processManualCode()">
+                                    <i class="fas fa-check"></i> تأكيد
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderModal(html);
+            startQRCamera();
         };
-        window.processManualCode = () => {
-            window.location.href = 'student-scan.html';
+
+        async function startQRCamera() {
+            try {
+                const video = document.getElementById('qrVideo');
+                State.qrStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                video.srcObject = State.qrStream;
+            } catch (err) {
+                console.warn('Camera unavailable:', err);
+                const wrap = document.getElementById('scannerWrap');
+                if (wrap) {
+                    wrap.innerHTML = `
+                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);gap:10px;padding:20px;text-align:center">
+                            <i class="fas fa-camera-slash" style="font-size:3rem"></i>
+                            <p>الكاميرا غير متاحة. استخدم الإدخال اليدوي أدناه</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        window.processManualCode = async () => {
+            const code = document.getElementById('manualQrCode').value.trim().toUpperCase();
+            if (!code) {
+                window.ProVance.showToast('أدخل كود الـ QR', 'warning');
+                return;
+            }
+            await processQRScan(code);
         };
-        async function processQRScan() {
-            // معطّلة عمداً — استخدم صفحة المسح الموحّدة
-            window.location.href = 'student-scan.html';
+
+        async function processQRScan(code) {
+            try {
+                const sb = await window.getSafeSupabase();
+                if (!sb) { window.ProVance?.showToast?.('فشل الاتصال', 'error'); return; }
+                const { data: qrCode, error } = await sb.from('qr_codes').select('*').eq('code', code).maybeSingle();
+
+                if (error || !qrCode) {
+                    window.ProVance.showToast('❌ كود QR غير صحيح', 'error');
+                    return;
+                }
+
+                const now = new Date();
+                const validUntil = new Date(qrCode.valid_until);
+
+                if (qrCode.status !== 'active') {
+                    window.ProVance.showToast('⚠️ الـ QR ده مش نشط', 'warning');
+                    return;
+                }
+
+                if (validUntil < now) {
+                    window.ProVance.showToast('⏰ انتهت صلاحية الـ QR', 'error');
+                    return;
+                }
+
+                // تحقق من أن QR ده ليه (للمقابلات فقط - الحضور اليومي عام)
+                if (qrCode.qr_type === 'interview' && qrCode.student_user_id && qrCode.student_user_id !== State.studentUserId) {
+                    window.ProVance.showToast('❌ الـ QR ده مش ليك', 'error');
+                    return;
+                }
+
+                const expectedTime = qrCode.metadata?.interview_time
+                    ? new Date(qrCode.metadata.interview_time)
+                    : new Date(qrCode.valid_from);
+                const delayMins = Math.max(0, Math.floor((now - expectedTime) / 60000));
+                const status = delayMins > 15 ? 'late' : (delayMins < 0 ? 'early' : 'on_time');
+
+                // ابحث عن application للحضور اليومي
+                let appId = qrCode.application_id;
+                if (qrCode.qr_type === 'daily_attendance' && !appId) {
+                    const myApp = State.allApplications.find(a =>
+                        a.company_user_id === qrCode.company_user_id &&
+                        ['hired', 'in_training'].includes(a.status)
+                    );
+                    if (myApp) appId = myApp.id;
+                }
+
+                const { error: logErr } = await sb.from('attendance_logs').insert({
+                    qr_code_id: qrCode.id,
+                    application_id: appId,
+                    student_user_id: State.studentUserId,
+                    student_name: State.studentData.full_name,
+                    company_user_id: qrCode.company_user_id,
+                    company_name: qrCode.company_name,
+                    attendance_type: qrCode.qr_type,
+                    expected_time: expectedTime.toISOString(),
+                    delay_minutes: delayMins,
+                    status,
+                    is_valid: true
+                });
+
+                if (logErr) throw logErr;
+
+                await sb.from('qr_codes').update({
+                    scans_count: (qrCode.scans_count || 0) + 1,
+                    last_scanned_at: now.toISOString(),
+                    is_used: qrCode.qr_type === 'interview'
+                }).eq('id', qrCode.id);
+
+                if (qrCode.qr_type === 'interview' && qrCode.application_id) {
+                    await sb.from('applications').update({ status: 'interview_done' }).eq('id', qrCode.application_id);
+                }
+
+                if (qrCode.qr_type === 'daily_attendance' && appId) {
+                    try {
+                        await sb.rpc('check_and_create_payment_lock', { p_application_id: appId });
+                    } catch (e) { console.warn('Payment lock check failed:', e); }
+                }
+
+                if (window.ProVance.sendNotification) {
+                    await window.ProVance.sendNotification({
+                        userId: qrCode.company_user_id,
+                        userType: 'company',
+                        title: '✅ ' + (qrCode.qr_type === 'interview' ? 'حضور مقابلة' : 'حضور يومي'),
+                        message: `${State.studentData.full_name} مسح الـ QR Code ${delayMins > 0 ? `(متأخر ${delayMins} دقيقة)` : 'في الوقت'}`,
+                        type: 'success'
+                    });
+                }
+
+                const successMsg = status === 'late'
+                    ? `⚠️ تم التسجيل بتأخير ${delayMins} دقيقة`
+                    : status === 'early'
+                    ? '⚡ وصلت مبكراً!'
+                    : '🎉 تم تسجيل الحضور بنجاح!';
+                window.ProVance.showToast(successMsg, status === 'on_time' || status === 'early' ? 'success' : 'warning');
+
+                closeModal('qrScannerModal');
+                window.dispatchEvent(new CustomEvent('reload-profile'));
+            } catch (err) {
+                console.error(err);
+                window.ProVance.showToast('حدث خطأ: ' + err.message, 'error');
+            }
         }
 
         // ============ EDIT HISTORY MODAL ============
