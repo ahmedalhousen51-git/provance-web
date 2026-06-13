@@ -1368,11 +1368,6 @@
         });
 
         const presentDaysCount = Object.keys(attendedDays).length;
-        // عُدّ "في الوقت" و"متأخر" بعدد الأيام المميزة (مش عدد السكانات الخام)
-        // عشان لو فيه سجلات متكررة في نفس اليوم ماتزوّدش الأرقام
-        const dayStatuses = Object.values(attendedDays);
-        const onTime = dayStatuses.filter(s => s === 'on_time').length;
-        const late = dayStatuses.filter(s => s === 'late').length;
 
         // ── الحساب الذكي للغياب: نعدّ أيام العمل المفروضة فقط (نتجاهل إجازات الشركة) ──
         let expectedWorkDays = 0;
@@ -1407,31 +1402,47 @@
             }
         }
 
+        // onTime/late: نحسبهم على أيام العمل المحددة فقط عشان يتساووا مع total/absent
+        let onTime, late;
+        if (expectedWorkDays > 0) {
+            onTime = 0; late = 0;
+            Object.keys(attendedDays).forEach(k => {
+                if (workDayKeySet[k]) {
+                    if (attendedDays[k] === 'on_time') onTime++;
+                    else if (attendedDays[k] === 'late') late++;
+                }
+            });
+        } else {
+            const dayStatuses = Object.values(attendedDays);
+            onTime = dayStatuses.filter(s => s === 'on_time').length;
+            late = dayStatuses.filter(s => s === 'late').length;
+        }
+
         // أيام حضور إضافية: سكان في يوم مش ضمن أيام العمل (إجازة/قبل البداية)
-        // بتزوّد الحضور بس عمرها ما بتزوّد الغياب — مكافأة مش عقوبة
+        // بتزوّد النسبة بس عمرها ما بتزوّد الغياب — مكافأة مش عقوبة
         let bonusDays = 0;
         if (expectedWorkDays > 0) {
             Object.keys(attendedDays).forEach(k => { if (!workDayKeySet[k]) bonusDays++; });
         }
 
         // النسبة العادلة: على أساس أيام العمل المفروضة، والحضور الإضافي يعوّض الغياب
+        // absent = realAbsent (الغياب الفعلي قبل التعويض) عشان onTime+late+absent = total دايماً
         let rate, total, absent;
         if (expectedWorkDays > 0) {
             total = expectedWorkDays;
-            let netAbsent = realAbsent - bonusDays;   // الحضور الإضافي يعوّض
+            absent = realAbsent;   // الغياب الفعلي — الـ bonus compensation ظاهر في النسبة والبانر
+            let netAbsent = realAbsent - bonusDays;
             if (netAbsent < 0) netAbsent = 0;
-            absent = netAbsent;
-            const presentForRate = expectedWorkDays - netAbsent;  // حاضر + غياب = أيام العمل
+            const presentForRate = expectedWorkDays - netAbsent;
             rate = Math.round((presentForRate / expectedWorkDays) * 100);
             if (rate > 100) rate = 100;
             if (rate < 0) rate = 0;
         } else {
             // مفيش جدول — احسب بالطريقة البسيطة
-            absent = daily.filter(a => a.status === 'absent').length;
-            total = presentDaysCount + absent;
-            rate = total > 0 ? Math.round((presentDaysCount / total) * 100) : (presentDaysCount > 0 ? 100 : 0);
+            absent = 0;
+            total = presentDaysCount;
+            rate = presentDaysCount > 0 ? 100 : 0;
         }
-        const present = onTime + late;
 
         // آخر 14 يوم للأعمدة
         const byDay = {};
