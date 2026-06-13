@@ -1367,9 +1367,12 @@
             if (!attendedDays[d]) attendedDays[d] = a.status;
         });
 
-        const onTime = daily.filter(a => a.status === 'on_time').length;
-        const late = daily.filter(a => a.status === 'late').length;
         const presentDaysCount = Object.keys(attendedDays).length;
+        // عُدّ "في الوقت" و"متأخر" بعدد الأيام المميزة (مش عدد السكانات الخام)
+        // عشان لو فيه سجلات متكررة في نفس اليوم ماتزوّدش الأرقام
+        const dayStatuses = Object.values(attendedDays);
+        const onTime = dayStatuses.filter(s => s === 'on_time').length;
+        const late = dayStatuses.filter(s => s === 'late').length;
 
         // ── الحساب الذكي للغياب: نعدّ أيام العمل المفروضة فقط (نتجاهل إجازات الشركة) ──
         let expectedWorkDays = 0;
