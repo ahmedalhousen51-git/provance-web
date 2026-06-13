@@ -647,12 +647,12 @@ window.startScanner = async () => {
   scanning = true;
   console.log('🎬 الكاميرا اشتغلت — readyState:', video.readyState, video.videoWidth, 'x', video.videoHeight);
 
-  // أظهر رسالة الحالة فوراً (تأكيد إن الحلقة بدأت)
-  const _st = document.getElementById('scanStatus');
-  if (_st) { _st.style.display = 'block'; _st.innerHTML = '<i class="fas fa-search"></i> وجّه الكاميرا نحو الكود...'; _st.style.color = '#4facfe'; }
-
-  // ابدأ حلقة المسح (requestAnimationFrame — الأكثر موثوقية)
-  requestAnimationFrame(scanTick);
+  if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+    scanLoop(video);
+  } else {
+    video.addEventListener('playing', () => { if (scanning) scanLoop(video); }, { once: true });
+    setTimeout(() => { if (scanning && !loopRunning) scanLoop(video); }, 1200);
+  }
 };
 
 /* ─── Fallback UI عند فشل الكاميرا ─── */
@@ -700,65 +700,65 @@ window.stopScanner = () => {
 /* ════════════════════════════════════════════════
    🔁  Scan Loop (jsQR)
 ════════════════════════════════════════════════ */
-/* حلقة المسح — requestAnimationFrame (موثوقة، مابتعلقش) */
-const _scanCanvas = document.createElement('canvas');
-const _scanCtx = _scanCanvas.getContext('2d', { willReadFrequently: true });
-let _scanFrames = 0;
-let _lastScanTime = 0;
-
-function scanTick() {
-  if (!scanning) return; // اتوقف لو المسح توقف
+function scanLoop(video) {
+  if (!scanning || loopRunning) return;
+  loopRunning = true;
 
   if (typeof jsQR === 'undefined') {
-    const st = document.getElementById('scanStatus');
-    if (st) { st.innerHTML = '<i class="fas fa-triangle-exclamation"></i> مكتبة القراءة لم تُحمّل — أعد تحميل الصفحة'; st.style.color = '#ef4444'; }
-    requestAnimationFrame(scanTick);
+    alert('مكتبة قراءة QR لم تُحمّل. تأكد من الإنترنت وأعد تحميل الصفحة.');
+    loopRunning = false;
     return;
   }
 
-  const video = document.getElementById('qr-video');
-  const st = document.getElementById('scanStatus');
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  let frames = 0;
 
-  if (video && video.readyState >= 2 && video.videoWidth > 0) {
-    // معالجة كل ~80ms كحد أقصى (مش كل إطار) — بيخفّف الحمل جداً والـ rAF يفضل سلس
-    const now = (performance && performance.now) ? performance.now() : Date.now();
-    if (now - _lastScanTime >= 70) {
-      _lastScanTime = now;
-      _scanFrames++;
-      const vw = video.videoWidth, vh = video.videoHeight;
-      // تصغير لـ 720px — لسه واضح للكود، بكسلات أقل = أسرع
-      const scale = Math.min(1, 720 / Math.max(vw, vh));
-      const cw = Math.max(1, Math.round(vw * scale));
-      const ch = Math.max(1, Math.round(vh * scale));
-      _scanCanvas.width = cw;
-      _scanCanvas.height = ch;
-      _scanCtx.drawImage(video, 0, 0, cw, ch);
-      try {
-        const img = _scanCtx.getImageData(0, 0, cw, ch);
-        // dontInvert: jsQR يشتغل مرة واحدة (أسرع 2x) — الـ QR العادي غامق على فاتح
-        const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
-        if (code && code.data) {
-          console.log('✅ QR detected:', code.data);
-          if (st) { st.textContent = '✅ تم التقاط الكود!'; st.style.color = '#10b981'; }
-          scanning = false;
-          stopScanner();
-          processQR(code.data);
-          return; // وقف الحلقة
-        }
-      } catch (e) { console.warn('scan frame error:', e); }
+  const statusEl = document.getElementById('scanStatus');
+  if (statusEl) statusEl.style.display = 'block';
 
-      // حدّث رسالة البحث كل ~12 معالجة
-      if (_scanFrames % 12 === 0 && st) {
-        const dots = '.'.repeat((Math.floor(_scanFrames / 12) % 4));
-        st.innerHTML = '<i class="fas fa-search"></i> جاري البحث عن الكود' + dots;
-        st.style.color = '#4facfe';
-      }
+  if (scanInterval) clearInterval(scanInterval);
+  scanInterval = setInterval(() => {
+    if (!scanning) { clearInterval(scanInterval); loopRunning = false; return; }
+    if (video.readyState < 2 || video.videoWidth === 0) {
+      if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تشغيل الكاميرا...';
+      return;
     }
-  } else if (st) {
-    st.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تشغيل الكاميرا...';
-  }
+    const vw = video.videoWidth, vh = video.videoHeight;
+    canvas.width  = vw;
+    canvas.height = vh;
+    ctx.drawImage(video, 0, 0);
+    frames++;
+    try {
+      // محاولة 1: الإطار كامل
+      let code = null;
+      const imageData = ctx.getImageData(0, 0, vw, vh);
+      code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
 
-  requestAnimationFrame(scanTick); // الإطار الجاي
+      // محاولة 2: المنطقة الوسطى المربعة (الـ QR غالباً في النص) — أوضح وأدق
+      if (!code) {
+        const side = Math.floor(Math.min(vw, vh) * 0.7);
+        const sx = Math.floor((vw - side) / 2);
+        const sy = Math.floor((vh - side) / 2);
+        const center = ctx.getImageData(sx, sy, side, side);
+        code = jsQR(center.data, center.width, center.height, { inversionAttempts: 'attemptBoth' });
+      }
+
+      if (code && code.data) {
+        console.log('✅ QR detected:', code.data);
+        if (statusEl) { statusEl.textContent = '✅ تم التقاط الكود!'; statusEl.style.color = '#10b981'; }
+        clearInterval(scanInterval);
+        stopScanner();
+        processQR(code.data);
+        return;
+      }
+      if (frames % 4 === 0 && statusEl) {
+        const dots = '.'.repeat((Math.floor(frames / 4) % 4));
+        statusEl.innerHTML = '<i class="fas fa-search"></i> جاري البحث عن الكود' + dots;
+        statusEl.style.color = '#4facfe';
+      }
+    } catch (e) { console.warn('scan frame error:', e); }
+  }, 120); // ~8 fps
 }
 
 /* ════════════════════════════════════════════════
@@ -883,22 +883,6 @@ async function processQR(qrData) {
       return;
     }
 
-    /* ── 4. منع التسجيل المكرر في نفس اليوم ── */
-    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-    try {
-      const { data: dup } = await sb
-        .from('attendance_logs')
-        .select('id')
-        .eq('student_user_id', studentUserId)
-        .eq('qr_code_id', qr.id)
-        .gte('scanned_at', todayStart.toISOString())
-        .maybeSingle();
-      if (dup) {
-        showResult('error', '✋ سجّلت قبل كده', 'لقد سجّلت حضورك على هذا الكود اليوم بالفعل.');
-        return;
-      }
-    } catch (e) { console.warn('duplicate check skipped:', e.message); }
-
     /* ── 5. استخراج بيانات الـ QR (متوافق مع metadata صفحة الشركة) ── */
     const meta           = qr.metadata || {};
     const purpose        = meta.purpose
@@ -906,6 +890,51 @@ async function processQR(qrData) {
     const attendanceType = purpose === 'interview' ? 'interview' : 'daily_attendance';
     const department     = meta.department || null;
     const companyName    = qr.company_name || meta.company_name || 'الشركة';
+
+    /* ── 4. منع التسجيل المكرر في نفس اليوم ──
+       مهم: الرفض على مستوى (الطالب + الشركة + اليوم) — مش على مستوى الكود الواحد.
+       لأن الشركة بتعرض كود جديد كل ساعة، فلو ربطنا الرفض بـ qr_code_id الطالب
+       يقدر يسجّل أكتر من مرة في اليوم بأكواد مختلفة. ده اللي كان بيطلّع سجلات
+       متكررة (11 سجل من 5 أيام). الحضور اليومي = مرة واحدة بس في اليوم. */
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    try {
+      const { data: dupRows, error: dupErr } = await sb
+        .from('attendance_logs')
+        .select('id, scanned_at, attendance_type')
+        .eq('student_user_id', studentUserId)
+        .eq('company_user_id', qr.company_user_id)
+        .gte('scanned_at', todayStart.toISOString());
+      if (dupErr) throw dupErr;
+      // امنع التكرار فقط لو فيه سجل من نفس نوع الحضور النهاردة.
+      // لو العمود attendance_type مش موجود في صف قديم، اعتبره حضور يومي.
+      const sameTypeToday = (dupRows || []).filter(r => {
+        const t = r.attendance_type || 'daily_attendance';
+        return t === attendanceType;
+      });
+      if (sameTypeToday.length > 0) {
+        const msg = attendanceType === 'interview'
+          ? 'لقد سجّلت حضور المقابلة اليوم بالفعل.'
+          : 'لقد سجّلت حضورك اليوم بالفعل — الحضور اليومي مرة واحدة فقط.';
+        showResult('error', '✋ سجّلت قبل كده', msg);
+        return;
+      }
+    } catch (e) {
+      console.warn('duplicate check (by type) skipped, trying fallback:', e.message);
+      // Fallback: لو العمود attendance_type مش موجود خالص في الجدول
+      try {
+        const { data: dupFallback } = await sb
+          .from('attendance_logs')
+          .select('id')
+          .eq('student_user_id', studentUserId)
+          .eq('company_user_id', qr.company_user_id)
+          .gte('scanned_at', todayStart.toISOString())
+          .limit(1);
+        if (dupFallback && dupFallback.length > 0) {
+          showResult('error', '✋ سجّلت قبل كده', 'لقد سجّلت حضورك اليوم بالفعل — الحضور اليومي مرة واحدة فقط.');
+          return;
+        }
+      } catch (e2) { console.warn('duplicate fallback also skipped:', e2.message); }
+    }
 
     /* ── 6. حساب التأخير (15 دقيقة = حضور في الوقت) ── */
     const validFrom    = qr.valid_from ? new Date(qr.valid_from) : now;
@@ -926,16 +955,14 @@ async function processQR(qrData) {
       department,
       delay_minutes:   delayMinutes
     };
-    /* صف مبسّط احتياطي (بدون الأعمدة الاختيارية، لكن مع attendance_type المهم) */
+    /* صف مبسّط احتياطي (بدون الأعمدة الاختيارية) */
     const baseRow = {
       qr_code_id:      qr.id,
       company_user_id: qr.company_user_id,
       student_user_id: studentUserId,
       student_name:    (studentData && studentData.full_name) || null,
       status,
-      scanned_at:      now.toISOString(),
-      attendance_type: attendanceType,
-      purpose
+      scanned_at:      now.toISOString()
     };
 
     console.log('💾 INSERT attendance_logs ←', fullRow);
@@ -943,24 +970,18 @@ async function processQR(qrData) {
 
     if (insErr) {
       console.warn('⚠️ fullRow failed → try baseRow:', insErr.message);
-      const r2 = await sb.from('attendance_logs').insert(baseRow);
-      insErr = r2.error;
-    }
-    if (insErr) {
-      // مستوى أخير: أقل أعمدة ممكنة (مضمون يشتغل)
-      console.warn('⚠️ baseRow failed → try minimalRow:', insErr.message);
-      const minimalRow = {
-        qr_code_id:      qr.id,
-        company_user_id: qr.company_user_id,
-        student_user_id: studentUserId,
-        status,
-        scanned_at:      now.toISOString()
-      };
-      const r3 = await sb.from('attendance_logs').insert(minimalRow);
-      insErr = r3.error;
+      const { error: insErr2 } = await sb.from('attendance_logs').insert(baseRow);
+      insErr = insErr2;
     }
 
     if (insErr) {
+      // لو القيد الفريد في قاعدة البيانات رفض التسجيل (سجّل قبل كده النهاردة)
+      const isDuplicate = insErr.code === '23505'
+        || /duplicate key|unique constraint|uniq_daily_attendance/i.test(insErr.message || '');
+      if (isDuplicate) {
+        showResult('error', '✋ سجّلت قبل كده', 'لقد سجّلت حضورك اليوم بالفعل — الحضور اليومي مرة واحدة فقط.');
+        return;
+      }
       console.error('❌ INSERT failed:', insErr);
       showResult('error', '❌ تعذّر تسجيل الحضور',
         'السبب: ' + insErr.message + '<br><br>غالباً صلاحيات قاعدة البيانات (RLS) — صوّر الشاشة وابعتها للدعم.');
