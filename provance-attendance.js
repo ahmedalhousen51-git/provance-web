@@ -75,6 +75,7 @@
       : null;
 
     var expectedWorkDays = 0, realAbsent = 0, companyHolidays = 0, presentOnWorkDays = 0;
+    var workDayKeySet = {};   // مفاتيح أيام العمل المفروضة (عشان نعرف السكان اللي بره الجدول)
 
     if (sched && sched.start_date && workDayNums && workDayNums.length) {
       var start = parseLocalDate(sched.start_date);
@@ -86,6 +87,7 @@
         var dayNum = dt.getDay();
         if (workDayNums.indexOf(dayNum) !== -1) {
           expectedWorkDays++;
+          workDayKeySet[dayKey] = true;
           if (attendedDays[dayKey]) presentOnWorkDays++;
           else realAbsent++;
         } else {
@@ -94,11 +96,24 @@
       }
     }
 
+    // أيام حضور إضافية: الطالب سكَن في يوم مش ضمن أيام العمل (إجازة/قبل البداية)
+    // دي بتزوّد الحضور بس عمرها ما بتزوّد الغياب أو المقام — مكافأة مش عقوبة
+    var bonusDays = 0;
+    if (expectedWorkDays > 0) {
+      Object.keys(attendedDays).forEach(function (k) {
+        if (!workDayKeySet[k]) bonusDays++;
+      });
+    }
+
     var rate, total, absent, present;
     if (expectedWorkDays > 0) {
-      absent = realAbsent;
       total = expectedWorkDays;
-      present = expectedWorkDays - realAbsent;     // ضمان: حاضر + غياب = أيام العمل
+      // الحضور الإضافي (بره الجدول) يعوّض الغياب — الغياب الصافي ما ينفعش يبقى بالسالب
+      var netAbsent = realAbsent - bonusDays;
+      if (netAbsent < 0) netAbsent = 0;
+      absent = netAbsent;
+      // الحاضر = أيام العمل ناقص الغياب الصافي ⇒ دايماً: حاضر + غياب = أيام العمل
+      present = expectedWorkDays - netAbsent;
       rate = Math.round((present / expectedWorkDays) * 100);
       if (rate > 100) rate = 100;
       if (rate < 0) rate = 0;
@@ -129,6 +144,7 @@
       onTime: onTime,
       late: late,
       presentDaysCount: presentDaysCount,
+      bonusDays: bonusDays,
       companyHolidays: companyHolidays,
       workDayNames: workDayNames || [],
       days: days,
