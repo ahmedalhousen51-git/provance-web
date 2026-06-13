@@ -1618,7 +1618,12 @@
     function updateStats() {
         const completed = allApplications.filter(a => a.status === 'completed').length;
         const totalApplications = allApplications.length;
-        const attendanceCount = allAttendance.filter(a => a.attendance_type === 'daily_attendance' && a.status !== 'absent').length;
+        // أيام الحضور الفعلية = أيام فريدة عندها سكان QR (مش عدد السجلات الخام)
+        const attendanceCount = new Set(
+            allAttendance
+                .filter(a => a.attendance_type === 'daily_attendance' && a.scanned_at)
+                .map(a => localDayKey(a.scanned_at))
+        ).size;
         const evaluations = allEvaluations.filter(e => e.overall_score > 0);
         const avgRating = evaluations.length
             ? (evaluations.reduce((s, e) => s + Number(e.overall_score), 0) / evaluations.length).toFixed(1)
