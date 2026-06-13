@@ -1376,6 +1376,7 @@
         let realAbsent = 0;
         let companyHolidays = 0;
         let presentOnWorkDays = 0;
+        const workDayKeySet = {};   // مفاتيح أيام العمل المفروضة
 
         if (sched && sched.start_date && workDayNums && workDayNums.length) {
             const start = parseLocalDate(sched.start_date);
@@ -1390,6 +1391,7 @@
                 if (workDayNums.includes(dayNum)) {
                     // يوم عمل مفروض
                     expectedWorkDays++;
+                    workDayKeySet[dayKey] = true;
                     if (attendedDays[dayKey]) {
                         presentOnWorkDays++;           // حضر في يوم عمل مفروض
                     } else {
@@ -1402,13 +1404,21 @@
             }
         }
 
-        // النسبة العادلة: على أساس أيام العمل المفروضة فقط
+        // أيام حضور إضافية: سكان في يوم مش ضمن أيام العمل (إجازة/قبل البداية)
+        // بتزوّد الحضور بس عمرها ما بتزوّد الغياب — مكافأة مش عقوبة
+        let bonusDays = 0;
+        if (expectedWorkDays > 0) {
+            Object.keys(attendedDays).forEach(k => { if (!workDayKeySet[k]) bonusDays++; });
+        }
+
+        // النسبة العادلة: على أساس أيام العمل المفروضة، والحضور الإضافي يعوّض الغياب
         let rate, total, absent;
         if (expectedWorkDays > 0) {
-            absent = realAbsent;
             total = expectedWorkDays;
-            // الحاضر = أيام العمل المفروضة ناقص الغياب (متسق دايماً: حاضر + غياب = أيام العمل)
-            const presentForRate = expectedWorkDays - realAbsent;
+            let netAbsent = realAbsent - bonusDays;   // الحضور الإضافي يعوّض
+            if (netAbsent < 0) netAbsent = 0;
+            absent = netAbsent;
+            const presentForRate = expectedWorkDays - netAbsent;  // حاضر + غياب = أيام العمل
             rate = Math.round((presentForRate / expectedWorkDays) * 100);
             if (rate > 100) rate = 100;
             if (rate < 0) rate = 0;
@@ -1478,11 +1488,11 @@
                     </div>
                 </div>
             </div>
-            ${companyHolidays > 0 ? `
+            ${(companyHolidays > 0 || bonusDays > 0) ? `
             <div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
                 <i class="fas fa-shield-alt" style="color:#8b5cf6;font-size:1.1rem"></i>
                 <div style="font-size:.82rem;line-height:1.6">
-                    <strong style="color:#8b5cf6">حساب عادل ✓</strong> — تم استبعاد <strong>${companyHolidays}</strong> يوم إجازة رسمية للشركة من حساب الغياب. غيابك محسوب على أيام العمل الفعلية فقط (${workDayNames ? workDayNames.join('، ') : ''}).
+                    <strong style="color:#8b5cf6">حساب عادل ✓</strong>${companyHolidays > 0 ? ` — تم استبعاد <strong>${companyHolidays}</strong> يوم إجازة رسمية للشركة من حساب الغياب. غيابك محسوب على أيام العمل الفعلية فقط (${workDayNames ? workDayNames.join('، ') : ''}).` : ''}${bonusDays > 0 ? ` <span style="color:#10b981">حضرت <strong>${bonusDays}</strong> يوم خارج أيام العمل الرسمية — اتحسبوا لصالحك ورفعوا نسبتك. 🎉</span>` : ''}
                 </div>
             </div>` : ''}
             <!-- الأعمدة البيانية -->
