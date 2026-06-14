@@ -1231,13 +1231,20 @@ async function loadAll() {
         let attByApp = {};
         if (appIds.length > 0) {
             try {
+                // بناء خريطة من student_user_id إلى application_id
+                // لأن student-scan.html بيحفظ الحضور بـ company_user_id+student_user_id بدون application_id
+                const studentToApp = {};
+                (apps || []).forEach(a => { if (a.student_user_id) studentToApp[a.student_user_id] = a.id; });
+
                 const { data: attLogs } = await sb.from('attendance_logs')
                     .select('application_id, student_user_id, scanned_at, status, attendance_type')
-                    .in('application_id', appIds);
+                    .eq('company_user_id', companyUserId);
                 (attLogs || []).forEach(l => {
                     if (l.attendance_type && l.attendance_type !== 'daily_attendance') return;
-                    if (!attByApp[l.application_id]) attByApp[l.application_id] = [];
-                    attByApp[l.application_id].push(l);
+                    const appId = l.application_id || studentToApp[l.student_user_id];
+                    if (!appId) return;
+                    if (!attByApp[appId]) attByApp[appId] = [];
+                    attByApp[appId].push(l);
                 });
             } catch(e) { /* جدول الحضور ممكن يكون فاضي */ }
         }
