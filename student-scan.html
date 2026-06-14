@@ -946,14 +946,31 @@ async function processQR(qrData) {
     try {
       const { data: appRow } = await sb
         .from('applications')
-        .select('id')
+        .select('id, training_schedule')
         .eq('student_user_id', studentUserId)
         .eq('company_user_id', qr.company_user_id)
         .in('status', ['hired', 'in_training', 'accepted', 'active', 'interview_done'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (appRow) applicationId = appRow.id;
+      if (appRow) {
+        applicationId = appRow.id;
+        // فحص: هل بدأ التدريب الرسمي؟ (لحضور يومي فقط)
+        if (attendanceType === 'daily_attendance') {
+          const sched = appRow.training_schedule || {};
+          if (sched.start_date) {
+            const _start = new Date(sched.start_date); _start.setHours(0,0,0,0);
+            const _today = new Date(); _today.setHours(0,0,0,0);
+            if (_start > _today) {
+              showResult('warning', '⏳ التدريب لم يبدأ بعد',
+                'تدريبك في هذه الشركة يبدأ في ' +
+                _start.toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' }) +
+                ' — لا يُسجَّل حضور قبل تاريخ البداية الرسمية.');
+              return;
+            }
+          }
+        }
+      }
     } catch (_) { /* التريگر على Supabase هيملأه تلقائياً لو فاضي */ }
 
     /* ── 7. تسجيل الحضور في attendance_logs ── */
