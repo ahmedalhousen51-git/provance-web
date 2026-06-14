@@ -941,9 +941,25 @@ async function processQR(qrData) {
     const delayMinutes = Math.max(0, Math.round((now - validFrom) / 60000));
     const status       = delayMinutes <= 15 ? 'on_time' : 'late';
 
+    /* ── 6b. جلب application_id للطالب في هذه الشركة ── */
+    let applicationId = null;
+    try {
+      const { data: appRow } = await sb
+        .from('applications')
+        .select('id')
+        .eq('student_user_id', studentUserId)
+        .eq('company_user_id', qr.company_user_id)
+        .in('status', ['hired', 'in_training', 'accepted', 'active', 'interview_done'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (appRow) applicationId = appRow.id;
+    } catch (_) { /* التريگر على Supabase هيملأه تلقائياً لو فاضي */ }
+
     /* ── 7. تسجيل الحضور في attendance_logs ── */
     const fullRow = {
       qr_code_id:      qr.id,
+      application_id:  applicationId,
       company_user_id: qr.company_user_id,
       student_user_id: studentUserId,
       student_name:    (studentData && studentData.full_name) || null,
@@ -958,6 +974,7 @@ async function processQR(qrData) {
     /* صف مبسّط احتياطي (بدون الأعمدة الاختيارية) */
     const baseRow = {
       qr_code_id:      qr.id,
+      application_id:  applicationId,
       company_user_id: qr.company_user_id,
       student_user_id: studentUserId,
       student_name:    (studentData && studentData.full_name) || null,
