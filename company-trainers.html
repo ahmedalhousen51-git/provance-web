@@ -1106,8 +1106,19 @@ function parseLocalDate(s) {
 
 // احسب نسبة الحضور للمتدرب — نفس خوارزمية student-profile
 function getAttendanceRate(t) {
-    const daily = (t.attendance || []).filter(a => !a.attendance_type || a.attendance_type === 'daily_attendance');
+    let daily = (t.attendance || []).filter(a => !a.attendance_type || a.attendance_type === 'daily_attendance');
     const sched = t.training_schedule || {};
+    // فلتر: اعتبر فقط السجلات داخل فترة التدريب الرسمية (start → end)
+    // سجلات ما قبل البداية تتحوّل "بونص وهمي" وتشوّه الغياب والنسبة
+    if (sched.start_date) {
+        const _ps = parseLocalDate(sched.start_date);
+        const _pe = sched.end_date ? parseLocalDate(sched.end_date) : null;
+        daily = daily.filter(a => {
+            if (!a.scanned_at) return false;
+            const _d = parseLocalDate(localDayKey(a.scanned_at));
+            return _d >= _ps && (_pe === null || _d <= _pe);
+        });
+    }
     const workDayNames = Array.isArray(sched.training_days) ? sched.training_days : null;
     const workDayNums  = workDayNames ? workDayNames.map(d => AR_DAY_TO_NUM[d]).filter(n => n !== undefined) : null;
 
