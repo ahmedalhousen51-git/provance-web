@@ -1169,7 +1169,12 @@ function getAttendanceRate(t) {
         total  = presentDaysCount + absent;
         rate   = total > 0 ? Math.round((presentDaysCount / total) * 100) : (presentDaysCount > 0 ? 100 : 0);
     }
-    return { rate, present: presentDaysCount, onTime, late, absent, total, bonusDays, companyHolidays, hasData: daily.length > 0 || expectedWorkDays > 0 };
+    // hasData: صحيح فقط لو في سجلات حضور فعلية (مش مجرد جدول بدون مسح)
+    // hasScheduleOnly: في جدول لكن ما حدش سجّل بعد
+    return { rate, present: presentDaysCount, onTime, late, absent, total, bonusDays, companyHolidays,
+        hasData: daily.length > 0,
+        hasScheduleOnly: daily.length === 0 && expectedWorkDays > 0
+    };
 }
 
 // تنسيق التاريخ بالعربي
@@ -1434,6 +1439,30 @@ window.applyTraineeFilters = () => {
     renderTrainees();
 };
 
+// تحقق من اكتمال ملف المتدرب عند انتهاء فترة التدريب
+function getTrainingCompletionStatus(t) {
+    const dates = getTrainingDates(t);
+    if (!dates.end) return null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const endDate = new Date(dates.end); endDate.setHours(0,0,0,0);
+    const hasEnded = endDate < today || t.status === 'completed';
+    if (!hasEnded) return null;
+
+    const missing = [];
+    if (!t.evaluation) missing.push({ key: 'eval', label: 'تقييم الأداء' });
+    if (!t.tasks || t.tasks.length === 0) missing.push({ key: 'tasks', label: 'تقارير المهام' });
+    if (!t.recommendation) missing.push({ key: 'rec', label: 'الترشيحات' });
+    const sent = !!(t.recommendation && t.recommendation.sent_to_student);
+
+    return {
+        hasEnded: true,
+        missing,
+        isComplete: missing.length === 0,
+        alreadySent: sent,
+        daysOverdue: Math.max(0, Math.floor((today - endDate) / 86400000))
+    };
+}
+
 function renderTrainees() {
     const grid = document.getElementById('traineesGrid');
     
@@ -1447,7 +1476,52 @@ function renderTrainees() {
         return;
     }
     
-    grid.innerHTML = filteredTrainees.map(t => {
+    // ===== بانر التنبيه: متدربين انتهى تدريبهم =====
+    const endedTrainees = allTrainees.filter(t => {
+        const cs = getTrainingCompletionStatus(t);
+        return cs !== null;
+    });
+    const incompleteTrainees = endedTrainees.filter(t => {
+        const cs = getTrainingCompletionStatus(t);
+        return cs && !cs.alreadySent && !cs.isComplete;
+    });
+    const readyToSend = endedTrainees.filter(t => {
+        const cs = getTrainingCompletionStatus(t);
+        return cs && !cs.alreadySent && cs.isComplete;
+    });
+
+    let attentionHtml = '';
+    if (incompleteTrainees.length > 0) {
+        attentionHtml += '<div style="grid-column:1/-1;background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(220,38,38,0.05));border:1px solid rgba(239,68,68,0.4);border-radius:14px;padding:16px 18px;margin-bottom:4px">' +
+            '<div style="font-weight:800;font-size:0.97rem;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#ef4444"><i class="fas fa-triangle-exclamation"></i> ' + incompleteTrainees.length + ' متدرب خلص تدريبه — التقرير ناقص!</div>' +
+            incompleteTrainees.map(t => {
+                const cs = getTrainingCompletionStatus(t);
+                return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,0,0,0.25);border-radius:10px;padding:10px 14px;margin-bottom:8px;flex-wrap:wrap">' +
+                    '<div style="font-size:0.88rem"><strong style="color:var(--text)">' + esc(t.student_name || '-') + '</strong>' +
+                    ' <span style="color:#ef4444">— ناقص: ' + cs.missing.map(m => m.label).join('، ') + '</span>' +
+                    (cs.daysOverdue > 0 ? ' <span style="color:var(--text-muted);font-size:0.76rem">منذ ' + cs.daysOverdue + ' يوم</span>' : '') +
+                    '</div>' +
+                    '<button onclick="event.stopPropagation();openTrainee(&apos;' + t.id + '&apos;)" style="background:rgba(239,68,68,0.2);color:#ef4444;border:1px solid rgba(239,68,68,0.4);padding:7px 14px;border-radius:8px;font-weight:700;font-family:inherit;font-size:0.8rem;cursor:pointer;white-space:nowrap;flex-shrink:0"><i class="fas fa-arrow-left"></i> إكمال الملف</button>' +
+                '</div>';
+            }).join('') +
+        '</div>';
+    }
+    if (readyToSend.length > 0) {
+        attentionHtml += '<div style="grid-column:1/-1;background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(5,150,105,0.04));border:1px solid rgba(16,185,129,0.35);border-radius:14px;padding:16px 18px;margin-bottom:4px">' +
+            '<div style="font-weight:800;font-size:0.97rem;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#10b981"><i class="fas fa-check-circle"></i> ' + readyToSend.length + ' متدرب جاهز لإرسال التقرير النهائي</div>' +
+            readyToSend.map(t => {
+                const recId = t.recommendation && t.recommendation.id;
+                return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,0,0,0.25);border-radius:10px;padding:10px 14px;margin-bottom:8px;flex-wrap:wrap">' +
+                    '<strong style="color:var(--text);font-size:0.88rem">' + esc(t.student_name || '-') + '</strong>' +
+                    (recId
+                        ? '<button onclick="event.stopPropagation();currentTraineeId=&apos;' + t.id + '&apos;;sendFullReportToStudent(&apos;' + recId + '&apos;)" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:7px 16px;border-radius:8px;font-weight:700;font-family:inherit;font-size:0.8rem;cursor:pointer;white-space:nowrap;flex-shrink:0"><i class="fas fa-paper-plane"></i> إرسال التقرير</button>'
+                        : '<button onclick="event.stopPropagation();openTrainee(&apos;' + t.id + '&apos;)" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:7px 14px;border-radius:8px;font-weight:700;font-family:inherit;font-size:0.8rem;cursor:pointer;white-space:nowrap;flex-shrink:0">فتح الملف</button>') +
+                '</div>';
+            }).join('') +
+        '</div>';
+    }
+
+    grid.innerHTML = attentionHtml + filteredTrainees.map(t => {
         const initial = (t.student_name || '?').trim().charAt(0).toUpperCase();
         const avatar = t.student_photo 
             ? '<img src="' + esc(t.student_photo) + '" alt="" style="width:100%;height:100%;object-fit:cover">'
@@ -1484,6 +1558,8 @@ function renderTrainees() {
                 ? '<span style="color:' + attRateColor + '"><i class="fas fa-user-check"></i> حضور ' + att.rate + '%</span>' +
                   (att.bonusDays > 0 ? ' <span style="color:#4facfe;font-size:0.75rem">+' + att.bonusDays + ' إضافي</span>' : '') +
                   (att.absent > 0 ? ' <span style="color:#ef4444;font-size:0.75rem">' + att.absent + ' غياب</span>' : '')
+                : att.hasScheduleOnly
+                ? '<span style="color:#f59e0b"><i class="fas fa-user-clock"></i> لم يسجّل حضوره بعد</span>'
                 : '<span style="color:var(--text-muted)"><i class="fas fa-user-check"></i> لا حضور</span>';
             trainingInfo =
                 '<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:0.74rem;color:var(--text-muted);background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:8px 10px">' +
@@ -1493,7 +1569,20 @@ function renderTrainees() {
                 '</div>';
         }
         
-        return '<div onclick="openTrainee(&apos;' + t.id + '&apos;)" style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:12px">' +
+        // شارة اكتمال التقرير عند انتهاء التدريب
+        const cs = getTrainingCompletionStatus(t);
+        let completionBadge = '';
+        if (cs) {
+            if (cs.alreadySent) {
+                completionBadge = '<div style="background:rgba(79,172,254,0.08);border:1px solid rgba(79,172,254,0.25);border-radius:10px;padding:7px 10px;font-size:0.76rem;font-weight:700;color:#4facfe"><i class="fas fa-paper-plane"></i> التقرير أُرسل للطالب</div>';
+            } else if (cs.isComplete) {
+                completionBadge = '<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:7px 10px;font-size:0.76rem;font-weight:700;color:#10b981"><i class="fas fa-check-circle"></i> خلص التدريب — جاهز لإرسال التقرير</div>';
+            } else {
+                completionBadge = '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:7px 10px;font-size:0.76rem;font-weight:700;color:#ef4444"><i class="fas fa-triangle-exclamation"></i> خلص التدريب — ناقص: ' + cs.missing.map(m => m.label).join('، ') + '</div>';
+            }
+        }
+
+        return '<div onclick="openTrainee(&apos;' + t.id + '&apos;)" style="background:var(--bg-card);border:1px solid ' + (cs && !cs.alreadySent && !cs.isComplete ? 'rgba(239,68,68,0.35)' : cs && !cs.alreadySent && cs.isComplete ? 'rgba(16,185,129,0.35)' : 'var(--border)') + ';border-radius:16px;padding:18px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:12px">' +
             '<div style="display:flex;align-items:center;gap:12px">' +
                 '<div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.5rem;overflow:hidden;flex-shrink:0">' + avatar + '</div>' +
                 '<div style="flex:1;min-width:0">' +
@@ -1503,6 +1592,7 @@ function renderTrainees() {
             '</div>' +
             '<div style="display:flex;gap:6px;flex-wrap:wrap">' + statusBadge + scoreDisplay + '</div>' +
             trainingInfo +
+            completionBadge +
             '<div style="display:flex;gap:10px;padding-top:10px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--text-muted)">' +
                 '<span><i class="fas fa-clipboard-list" style="color:var(--primary)"></i> ' + tasksCount + ' مهمة</span>' +
                 '<span><i class="fas fa-' + (hasRec ? 'check-circle' : 'magic') + '" style="color:' + (hasRec ? '#10b981' : 'var(--primary)') + '"></i> ' + (hasRec ? 'رشحت' : 'لم ترشح') + '</span>' +
@@ -1582,6 +1672,12 @@ function buildTrainingInfoCard(t) {
                 '</div>' +
                 '<a href="company-QR_Code.html" style="background:rgba(79,172,254,0.12);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-size:0.8rem;text-decoration:none;white-space:nowrap;flex-shrink:0"><i class="fas fa-qrcode"></i> سجل الحضور</a>' +
             '</div>';
+    } else if (att.hasScheduleOnly) {
+        attHtml =
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);flex-wrap:wrap">' +
+                '<span style="font-size:0.82rem;color:#f59e0b"><i class="fas fa-user-clock"></i> الطالب لم يمسح الـ QR بعد — ستُحسب أيام العمل الفائتة كغياب</span>' +
+                '<a href="company-QR_Code.html" style="background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-size:0.8rem;text-decoration:none"><i class="fas fa-qrcode"></i> رابط QR</a>' +
+            '</div>';
     } else {
         attHtml =
             '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);flex-wrap:wrap">' +
@@ -1640,6 +1736,25 @@ window.openTrainee = (appId) => {
                 '<button onclick="closeTraineeModal()" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>' +
             '</div>' +
             buildTrainingInfoCard(t) +
+            (function() {
+                const cs = getTrainingCompletionStatus(t);
+                if (!cs) return '';
+                if (cs.alreadySent) return '<div style="background:rgba(79,172,254,0.08);border:1px solid rgba(79,172,254,0.25);border-radius:14px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><i class="fas fa-paper-plane" style="color:#4facfe;font-size:1.1rem"></i><div><strong style="color:#4facfe">التقرير النهائي أُرسل للطالب</strong><div style="font-size:0.82rem;color:var(--text-muted);margin-top:3px">يمكن للطالب الاطلاع على تقييمه وترشيحاته من حسابه</div></div></div>';
+                if (!cs.isComplete) {
+                    const missingBtns = cs.missing.map(m =>
+                        '<button onclick="switchTab(&apos;' + m.key + '&apos;)" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:6px 14px;border-radius:8px;font-weight:700;font-family:inherit;font-size:0.8rem;cursor:pointer">' + m.label + '</button>'
+                    ).join('');
+                    return '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.35);border-radius:14px;padding:14px 18px;margin-bottom:16px">' +
+                        '<div style="font-weight:800;color:#ef4444;margin-bottom:10px;display:flex;align-items:center;gap:8px"><i class="fas fa-triangle-exclamation"></i> خلص التدريب — التقرير غير مكتمل' + (cs.daysOverdue > 0 ? ' <span style="font-size:0.78rem;font-weight:600;color:var(--text-muted)">(' + cs.daysOverdue + ' يوم مضى)</span>' : '') + '</div>' +
+                        '<div style="font-size:0.86rem;color:var(--text-muted);margin-bottom:12px">يجب إكمال هذه الأجزاء قبل إرسال التقرير:</div>' +
+                        '<div style="display:flex;gap:8px;flex-wrap:wrap">' + missingBtns + '</div>' +
+                    '</div>';
+                }
+                return '<div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.35);border-radius:14px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">' +
+                    '<div><strong style="color:#10b981"><i class="fas fa-check-circle"></i> الملف مكتمل — جاهز لإرسال التقرير النهائي</strong><div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px">سيُرسل للطالب: التقييم + الترشيحات + تحليل الشخصية</div></div>' +
+                    '<button onclick="switchTab(&apos;persona&apos;)" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0"><i class="fas fa-paper-plane"></i> إرسال الآن</button>' +
+                '</div>';
+            })() +
             '<div style="display:flex;gap:4px;background:var(--bg-card);padding:4px;border-radius:12px;margin-bottom:18px">' +
                 '<button id="tab-eval" onclick="switchTab(&apos;eval&apos;)" style="flex:1;padding:10px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem"><i class="fas fa-chart-line"></i> تقارير الأداء</button>' +
                 '<button id="tab-tasks" onclick="switchTab(&apos;tasks&apos;)" style="flex:1;padding:10px;background:transparent;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem"><i class="fas fa-clipboard-list"></i> تقارير المهام</button>' +
