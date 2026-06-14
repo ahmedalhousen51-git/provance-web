@@ -1088,49 +1088,88 @@ function getTrainingDates(t) {
     return { start, end, daysLeft, progress };
 }
 
-// احسب نسبة الحضور للمتدرب
+// مفتاح اليوم بالتوقيت المحلي (يمنع انزلاق اليوم عند منتصف الليل)
+function localDayKey(d) {
+    const dt = (d instanceof Date) ? d : new Date(d);
+    return dt.getFullYear() + '-' +
+           String(dt.getMonth()+1).padStart(2,'0') + '-' +
+           String(dt.getDate()).padStart(2,'0');
+}
+
+// يفسّر "YYYY-MM-DD" كمنتصف ليل محلي (مش UTC)
+function parseLocalDate(s) {
+    if (s instanceof Date) { const d = new Date(s); d.setHours(0,0,0,0); return d; }
+    const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return new Date(+m[1], +m[2]-1, +m[3], 0,0,0,0);
+    const d = new Date(s); d.setHours(0,0,0,0); return d;
+}
+
+// احسب نسبة الحضور للمتدرب — نفس خوارزمية student-profile
 function getAttendanceRate(t) {
     const daily = (t.attendance || []).filter(a => !a.attendance_type || a.attendance_type === 'daily_attendance');
     const sched = t.training_schedule || {};
     const workDayNames = Array.isArray(sched.training_days) ? sched.training_days : null;
-    const workDayNums = workDayNames ? workDayNames.map(d => AR_DAY_TO_NUM[d]).filter(n => n !== undefined) : null;
+    const workDayNums  = workDayNames ? workDayNames.map(d => AR_DAY_TO_NUM[d]).filter(n => n !== undefined) : null;
 
-    // أيام الحضور الفعلية (مجمّعة باليوم)
+    // أيام الحضور الفعلية مجمّعة بمفتاح محلي
     const attendedDays = {};
     daily.forEach(a => {
         if (!a.scanned_at) return;
-        const d = new Date(a.scanned_at).toISOString().slice(0, 10);
-        if (!attendedDays[d]) attendedDays[d] = a.status || 'on_time';
+        const k = localDayKey(a.scanned_at);
+        if (!attendedDays[k]) attendedDays[k] = a.status || 'on_time';
     });
     const presentDaysCount = Object.keys(attendedDays).length;
-    const onTime = daily.filter(a => a.status === 'on_time').length;
-    const late = daily.filter(a => a.status === 'late').length;
 
-    let expectedWorkDays = 0, realAbsent = 0;
+    let expectedWorkDays = 0, realAbsent = 0, bonusDays = 0, companyHolidays = 0;
+    let onTime = 0, late = 0;
+    const workDayKeySet = {};
+
     if (sched.start_date && workDayNums && workDayNums.length) {
-        const start = new Date(sched.start_date); start.setHours(0,0,0,0);
-        const today = new Date(); today.setHours(0,0,0,0);
-        const end = sched.end_date ? new Date(sched.end_date) : today;
-        const lastDay = end < today ? end : today;
+        const start   = parseLocalDate(sched.start_date);
+        const today   = new Date(); today.setHours(0,0,0,0);
+        const endDate = sched.end_date ? parseLocalDate(sched.end_date) : today;
+        const lastDay = endDate < today ? endDate : today;
+
         for (let dt = new Date(start); dt <= lastDay; dt.setDate(dt.getDate()+1)) {
+            const k = localDayKey(dt);
             if (workDayNums.includes(dt.getDay())) {
                 expectedWorkDays++;
-                const key = dt.toISOString().slice(0,10);
-                if (!attendedDays[key]) realAbsent++;
+                workDayKeySet[k] = true;
+                if (attendedDays[k]) {
+                    // حضر في يوم عمل مفروض
+                    if (attendedDays[k] === 'on_time') onTime++;
+                    else if (attendedDays[k] === 'late') late++;
+                } else {
+                    realAbsent++;
+                }
+            } else {
+                companyHolidays++;
             }
         }
+        // أيام حضور إضافية: حضر في يوم مش ضمن جدول العمل
+        Object.keys(attendedDays).forEach(k => { if (!workDayKeySet[k]) bonusDays++; });
+    } else {
+        // بدون جدول: onTime/late من كل السجلات
+        Object.values(attendedDays).forEach(s => {
+            if (s === 'on_time') onTime++;
+            else if (s === 'late') late++;
+        });
     }
 
     let rate, total, absent;
     if (expectedWorkDays > 0) {
-        absent = realAbsent; total = expectedWorkDays;
-        rate = Math.min(100, Math.round((presentDaysCount / expectedWorkDays) * 100));
+        total  = expectedWorkDays;
+        absent = realAbsent;
+        // الأيام الإضافية تعوّض الغياب في النسبة
+        const netAbsent = Math.max(0, realAbsent - bonusDays);
+        rate = Math.min(100, Math.max(0, Math.round(((expectedWorkDays - netAbsent) / expectedWorkDays) * 100)));
     } else {
-        absent = daily.filter(a => a.status === 'absent').length;
-        total = presentDaysCount + absent;
-        rate = total > 0 ? Math.round((presentDaysCount / total) * 100) : (presentDaysCount > 0 ? 100 : 0);
+        const absCount = daily.filter(a => a.status === 'absent').length;
+        absent = absCount;
+        total  = presentDaysCount + absent;
+        rate   = total > 0 ? Math.round((presentDaysCount / total) * 100) : (presentDaysCount > 0 ? 100 : 0);
     }
-    return { rate, present: presentDaysCount, onTime, late, absent, total, hasData: daily.length > 0 || expectedWorkDays > 0 };
+    return { rate, present: presentDaysCount, onTime, late, absent, total, bonusDays, companyHolidays, hasData: daily.length > 0 || expectedWorkDays > 0 };
 }
 
 // تنسيق التاريخ بالعربي
@@ -1440,8 +1479,11 @@ function renderTrainees() {
                     ? '<span style="color:#10b981">باقي ' + dates.daysLeft + ' يوم</span>'
                     : (dates.daysLeft === 0 ? '<span style="color:#f59e0b">آخر يوم اليوم</span>' : '<span style="color:#4facfe">انتهى التدريب</span>'))
                 : '';
-            const attBadge = att.hasData
-                ? '<span style="color:' + (att.rate >= 75 ? '#10b981' : att.rate >= 50 ? '#f59e0b' : '#ef4444') + '"><i class="fas fa-user-check"></i> حضور ' + att.rate + '%</span>'
+            const attRateColor = att.rate >= 75 ? '#10b981' : att.rate >= 50 ? '#f59e0b' : '#ef4444';
+        const attBadge = att.hasData
+                ? '<span style="color:' + attRateColor + '"><i class="fas fa-user-check"></i> حضور ' + att.rate + '%</span>' +
+                  (att.bonusDays > 0 ? ' <span style="color:#4facfe;font-size:0.75rem">+' + att.bonusDays + ' إضافي</span>' : '') +
+                  (att.absent > 0 ? ' <span style="color:#ef4444;font-size:0.75rem">' + att.absent + ' غياب</span>' : '')
                 : '<span style="color:var(--text-muted)"><i class="fas fa-user-check"></i> لا حضور</span>';
             trainingInfo =
                 '<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:0.74rem;color:var(--text-muted);background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:8px 10px">' +
@@ -1504,23 +1546,38 @@ function buildTrainingInfoCard(t) {
 
     // نسبة الحضور
     const attColor = att.rate >= 75 ? '#10b981' : att.rate >= 50 ? '#f59e0b' : '#ef4444';
+    const circumference = 2 * Math.PI * 15.9;
     let attHtml;
     if (att.hasData) {
+        const bonusChip = att.bonusDays > 0
+            ? '<span style="background:rgba(79,172,254,0.12);color:#4facfe;border:1px solid rgba(79,172,254,0.25);border-radius:8px;padding:2px 8px;font-size:0.72rem;font-weight:700">+' + att.bonusDays + ' إضافي</span> '
+            : '';
+        const lateChip = att.late > 0
+            ? ' • <strong style="color:#f59e0b">' + att.late + '</strong> متأخر'
+            : '';
+        const absentChip = att.absent > 0
+            ? ' • <strong style="color:#ef4444">' + att.absent + '</strong> غياب'
+            : '';
         attHtml =
             '<div style="display:flex;align-items:center;gap:14px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">' +
                 '<div style="position:relative;width:62px;height:62px;flex-shrink:0">' +
                     '<svg viewBox="0 0 36 36" style="width:62px;height:62px;transform:rotate(-90deg)">' +
                         '<circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"></circle>' +
-                        '<circle cx="18" cy="18" r="15.9" fill="none" stroke="' + attColor + '" stroke-width="3" stroke-dasharray="' + att.rate + ', 100" stroke-linecap="round"></circle>' +
+                        '<circle cx="18" cy="18" r="15.9" fill="none" stroke="' + attColor + '" stroke-width="3"' +
+                            ' stroke-dasharray="' + (circumference * att.rate / 100).toFixed(1) + ' ' + circumference.toFixed(1) + '"' +
+                            ' stroke-linecap="round"></circle>' +
                     '</svg>' +
                     '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.85rem;color:' + attColor + '">' + att.rate + '%</div>' +
                 '</div>' +
-                '<div style="flex:1">' +
-                    '<div style="font-weight:800;font-size:0.9rem;margin-bottom:4px"><i class="fas fa-user-check" style="color:' + attColor + '"></i> نسبة الحضور</div>' +
+                '<div style="flex:1;min-width:0">' +
+                    '<div style="font-weight:800;font-size:0.9rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+                        '<i class="fas fa-user-check" style="color:' + attColor + '"></i> نسبة الحضور ' +
+                        bonusChip +
+                    '</div>' +
                     '<div style="font-size:0.78rem;color:var(--text-muted);line-height:1.7">' +
                         'حضر <strong style="color:#10b981">' + att.present + '</strong> يوم' +
-                        (att.late > 0 ? ' • <strong style="color:#f59e0b">' + att.late + '</strong> متأخر' : '') +
-                        (att.absent > 0 ? ' • <strong style="color:#ef4444">' + att.absent + '</strong> غياب' : '') +
+                        lateChip +
+                        absentChip +
                     '</div>' +
                 '</div>' +
                 '<a href="company-QR_Code.html" style="background:rgba(79,172,254,0.12);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:8px 14px;border-radius:10px;font-weight:700;font-size:0.8rem;text-decoration:none;white-space:nowrap;flex-shrink:0"><i class="fas fa-qrcode"></i> سجل الحضور</a>' +
