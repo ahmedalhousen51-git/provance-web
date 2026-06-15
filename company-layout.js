@@ -168,13 +168,33 @@
         } catch (e) { /* silent */ }
     }
 
-    // ─── Get Supabase client (supports all patterns used across pages) ─────────
+    // ─── Get Supabase client (self-contained — no external dependency) ───────────
+    var _sbCache = null;
     async function getSB() {
+        if (_sbCache) return _sbCache;
+
+        // 1. ProVance managed client (supabase-config.js)
         if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
-            try { return await window.ProVance.waitForSupabaseClient(5000); } catch (e) {}
+            try { var c = await window.ProVance.waitForSupabaseClient(3000); if (c) { _sbCache = c; return c; } } catch (e) {}
         }
-        if (window.ProVance && window.ProVance.sb) return window.ProVance.sb;
-        if (typeof window.getSafeSupabase === 'function') return await window.getSafeSupabase();
+        if (window.ProVance && window.ProVance.sb) { _sbCache = window.ProVance.sb; return _sbCache; }
+
+        // 2. Page-level getSafeSupabase helper
+        if (typeof window.getSafeSupabase === 'function') {
+            try { var c2 = await window.getSafeSupabase(); if (c2) { _sbCache = c2; return c2; } } catch (e) {}
+        }
+
+        // 3. Direct creation — works even if supabase-config.js is missing
+        if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
+            try {
+                _sbCache = window.supabase.createClient(
+                    'https://jrwazyrdzmbcnddpxxrf.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI',
+                    { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } }
+                );
+                return _sbCache;
+            } catch (e) {}
+        }
         return null;
     }
 
