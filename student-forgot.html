@@ -289,21 +289,24 @@
             clearErr();
 
             if (!email) { showErr('البريد الإلكتروني مطلوب'); return; }
-            if (!window.ProVance.isValidEmail(email)) { showErr('صيغة البريد غير صحيحة'); return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('صيغة البريد غير صحيحة'); return; }
 
             submitBtn.classList.add('loading');
             submitBtn.disabled = true;
 
             try {
-                const sb = window.ProVance.sb;
-                const redirectTo = window.location.origin +
-                    window.location.pathname.replace('student-forgot.html', 'student-reset-password.html');
+                const SB_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+                const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+                const sb = (window.ProVance && window.ProVance.sb) ||
+                    window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, storage: window.localStorage } });
+                const base = window.location.href.replace(/[?#].*$/, '');
+                const redirectTo = base.replace(/[^/]*$/, 'student-reset-password.html');
 
                 const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
 
                 if (error) {
                     console.error(error);
-                    window.ProVance.showToast('حدث خطأ، حاول مرة أخرى', 'error');
+                    showErr('حدث خطأ، حاول مرة أخرى');
                     submitBtn.classList.remove('loading');
                     submitBtn.disabled = false;
                     return;
@@ -315,7 +318,7 @@
 
             } catch (err) {
                 console.error(err);
-                window.ProVance.showToast('خطأ في الاتصال', 'error');
+                showErr('خطأ في الاتصال، حاول مرة أخرى');
                 submitBtn.classList.remove('loading');
                 submitBtn.disabled = false;
             }
