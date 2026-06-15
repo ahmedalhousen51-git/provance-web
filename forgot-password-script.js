@@ -87,7 +87,7 @@ forgotForm.addEventListener('submit', function(e) {
                     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
                 ));
 
-            const redirectTo = window.location.origin + '/company-reset-password.html';
+            const redirectTo = window.location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, 'company-reset-password.html');
             const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
 
             if (error) {
@@ -141,7 +141,7 @@ resendLink.addEventListener('click', function(e) {
                     'https://jrwazyrdzmbcnddpxxrf.supabase.co',
                     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
                 ));
-            const redirectTo = window.location.origin + '/company-reset-password.html';
+            const redirectTo = window.location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, 'company-reset-password.html');
             await sb.auth.resetPasswordForEmail(email, { redirectTo });
             showNotification('تم إعادة إرسال الرابط بنجاح!');
         } catch (err) {
