@@ -2159,7 +2159,7 @@ window.showAddTaskForm = () => {
         // أزرار الحفظ/إلغاء
         '<div style="display:flex;gap:10px">' +
             '<button onclick="renderTasksTab()" style="flex:1;background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>' +
-            '<button onclick="saveTask()" style="flex:1;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-save"></i> حفظ</button>' +
+            '<button id="saveTaskBtn" onclick="saveTask()" style="flex:1;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-save"></i> حفظ</button>' +
         '</div>';
 
     window._taskRating = 0;
@@ -2192,10 +2192,16 @@ window.saveTask = async () => {
     const title = (document.getElementById('taskTitle') || {}).value || '';
     if (!title.trim()) { showToast('عنوان المهمة مطلوب', 'warning'); return; }
 
+    const saveBtn = document.getElementById('saveTaskBtn');
+    const restoreBtn = () => {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ'; saveBtn.style.opacity = '1'; saveBtn.style.cursor = 'pointer'; }
+    };
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'; saveBtn.style.opacity = '0.75'; saveBtn.style.cursor = 'not-allowed'; }
+
     try {
         const sb = await window.getSafeSupabase();
         const t = allTrainees.find(x => x.id === currentTraineeId);
-        if (!t) { showToast('لم يُعثر على بيانات المتدرب', 'error'); return; }
+        if (!t) { showToast('لم يُعثر على بيانات المتدرب', 'error'); restoreBtn(); return; }
 
         const hoursVal = parseFloat((document.getElementById('taskHours') || {}).value || '');
 
@@ -2206,21 +2212,23 @@ window.saveTask = async () => {
             const file = fileInput.files[0];
             if (file.size > 10 * 1024 * 1024) {
                 showToast('حجم الملف أكبر من 10 MB', 'warning');
-                return;
+                restoreBtn(); return;
             }
+            if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري رفع الملف...';
             const ext = file.name.split('.').pop();
             const safeName = Date.now() + '_' + Math.random().toString(36).substr(2, 6) + '.' + ext;
             const storagePath = 'task-reports/' + companyUserId + '/' + currentTraineeId + '/' + safeName;
             const { error: uploadErr } = await sb.storage.from('uploads').upload(storagePath, file, { upsert: false, contentType: file.type });
             if (uploadErr) {
                 showToast('خطأ في رفع الملف: ' + uploadErr.message, 'error');
-                return;
+                restoreBtn(); return;
             }
             filePath = storagePath;
             fileName = file.name;
             fileType = file.type;
         }
 
+        if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
         const { error } = await sb.from('task_reports').insert({
             application_id: currentTraineeId,
             student_user_id: t.student_user_id,
@@ -2245,6 +2253,7 @@ window.saveTask = async () => {
         renderTasksTab();
     } catch(err) {
         showToast('خطأ: ' + err.message, 'error');
+        restoreBtn();
     }
 };
 
