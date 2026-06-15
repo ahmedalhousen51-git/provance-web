@@ -522,6 +522,7 @@ body {
   }
 </script>
 <script src="supabase-config.js"></script>
+<script src="push-subscribe.js"></script>
 <script>
 'use strict';
 
@@ -893,22 +894,103 @@ async function processQR(qrData) {
     const department     = meta.department || null;
     const companyName    = qr.company_name || meta.company_name || 'الشركة';
 
+    /* ── 6b★ جلب application_id الذكي (مُنقَّل قبل فحص التكرار) ──
+       الأولوية:
+       1. QR نفسه فيه application_id (مقابلة شخصية) → استخدمه مباشرة
+       2. عدة تطبيقات → اختار اللي النهارده يوم عمل فيه
+       3. تطبيق واحد → استخدمه
+       4. fallback → الأحدث                                           */
+    const AR_DAY_MAP = { 'الأحد':0,'الإثنين':1,'الاثنين':1,'الثلاثاء':2,'الأربعاء':3,'الخميس':4,'الجمعة':5,'السبت':6 };
+    const todayDayNum = new Date().getDay();
+
+    function isTodayWorkDay(sched) {
+      if (!sched || !Array.isArray(sched.training_days)) return false;
+      return sched.training_days.some(d => AR_DAY_MAP[d] === todayDayNum);
+    }
+
+    let applicationId = qr.application_id || null;
+    let resolvedSched = null;
+
+    if (!applicationId) {
+      try {
+        const statusList = attendanceType === 'interview'
+          ? ['hired', 'in_training', 'accepted', 'active', 'interview_done', 'pending']
+          : ['hired', 'in_training', 'accepted', 'active', 'interview_done'];
+
+        const { data: appRows } = await sb
+          .from('applications')
+          .select('id, training_schedule, internship_title, internship_id, status')
+          .eq('student_user_id', studentUserId)
+          .eq('company_user_id', qr.company_user_id)
+          .in('status', statusList)
+          .order('created_at', { ascending: false });
+
+        if (appRows && appRows.length > 0) {
+          let picked = null;
+
+          if (appRows.length === 1) {
+            // تطبيق واحد فقط → استخدمه مباشرة
+            picked = appRows[0];
+          } else {
+            // محاولة 1: طابق بناءً على department من الـ QR metadata
+            if (department) {
+              const deptLow = department.toLowerCase();
+              picked = appRows.find(a => {
+                const title = (a.internship_title || '').toLowerCase();
+                return title.includes(deptLow) || deptLow.includes(title.split(' ')[0]);
+              });
+            }
+            // محاولة 2: اختار التطبيق اللي النهارده يوم عمل فيه
+            if (!picked) {
+              const todayMatches = appRows.filter(a => isTodayWorkDay(a.training_schedule));
+              if (todayMatches.length === 1) picked = todayMatches[0];
+              else if (todayMatches.length > 1) picked = todayMatches[0]; // أحدثهم
+            }
+            // محاولة 3: fallback → الأحدث
+            if (!picked) picked = appRows[0];
+          }
+
+          applicationId = picked.id;
+          resolvedSched = picked.training_schedule;
+
+          // فحص بدء التدريب (حضور يومي فقط)
+          if (attendanceType === 'daily_attendance' && resolvedSched && resolvedSched.start_date) {
+            const _start = new Date(resolvedSched.start_date); _start.setHours(0,0,0,0);
+            const _today = new Date(); _today.setHours(0,0,0,0);
+            if (_start > _today) {
+              showResult('warning', '⏳ التدريب لم يبدأ بعد',
+                'تدريبك في هذه الشركة يبدأ في ' +
+                _start.toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' }) +
+                ' — لا يُسجَّل حضور قبل تاريخ البداية الرسمية.');
+              return;
+            }
+          }
+        }
+      } catch (_) { /* الـ trigger على Supabase سيملأه تلقائياً لو فاضي */ }
+    }
+
     /* ── 4. منع التسجيل المكرر في نفس اليوم ──
-       مهم: الرفض على مستوى (الطالب + الشركة + اليوم) — مش على مستوى الكود الواحد.
-       لأن الشركة بتعرض كود جديد كل ساعة، فلو ربطنا الرفض بـ qr_code_id الطالب
-       يقدر يسجّل أكتر من مرة في اليوم بأكواد مختلفة. ده اللي كان بيطلّع سجلات
-       متكررة (11 سجل من 5 أيام). الحضور اليومي = مرة واحدة بس في اليوم. */
+       الأولوية: لو عرفنا application_id → فحص per-application (أدق)
+       وإلا: فحص per-company (أشمل لكنه يمنع تسجيل تطبيقين مختلفين).
+       الحضور اليومي = مرة واحدة بس في اليوم لكل تطبيق.               */
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
     try {
-      const { data: dupRows, error: dupErr } = await sb
+      let dupQuery = sb
         .from('attendance_logs')
-        .select('id, scanned_at, attendance_type')
+        .select('id, scanned_at, attendance_type, application_id')
         .eq('student_user_id', studentUserId)
-        .eq('company_user_id', qr.company_user_id)
         .gte('scanned_at', todayStart.toISOString());
+
+      // لو عرفنا التطبيق → فحص دقيق per-application
+      if (applicationId) {
+        dupQuery = dupQuery.eq('application_id', applicationId);
+      } else {
+        dupQuery = dupQuery.eq('company_user_id', qr.company_user_id);
+      }
+
+      const { data: dupRows, error: dupErr } = await dupQuery;
       if (dupErr) throw dupErr;
-      // امنع التكرار فقط لو فيه سجل من نفس نوع الحضور النهاردة.
-      // لو العمود attendance_type مش موجود في صف قديم، اعتبره حضور يومي.
+
       const sameTypeToday = (dupRows || []).filter(r => {
         const t = r.attendance_type || 'daily_attendance';
         return t === attendanceType;
@@ -921,59 +1003,13 @@ async function processQR(qrData) {
         return;
       }
     } catch (e) {
-      console.warn('duplicate check (by type) skipped, trying fallback:', e.message);
-      // Fallback: لو العمود attendance_type مش موجود خالص في الجدول
-      try {
-        const { data: dupFallback } = await sb
-          .from('attendance_logs')
-          .select('id')
-          .eq('student_user_id', studentUserId)
-          .eq('company_user_id', qr.company_user_id)
-          .gte('scanned_at', todayStart.toISOString())
-          .limit(1);
-        if (dupFallback && dupFallback.length > 0) {
-          showResult('error', '✋ سجّلت قبل كده', 'لقد سجّلت حضورك اليوم بالفعل — الحضور اليومي مرة واحدة فقط.');
-          return;
-        }
-      } catch (e2) { console.warn('duplicate fallback also skipped:', e2.message); }
+      console.warn('duplicate check skipped:', e.message);
     }
 
     /* ── 6. حساب التأخير (15 دقيقة = حضور في الوقت) ── */
     const validFrom    = qr.valid_from ? new Date(qr.valid_from) : now;
     const delayMinutes = Math.max(0, Math.round((now - validFrom) / 60000));
     const status       = delayMinutes <= 15 ? 'on_time' : 'late';
-
-    /* ── 6b. جلب application_id للطالب في هذه الشركة ── */
-    let applicationId = null;
-    try {
-      const { data: appRow } = await sb
-        .from('applications')
-        .select('id, training_schedule')
-        .eq('student_user_id', studentUserId)
-        .eq('company_user_id', qr.company_user_id)
-        .in('status', ['hired', 'in_training', 'accepted', 'active', 'interview_done'])
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (appRow) {
-        applicationId = appRow.id;
-        // فحص: هل بدأ التدريب الرسمي؟ (لحضور يومي فقط)
-        if (attendanceType === 'daily_attendance') {
-          const sched = appRow.training_schedule || {};
-          if (sched.start_date) {
-            const _start = new Date(sched.start_date); _start.setHours(0,0,0,0);
-            const _today = new Date(); _today.setHours(0,0,0,0);
-            if (_start > _today) {
-              showResult('warning', '⏳ التدريب لم يبدأ بعد',
-                'تدريبك في هذه الشركة يبدأ في ' +
-                _start.toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' }) +
-                ' — لا يُسجَّل حضور قبل تاريخ البداية الرسمية.');
-              return;
-            }
-          }
-        }
-      }
-    } catch (_) { /* التريگر على Supabase هيملأه تلقائياً لو فاضي */ }
 
     /* ── 7. تسجيل الحضور في attendance_logs ── */
     const fullRow = {
@@ -1043,9 +1079,20 @@ async function processQR(qrData) {
           title:    purpose === 'interview' ? '🎯 طالب وصل للمقابلة' : '✅ تسجيل حضور جديد',
           message:  ((studentData && studentData.full_name) || 'طالب') + ' سجّل ' +
                     (purpose === 'interview' ? 'حضوره للمقابلة' : 'حضوره') +
-                    (status === 'late' ? ' (متأخر ' + delayMinutes + ' دقيقة)' : ''),
+                    (department ? ' — ' + department : '') +
+                    (status === 'late' ? ' (متأخر ' + delayMinutes + ' دقيقة)' : ' في الوقت'),
           type:     status === 'late' ? 'warning' : 'success',
           link:     'company-QR_Code.html'
+        });
+        // إشعار للطالب نفسه
+        await window.ProVance.sendNotification({
+          userId:   studentUserId,
+          userType: 'student',
+          title:    status === 'late' ? '⏰ تم تسجيل حضورك بتأخير' : '✅ تم تسجيل حضورك',
+          message:  companyName + (department ? ' — ' + department : '') +
+                    (status === 'late' ? ' · متأخر ' + delayMinutes + ' دقيقة' : ' · في الوقت'),
+          type:     status === 'late' ? 'warning' : 'success',
+          link:     'student-profile.html'
         });
       }
     } catch(_) { console.warn('notification skipped'); }
@@ -1184,6 +1231,13 @@ async function init() {
       .eq('user_id', studentUserId)
       .maybeSingle();
     studentData = student;
+
+    // تفعيل Web Push للطالب (يطلب الإذن بهدوء)
+    try {
+      if (window.ProVancePush && window.ProVancePush.status() === 'default') {
+        await window.ProVancePush.enable(sb, studentUserId, 'student');
+      }
+    } catch(_) {}
 
     await loadRecentScans();
 
