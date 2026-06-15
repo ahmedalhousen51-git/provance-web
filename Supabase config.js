@@ -327,12 +327,18 @@
             }
         }
 
-        // Web Push (لا يعطّل لو فشل)
+        // Web Push — يوصل حتى لو الموقع مقفول
         try {
             sb.functions.invoke('send-push', {
-                body: { user_id: opts.userId, title: opts.title, body: opts.message, url: opts.link || opts.actionUrl || '/' }
+                body: {
+                    user_id:   opts.userId,
+                    user_type: opts.userType || null,
+                    title:     opts.title,
+                    message:   opts.message,
+                    url:       opts.link || opts.actionUrl || '/'
+                }
             }).catch(() => {});
-        } catch (e) { /* تجاهل */ }
+        } catch (e) { /* تجاهل — لا يوقف باقي الكود */ }
 
         return ok;
     }
