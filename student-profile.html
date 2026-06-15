@@ -399,6 +399,7 @@
             animation: slideUp .3s ease-out;
         }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes attPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.4; transform:scale(1.4); } }
         .modal-content::-webkit-scrollbar { width: 6px; }
         .modal-content::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
 
@@ -873,31 +874,11 @@
                 </div>
             </section>
 
-            <!-- AI Evaluation -->
-            <section class="section" id="sectionAiEval" style="display:none">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-chart-bar"></i> تقييم الأداء
-                    </h2>
-                </div>
-                <div id="aiEvalContent"></div>
-            </section>
-
-            <!-- Career Report (Personality + Recommendations) -->
-            <section class="section" id="sectionCareerRec" style="display:none">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-star"></i> تقريرك الكامل من الشركة
-                    </h2>
-                </div>
-                <div id="careerRecContent"></div>
-            </section>
-
-            <!-- Task Reports -->
+            <!-- Training History -->
             <section class="section">
                 <div class="section-header">
                     <h2 class="section-title">
-                        <i class="fas fa-clipboard-list"></i> تقارير المهام
+                        <i class="fas fa-briefcase"></i> سجل التدريبات
                     </h2>
                 </div>
                 <div id="taskReportsList">
@@ -1292,8 +1273,6 @@
 
         renderTrainingHistory();
         renderQRHistory();
-        renderAiEval();
-        renderCareerRec();
         renderTaskReports();
         renderViolations();
         updateStats();
@@ -1789,10 +1768,9 @@
         const startDate = app.training_start_date || sched.start_date || null;
         const endDate   = app.training_end_date   || sched.end_date   || null;
 
-        // المدة
         let durationText = '-';
         if (startDate && endDate) {
-            const days = Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000);
+            const days = Math.ceil((parseLocalDate(endDate) - parseLocalDate(startDate)) / 86400000);
             durationText = days >= 30 ? Math.round(days / 30) + ' شهر' : days + ' يوم';
         } else if (sched.duration) {
             durationText = esc(String(sched.duration));
@@ -1801,95 +1779,102 @@
         const att = calcAttendanceForApp(app);
         const rateColor = att.rate >= 75 ? '#10b981' : att.rate >= 50 ? '#f59e0b' : '#ef4444';
 
+        const isTraining = app.status === 'in_training' || app.status === 'hired';
+        const sentRec    = allCareerRecs.find(r => r.application_id === app.id && r.sent_to_student);
+        const sentEval   = allAiEvals.find(e => e.application_id === app.id);
         const appTasks   = allTaskReports.filter(t => t.application_id === app.id);
-        const hasReport  = appTasks.length > 0 || allAiEvals.length > 0 ||
-                           allCareerRecs.some(r => r.sent_to_student);
+        const hasReport  = !isTraining && (sentRec || sentEval || appTasks.length > 0);
 
         const logo = app.company_logo
-            ? `<img src="${esc(app.company_logo)}" alt="${esc(app.company_name)}" style="width:100%;height:100%;object-fit:cover">`
+            ? `<img src="${esc(app.company_logo)}" alt="" style="width:100%;height:100%;object-fit:cover">`
             : `<span style="font-size:1.3rem;font-weight:800">${getInitial(app.company_name)}</span>`;
 
-        const statusBadge = app.status === 'in_training'
-            ? '<span style="background:rgba(16,185,129,0.12);color:#10b981;padding:3px 10px;border-radius:10px;font-size:0.72rem;font-weight:700">🎓 جاري التدريب</span>'
+        // دائرة الحضور SVG
+        const circ56 = 2 * Math.PI * 22;
+        const attOffset = (circ56 * (1 - att.rate / 100)).toFixed(1);
+        const attRing = `
+            <div style="position:relative;width:62px;height:62px;flex-shrink:0">
+                <svg viewBox="0 0 52 52" style="width:62px;height:62px;transform:rotate(-90deg)">
+                    <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="4.5"/>
+                    <circle cx="26" cy="26" r="22" fill="none" stroke="${rateColor}" stroke-width="4.5"
+                        stroke-dasharray="${circ56.toFixed(1)}" stroke-dashoffset="${attOffset}"
+                        stroke-linecap="round"/>
+                </svg>
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.74rem;font-weight:900;color:${rateColor}">${att.rate}%</div>
+            </div>`;
+
+        const attDetails = [
+            `<span style="color:#10b981"><i class="fas fa-check"></i> ${att.presentDaysCount} حضر</span>`,
+            att.absentDays > 0 ? `<span style="color:#ef4444"><i class="fas fa-times"></i> ${att.absentDays} غياب</span>` : '',
+            att.bonusDays  > 0 ? `<span style="color:#a855f7">+${att.bonusDays} إضافي</span>` : '',
+            att.lateDays   > 0 ? `<span style="color:#f59e0b"><i class="fas fa-clock"></i> ${att.lateDays} تأخر</span>` : ''
+        ].filter(Boolean).join('<span style="opacity:0.3"> • </span>');
+
+        const statusBadge = isTraining
+            ? `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,0.12);color:#10b981;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700"><span style="width:6px;height:6px;border-radius:50%;background:#10b981;animation:attPulse 2s infinite"></span>جاري التدريب</span>`
             : app.status === 'completed'
-            ? '<span style="background:rgba(79,172,254,0.12);color:#4facfe;padding:3px 10px;border-radius:10px;font-size:0.72rem;font-weight:700">✓ مكتمل</span>'
-            : '<span style="background:rgba(245,158,11,0.12);color:#f59e0b;padding:3px 10px;border-radius:10px;font-size:0.72rem;font-weight:700">✓ تم التعيين</span>';
+            ? `<span style="background:rgba(79,172,254,0.12);color:#4facfe;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700">✓ مكتمل</span>`
+            : `<span style="background:rgba(245,158,11,0.12);color:#f59e0b;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700">✓ تم التعيين</span>`;
+
+        let bottomHtml;
+        if (isTraining) {
+            bottomHtml = `<div style="background:rgba(16,185,129,0.04);border:1px dashed rgba(16,185,129,0.3);border-radius:10px;padding:12px;text-align:center;font-size:0.82rem;color:var(--text-muted)"><i class="fas fa-clock" style="color:#10b981;margin-left:5px"></i>التقرير سيظهر هنا بعد انتهاء التدريب وإرساله من الشركة</div>`;
+        } else if (hasReport) {
+            bottomHtml = `<button onclick="openFullTrainingReport('${esc(app.id)}')" style="width:100%;background:var(--gradient);color:#fff;border:none;padding:13px;border-radius:12px;font-weight:700;font-family:inherit;font-size:0.92rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(79,172,254,0.2)"><i class="fas fa-file-alt"></i> عرض التقرير الكامل</button>`;
+        } else {
+            bottomHtml = `<div style="text-align:center;color:var(--text-muted);font-size:0.82rem;padding:12px;border:1px dashed var(--border);border-radius:10px"><i class="fas fa-hourglass-half" style="opacity:0.5;margin-left:5px"></i> لم يُرسَل التقرير بعد من الشركة</div>`;
+        }
+
+        const borderColor = isTraining ? 'rgba(16,185,129,0.25)' : hasReport ? 'rgba(79,172,254,0.25)' : 'var(--border)';
+        const topBarColor = isTraining ? 'linear-gradient(90deg,#10b981,#059669)' : hasReport ? 'var(--gradient)' : 'rgba(255,255,255,0.06)';
 
         return `
-        <div style="background:linear-gradient(135deg,rgba(79,172,254,0.05),rgba(0,242,254,0.02));border:1px solid rgba(79,172,254,0.2);border-radius:18px;padding:20px;margin-bottom:18px;position:relative;overflow:hidden">
-
-            <!-- شريط معتمد -->
-            <div style="position:absolute;top:0;left:0;background:linear-gradient(90deg,#10b981,#059669);color:#fff;font-size:0.68rem;font-weight:800;padding:4px 16px;border-radius:0 0 12px 0;letter-spacing:0.5px">✓ معتمد</div>
-
-            <!-- هيدر الشركة -->
-            <div style="display:flex;align-items:center;gap:14px;margin-top:12px;margin-bottom:16px">
-                <div style="width:56px;height:56px;border-radius:14px;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;overflow:hidden;flex-shrink:0;border:2px solid rgba(79,172,254,0.3)">
-                    ${logo}
+        <div style="background:rgba(255,255,255,0.02);border:1px solid ${borderColor};border-radius:18px;overflow:hidden;margin-bottom:18px">
+            <div style="height:4px;background:${topBarColor}"></div>
+            <div style="padding:18px">
+                <!-- هيدر الشركة -->
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+                    <div style="width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,rgba(79,172,254,0.15),rgba(0,242,254,0.08));border:1px solid rgba(79,172,254,0.2);display:flex;align-items:center;justify-content:center;color:var(--primary);overflow:hidden;flex-shrink:0">${logo}</div>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-weight:800;font-size:1rem;margin-bottom:2px">${esc(app.company_name || '-')}</div>
+                        <div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:6px">${esc(app.internship_title || '')}</div>
+                        ${statusBadge}
+                    </div>
                 </div>
-                <div style="flex:1;min-width:0">
-                    <div style="font-weight:800;font-size:1.05rem;margin-bottom:3px">${esc(app.company_name || '-')}</div>
-                    <div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:5px">${esc(app.internship_title || '')}</div>
-                    ${statusBadge}
+
+                <!-- التواريخ -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+                    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:9px;text-align:center">
+                        <div style="font-size:0.62rem;color:var(--text-muted);margin-bottom:3px">📅 بدأ</div>
+                        <div style="font-weight:700;font-size:0.78rem">${startDate ? formatDate(startDate) : '-'}</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:9px;text-align:center">
+                        <div style="font-size:0.62rem;color:var(--text-muted);margin-bottom:3px">🏁 انتهى</div>
+                        <div style="font-weight:700;font-size:0.78rem">${endDate ? formatDate(endDate) : (isTraining ? '<span style="color:#10b981;font-size:0.7rem">جاري</span>' : '-')}</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:9px;text-align:center">
+                        <div style="font-size:0.62rem;color:var(--text-muted);margin-bottom:3px">⏱ المدة</div>
+                        <div style="font-weight:700;font-size:0.78rem">${durationText}</div>
+                    </div>
                 </div>
+
+                <!-- الحضور بالدائرة -->
+                <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:14px">
+                    ${attRing}
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:0.8rem;font-weight:700;margin-bottom:5px">سجل الحضور</div>
+                        <div style="font-size:0.74rem;display:flex;flex-wrap:wrap;gap:8px;line-height:1.9">${attDetails || '<span style="color:var(--text-muted)">لا يوجد سجل بعد</span>'}</div>
+                    </div>
+                </div>
+
+                <!-- ختم الاعتماد -->
+                <div style="background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:9px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+                    <i class="fas fa-stamp" style="color:#10b981;font-size:0.85rem"></i>
+                    <div style="font-size:0.78rem"><span style="color:var(--text-muted)">معتمد من </span><strong>${esc(app.company_name || '-')}</strong></div>
+                </div>
+
+                ${bottomHtml}
             </div>
-
-            <!-- التواريخ والمدة -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-                <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
-                    <div style="font-size:0.66rem;color:var(--text-muted);margin-bottom:4px">📅 بدأ</div>
-                    <div style="font-weight:700;font-size:0.82rem">${startDate ? formatDate(startDate) : '<span style="color:var(--text-dim)">-</span>'}</div>
-                </div>
-                <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
-                    <div style="font-size:0.66rem;color:var(--text-muted);margin-bottom:4px">📅 انتهى</div>
-                    <div style="font-weight:700;font-size:0.82rem">${endDate ? formatDate(endDate) : (app.status === 'in_training' ? '<span style="color:#10b981;font-size:0.74rem">جاري</span>' : '<span style="color:var(--text-dim)">-</span>')}</div>
-                </div>
-                <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
-                    <div style="font-size:0.66rem;color:var(--text-muted);margin-bottom:4px">⏱ المدة</div>
-                    <div style="font-weight:700;font-size:0.82rem">${durationText}</div>
-                </div>
-            </div>
-
-            <!-- إحصائيات الحضور -->
-            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-                <div style="flex:1;min-width:68px;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:10px;text-align:center">
-                    <div style="font-size:1.15rem;font-weight:800;color:${rateColor};line-height:1">${att.rate}%</div>
-                    <div style="font-size:0.66rem;color:var(--text-muted);margin-top:3px">الحضور</div>
-                </div>
-                <div style="flex:1;min-width:68px;background:rgba(79,172,254,0.07);border:1px solid rgba(79,172,254,0.2);border-radius:10px;padding:10px;text-align:center">
-                    <div style="font-size:1.15rem;font-weight:800;color:#4facfe;line-height:1">${att.presentDaysCount}</div>
-                    <div style="font-size:0.66rem;color:var(--text-muted);margin-top:3px">يوم حضر</div>
-                </div>
-                <div style="flex:1;min-width:68px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:10px;text-align:center">
-                    <div style="font-size:1.15rem;font-weight:800;color:#ef4444;line-height:1">${att.absentDays}</div>
-                    <div style="font-size:0.66rem;color:var(--text-muted);margin-top:3px">غياب</div>
-                </div>
-                ${att.bonusDays > 0 ? `<div style="flex:1;min-width:68px;background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:10px;padding:10px;text-align:center">
-                    <div style="font-size:1.15rem;font-weight:800;color:#a855f7;line-height:1">+${att.bonusDays}</div>
-                    <div style="font-size:0.66rem;color:var(--text-muted);margin-top:3px">إضافي</div>
-                </div>` : ''}
-                ${att.lateDays > 0 ? `<div style="flex:1;min-width:68px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:10px;text-align:center">
-                    <div style="font-size:1.15rem;font-weight:800;color:#f59e0b;line-height:1">${att.lateDays}</div>
-                    <div style="font-size:0.66rem;color:var(--text-muted);margin-top:3px">متأخر</div>
-                </div>` : ''}
-            </div>
-
-            <!-- ختم الاعتماد -->
-            <div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:12px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
-                <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                    <i class="fas fa-stamp" style="color:#fff;font-size:0.9rem"></i>
-                </div>
-                <div>
-                    <div style="font-size:0.7rem;color:var(--text-muted)">هذا التقرير معتمد من</div>
-                    <div style="font-weight:800;font-size:0.92rem">${esc(app.company_name || '-')}</div>
-                </div>
-            </div>
-
-            <!-- زرار التقرير الكامل -->
-            ${hasReport
-                ? `<button onclick="openFullTrainingReport('${esc(app.id)}')" style="width:100%;background:var(--gradient);color:#fff;border:none;padding:13px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.92rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-                    <i class="fas fa-file-alt"></i> عرض التقرير الكامل
-                  </button>`
-                : `<div style="text-align:center;color:var(--text-dim);font-size:0.84rem;padding:10px;border:1px dashed var(--border);border-radius:10px">لا توجد تقارير بعد من الشركة</div>`}
         </div>`;
     }
 
@@ -1909,16 +1894,39 @@
         list.innerHTML = trainings.map(app => buildTrainingReportCard(app)).join('');
     }
 
-    // ====== موديل التقرير الكامل (بنفس تنظيم الشركة) ======
-    window.openFullTrainingReport = (appId) => {
+    // ====== موديل التقرير الكامل — async ======
+    window.openFullTrainingReport = async (appId) => {
         const app = allApplications.find(a => a.id === appId);
         if (!app) return;
 
-        const appTasks = allTaskReports.filter(t => t.application_id === appId);
-        const ev = allAiEvals[0];
-        const rec = allCareerRecs.find(r => r.sent_to_student);
+        const oldModal = document.getElementById('fullTrainingReportModal');
+        if (oldModal) oldModal.remove();
+        document.body.insertAdjacentHTML('beforeend',
+            `<div id="fullTrainingReportModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);z-index:3000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this){this.remove();document.body.style.overflow=''}">
+                <div id="ftrInner" style="background:var(--bg-2);border:1px solid var(--border);border-radius:22px;width:100%;max-width:720px;padding:60px 24px;margin:auto;text-align:center">
+                    <div style="font-size:2.5rem;opacity:0.4;margin-bottom:12px">⏳</div>
+                    <div style="color:var(--text-muted)">جاري تحميل التقرير...</div>
+                </div>
+            </div>`
+        );
+        document.body.style.overflow = 'hidden';
 
-        // تقارير المهام - نفس تنظيم الشركة
+        try {
+        const appTasks = allTaskReports.filter(t => t.application_id === appId);
+        const ev  = allAiEvals.find(e => e.application_id === appId) || allAiEvals[0] || null;
+        const rec = allCareerRecs.find(r => r.application_id === appId && r.sent_to_student) || null;
+
+        // جلب أسئلة القالب لو في تقييم
+        let templateQuestions = [];
+        if (ev && ev.template_id) {
+            try {
+                const sb2 = await window.getSafeSupabase();
+                const { data: tmpl } = await sb2.from('ai_evaluation_templates').select('questions').eq('id', ev.template_id).maybeSingle();
+                if (tmpl && Array.isArray(tmpl.questions)) templateQuestions = tmpl.questions;
+            } catch(te) { /* الأسئلة اختيارية */ }
+        }
+
+        // تقارير المهام
         const statusMap = { completed: ['✅','مكتملة','#10b981'], partial: ['⚡','جزئية','#f59e0b'], pending: ['⏳','معلقة','#94a3b8'], in_progress: ['🔄','جاري التنفيذ','#4facfe'], cancelled: ['❌','ملغية','#ef4444'] };
         const tasksHtml = appTasks.length === 0
             ? '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-clipboard-list" style="font-size:3rem;opacity:.3;display:block;margin-bottom:12px"></i><p>لا توجد تقارير مهام</p></div>'
@@ -1948,33 +1956,62 @@
                 </div>`;
             }).join('');
 
-        // تقييم الأداء
+        // تقييم الأداء مع الأسئلة
+        const catLabels = { technical:'المهارات التقنية', soft_skills:'مهارات التواصل', growth:'التطور والتعلم', performance:'الأداء العام' };
+        const catColors = { technical:'#4facfe', soft_skills:'#10b981', growth:'#f59e0b', performance:'#f093fb' };
         let evalHtml = '<div style="text-align:center;padding:30px;color:var(--text-muted)"><i class="fas fa-chart-bar" style="font-size:2rem;opacity:.3;display:block;margin-bottom:10px"></i><p>لا يوجد تقييم بعد</p></div>';
         if (ev) {
             const score = Math.round(Number(ev.overall_score) || 0);
             const cats = ev.category_scores || {};
-            const catLabels = { technical:'التقني', soft_skills:'التواصل', growth:'التطور', performance:'الأداء' };
-            const catColors = { technical:'#4facfe', soft_skills:'#10b981', growth:'#f59e0b', performance:'#f093fb' };
+            const answers = ev.answers || {};
             const sc = score >= 75 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
             const circ = 2 * Math.PI * 38;
             const bars = Object.entries(cats).map(([k,v]) => {
                 const pct = Math.min(100, Math.round(Number(v)||0));
                 const c = catColors[k] || '#4facfe';
-                return `<div style="margin-bottom:12px">
-                    <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:5px">
+                return `<div style="margin-bottom:10px">
+                    <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px">
                         <span style="color:var(--text-muted)">${catLabels[k]||k}</span>
                         <span style="font-weight:700;color:${c}">${pct}%</span>
                     </div>
-                    <div style="height:9px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden">
+                    <div style="height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden">
                         <div style="height:100%;width:${pct}%;background:${c};border-radius:4px"></div>
                     </div>
                 </div>`;
             }).join('');
-            evalHtml = `<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:18px">
+
+            // أسئلة التقييم مع إجابات النجوم
+            let questionsHtml = '';
+            if (templateQuestions.length > 0) {
+                const qGroups = {};
+                templateQuestions.forEach(q => {
+                    const cat = q.category || 'general';
+                    if (!qGroups[cat]) qGroups[cat] = [];
+                    qGroups[cat].push(q);
+                });
+                questionsHtml = `<div style="margin-top:20px">
+                    <div style="font-weight:800;font-size:0.9rem;margin-bottom:12px;color:var(--text-muted)"><i class="fas fa-list-ul" style="margin-left:6px"></i>تفاصيل إجابات الشركة</div>
+                    ${Object.entries(qGroups).map(([cat, qs]) => `
+                        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+                            <div style="font-size:0.78rem;font-weight:800;color:${catColors[cat]||'#4facfe'};margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">${catLabels[cat]||cat}</div>
+                            ${qs.map(q => {
+                                const rating = Number(answers[q.id] || answers['q'+q.id] || 0);
+                                const stars = [1,2,3,4,5].map(n => `<span style="font-size:1rem;color:${n<=rating?'#fbbf24':'rgba(148,163,184,0.25)'}">★</span>`).join('');
+                                return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.03)">
+                                    <div style="font-size:0.83rem;color:var(--text-muted);flex:1">${esc(q.question||q.text||'-')}</div>
+                                    <div style="flex-shrink:0;display:flex;gap:1px">${stars}</div>
+                                </div>`;
+                            }).join('')}
+                        </div>`).join('')}
+                </div>`;
+            }
+
+            evalHtml = `
+            <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:18px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:14px;padding:16px">
                 <div style="position:relative;width:90px;height:90px;flex-shrink:0">
                     <svg viewBox="0 0 88 88" style="transform:rotate(-90deg)">
                         <circle cx="44" cy="44" r="38" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9"/>
-                        <circle cx="44" cy="44" r="38" fill="none" stroke="${sc}" stroke-width="9" stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-score/100)}" stroke-linecap="round"/>
+                        <circle cx="44" cy="44" r="38" fill="none" stroke="${sc}" stroke-width="9" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ*(1-score/100)).toFixed(1)}" stroke-linecap="round"/>
                     </svg>
                     <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
                         <span style="font-size:1.4rem;font-weight:900;color:${sc};line-height:1">${score}</span>
@@ -1983,7 +2020,8 @@
                 </div>
                 <div style="flex:1;min-width:200px">${bars}</div>
             </div>
-            ${ev.summary_feedback ? `<div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:12px;padding:14px;font-size:0.88rem;line-height:1.7;color:var(--text-muted)"><i class="fas fa-comment" style="color:#4facfe;margin-left:6px"></i>${esc(ev.summary_feedback)}</div>` : ''}`;
+            ${ev.summary_feedback ? `<div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:12px;padding:14px;font-size:0.88rem;line-height:1.7;color:var(--text-muted)"><i class="fas fa-comment" style="color:#4facfe;margin-left:6px"></i>${esc(ev.summary_feedback)}</div>` : ''}
+            ${questionsHtml}`;
         }
 
         // التقرير الكامل والترشيحات
@@ -2005,15 +2043,15 @@
             if (strengths.length || improvements.length) {
                 h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">`;
                 if (strengths.length) h += `<div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:12px;padding:12px"><div style="font-weight:700;font-size:0.85rem;color:#10b981;margin-bottom:8px"><i class="fas fa-thumbs-up"></i> نقاط القوة</div>${strengths.map(s=>`<div style="font-size:0.82rem;color:var(--text-muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:6px"><i class="fas fa-check" style="color:#10b981;flex-shrink:0;margin-top:2px"></i>${esc(s)}</div>`).join('')}</div>`;
-                if (improvements.length) h += `<div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:12px;padding:12px"><div style="font-weight:700;font-size:0.85rem;color:#f59e0b;margin-bottom:8px"><i class="fas fa-arrow-up"></i> مجالات التطوير</div>${improvements.map(i=>`<div style="font-size:0.82rem;color:var(--text-muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:6px"><i class="fas fa-arrow-up" style="color:#f59e0b;flex-shrink:0;margin-top:2px"></i>${esc(i)}</div>`).join('')}</div>`;
+                if (improvements.length) h += `<div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:12px;padding:12px"><div style="font-weight:700;font-size:0.85rem;color:#f59e0b;margin-bottom:8px"><i class="fas fa-arrow-up"></i> مجالات التطوير</div>${improvements.map(im=>`<div style="font-size:0.82rem;color:var(--text-muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:6px"><i class="fas fa-arrow-up" style="color:#f59e0b;flex-shrink:0;margin-top:2px"></i>${esc(im)}</div>`).join('')}</div>`;
                 h += `</div>`;
             }
             if (careers.length) {
                 h += `<div style="font-weight:800;font-size:0.95rem;margin-bottom:10px"><i class="fas fa-briefcase" style="color:#4facfe;margin-left:6px"></i>المسارات المهنية المقترحة</div>`;
-                h += careers.map((c,i) => {
+                h += careers.map((c,idx) => {
                     const pct = c.match_score || c.match || 0;
                     const mc = matchColor(pct);
-                    return `<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;${i===0?'border-color:rgba(79,172,254,0.3);background:rgba(79,172,254,0.04)':''}">
+                    return `<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;${idx===0?'border-color:rgba(79,172,254,0.3);background:rgba(79,172,254,0.04)':''}">
                         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
                             <div style="width:44px;height:44px;border-radius:50%;background:conic-gradient(${mc} ${pct}%,rgba(255,255,255,0.06) 0);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative">
                                 <div style="position:absolute;inset:4px;background:var(--bg-2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:${mc}">${pct}%</div>
@@ -2022,7 +2060,7 @@
                                 <div style="font-weight:800;font-size:0.92rem">${esc(c.job_title||c.field||'-')}</div>
                                 <div style="font-size:0.76rem;color:var(--text-muted)">${esc(levelLabel[c.level]||c.level||'')}${c.salary_range_egp?` • ${esc(c.salary_range_egp)}`:''}</div>
                             </div>
-                            ${i===0?'<span style="background:rgba(79,172,254,0.15);color:#4facfe;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;flex-shrink:0">الأنسب</span>':''}
+                            ${idx===0?'<span style="background:rgba(79,172,254,0.15);color:#4facfe;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;flex-shrink:0">الأنسب</span>':''}
                         </div>
                         ${c.description?`<div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:6px">${esc(c.description)}</div>`:''}
                         ${(c.key_skills&&c.key_skills.length)?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">${c.key_skills.map(s=>`<span style="background:rgba(79,172,254,0.08);color:#4facfe;padding:2px 8px;border-radius:8px;font-size:0.74rem">${esc(s)}</span>`).join('')}</div>`:''}
@@ -2033,36 +2071,27 @@
             careerHtml = h || '<div style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد بيانات</div>';
         }
 
-        // tabs IDs فريدة
+        // تحديث المودال الموجود
         const uid = 'ftr_' + appId.replace(/-/g,'').slice(0,8);
-        const modal = document.createElement('div');
-        modal.id = 'fullTrainingReportModal';
-        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);z-index:3000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto';
-        modal.onclick = e => { if (e.target === modal) { modal.remove(); document.body.style.overflow=''; } };
-        modal.innerHTML = `
-            <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:22px;width:100%;max-width:720px;padding:24px;margin:auto">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
-                    <div>
-                        <div style="font-size:1.1rem;font-weight:800"><i class="fas fa-file-alt" style="color:var(--primary)"></i> التقرير الكامل — ${esc(app.company_name||'-')}</div>
-                        <div style="color:var(--text-muted);font-size:0.82rem;margin-top:3px">${esc(app.internship_title||'')}</div>
-                    </div>
-                    <button onclick="document.getElementById('fullTrainingReportModal').remove();document.body.style.overflow=''" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center">×</button>
+        const ftrInner = document.getElementById('ftrInner');
+        if (!ftrInner) return;
+        ftrInner.style.cssText = 'background:var(--bg-2);border:1px solid var(--border);border-radius:22px;width:100%;max-width:720px;padding:24px;margin:auto';
+        ftrInner.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div>
+                    <div style="font-size:1.1rem;font-weight:800"><i class="fas fa-file-alt" style="color:var(--primary)"></i> التقرير الكامل — ${esc(app.company_name||'-')}</div>
+                    <div style="color:var(--text-muted);font-size:0.82rem;margin-top:3px">${esc(app.internship_title||'')}</div>
                 </div>
-
-                <!-- تابز -->
-                <div style="display:flex;gap:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:18px;overflow-x:auto">
-                    <button id="${uid}tab1" onclick="ftrTab('${uid}',1)" style="flex:1;padding:10px 8px;background:var(--gradient);color:#fff;border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem;white-space:nowrap"><i class="fas fa-clipboard-list"></i> تقارير المهام <span style="background:rgba(255,255,255,0.2);padding:1px 7px;border-radius:8px;font-size:0.72rem">${appTasks.length}</span></button>
-                    <button id="${uid}tab2" onclick="ftrTab('${uid}',2)" style="flex:1;padding:10px 8px;background:none;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem;white-space:nowrap"><i class="fas fa-chart-bar"></i> تقييم الأداء</button>
-                    <button id="${uid}tab3" onclick="ftrTab('${uid}',3)" style="flex:1;padding:10px 8px;background:none;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem;white-space:nowrap"><i class="fas fa-star"></i> التقرير الكامل</button>
-                </div>
-
-                <div id="${uid}panel1">${tasksHtml}</div>
-                <div id="${uid}panel2" style="display:none">${evalHtml}</div>
-                <div id="${uid}panel3" style="display:none">${careerHtml}</div>
-            </div>`;
-
-        document.body.appendChild(modal);
-        document.body.style.overflow = 'hidden';
+                <button onclick="document.getElementById('fullTrainingReportModal').remove();document.body.style.overflow=''" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center">×</button>
+            </div>
+            <div style="display:flex;gap:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:18px;overflow-x:auto">
+                <button id="${uid}tab1" onclick="ftrTab('${uid}',1)" style="flex:1;padding:10px 8px;background:var(--gradient);color:#fff;border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.85rem;white-space:nowrap"><i class="fas fa-clipboard-list"></i> تقارير المهام <span style="background:rgba(255,255,255,0.2);padding:1px 7px;border-radius:8px;font-size:0.72rem">${appTasks.length}</span></button>
+                <button id="${uid}tab2" onclick="ftrTab('${uid}',2)" style="flex:1;padding:10px 8px;background:none;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.85rem;white-space:nowrap"><i class="fas fa-chart-bar"></i> تقييم الأداء</button>
+                <button id="${uid}tab3" onclick="ftrTab('${uid}',3)" style="flex:1;padding:10px 8px;background:none;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.85rem;white-space:nowrap"><i class="fas fa-star"></i> التقرير الكامل</button>
+            </div>
+            <div id="${uid}panel1">${tasksHtml}</div>
+            <div id="${uid}panel2" style="display:none">${evalHtml}</div>
+            <div id="${uid}panel3" style="display:none">${careerHtml}</div>`;
 
         window.ftrTab = (uid, n) => {
             [1,2,3].forEach(i => {
@@ -2072,6 +2101,12 @@
                 if (pan) pan.style.display = i===n ? 'block' : 'none';
             });
         };
+
+        } catch(err) {
+            console.error('openFullTrainingReport error:', err);
+            const inner = document.getElementById('ftrInner');
+            if (inner) inner.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444"><i class="fas fa-exclamation-circle" style="font-size:2rem;display:block;margin-bottom:10px"></i><p>حدث خطأ أثناء تحميل التقرير، حاول مرة أخرى</p></div>';
+        }
     };
 
     function renderQRHistory() {
