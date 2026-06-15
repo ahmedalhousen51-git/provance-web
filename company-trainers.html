@@ -1593,24 +1593,24 @@ function renderTrainees() {
                 '</div>';
         }
         
-        // شارة اكتمال التقرير عند انتهاء التدريب
         const cs = getTrainingCompletionStatus(t);
+        const _alreadySent = !!(t.recommendation && t.recommendation.sent_to_student);
+        const _readyToSend = !!t.evaluation && !!t.recommendation && !!(t.recommendation.skill_profile) && !_alreadySent;
+
         let completionBadge = '';
-        if (cs) {
-            if (cs.alreadySent) {
-                completionBadge = '<div style="background:rgba(79,172,254,0.08);border:1px solid rgba(79,172,254,0.25);border-radius:10px;padding:7px 10px;font-size:0.76rem;font-weight:700;color:#4facfe"><i class="fas fa-paper-plane"></i> التقرير أُرسل للطالب</div>';
-            } else if (cs.isComplete) {
-                const _recId = t.recommendation && t.recommendation.id ? t.recommendation.id : '';
-                completionBadge =
-                    '<button onclick="event.stopPropagation();currentTraineeId=\'' + t.id + '\';sendFullReportToStudent(\'' + _recId + '\')" ' +
-                    'style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:11px 14px;border-radius:12px;font-weight:700;font-family:inherit;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(16,185,129,0.3)">' +
-                    '<i class="fas fa-paper-plane"></i> إرسال التقرير الكامل للطالب</button>';
-            } else {
-                completionBadge = '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:7px 10px;font-size:0.76rem;font-weight:700;color:#ef4444"><i class="fas fa-triangle-exclamation"></i> خلص التدريب — ناقص: ' + cs.missing.map(m => m.label).join('، ') + '</div>';
-            }
+        if (_alreadySent) {
+            completionBadge = '<div style="background:rgba(79,172,254,0.08);border:1px solid rgba(79,172,254,0.25);border-radius:10px;padding:7px 10px;font-size:0.76rem;font-weight:700;color:#4facfe"><i class="fas fa-paper-plane"></i> التقرير أُرسل للطالب</div>';
+        } else if (_readyToSend) {
+            const _recId = t.recommendation.id || '';
+            completionBadge =
+                '<button onclick="event.stopPropagation();currentTraineeId=\'' + t.id + '\';sendFullReportToStudent(\'' + _recId + '\')" ' +
+                'style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:11px 14px;border-radius:12px;font-weight:700;font-family:inherit;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(16,185,129,0.3)">' +
+                '<i class="fas fa-paper-plane"></i> إرسال التقرير الكامل للطالب</button>';
+        } else if (cs && !cs.isComplete) {
+            completionBadge = '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:7px 10px;font-size:0.76rem;font-weight:700;color:#ef4444"><i class="fas fa-triangle-exclamation"></i> خلص التدريب — ناقص: ' + cs.missing.map(m => m.label).join('، ') + '</div>';
         }
 
-        return '<div onclick="openTrainee(&apos;' + t.id + '&apos;)" style="background:var(--bg-card);border:1px solid ' + (cs && !cs.alreadySent && !cs.isComplete ? 'rgba(239,68,68,0.35)' : cs && !cs.alreadySent && cs.isComplete ? 'rgba(16,185,129,0.35)' : 'var(--border)') + ';border-radius:16px;padding:18px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:12px">' +
+        return '<div onclick="openTrainee(&apos;' + t.id + '&apos;)" style="background:var(--bg-card);border:1px solid ' + (_alreadySent ? 'rgba(79,172,254,0.25)' : _readyToSend ? 'rgba(16,185,129,0.35)' : (cs && !cs.isComplete ? 'rgba(239,68,68,0.35)' : 'var(--border)')) + ';border-radius:16px;padding:18px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:12px">' +
             '<div style="display:flex;align-items:center;gap:12px">' +
                 '<div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.5rem;overflow:hidden;flex-shrink:0">' + avatar + '</div>' +
                 '<div style="flex:1;min-width:0">' +
