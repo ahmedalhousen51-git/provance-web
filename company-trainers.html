@@ -1276,7 +1276,7 @@ async function loadAll() {
         });
         
         const { data: recs } = await sb.from('career_recommendations')
-            .select('id, application_id, sent_to_student')
+            .select('id, application_id, sent_to_student, skill_profile')
             .eq('company_user_id', companyUserId);
         const recsByApp = {};
         (recs || []).forEach(r => { recsByApp[r.application_id] = r; });
@@ -1461,8 +1461,9 @@ function getTrainingCompletionStatus(t) {
 
     const missing = [];
     if (!t.evaluation) missing.push({ key: 'eval', label: 'تقييم الأداء' });
-    if (!t.tasks || t.tasks.length === 0) missing.push({ key: 'tasks', label: 'تقارير المهام' });
     if (!t.recommendation) missing.push({ key: 'rec', label: 'الترشيحات' });
+    if (t.recommendation && !t.recommendation.skill_profile) missing.push({ key: 'persona', label: 'تحليل الشخصية' });
+    // تقارير المهام اختيارية — لا تمنع إرسال التقرير
     const sent = !!(t.recommendation && t.recommendation.sent_to_student);
 
     return {
@@ -1587,7 +1588,11 @@ function renderTrainees() {
             if (cs.alreadySent) {
                 completionBadge = '<div style="background:rgba(79,172,254,0.08);border:1px solid rgba(79,172,254,0.25);border-radius:10px;padding:7px 10px;font-size:0.76rem;font-weight:700;color:#4facfe"><i class="fas fa-paper-plane"></i> التقرير أُرسل للطالب</div>';
             } else if (cs.isComplete) {
-                completionBadge = '<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:7px 10px;font-size:0.76rem;font-weight:700;color:#10b981"><i class="fas fa-check-circle"></i> خلص التدريب — جاهز لإرسال التقرير</div>';
+                const _recId = t.recommendation && t.recommendation.id ? t.recommendation.id : '';
+                completionBadge =
+                    '<button onclick="event.stopPropagation();currentTraineeId=\'' + t.id + '\';sendFullReportToStudent(\'' + _recId + '\')" ' +
+                    'style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:11px 14px;border-radius:12px;font-weight:700;font-family:inherit;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(16,185,129,0.3)">' +
+                    '<i class="fas fa-paper-plane"></i> إرسال التقرير الكامل للطالب</button>';
             } else {
                 completionBadge = '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:7px 10px;font-size:0.76rem;font-weight:700;color:#ef4444"><i class="fas fa-triangle-exclamation"></i> خلص التدريب — ناقص: ' + cs.missing.map(m => m.label).join('، ') + '</div>';
             }
