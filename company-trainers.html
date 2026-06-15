@@ -1416,7 +1416,6 @@ function getTrainingCompletionStatus(t) {
     const missing = [];
     if (!t.evaluation) missing.push({ key: 'eval', label: 'تقييم الأداء' });
     if (!t.recommendation) missing.push({ key: 'rec', label: 'الترشيحات' });
-    if (t.recommendation && !t.recommendation.skill_profile) missing.push({ key: 'persona', label: 'تحليل الشخصية' });
     // تقارير المهام اختيارية — لا تمنع إرسال التقرير
     const sent = !!(t.recommendation && t.recommendation.sent_to_student);
 
@@ -1537,7 +1536,7 @@ function renderTrainees() {
         
         const cs = getTrainingCompletionStatus(t);
         const _alreadySent = !!(t.recommendation && t.recommendation.sent_to_student);
-        const _readyToSend = !!t.evaluation && !!t.recommendation && !!(t.recommendation.skill_profile) && !_alreadySent;
+        const _readyToSend = !!t.evaluation && !!t.recommendation && !_alreadySent;
 
         let completionBadge = '';
         if (_alreadySent) {
@@ -1940,7 +1939,7 @@ function renderEvalQuestions(template) {
         '</div>' +
         '<div style="display:flex;gap:10px">' +
             '<button onclick="renderEvalTab()" style="flex:1;background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>' +
-            '<button onclick="submitEvaluation(&apos;' + (template.id || '') + '&apos;)" style="flex:1;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-paper-plane"></i> حفظ وإرسال</button>' +
+            '<button onclick="submitEvaluation(&apos;' + (template.id || '') + '&apos;)" style="flex:1;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-save"></i> حفظ التقييم</button>' +
         '</div>';
     
     window._evalAnswers = {};
@@ -1969,18 +1968,18 @@ window.submitEvaluation = async (templateId) => {
     if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     const answers = window._evalAnswers || {};
     const template = window._evalTemplate;
-    
+
     if (!template || !template.questions) { showToast('خطأ في الأسئلة', 'error'); return; }
-    if (Object.keys(answers).length < template.questions.length) {
-        showToast('يجب تقييم كل الأسئلة', 'warning');
+    if (Object.keys(answers).length === 0) {
+        showToast('يجب تقييم سؤال واحد على الأقل', 'warning');
         return;
     }
-    
+
     const summary = (document.getElementById('summaryFeedback') || {}).value || '';
-    
+
     let totalScore = 0, count = 0;
     let categoryScores = {};
-    
+
     template.questions.forEach(q => {
         const ans = answers[q.id];
         if (ans === undefined) return;
@@ -1988,27 +1987,23 @@ window.submitEvaluation = async (templateId) => {
         const weight = q.weight || 10;
         totalScore += score * weight;
         count += weight;
-        
+
         if (!categoryScores[q.category]) categoryScores[q.category] = { sum: 0, count: 0 };
         categoryScores[q.category].sum += score;
         categoryScores[q.category].count++;
     });
-    
+
     const overallScore = count > 0 ? (totalScore / count) : 0;
     const categoryFinal = {};
     Object.keys(categoryScores).forEach(c => {
         categoryFinal[c] = categoryScores[c].count > 0 ? (categoryScores[c].sum / categoryScores[c].count) : 0;
     });
-    
+
     try {
         const sb = await window.getSafeSupabase();
         const t = allTrainees.find(x => x.id === currentTraineeId);
-        
-        if (t.evaluation) {
-            await sb.from('ai_evaluations').delete().eq('id', t.evaluation.id);
-        }
-        
-        const { error } = await sb.from('ai_evaluations').insert({
+
+        const payload = {
             application_id: currentTraineeId,
             student_user_id: t.student_user_id,
             company_user_id: companyUserId,
@@ -2019,27 +2014,23 @@ window.submitEvaluation = async (templateId) => {
             overall_score: overallScore,
             category_scores: categoryFinal,
             summary_feedback: summary,
-            status: 'sent',
-            submitted_at: new Date().toISOString(),
-            sent_to_student_at: new Date().toISOString()
-        });
-        
-        if (error) throw error;
-        
-        if (window.ProVance && window.ProVance.sendNotification) {
-            try {
-                await window.ProVance.sendNotification({
-                    userId: t.student_user_id,
-                    userType: 'student',
-                    title: '⭐ تم تقييمك',
-                    message: 'نتيجتك: ' + overallScore.toFixed(1) + '/100',
-                    type: overallScore >= 70 ? 'success' : 'info',
-                    link: 'student-profile.html'
-                });
-            } catch(e){}
+            status: 'draft',
+            submitted_at: new Date().toISOString()
+        };
+
+        let error;
+        if (t.evaluation && t.evaluation.id) {
+            // تحديث المسودة الموجودة
+            ({ error } = await sb.from('ai_evaluations').update(payload).eq('id', t.evaluation.id));
+        } else {
+            ({ error } = await sb.from('ai_evaluations').insert(payload));
         }
-        
-        showToast('✅ تم حفظ التقييم', 'success');
+
+        if (error) throw error;
+
+        const answered = Object.keys(answers).length;
+        const total = template.questions.length;
+        showToast('✅ تم حفظ التقييم (' + answered + '/' + total + ' سؤال)', 'success');
         await loadAll();
         openTrainee(currentTraineeId);
     } catch(err) {
@@ -3426,7 +3417,7 @@ window.sendRecToStudent = async (recId) => {
 
 // إرسال التقرير الكامل للطالب (تقييم + ترشيحات + تحليل شخصية) دفعة واحدة
 window.sendFullReportToStudent = async (recId) => {
-    if (!confirm('إرسال التقرير الكامل للطالب؟\nسيتمكّن الطالب من رؤية: تقييم الأداء، الترشيحات الوظيفية، وتحليل الشخصية. لا يمكن التراجع.')) return;
+    if (!confirm('إرسال التقرير الكامل للطالب؟\nسيتمكّن الطالب من رؤية: تقييم الأداء والترشيحات الوظيفية. لا يمكن التراجع.')) return;
 
     const sb = await window.getSafeSupabase();
     const t = allTrainees.find(x => x.id === currentTraineeId);
@@ -3472,7 +3463,7 @@ window.sendFullReportToStudent = async (recId) => {
                 userId: t.student_user_id,
                 userType: 'student',
                 title: '📋 تقريرك الكامل جاهز',
-                message: 'الشركة أرسلت تقييم أدائك، الترشيحات الوظيفية، وتحليل شخصيتك المهنية',
+                message: 'الشركة أرسلت تقييم أدائك والترشيحات الوظيفية',
                 type: 'success',
                 link: 'student-profile.html'
             });
