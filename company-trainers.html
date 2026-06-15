@@ -1202,6 +1202,18 @@ let filteredTrainees = [];
 let currentTraineeId = null;
 let currentStatusFilter = 'all';
 
+function isTraineeLocked() {
+    const t = allTrainees.find(x => x.id === currentTraineeId);
+    return !!(t && t.recommendation && t.recommendation.sent_to_student);
+}
+function lockBannerHtml() {
+    return '<div style="display:flex;align-items:center;gap:12px;background:rgba(79,172,254,0.07);border:1px solid rgba(79,172,254,0.3);border-radius:14px;padding:13px 16px;margin-bottom:16px">' +
+        '<i class="fas fa-lock" style="color:#4facfe;font-size:1.1rem;flex-shrink:0"></i>' +
+        '<div><strong style="color:#4facfe;font-size:0.92rem">التقرير أُرسل للطالب — الملف مقفول</strong>' +
+        '<div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px">لا يمكن إجراء أي تعديلات بعد إرسال التقرير للحفاظ على موثوقية البيانات</div></div>' +
+    '</div>';
+}
+
 window.logoutCompany = async (e) => {
     e && e.preventDefault && e.preventDefault();
     if (!confirm('تسجيل الخروج؟')) return;
@@ -1815,15 +1827,16 @@ window.switchTab = (tab) => {
 async function renderEvalTab() {
     const t = allTrainees.find(x => x.id === currentTraineeId);
     if (!t) return;
-    
+    const locked = isTraineeLocked();
+
     const content = document.getElementById('tabContent');
-    
+
     if (t.evaluation) {
         const e = t.evaluation;
         const cats = e.category_scores || {};
         const catLabels = {technical:'🛠️ مهارات تقنية', soft_skills:'💼 مهارات شخصية', performance:'📊 الأداء', growth:'🌱 التطور'};
-        
-        content.innerHTML = '<div style="text-align:center;background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(220,38,38,0.05));border:1px solid rgba(239,68,68,0.25);border-radius:14px;padding:24px;margin-bottom:14px">' +
+
+        content.innerHTML = (locked ? lockBannerHtml() : '') + '<div style="text-align:center;background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(220,38,38,0.05));border:1px solid rgba(239,68,68,0.25);border-radius:14px;padding:24px;margin-bottom:14px">' +
             '<div style="font-size:3.5rem;font-weight:800;background:linear-gradient(135deg,#ef4444,#dc2626);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1">' + Number(e.overall_score || 0).toFixed(1) + '<span style="font-size:1.2rem">/100</span></div>' +
             '<div style="color:var(--text-muted);margin-top:6px">النتيجة الإجمالية</div>' +
         '</div>' +
@@ -1833,18 +1846,19 @@ async function renderEvalTab() {
             ).join('') +
         '</div>' : '') +
         (e.summary_feedback ? '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px"><div style="font-weight:700;margin-bottom:8px;color:var(--primary)"><i class="fas fa-comment"></i> الملخص</div><div style="line-height:1.7;color:var(--text-muted);font-size:0.92rem">' + esc(e.summary_feedback) + '</div></div>' : '') +
-        '<button onclick="startNewEval()" style="width:100%;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-redo"></i> إعادة التقييم بأسئلة جديدة من AI</button>';
+        (locked ? '' : '<button onclick="startNewEval()" style="width:100%;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-redo"></i> إعادة التقييم بأسئلة جديدة من AI</button>');
     } else {
-        content.innerHTML = '<div style="text-align:center;padding:40px 20px">' +
+        content.innerHTML = (locked ? lockBannerHtml() : '') + '<div style="text-align:center;padding:40px 20px">' +
             '<div style="width:80px;height:80px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:#fff;margin:0 auto 18px"><i class="fas fa-brain"></i></div>' +
             '<h3 style="font-size:1.2rem;font-weight:800;margin-bottom:6px">تقييم بالذكاء الاصطناعي</h3>' +
             '<p style="color:var(--text-muted);margin-bottom:24px;line-height:1.6">الـ AI هيولّد أسئلة مخصصة لمجال "' + esc(t.field) + '". قيّم الطالب بـ 5 نجوم لكل سؤال.</p>' +
-            '<button onclick="startNewEval()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:14px 28px;border-radius:12px;font-weight:700;font-family:inherit;font-size:1rem;cursor:pointer"><i class="fas fa-magic"></i> توليد أسئلة التقييم</button>' +
+            (locked ? '<div style="background:rgba(79,172,254,0.06);border-radius:10px;padding:12px;color:var(--text-muted);font-size:0.88rem;text-align:center"><i class="fas fa-lock" style="color:#4facfe"></i> لا يوجد تقييم مسجّل قبل إرسال التقرير</div>' : '<button onclick="startNewEval()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:14px 28px;border-radius:12px;font-weight:700;font-family:inherit;font-size:1rem;cursor:pointer"><i class="fas fa-magic"></i> توليد أسئلة التقييم</button>') +
         '</div>';
     }
 }
 
 window.startNewEval = async () => {
+    if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     const t = allTrainees.find(x => x.id === currentTraineeId);
     if (!t) return;
 
@@ -2007,6 +2021,7 @@ window.setStar = (qId, value) => {
 };
 
 window.submitEvaluation = async (templateId) => {
+    if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     const answers = window._evalAnswers || {};
     const template = window._evalTemplate;
     
@@ -2091,7 +2106,8 @@ window.submitEvaluation = async (templateId) => {
 async function renderTasksTab() {
     const t = allTrainees.find(x => x.id === currentTraineeId);
     if (!t) return;
-    
+    const locked = isTraineeLocked();
+
     const sb = await window.getSafeSupabase();
     const { data: tasks } = await sb.from('task_reports').select('*').eq('application_id', currentTraineeId).order('created_at', { ascending: false });
     
@@ -2110,14 +2126,17 @@ async function renderTasksTab() {
                 (task.task_description ? '<div style="color:var(--text-muted);font-size:0.88rem;margin-top:8px;line-height:1.6">' + esc(task.task_description) + '</div>' : '') +
                 (task.report_text ? '<div style="background:rgba(239,68,68,0.05);padding:10px;border-radius:8px;margin-top:10px;font-size:0.88rem;line-height:1.6;color:var(--text-muted)"><strong style="color:var(--primary)">التقرير:</strong> ' + esc(task.report_text) + '</div>' : '') +
                 (task.file_url ? '<a href="' + esc(task.file_url) + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;color:var(--primary);font-size:0.85rem;text-decoration:none"><i class="fas fa-file"></i> ' + esc(task.file_name || 'ملف') + '</a>' : '') +
-                '<button onclick="deleteTask(&apos;' + task.id + '&apos;)" style="margin-top:10px;background:transparent;border:none;color:#ef4444;cursor:pointer;font-size:0.8rem"><i class="fas fa-trash"></i> حذف</button>' +
+                (locked ? '' : '<button onclick="deleteTask(&apos;' + task.id + '&apos;)" style="margin-top:10px;background:transparent;border:none;color:#ef4444;cursor:pointer;font-size:0.8rem"><i class="fas fa-trash"></i> حذف</button>') +
             '</div>';
         }).join('');
     
-    content.innerHTML = '<button onclick="showAddTaskForm()" style="width:100%;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:12px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:14px"><i class="fas fa-plus"></i> إضافة مهمة / تقرير جديد</button>' + tasksHtml;
+    content.innerHTML = (locked ? lockBannerHtml() : '') +
+        (locked ? '' : '<button onclick="showAddTaskForm()" style="width:100%;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:12px;border-radius:12px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:14px"><i class="fas fa-plus"></i> إضافة مهمة / تقرير جديد</button>') +
+        tasksHtml;
 }
 
 window.showAddTaskForm = () => {
+    if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     const today = new Date().toISOString().split('T')[0];
     const now = new Date().toTimeString().slice(0, 5);
     
@@ -2159,6 +2178,7 @@ window.setTaskRating = (n) => {
 };
 
 window.saveTask = async () => {
+    if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     const title = (document.getElementById('taskTitle') || {}).value || '';
     if (!title.trim()) { showToast('عنوان المهمة مطلوب', 'warning'); return; }
     
@@ -2207,6 +2227,7 @@ window.saveTask = async () => {
 };
 
 window.deleteTask = async (taskId) => {
+    if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     if (!confirm('حذف التقرير؟')) return;
     const sb = await window.getSafeSupabase();
     const { error } = await sb.from('task_reports').delete().eq('id', taskId);
@@ -2459,6 +2480,7 @@ function buildPersonaAnalysis(field, evaluation, tasks) {
 async function renderPersonaTab() {
     const t = allTrainees.find(x => x.id === currentTraineeId);
     if (!t) return;
+    const locked = isTraineeLocked();
     const content = document.getElementById('tabContent');
 
     if (!t.evaluation) {
@@ -2545,6 +2567,7 @@ async function renderPersonaTab() {
     }
 
     content.innerHTML =
+        (locked ? lockBannerHtml() : '') +
         // نظرة عامة
         '<div class="persona-overview"><div class="persona-overview-title"><i class="fas fa-brain"></i> النظرة العامة على الشخصية المهنية' +
         (a._ai ? ' <span style="margin-right:auto;font-size:0.7rem;background:linear-gradient(135deg,#7c6cff,#a855f7);color:#fff;padding:3px 10px;border-radius:20px;font-weight:800"><i class="fas fa-robot"></i> تحليل AI</span>' : '') +
@@ -2576,7 +2599,7 @@ async function renderPersonaTab() {
             (recRow && recRow.sent_to_student
                 ? '<div class="rec-sent"><i class="fas fa-check-circle"></i> تم إرسال التقرير الكامل للطالب</div>'
                 : '') +
-            '<button class="rec-save-btn" onclick="saveCompanyRecs()"><i class="fas fa-save"></i> حفظ التقدم</button>' +
+            (locked ? '' : '<button class="rec-save-btn" onclick="saveCompanyRecs()"><i class="fas fa-save"></i> حفظ التقدم</button>') +
             (recRow && !recRow.sent_to_student
                 ? '<button class="rec-send-btn" onclick="sendFullReportToStudent(&apos;' + recRow.id + '&apos;)"><i class="fas fa-paper-plane"></i> إرسال التقرير الكامل للطالب</button>'
                 : (!recRow ? '<div class="rec-send-hint"><i class="fas fa-info-circle"></i> ولّد الترشيحات أولاً من تاب «الترشيحات» لتفعيل الإرسال</div>' : '')) +
@@ -2587,6 +2610,7 @@ async function renderPersonaTab() {
 async function renderRecTab() {
     const t = allTrainees.find(x => x.id === currentTraineeId);
     if (!t) return;
+    const locked = isTraineeLocked();
 
     const sb = await window.getSafeSupabase();
     let rec = null;
@@ -2722,7 +2746,7 @@ async function renderRecTab() {
         const companyCardsHTML = (window._recState.companyRecs || []).map((c, ci) => {
             const cm = (typeof c.match === 'number') ? c.match : (parseInt(c.match) || 0);
             return '<div class="rec-card rec-company-card" id="compRecCard_' + ci + '">' +
-                '<button class="rec-remove-btn" onclick="removeCompanyRec(' + ci + ')" title="حذف"><i class="fas fa-times"></i></button>' +
+                (locked ? '' : '<button class="rec-remove-btn" onclick="removeCompanyRec(' + ci + ')" title="حذف"><i class="fas fa-times"></i></button>') +
                 '<div class="rec-card-head">' +
                     '<span class="rec-company-badge"><i class="fas fa-building"></i> ترشيح الشركة</span>' +
                     '<div class="rec-field-name">' + esc(c.field || '') + '</div>' +
@@ -2736,6 +2760,7 @@ async function renderRecTab() {
         }).join('');
 
         content.innerHTML =
+            (locked ? lockBannerHtml() : '') +
             // الملخص الذكي: أفضل مسار
             (rec.smart_summary ? '<div class="rec-smart"><div class="rec-smart-icon"><i class="fas fa-lightbulb"></i></div><div class="rec-smart-body"><div class="rec-smart-title">خلاصة الترشيح</div><div class="rec-smart-text">' + esc(rec.smart_summary) + '</div></div></div>' : '') +
 
@@ -2752,13 +2777,13 @@ async function renderRecTab() {
             // Company Recommendations
             '<div class="rec-section-title" style="margin-top:24px"><i class="fas fa-building"></i> ترشيحات الشركة</div>' +
             '<div class="rec-grid" id="companyRecGrid">' + (companyCardsHTML || '') + '</div>' +
-            '<button class="rec-add-field" onclick="addCompanyRecField()"><i class="fas fa-plus"></i> إضافة مجال ترشيح إضافي</button>' +
+            (locked ? '' : '<button class="rec-add-field" onclick="addCompanyRecField()"><i class="fas fa-plus"></i> إضافة مجال ترشيح إضافي</button>') +
 
             // Actions
             '<div class="rec-actions">' +
                 (rec.sent_to_student ? '<div class="rec-sent"><i class="fas fa-check-circle"></i> تم إرسال التقرير الكامل للطالب</div>' : '') +
-                '<button class="rec-save-btn" onclick="saveCompanyRecs()"><i class="fas fa-save"></i> حفظ التقدم</button>' +
-                '<button class="rec-regen-btn" onclick="regenerateRec()"><i class="fas fa-redo"></i> إعادة توليد الترشيحات</button>' +
+                (locked ? '' : '<button class="rec-save-btn" onclick="saveCompanyRecs()"><i class="fas fa-save"></i> حفظ التقدم</button>') +
+                (locked ? '' : '<button class="rec-regen-btn" onclick="regenerateRec()"><i class="fas fa-redo"></i> إعادة توليد الترشيحات</button>') +
                 (!rec.sent_to_student ? '<div class="rec-send-hint"><i class="fas fa-info-circle"></i> الإرسال النهائي للطالب من تاب «تحليل الشخصية»</div>' : '') +
             '</div>';
     } else {
@@ -2778,6 +2803,7 @@ async function renderRecTab() {
 // ===== اعتماد / إلغاء اعتماد ترشيح AI =====
 window.toggleApproveRec = (e, idx, fieldName) => {
     e.preventDefault();
+    if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     if (!window._recState) return;
     const arr = window._recState.approved;
     const pos = arr.indexOf(fieldName);
@@ -2825,6 +2851,7 @@ function updateApprovedCount() {
 
 // ===== اعتماد كل الترشيحات دفعة واحدة =====
 window.approveAllRecs = () => {
+    if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     if (!window._recState) return;
     const cards = document.querySelectorAll('[id^="recCard_"]');
     // لو الكل معتمد بالفعل → ألغِ الكل (toggle)
@@ -2842,6 +2869,7 @@ window.approveAllRecs = () => {
 
 // ===== تحديث رأي الشركة على ترشيح AI =====
 window.updateOpinion = (fieldName, value) => {
+    if (isTraineeLocked()) return;
     if (!window._recState) return;
     if (!window._recState.opinions) window._recState.opinions = {};
     window._recState.opinions[fieldName] = value;
@@ -2849,6 +2877,7 @@ window.updateOpinion = (fieldName, value) => {
 
 // ===== إضافة مجال ترشيح من الشركة =====
 window.addCompanyRecField = () => {
+    if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     const field = prompt('اسم المجال / الوظيفة المرشّحة من الشركة:');
     if (!field || !field.trim()) return;
     const description = prompt('سبب الترشيح أو لماذا يناسب الطالب (اختياري):') || '';
@@ -2866,6 +2895,7 @@ window.addCompanyRecField = () => {
 
 // ===== حذف ترشيح شركة =====
 window.removeCompanyRec = (ci) => {
+    if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     if (!window._recState) return;
     window._recState.companyRecs.splice(ci, 1);
     renderRecTab(); // أعد الرسم عشان الـ indices تتظبط
@@ -2873,6 +2903,7 @@ window.removeCompanyRec = (ci) => {
 
 // ===== حفظ ترشيحات الشركة + الاعتمادات =====
 window.saveCompanyRecs = async () => {
+    if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     if (!window._recState || !window._recState.recId) { showToast('لا يوجد ما يُحفظ', 'warning'); return; }
     try {
         const sb = await window.getSafeSupabase();
@@ -2940,6 +2971,7 @@ async function saveFreshRec(recId, fresh, approved, companyRecs, opinions) {
 }
 
 window.generateRec = async (silent) => {
+    if (isTraineeLocked()) { if (!silent) showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     const t = allTrainees.find(x => x.id === currentTraineeId);
     if (!t || !t.evaluation) { if (!silent) showToast('قيّم الأداء أولاً', 'warning'); return; }
 
@@ -3307,6 +3339,7 @@ function buildCareerRecommendations(field, evaluation) {
 }
 
 window.regenerateRec = async () => {
+    if (isTraineeLocked()) { showToast('🔒 لا يمكن التعديل — التقرير أُرسل للطالب', 'warning'); return; }
     if (!confirm('إعادة توليد الترشيحات؟')) return;
     generateRec();
 };
