@@ -1567,7 +1567,10 @@ function renderTrainees() {
                 '<span><i class="fas fa-clipboard-list" style="color:var(--primary)"></i> ' + tasksCount + ' مهمة</span>' +
                 '<span><i class="fas fa-' + (hasRec ? 'check-circle' : 'magic') + '" style="color:' + (hasRec ? '#10b981' : 'var(--primary)') + '"></i> ' + (hasRec ? 'رشحت' : 'لم ترشح') + '</span>' +
             '</div>' +
-            '<button style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:8px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer;width:100%"><i class="fas fa-arrow-left"></i> فتح الملف</button>' +
+            '<div style="display:flex;gap:8px">' +
+                '<button onclick="event.stopPropagation();openTaskReportsOnly(&apos;' + t.id + '&apos;)" style="background:rgba(79,172,254,0.1);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:8px 12px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.82rem;cursor:pointer;flex-shrink:0" title="عرض تقارير المهام"><i class="fas fa-clipboard-list"></i> التقارير</button>' +
+                '<button onclick="event.stopPropagation();openTrainee(&apos;' + t.id + '&apos;)" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:8px;border-radius:10px;font-weight:700;font-family:inherit;font-size:0.85rem;cursor:pointer;flex:1"><i class="fas fa-arrow-left"></i> فتح الملف</button>' +
+            '</div>' +
         '</div>';
     }).join('');
 }
@@ -2076,6 +2079,7 @@ async function renderTasksTab() {
                 '</div>' +
                 (task.task_description ? '<div style="color:var(--text-muted);font-size:0.88rem;margin-top:8px;line-height:1.6">' + esc(task.task_description) + '</div>' : '') +
                 (task.notes ? '<div style="background:rgba(239,68,68,0.05);padding:10px;border-radius:8px;margin-top:10px;font-size:0.88rem;line-height:1.6;color:var(--text-muted)"><strong style="color:var(--primary)">ملاحظات:</strong> ' + esc(task.notes) + '</div>' : '') +
+                (task.file_name ? '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;background:rgba(79,172,254,0.07);border:1px solid rgba(79,172,254,0.25);border-radius:8px;padding:8px 12px"><i class="fas fa-paperclip" style="color:#4facfe;flex-shrink:0"></i><span style="flex:1;font-size:0.84rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)">' + esc(task.file_name) + '</span><button onclick="downloadTaskFile(&apos;' + esc(task.file_path||'') + '&apos;,&apos;' + esc(task.file_name||'') + '&apos;)" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:5px 12px;border-radius:8px;font-weight:700;font-family:inherit;font-size:0.8rem;cursor:pointer;white-space:nowrap;flex-shrink:0"><i class="fas fa-download"></i> تحميل</button></div>' : '') +
                 (locked ? '' : '<button onclick="deleteTask(&apos;' + task.id + '&apos;)" style="margin-top:10px;background:transparent;border:none;color:#ef4444;cursor:pointer;font-size:0.8rem"><i class="fas fa-trash"></i> حذف</button>') +
             '</div>';
         }).join('');
@@ -2133,6 +2137,19 @@ window.showAddTaskForm = () => {
         '<div style="margin-bottom:14px"><label style="' + LBL + '">ملاحظات الأداء</label>' +
         '<textarea id="taskNotes" rows="3" placeholder="نقاط القوة، نقاط التحسين، التعليقات..." style="' + INP + ';resize:vertical"></textarea></div>' +
 
+        // رفع ملف
+        '<div style="margin-bottom:14px"><label style="' + LBL + '"><i class="fas fa-paperclip" style="color:var(--primary);margin-left:4px"></i> إرفاق ملف (اختياري)</label>' +
+        '<div id="fileDropZone" onclick="document.getElementById(\'taskFile\').click()" ondragover="event.preventDefault();this.style.borderColor=\'var(--primary)\';this.style.background=\'rgba(239,68,68,0.05)\'" ondragleave="this.style.borderColor=\'var(--border)\';this.style.background=\'transparent\'" ondrop="handleFileDrop(event)" style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s">' +
+            '<i class="fas fa-cloud-upload-alt" style="font-size:2rem;color:var(--text-muted);margin-bottom:8px;display:block"></i>' +
+            '<div style="color:var(--text-muted);font-size:0.88rem">اضغط لاختيار ملف أو اسحبه هنا</div>' +
+            '<div style="color:rgba(148,163,184,0.6);font-size:0.75rem;margin-top:4px">PDF, Word, Excel, صور — حد أقصى 10 MB</div>' +
+            '<div id="fileSelectedInfo" style="display:none;margin-top:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:8px 12px;text-align:right;display:none">' +
+                '<i class="fas fa-file-check" style="color:#10b981"></i> <span id="fileSelectedName" style="color:#10b981;font-weight:700;font-size:0.88rem"></span>' +
+                ' <button type="button" onclick="event.stopPropagation();clearTaskFile()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.8rem;margin-right:8px">✕ إزالة</button>' +
+            '</div>' +
+        '</div>' +
+        '<input type="file" id="taskFile" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.zip,.rar" onchange="onFileSelected(this)"></div>' +
+
         // التقييم بالنجوم
         '<div style="margin-bottom:16px"><label style="' + LBL + '">التقييم (1-5 نجوم)</label>' +
         '<div id="taskRatingStars" style="display:flex;gap:6px">' +
@@ -2182,6 +2199,28 @@ window.saveTask = async () => {
 
         const hoursVal = parseFloat((document.getElementById('taskHours') || {}).value || '');
 
+        // رفع الملف لو موجود
+        let filePath = null, fileName = null, fileType = null;
+        const fileInput = document.getElementById('taskFile');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('حجم الملف أكبر من 10 MB', 'warning');
+                return;
+            }
+            const ext = file.name.split('.').pop();
+            const safeName = Date.now() + '_' + Math.random().toString(36).substr(2, 6) + '.' + ext;
+            const storagePath = 'task-reports/' + companyUserId + '/' + currentTraineeId + '/' + safeName;
+            const { error: uploadErr } = await sb.storage.from('uploads').upload(storagePath, file, { upsert: false, contentType: file.type });
+            if (uploadErr) {
+                showToast('خطأ في رفع الملف: ' + uploadErr.message, 'error');
+                return;
+            }
+            filePath = storagePath;
+            fileName = file.name;
+            fileType = file.type;
+        }
+
         const { error } = await sb.from('task_reports').insert({
             application_id: currentTraineeId,
             student_user_id: t.student_user_id,
@@ -2193,7 +2232,10 @@ window.saveTask = async () => {
             task_date: (document.getElementById('taskDate') || {}).value || null,
             time_spent_hours: isNaN(hoursVal) ? null : hoursVal,
             quality_rating: window._taskRating || null,
-            completion_status: (document.getElementById('taskStatus') || {}).value || 'completed'
+            completion_status: (document.getElementById('taskStatus') || {}).value || 'completed',
+            file_path: filePath,
+            file_name: fileName,
+            file_type: fileType
         });
 
         if (error) throw error;
@@ -2238,8 +2280,13 @@ async function callAIAnalysis(t) {
             tasks: (t.tasks || []).map(tk => ({
                 task_title: tk.task_title,
                 task_description: tk.task_description,
-                report_text: tk.report_text,
-                rating: tk.rating
+                notes: tk.notes,
+                report_text: tk.notes,
+                quality_rating: tk.quality_rating,
+                rating: tk.quality_rating,
+                completion_status: tk.completion_status,
+                time_spent_hours: tk.time_spent_hours,
+                has_file: !!tk.file_path
             })),
             mode: 'full'
         };
@@ -2280,9 +2327,9 @@ function aiToPersona(ai, t) {
     let taskAnalysis = null;
     if (Array.isArray(ai.task_insights) && ai.task_insights.length && (t.tasks||[]).length) {
         const tasks = t.tasks || [];
-        const withReport = tasks.filter(x => x.report_text && x.report_text.trim()).length;
-        const rated = tasks.filter(x => x.rating > 0);
-        const avg = rated.length ? rated.reduce((s,x)=>s+Number(x.rating),0)/rated.length : 0;
+        const withReport = tasks.filter(x => x.notes && x.notes.trim()).length;
+        const rated = tasks.filter(x => x.quality_rating > 0);
+        const avg = rated.length ? rated.reduce((s,x)=>s+Number(x.quality_rating),0)/rated.length : 0;
         taskAnalysis = {
             total: tasks.length,
             with_report: withReport,
@@ -2291,7 +2338,7 @@ function aiToPersona(ai, t) {
             insights: ai.task_insights,
             recent_tasks: tasks.slice(-3).reverse().map(x => ({
                 title: x.task_title || 'مهمة', asked: x.task_description || '',
-                done: x.report_text || '', rating: x.rating || 0
+                done: x.notes || '', rating: x.quality_rating || 0
             }))
         };
     }
@@ -2389,14 +2436,14 @@ function buildPersonaAnalysis(field, evaluation, tasks) {
     const taskList = Array.isArray(tasks) ? tasks : [];
     if (taskList.length > 0) {
         const total = taskList.length;
-        const withReport = taskList.filter(x => x.report_text && x.report_text.trim()).length;
-        const rated = taskList.filter(x => x.rating != null && x.rating > 0);
-        const avgRating = rated.length ? (rated.reduce((s, x) => s + Number(x.rating), 0) / rated.length) : 0;
+        const withReport = taskList.filter(x => x.notes && x.notes.trim()).length;
+        const rated = taskList.filter(x => x.quality_rating != null && x.quality_rating > 0);
+        const avgRating = rated.length ? (rated.reduce((s, x) => s + Number(x.quality_rating), 0) / rated.length) : 0;
         const completionRate = Math.round((withReport / total) * 100);
         const withFiles = taskList.filter(x => x.file_url).length;
 
         // متوسط طول التقارير (مؤشر على التفصيل والاجتهاد)
-        const reportLengths = taskList.filter(x => x.report_text).map(x => x.report_text.trim().length);
+        const reportLengths = taskList.filter(x => x.notes).map(x => x.notes.trim().length);
         const avgReportLen = reportLengths.length ? Math.round(reportLengths.reduce((a, b) => a + b, 0) / reportLengths.length) : 0;
 
         // رؤى مبنية على المهام
@@ -2420,8 +2467,8 @@ function buildPersonaAnalysis(field, evaluation, tasks) {
         const recentTasks = taskList.slice(-3).reverse().map(x => ({
             title: x.task_title || 'مهمة',
             asked: x.task_description || '',
-            done: x.report_text || '',
-            rating: x.rating || 0
+            done: x.notes || '',
+            rating: x.quality_rating || 0
         }));
 
         taskAnalysis = {
@@ -3426,6 +3473,141 @@ window.sendFullReportToStudent = async (recId) => {
     showToast('✅ تم إرسال التقرير الكامل للطالب', 'success');
     await loadAll();
     renderPersonaTab();
+};
+
+// ============ دوال رفع وتحميل ملفات المهام ============
+
+window.downloadTaskFile = async (storagePath, name) => {
+    if (!storagePath) return;
+    try {
+        const sb = await window.getSafeSupabase();
+        const { data, error } = await sb.storage.from('uploads').createSignedUrl(storagePath, 3600);
+        if (error || !data) { showToast('خطأ في تحميل الملف', 'error'); return; }
+        const a = document.createElement('a');
+        a.href = data.signedUrl;
+        a.download = name || 'file';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    } catch (e) {
+        showToast('خطأ: ' + e.message, 'error');
+    }
+};
+
+window.onFileSelected = (input) => {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const sizeStr = file.size > 1024 * 1024
+        ? (file.size / 1024 / 1024).toFixed(1) + ' MB'
+        : Math.round(file.size / 1024) + ' KB';
+    const info = document.getElementById('fileSelectedInfo');
+    const nameEl = document.getElementById('fileSelectedName');
+    if (nameEl) nameEl.textContent = file.name + ' (' + sizeStr + ')';
+    if (info) info.style.display = 'block';
+    const zone = document.getElementById('fileDropZone');
+    if (zone) { zone.style.borderColor = '#10b981'; zone.style.background = 'rgba(16,185,129,0.04)'; }
+};
+
+window.clearTaskFile = () => {
+    const input = document.getElementById('taskFile');
+    if (input) input.value = '';
+    const info = document.getElementById('fileSelectedInfo');
+    if (info) info.style.display = 'none';
+    const zone = document.getElementById('fileDropZone');
+    if (zone) { zone.style.borderColor = 'var(--border)'; zone.style.background = 'transparent'; }
+};
+
+window.handleFileDrop = (event) => {
+    event.preventDefault();
+    const file = event.dataTransfer && event.dataTransfer.files[0];
+    if (!file) return;
+    const input = document.getElementById('taskFile');
+    if (!input) return;
+    try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+    } catch (e) { return; }
+    onFileSelected(input);
+    const zone = document.getElementById('fileDropZone');
+    if (zone) { zone.style.borderColor = 'var(--border)'; zone.style.background = 'transparent'; }
+};
+
+// ============ موديل عرض تقارير المهام (قراءة فقط) ============
+window.openTaskReportsOnly = async (appId) => {
+    const t = allTrainees.find(x => x.id === appId);
+    if (!t) return;
+
+    // اعرض الموديل مع لودر
+    const oldModal = document.getElementById('taskReportsModal');
+    if (oldModal) oldModal.remove();
+
+    const closeModal = () => {
+        const m = document.getElementById('taskReportsModal');
+        if (m) m.remove();
+        document.body.style.overflow = '';
+    };
+
+    document.body.insertAdjacentHTML('beforeend',
+        '<div id="taskReportsModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:3000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this){document.getElementById(\'taskReportsModal\').remove();document.body.style.overflow=\'\'}">' +
+        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:20px;width:100%;max-width:700px;padding:24px;margin:auto">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border)">' +
+                '<div><div style="font-size:1.1rem;font-weight:800"><i class="fas fa-clipboard-list" style="color:var(--primary)"></i> تقارير مهام: ' + esc(t.student_name || '-') + '</div>' +
+                '<div style="color:var(--text-muted);font-size:0.82rem;margin-top:3px">' + esc(t.field || '') + '</div></div>' +
+                '<button onclick="document.getElementById(\'taskReportsModal\').remove();document.body.style.overflow=\'\'" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.2rem">×</button>' +
+            '</div>' +
+            '<div id="taskReportsContent" style="min-height:200px;display:flex;align-items:center;justify-content:center">' +
+                '<div style="text-align:center;color:var(--text-muted)"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--primary);display:block;margin-bottom:10px"></i>جاري التحميل...</div>' +
+            '</div>' +
+        '</div></div>'
+    );
+    document.body.style.overflow = 'hidden';
+
+    try {
+        const sb = await window.getSafeSupabase();
+        const { data: tasks } = await sb.from('task_reports').select('*').eq('application_id', appId).order('task_date', { ascending: false });
+
+        const statusMap = { completed: ['✅', 'مكتملة', '#10b981'], partial: ['⚡', 'جزئية', '#f59e0b'], pending: ['⏳', 'معلقة', '#94a3b8'] };
+
+        const tasksHtml = !(tasks || []).length
+            ? '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-clipboard-list" style="font-size:3rem;opacity:.3;display:block;margin-bottom:12px"></i><p>لا توجد تقارير مهام بعد</p></div>'
+            : (tasks).map(task => {
+                const stars = task.quality_rating ? [1,2,3,4,5].map(n => '<span style="color:' + (n <= task.quality_rating ? '#fbbf24' : 'rgba(148,163,184,0.3)') + '">★</span>').join('') : '';
+                const st = statusMap[task.completion_status] || statusMap.completed;
+                const hoursLabel = task.time_spent_hours ? (task.time_spent_hours < 1 ? '٣٠ دقيقة' : task.time_spent_hours + ' س') : null;
+                return '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:10px;flex-wrap:wrap">' +
+                        '<div style="flex:1;min-width:0">' +
+                            '<div style="font-weight:800;font-size:0.97rem;margin-bottom:6px">' + esc(task.task_title) + '</div>' +
+                            '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+                                '<span style="color:var(--text-muted);font-size:0.78rem"><i class="fas fa-calendar" style="color:var(--primary)"></i> ' + (task.task_date ? new Date(task.task_date + 'T00:00:00').toLocaleDateString('ar-EG', {day:'numeric',month:'long',year:'numeric'}) : '-') + '</span>' +
+                                (hoursLabel ? '<span style="background:rgba(79,172,254,0.1);color:#4facfe;padding:2px 8px;border-radius:10px;font-size:0.75rem"><i class="fas fa-clock"></i> ' + hoursLabel + '</span>' : '') +
+                                '<span style="color:' + st[2] + ';font-size:0.78rem">' + st[0] + ' ' + st[1] + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        (stars ? '<div style="font-size:1.15rem;flex-shrink:0">' + stars + '</div>' : '') +
+                    '</div>' +
+                    (task.task_description ? '<div style="background:rgba(255,255,255,0.02);border-right:3px solid var(--border);padding:10px 12px;border-radius:0 6px 6px 0;margin-bottom:8px;font-size:0.86rem;color:var(--text-muted);line-height:1.6"><strong style="color:var(--text)">المهمة المطلوبة:</strong><br>' + esc(task.task_description) + '</div>' : '') +
+                    (task.notes ? '<div style="background:rgba(239,68,68,0.05);border-right:3px solid var(--primary);padding:10px 12px;border-radius:0 6px 6px 0;margin-bottom:8px;font-size:0.86rem;line-height:1.6;color:var(--text-muted)"><strong style="color:var(--primary)">ملاحظات الأداء:</strong><br>' + esc(task.notes) + '</div>' : '') +
+                    (task.file_name ? '<div style="display:flex;align-items:center;gap:8px;background:rgba(79,172,254,0.07);border:1px solid rgba(79,172,254,0.25);border-radius:8px;padding:8px 12px"><i class="fas fa-paperclip" style="color:#4facfe;flex-shrink:0"></i><span style="flex:1;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;color:var(--text)">' + esc(task.file_name) + '</span><button onclick="downloadTaskFile(&apos;' + esc(task.file_path||'') + '&apos;,&apos;' + esc(task.file_name||'') + '&apos;)" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:5px 12px;border-radius:8px;font-weight:700;font-family:inherit;font-size:0.8rem;cursor:pointer;white-space:nowrap;flex-shrink:0"><i class="fas fa-download"></i> تحميل</button></div>' : '') +
+                '</div>';
+            }).join('');
+
+        const contentEl = document.getElementById('taskReportsContent');
+        if (contentEl) {
+            contentEl.style.display = 'block';
+            contentEl.innerHTML =
+                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">' +
+                    '<span style="color:var(--text-muted);font-size:0.84rem"><strong style="color:var(--text)">' + (tasks||[]).length + '</strong> تقرير مهمة</span>' +
+                    '<button onclick="openTrainee(&apos;' + appId + '&apos;);document.getElementById(\'taskReportsModal\').remove()" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:7px 14px;border-radius:8px;font-weight:700;font-family:inherit;font-size:0.82rem;cursor:pointer"><i class="fas fa-arrow-left"></i> فتح الملف الكامل</button>' +
+                '</div>' +
+                tasksHtml;
+        }
+    } catch (e) {
+        const contentEl = document.getElementById('taskReportsContent');
+        if (contentEl) contentEl.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444"><i class="fas fa-exclamation-circle" style="display:block;margin-bottom:10px;font-size:2rem"></i>خطأ: ' + esc(e.message) + '</div>';
+    }
 };
 
 (async () => {
