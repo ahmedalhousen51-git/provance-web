@@ -291,37 +291,50 @@
     // ============================================================
     async function sendNotification(opts) {
         const sb = getSupabase();
-        if (!sb) return false;
-        try {
-            await sb.from('notifications').insert({
-                user_id: opts.userId,
-                user_type: opts.userType,
-                title: opts.title,
-                message: opts.message,
-                type: opts.type || 'info',
-                link: opts.link || opts.actionUrl || null,
-                related_type: opts.relatedType || null,
-                related_id: opts.relatedId || null,
-                is_read: false
-            });
+        if (!sb) { console.warn('sendNotification: لا يوجد اتصال Supabase'); return false; }
 
-            // أرسل Web Push (يصل حتى لو الموقع مقفول) — لا يعطّل لو فشل
-            try {
-                sb.functions.invoke('send-push', {
-                    body: {
-                        user_id: opts.userId,
-                        title: opts.title,
-                        body: opts.message,
-                        url: opts.link || opts.actionUrl || '/'
-                    }
-                }).catch(() => {});
-            } catch (e) { /* تجاهل */ }
+        // الأعمدة الأساسية (المؤكد وجودها)
+        const baseRow = {
+            user_id: opts.userId,
+            user_type: opts.userType,
+            title: opts.title,
+            message: opts.message,
+            type: opts.type || 'info',
+            link: opts.link || opts.actionUrl || null
+        };
+        // الأعمدة الإضافية (قد لا تكون موجودة في كل الجداول)
+        const fullRow = Object.assign({}, baseRow, {
+            related_type: opts.relatedType || null,
+            related_id: opts.relatedId || null,
+            is_read: false
+        });
 
-            return true;
-        } catch (err) {
-            console.warn('sendNotification:', err.message);
-            return false;
+        let ok = false;
+        // 1) جرّب بالأعمدة الكاملة
+        let { error } = await sb.from('notifications').insert(fullRow);
+        if (!error) {
+            ok = true;
+        } else {
+            // 2) فشل؟ غالباً عمود ناقص → جرّب بالأساسية بس
+            console.warn('sendNotification (full) فشل:', error.message, '— إعادة المحاولة بالأعمدة الأساسية');
+            const retry = await sb.from('notifications').insert(baseRow);
+            if (!retry.error) {
+                ok = true;
+            } else {
+                // 3) لسه فاشل → اطبع الخطأ الحقيقي (RLS أو غيره)
+                console.error('❌ sendNotification فشل نهائياً:', retry.error.message, retry.error);
+                return false;
+            }
         }
+
+        // Web Push (لا يعطّل لو فشل)
+        try {
+            sb.functions.invoke('send-push', {
+                body: { user_id: opts.userId, title: opts.title, body: opts.message, url: opts.link || opts.actionUrl || '/' }
+            }).catch(() => {});
+        } catch (e) { /* تجاهل */ }
+
+        return ok;
     }
 
     async function notifyAdmins(opts) {
