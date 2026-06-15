@@ -1702,8 +1702,7 @@
 
         const daily = allAttendance.filter(a =>
             a.attendance_type === 'daily_attendance' &&
-            (a.application_id === app.id ||
-             (app.company_user_id && a.company_user_id && a.company_user_id === app.company_user_id))
+            a.application_id === app.id
         );
 
         const attendedDays = {};
@@ -2057,6 +2056,31 @@
                     </div>`;
                 }).join('');
             }
+            // تحليل الشخصية (skill_profile)
+            const sp = (rec.skill_profile && typeof rec.skill_profile === 'object' && Object.keys(rec.skill_profile).length)
+                ? rec.skill_profile
+                : (meta.skill_profile || null);
+            if (sp && (sp.technical || sp.soft_skills || sp.performance || sp.growth)) {
+                const spLabels = { technical:'التقني', soft_skills:'التواصل', performance:'الأداء', growth:'التطور' };
+                const spColors = { technical:'#4facfe', soft_skills:'#10b981', performance:'#f093fb', growth:'#f59e0b' };
+                const spBars = ['technical','soft_skills','performance','growth'].map(k => {
+                    const v = Math.round(Number(sp[k]) || 0);
+                    return `<div style="margin-bottom:10px">
+                        <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:4px">
+                            <span style="color:var(--text-muted)">${spLabels[k]||k}</span>
+                            <span style="font-weight:800;color:${spColors[k]||'#4facfe'}">${v}%</span>
+                        </div>
+                        <div style="height:9px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:hidden">
+                            <div style="height:100%;width:${v}%;background:${spColors[k]||'#4facfe'};border-radius:5px"></div>
+                        </div>
+                    </div>`;
+                }).join('');
+                h += `<div style="margin-top:16px;background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(168,85,247,0.03));border:1px solid rgba(168,85,247,0.2);border-radius:14px;padding:16px">
+                    <div style="font-weight:800;font-size:0.92rem;margin-bottom:12px;color:#a855f7"><i class="fas fa-brain" style="margin-left:6px"></i>تحليل الشخصية المهنية</div>
+                    ${spBars}
+                </div>`;
+            }
+
             careerHtml = h || '<div style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد بيانات</div>';
         }
 
