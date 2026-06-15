@@ -3543,54 +3543,52 @@ window.handleFileDrop = (event) => {
     if (zone) { zone.style.borderColor = 'var(--border)'; zone.style.background = 'transparent'; }
 };
 
-// ============ موديل عرض تقارير المهام (قراءة فقط) ============
+// ============ موديل سجل الأداء الكامل للمتدرب (قراءة فقط) ============
 window.openTaskReportsOnly = async (appId) => {
     const t = allTrainees.find(x => x.id === appId);
     if (!t) return;
 
-    // اعرض الموديل مع لودر
     const oldModal = document.getElementById('taskReportsModal');
     if (oldModal) oldModal.remove();
 
-    const closeModal = () => {
-        const m = document.getElementById('taskReportsModal');
-        if (m) m.remove();
-        document.body.style.overflow = '';
-    };
-
+    // لودر
     document.body.insertAdjacentHTML('beforeend',
-        '<div id="taskReportsModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:3000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this){document.getElementById(\'taskReportsModal\').remove();document.body.style.overflow=\'\'}">' +
-        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:20px;width:100%;max-width:700px;padding:24px;margin:auto">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border)">' +
-                '<div><div style="font-size:1.1rem;font-weight:800"><i class="fas fa-clipboard-list" style="color:var(--primary)"></i> تقارير مهام: ' + esc(t.student_name || '-') + '</div>' +
-                '<div style="color:var(--text-muted);font-size:0.82rem;margin-top:3px">' + esc(t.field || '') + '</div></div>' +
-                '<button onclick="document.getElementById(\'taskReportsModal\').remove();document.body.style.overflow=\'\'" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.2rem">×</button>' +
-            '</div>' +
-            '<div id="taskReportsContent" style="min-height:200px;display:flex;align-items:center;justify-content:center">' +
-                '<div style="text-align:center;color:var(--text-muted)"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--primary);display:block;margin-bottom:10px"></i>جاري التحميل...</div>' +
-            '</div>' +
+        '<div id="taskReportsModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);z-index:3000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto" onclick="if(event.target===this){document.getElementById(\'taskReportsModal\').remove();document.body.style.overflow=\'\'}">' +
+        '<div id="taskReportsInner" style="background:var(--bg);border:1px solid var(--border);border-radius:22px;width:100%;max-width:750px;padding:24px;margin:auto">' +
+            '<div style="text-align:center;padding:60px 20px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin" style="font-size:2.5rem;color:var(--primary);display:block;margin-bottom:14px"></i>جاري التحميل...</div>' +
         '</div></div>'
     );
     document.body.style.overflow = 'hidden';
 
     try {
         const sb = await window.getSafeSupabase();
-        const { data: tasks } = await sb.from('task_reports').select('*').eq('application_id', appId).order('task_date', { ascending: false });
 
-        const statusMap = { completed: ['✅', 'مكتملة', '#10b981'], partial: ['⚡', 'جزئية', '#f59e0b'], pending: ['⏳', 'معلقة', '#94a3b8'] };
+        // جيب الكل بالتوازي
+        const [tasksRes, evalRes, recRes] = await Promise.all([
+            sb.from('task_reports').select('*').eq('application_id', appId).order('task_date', { ascending: false }),
+            sb.from('ai_evaluations').select('*').eq('student_user_id', t.student_user_id).order('submitted_at', { ascending: false }).limit(1).maybeSingle(),
+            sb.from('career_recommendations').select('*').eq('student_user_id', t.student_user_id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        ]);
 
-        const tasksHtml = !(tasks || []).length
+        const tasks = tasksRes.data || [];
+        const ev = evalRes.data;
+        const rec = recRes.data;
+
+        // ========== تقارير المهام ==========
+        const statusMap = { completed:['✅','مكتملة','#10b981'], partial:['⚡','جزئية','#f59e0b'], pending:['⏳','معلقة','#94a3b8'], in_progress:['🔄','جاري التنفيذ','#4facfe'], cancelled:['❌','ملغية','#ef4444'] };
+        const tasksHtml = !tasks.length
             ? '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-clipboard-list" style="font-size:3rem;opacity:.3;display:block;margin-bottom:12px"></i><p>لا توجد تقارير مهام بعد</p></div>'
-            : (tasks).map(task => {
+            : '<div style="margin-bottom:10px;color:var(--text-muted);font-size:0.84rem"><strong style="color:var(--text)">' + tasks.length + '</strong> تقرير مهمة</div>' +
+              tasks.map(task => {
                 const stars = task.quality_rating ? [1,2,3,4,5].map(n => '<span style="color:' + (n <= task.quality_rating ? '#fbbf24' : 'rgba(148,163,184,0.3)') + '">★</span>').join('') : '';
                 const st = statusMap[task.completion_status] || statusMap.completed;
-                const hoursLabel = task.time_spent_hours ? (task.time_spent_hours < 1 ? '٣٠ دقيقة' : task.time_spent_hours + ' س') : null;
+                const hoursLabel = task.time_spent_hours ? (task.time_spent_hours < 1 ? '٣٠ دقيقة' : task.time_spent_hours + ' ساعة') : null;
                 return '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">' +
                     '<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:10px;flex-wrap:wrap">' +
                         '<div style="flex:1;min-width:0">' +
-                            '<div style="font-weight:800;font-size:0.97rem;margin-bottom:6px">' + esc(task.task_title) + '</div>' +
+                            '<div style="font-weight:800;font-size:0.97rem;margin-bottom:6px">' + esc(task.task_title || '-') + '</div>' +
                             '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
-                                '<span style="color:var(--text-muted);font-size:0.78rem"><i class="fas fa-calendar" style="color:var(--primary)"></i> ' + (task.task_date ? new Date(task.task_date + 'T00:00:00').toLocaleDateString('ar-EG', {day:'numeric',month:'long',year:'numeric'}) : '-') + '</span>' +
+                                (task.task_date ? '<span style="color:var(--text-muted);font-size:0.78rem"><i class="fas fa-calendar" style="color:var(--primary)"></i> ' + new Date(task.task_date + 'T00:00:00').toLocaleDateString('ar-EG',{day:'numeric',month:'long',year:'numeric'}) + '</span>' : '') +
                                 (hoursLabel ? '<span style="background:rgba(79,172,254,0.1);color:#4facfe;padding:2px 8px;border-radius:10px;font-size:0.75rem"><i class="fas fa-clock"></i> ' + hoursLabel + '</span>' : '') +
                                 '<span style="color:' + st[2] + ';font-size:0.78rem">' + st[0] + ' ' + st[1] + '</span>' +
                             '</div>' +
@@ -3601,21 +3599,129 @@ window.openTaskReportsOnly = async (appId) => {
                     (task.notes ? '<div style="background:rgba(239,68,68,0.05);border-right:3px solid var(--primary);padding:10px 12px;border-radius:0 6px 6px 0;margin-bottom:8px;font-size:0.86rem;line-height:1.6;color:var(--text-muted)"><strong style="color:var(--primary)">ملاحظات الأداء:</strong><br>' + esc(task.notes) + '</div>' : '') +
                     (task.file_name ? '<div style="display:flex;align-items:center;gap:8px;background:rgba(79,172,254,0.07);border:1px solid rgba(79,172,254,0.25);border-radius:8px;padding:8px 12px"><i class="fas fa-paperclip" style="color:#4facfe;flex-shrink:0"></i><span style="flex:1;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;color:var(--text)">' + esc(task.file_name) + '</span><button onclick="downloadTaskFile(&apos;' + esc(task.file_path||'') + '&apos;,&apos;' + esc(task.file_name||'') + '&apos;)" style="background:rgba(79,172,254,0.15);color:#4facfe;border:1px solid rgba(79,172,254,0.3);padding:5px 12px;border-radius:8px;font-weight:700;font-family:inherit;font-size:0.8rem;cursor:pointer;white-space:nowrap;flex-shrink:0"><i class="fas fa-download"></i> تحميل</button></div>' : '') +
                 '</div>';
-            }).join('');
+              }).join('');
 
-        const contentEl = document.getElementById('taskReportsContent');
-        if (contentEl) {
-            contentEl.style.display = 'block';
-            contentEl.innerHTML =
-                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">' +
-                    '<span style="color:var(--text-muted);font-size:0.84rem"><strong style="color:var(--text)">' + (tasks||[]).length + '</strong> تقرير مهمة</span>' +
-                    '<button onclick="openTrainee(&apos;' + appId + '&apos;);document.getElementById(\'taskReportsModal\').remove()" style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:7px 14px;border-radius:8px;font-weight:700;font-family:inherit;font-size:0.82rem;cursor:pointer"><i class="fas fa-arrow-left"></i> فتح الملف الكامل</button>' +
+        // ========== تقييم الأداء ==========
+        let evalHtml = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-chart-bar" style="font-size:3rem;opacity:.3;display:block;margin-bottom:12px"></i><p>لم يُجرَ تقييم بعد</p></div>';
+        if (ev) {
+            const score = Math.round(Number(ev.overall_score)||0);
+            const cats = ev.category_scores || {};
+            const catLabels = { technical:'التقني', soft_skills:'التواصل', growth:'التطور', performance:'الأداء' };
+            const catColors = { technical:'#4facfe', soft_skills:'#10b981', growth:'#f59e0b', performance:'#f093fb' };
+            const sc = score >= 75 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
+            const circ = 2 * Math.PI * 38;
+            const bars = Object.entries(cats).map(([k,v]) => {
+                const pct = Math.min(100, Math.round(Number(v)||0));
+                const c = catColors[k]||'#4facfe';
+                return '<div style="margin-bottom:12px">' +
+                    '<div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:5px"><span style="color:var(--text-muted)">' + (catLabels[k]||k) + '</span><span style="font-weight:700;color:' + c + '">' + pct + '%</span></div>' +
+                    '<div style="height:9px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + c + ';border-radius:4px"></div></div>' +
+                '</div>';
+            }).join('');
+            evalHtml = '<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:18px">' +
+                '<div style="position:relative;width:90px;height:90px;flex-shrink:0">' +
+                    '<svg viewBox="0 0 88 88" style="transform:rotate(-90deg)">' +
+                        '<circle cx="44" cy="44" r="38" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9"/>' +
+                        '<circle cx="44" cy="44" r="38" fill="none" stroke="' + sc + '" stroke-width="9" stroke-dasharray="' + circ + '" stroke-dashoffset="' + (circ*(1-score/100)) + '" stroke-linecap="round"/>' +
+                    '</svg>' +
+                    '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">' +
+                        '<span style="font-size:1.4rem;font-weight:900;color:' + sc + ';line-height:1">' + score + '</span>' +
+                        '<span style="font-size:.6rem;color:var(--text-muted)">/ 100</span>' +
+                    '</div>' +
                 '</div>' +
-                tasksHtml;
+                '<div style="flex:1;min-width:200px">' + bars + '</div>' +
+            '</div>' +
+            (ev.summary_feedback ? '<div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:12px;padding:14px;font-size:0.88rem;line-height:1.7;color:var(--text-muted)"><i class="fas fa-comment" style="color:#4facfe;margin-left:6px"></i>' + esc(ev.summary_feedback) + '</div>' : '');
         }
+
+        // ========== التقرير الكامل / الترشيحات ==========
+        let recHtml = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fas fa-star" style="font-size:3rem;opacity:.3;display:block;margin-bottom:12px"></i><p>لم تُكتَب ترشيحات بعد</p></div>';
+        if (rec) {
+            const recsArr = Array.isArray(rec.recommendations) ? rec.recommendations : [];
+            const meta = recsArr.find(r => r && r.__meta) || {};
+            const careers = recsArr.filter(r => r && !r.__meta);
+            const summary = rec.smart_summary || meta.smart_summary || '';
+            const assessment = rec.career_assessment || meta.career_assessment || '';
+            const strengths = (rec.strength_areas&&rec.strength_areas.length) ? rec.strength_areas : (meta.strength_areas||[]);
+            const improvements = (rec.improvement_areas&&rec.improvement_areas.length) ? rec.improvement_areas : (meta.improvement_areas||[]);
+            const matchColor = m => m >= 70 ? '#10b981' : m >= 55 ? '#f59e0b' : '#ef4444';
+            const levelLabel = { entry:'مبتدئ', mid:'متوسط', senior:'خبير' };
+
+            let h = '';
+            if (summary) h += '<div style="background:linear-gradient(135deg,rgba(79,172,254,0.08),rgba(0,242,254,0.04));border:1px solid rgba(79,172,254,0.2);border-radius:12px;padding:14px;margin-bottom:14px;font-size:0.9rem;line-height:1.7"><div style="font-weight:700;color:#4facfe;margin-bottom:6px"><i class="fas fa-lightbulb"></i> ملخص التقييم</div>' + esc(summary) + '</div>';
+            if (assessment) h += '<div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:0.86rem;color:var(--text-muted)"><i class="fas fa-star" style="color:#10b981;margin-left:6px"></i>' + esc(assessment) + '</div>';
+            if (strengths.length || improvements.length) {
+                h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">';
+                if (strengths.length) h += '<div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:12px;padding:12px"><div style="font-weight:700;font-size:0.85rem;color:#10b981;margin-bottom:8px"><i class="fas fa-thumbs-up"></i> نقاط القوة</div>' + strengths.map(s=>'<div style="font-size:0.82rem;color:var(--text-muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:6px"><i class="fas fa-check" style="color:#10b981;flex-shrink:0;margin-top:2px"></i>' + esc(s) + '</div>').join('') + '</div>';
+                if (improvements.length) h += '<div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:12px;padding:12px"><div style="font-weight:700;font-size:0.85rem;color:#f59e0b;margin-bottom:8px"><i class="fas fa-arrow-up"></i> مجالات التطوير</div>' + improvements.map(i=>'<div style="font-size:0.82rem;color:var(--text-muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:6px"><i class="fas fa-arrow-up" style="color:#f59e0b;flex-shrink:0;margin-top:2px"></i>' + esc(i) + '</div>').join('') + '</div>';
+                h += '</div>';
+            }
+            if (careers.length) {
+                h += '<div style="font-weight:800;font-size:0.95rem;margin-bottom:10px"><i class="fas fa-briefcase" style="color:var(--primary);margin-left:6px"></i>المسارات المهنية المقترحة</div>';
+                h += careers.map((c,i) => {
+                    const pct = c.match_score||c.match||0;
+                    const mc = matchColor(pct);
+                    return '<div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;' + (i===0?'border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04)':'') + '">' +
+                        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">' +
+                            '<div style="width:44px;height:44px;border-radius:50%;background:conic-gradient(' + mc + ' ' + pct + '%,rgba(255,255,255,0.06) 0);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative">' +
+                                '<div style="position:absolute;inset:4px;background:var(--bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:' + mc + '">' + pct + '%</div>' +
+                            '</div>' +
+                            '<div style="flex:1;min-width:0">' +
+                                '<div style="font-weight:800;font-size:0.92rem">' + esc(c.job_title||c.field||'-') + '</div>' +
+                                '<div style="font-size:0.76rem;color:var(--text-muted)">' + esc(levelLabel[c.level]||c.level||'') + (c.salary_range_egp?' • '+esc(c.salary_range_egp):'') + '</div>' +
+                            '</div>' +
+                            (i===0 ? '<span style="background:rgba(239,68,68,0.15);color:var(--primary);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;flex-shrink:0">الأنسب</span>' : '') +
+                        '</div>' +
+                        (c.description ? '<div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:6px">' + esc(c.description) + '</div>' : '') +
+                        ((c.key_skills&&c.key_skills.length) ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">' + c.key_skills.map(s=>'<span style="background:rgba(239,68,68,0.08);color:var(--primary);padding:2px 8px;border-radius:8px;font-size:0.74rem">' + esc(s) + '</span>').join('') + '</div>' : '') +
+                        (c.growth_path ? '<div style="font-size:0.76rem;color:var(--text-dim)"><i class="fas fa-route" style="margin-left:4px"></i>' + esc(c.growth_path) + '</div>' : '') +
+                    '</div>';
+                }).join('');
+            }
+            recHtml = h || '<div style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد بيانات</div>';
+        }
+
+        // ========== بناء الموديل النهائي بالتابز ==========
+        const sentBadge = rec && rec.sent_to_student
+            ? '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 10px;border-radius:10px;font-size:0.74rem;font-weight:700"><i class="fas fa-paper-plane"></i> أُرسل للطالب</span>'
+            : '';
+
+        const inner = document.getElementById('taskReportsInner');
+        if (!inner) return;
+
+        inner.innerHTML =
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">' +
+                '<div>' +
+                    '<div style="font-size:1.1rem;font-weight:800"><i class="fas fa-file-alt" style="color:var(--primary)"></i> سجل أداء: ' + esc(t.student_name||'-') + '</div>' +
+                    '<div style="color:var(--text-muted);font-size:0.82rem;margin-top:3px;display:flex;align-items:center;gap:8px">' + esc(t.field||'') + ' ' + sentBadge + '</div>' +
+                '</div>' +
+                '<div style="display:flex;gap:6px">' +
+                    '<button onclick="openTrainee(&apos;' + appId + '&apos;);document.getElementById(\'taskReportsModal\').remove()" style="background:rgba(239,68,68,0.1);color:var(--primary);border:1px solid rgba(239,68,68,0.3);padding:7px 14px;border-radius:8px;font-weight:700;font-family:inherit;font-size:0.82rem;cursor:pointer"><i class="fas fa-arrow-left"></i> الملف الكامل</button>' +
+                    '<button onclick="document.getElementById(\'taskReportsModal\').remove();document.body.style.overflow=\'\'" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center">×</button>' +
+                '</div>' +
+            '</div>' +
+            // تابز
+            '<div style="display:flex;gap:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:18px;overflow-x:auto">' +
+                '<button id="trTab1" onclick="trSwitch(1)" style="flex:1;padding:10px 8px;background:var(--gradient);color:#fff;border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem;white-space:nowrap"><i class="fas fa-clipboard-list"></i> تقارير المهام <span style="background:rgba(255,255,255,0.2);padding:1px 7px;border-radius:8px;font-size:0.72rem">' + tasks.length + '</span></button>' +
+                '<button id="trTab2" onclick="trSwitch(2)" style="flex:1;padding:10px 8px;background:none;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem;white-space:nowrap"><i class="fas fa-chart-bar"></i> تقييم الأداء</button>' +
+                '<button id="trTab3" onclick="trSwitch(3)" style="flex:1;padding:10px 8px;background:none;color:var(--text-muted);border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.88rem;white-space:nowrap"><i class="fas fa-star"></i> الترشيحات</button>' +
+            '</div>' +
+            '<div id="trPanel1">' + tasksHtml + '</div>' +
+            '<div id="trPanel2" style="display:none">' + evalHtml + '</div>' +
+            '<div id="trPanel3" style="display:none">' + recHtml + '</div>';
+
+        window.trSwitch = (n) => {
+            [1,2,3].forEach(i => {
+                const btn = document.getElementById('trTab' + i);
+                const pan = document.getElementById('trPanel' + i);
+                if (btn) { btn.style.background = i===n ? 'var(--gradient)' : 'none'; btn.style.color = i===n ? '#fff' : 'var(--text-muted)'; }
+                if (pan) pan.style.display = i===n ? 'block' : 'none';
+            });
+        };
+
     } catch (e) {
-        const contentEl = document.getElementById('taskReportsContent');
-        if (contentEl) contentEl.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444"><i class="fas fa-exclamation-circle" style="display:block;margin-bottom:10px;font-size:2rem"></i>خطأ: ' + esc(e.message) + '</div>';
+        const inner = document.getElementById('taskReportsInner');
+        if (inner) inner.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444"><i class="fas fa-exclamation-circle" style="display:block;margin-bottom:10px;font-size:2rem"></i>خطأ: ' + esc(e.message) + '</div>';
     }
 };
 
