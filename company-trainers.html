@@ -3554,16 +3554,26 @@ window.openTaskReportsOnly = async (appId) => {
     try {
         const sb = await window.getSafeSupabase();
 
-        // جيب الكل بالتوازي
+        // جيب الكل بالتوازي — مفلتر بـ application_id بالظبط
         const [tasksRes, evalRes, recRes] = await Promise.all([
             sb.from('task_reports').select('*').eq('application_id', appId).order('task_date', { ascending: false }),
-            sb.from('ai_evaluations').select('*').eq('student_user_id', t.student_user_id).order('submitted_at', { ascending: false }).limit(1).maybeSingle(),
-            sb.from('career_recommendations').select('*').eq('student_user_id', t.student_user_id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+            sb.from('ai_evaluations').select('*').eq('application_id', appId).order('submitted_at', { ascending: false }).limit(1).maybeSingle(),
+            sb.from('career_recommendations').select('*').eq('application_id', appId).order('created_at', { ascending: false }).limit(1).maybeSingle()
         ]);
 
         const tasks = tasksRes.data || [];
         const ev = evalRes.data;
         const rec = recRes.data;
+
+        // جيب أسئلة القالب لو في تقييم
+        let templateQuestions = [];
+        if (ev && ev.template_id) {
+            try {
+                const { data: tmpl } = await sb.from('ai_evaluation_templates')
+                    .select('questions').eq('id', ev.template_id).maybeSingle();
+                if (tmpl && Array.isArray(tmpl.questions)) templateQuestions = tmpl.questions;
+            } catch(e) {}
+        }
 
         // ========== تقارير المهام ==========
         const statusMap = { completed:['✅','مكتملة','#10b981'], partial:['⚡','جزئية','#f59e0b'], pending:['⏳','معلقة','#94a3b8'], in_progress:['🔄','جاري التنفيذ','#4facfe'], cancelled:['❌','ملغية','#ef4444'] };
@@ -3623,6 +3633,39 @@ window.openTaskReportsOnly = async (appId) => {
                 '<div style="flex:1;min-width:200px">' + bars + '</div>' +
             '</div>' +
             (ev.summary_feedback ? '<div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:12px;padding:14px;font-size:0.88rem;line-height:1.7;color:var(--text-muted)"><i class="fas fa-comment" style="color:#4facfe;margin-left:6px"></i>' + esc(ev.summary_feedback) + '</div>' : '');
+
+            // أسئلة التقييم — قراءة فقط
+            if (templateQuestions.length > 0) {
+                const answers = ev.answers || {};
+                const qGroups = {};
+                templateQuestions.forEach(q => {
+                    const cat = q.category || 'general';
+                    if (!qGroups[cat]) qGroups[cat] = [];
+                    qGroups[cat].push(q);
+                });
+                const catLabels2 = { technical:'المهارات التقنية', soft_skills:'مهارات التواصل', growth:'قابلية التطوير', performance:'جودة الأداء', general:'عام' };
+                const qSectionsHtml = Object.entries(qGroups).map(([cat, qs]) =>
+                    '<div style="margin-bottom:14px">' +
+                        '<div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,0.06)">' +
+                            (catLabels2[cat] || cat) +
+                        '</div>' +
+                        qs.map(q => {
+                            const rating = Number(answers[q.id] || answers['q' + q.id] || 0);
+                            const stars = [1,2,3,4,5].map(n =>
+                                '<span style="color:' + (n <= rating ? '#fbbf24' : 'rgba(148,163,184,0.2)') + ';font-size:1.1rem">★</span>'
+                            ).join('');
+                            return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)">' +
+                                '<span style="font-size:0.84rem;color:var(--text-muted);flex:1;line-height:1.5">' + esc(q.question || q.text || '-') + '</span>' +
+                                '<div style="flex-shrink:0;direction:ltr;white-space:nowrap">' + (rating > 0 ? stars : '<span style="font-size:0.72rem;color:rgba(148,163,184,0.4)">لم يُقيَّم</span>') + '</div>' +
+                            '</div>';
+                        }).join('') +
+                    '</div>'
+                ).join('');
+                evalHtml += '<div style="margin-top:18px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:16px">' +
+                    '<div style="font-weight:800;font-size:0.9rem;margin-bottom:12px"><i class="fas fa-list-check" style="color:var(--primary);margin-left:6px"></i>تفاصيل الأسئلة</div>' +
+                    qSectionsHtml +
+                '</div>';
+            }
         }
 
         // ========== التقرير الكامل / الترشيحات ==========
