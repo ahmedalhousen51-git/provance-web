@@ -1276,7 +1276,7 @@
             <div class="info-item">
                 <div class="info-label"><i class="${iconClass} fa-${icon}"></i> ${label}</div>
                 <div class="info-value ${isEmpty ? 'empty' : ''}">
-                    ${isEmpty ? 'لم يُحدد' : `<a href="${esc(url)}" target="_blank" style="color:var(--primary);text-decoration:none">${esc(url.length > 35 ? url.substring(0, 35) + '...' : url)} <i class="fas fa-external-link-alt" style="font-size:0.75rem"></i></a>`}
+                    ${isEmpty ? 'لم يُحدد' : (/^https?:\/\//i.test(url) ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:none">${esc(url.length > 35 ? url.substring(0, 35) + '...' : url)} <i class="fas fa-external-link-alt" style="font-size:0.75rem"></i></a>` : `<span style="color:var(--primary)">${esc(url.length > 35 ? url.substring(0, 35) + '...' : url)}</span>`)}
                 </div>
             </div>
         `;
@@ -1359,9 +1359,21 @@
             return;
         }
 
+        // فلتر: نعتبر فقط السجلات داخل فترة التدريب — سجلات ما قبل البداية تشوّه النسبة
+        let dailyFiltered = daily;
+        if (sched && sched.start_date) {
+            const _fStart = parseLocalDate(sched.start_date);
+            const _fEnd = sched.end_date ? parseLocalDate(sched.end_date) : null;
+            dailyFiltered = daily.filter(a => {
+                if (!a.scanned_at) return false;
+                const _d = parseLocalDate(localDayKey(a.scanned_at));
+                return _d >= _fStart && (_fEnd === null || _d <= _fEnd);
+            });
+        }
+
         // أيام الحضور الفعلية (مجمّعة) — بمفتاح محلي
         const attendedDays = {};
-        daily.forEach(a => {
+        dailyFiltered.forEach(a => {
             if (!a.scanned_at) return;
             const d = localDayKey(a.scanned_at);
             if (!attendedDays[d]) attendedDays[d] = a.status;
@@ -1446,7 +1458,7 @@
 
         // آخر 14 يوم للأعمدة
         const byDay = {};
-        daily.forEach(a => {
+        dailyFiltered.forEach(a => {
             if (!a.scanned_at) return;
             const d = localDayKey(a.scanned_at);
             if (!byDay[d]) byDay[d] = { date: d, status: a.status };
@@ -2485,7 +2497,9 @@
                 window.ProVance.showToast('مفيش CV مرفوع', 'warning');
                 return;
             }
-            window.open(State.studentData.cv_url, '_blank');
+            const _cvUrl = State.studentData.cv_url;
+            if (!/^https?:\/\//i.test(_cvUrl)) { window.ProVance.showToast('رابط CV غير صالح', 'error'); return; }
+            window.open(_cvUrl, '_blank');
         };
 
         console.log('✅ Profile modals registered');
