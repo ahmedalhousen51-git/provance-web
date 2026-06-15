@@ -107,12 +107,12 @@
             var sess = (await sb.auth.getSession()).data.session;
             if (!sess) return;
             var res = await sb.from('companies')
-                .select('company_name,logo_url')
+                .select('company_name,logo')
                 .eq('user_id', sess.user.id)
                 .maybeSingle();
             var co = res.data;
             var name = (co && co.company_name) || sess.user.email || 'الشركة';
-            var logo = co && co.logo_url;
+            var logo = co && co.logo;
             var initial = name.charAt(0).toUpperCase();
             var avatarInner = logo
                 ? '<img src="' + logo + '" alt="" style="width:100%;height:100%;object-fit:cover">'
