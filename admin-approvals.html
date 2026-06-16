@@ -254,6 +254,11 @@ async function loadApprovals() {
             setTimeout(() => window.location.href = 'admin-login.html', 1500);
             return;
         }
+        if (!adminCheck.is_active) {
+            await sb.auth.signOut();
+            window.location.href = 'admin-login.html';
+            return;
+        }
 
         // اجلب الـ approvals + الشركات
         const results = await Promise.allSettled([
@@ -452,7 +457,7 @@ window.approveItem = async (id) => {
         }).eq('id', id);
 
         // 2. حدث بيانات الشركة (أضف القسم/الفرع للـ companies)
-        const { data: companyData } = await sb.from('companies').select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency').eq('user_id', appr.company_user_id).maybeSingle();
+        const { data: companyData } = await sb.from('companies').select('user_id, company_name, email, status, company_field, company_location, primary_phone, training_fields, training_details, branch_locations, employees_count, training_price, training_currency, logo').eq('user_id', appr.company_user_id).maybeSingle();
 
         if (companyData) {
             const data = safeParse(appr.data, {});
