@@ -388,8 +388,9 @@ async function checkAdmin() {
         const { data: { session } } = await sb.auth.getSession();
         if (!session) { window.location.href = 'admin-login.html'; return null; }
         const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', session.user.id).maybeSingle();
-        applyAdminPermissions(admin);
         if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        if (!admin.is_active) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        applyAdminPermissions(admin);
         return admin;
     } catch (e) { window.location.href = 'admin-login.html'; return null; }
 }
@@ -447,7 +448,7 @@ function applyFilters(list) {
 
 function render() {
     const all = applyFilters(allNotifications);
-    const mine = applyFilters(allNotifications.filter(n => n.user_type === 'admin' && n.user_id === currentAdmin.user_id));
+    const mine = applyFilters(currentAdmin ? allNotifications.filter(n => n.user_type === 'admin' && n.user_id === currentAdmin.user_id) : []);
     const students = applyFilters(allNotifications.filter(n => n.user_type === 'student'));
     const companies = applyFilters(allNotifications.filter(n => n.user_type === 'company'));
 
