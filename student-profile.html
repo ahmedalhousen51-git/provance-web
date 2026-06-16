@@ -2252,20 +2252,40 @@
 
         alert.style.display = 'flex';
         alert.className = 'payment-alert';
+        const _remText = paymentLock.remaining_amount
+            ? `يجب دفع <strong style="color:var(--text)"> ${paymentLock.remaining_amount} ${paymentLock.currency || 'EGP'}</strong>`
+            : 'يجب إتمام دفع رسوم التدريب';
+        const _dlText = paymentLock.payment_deadline ? ` قبل ${formatDate(paymentLock.payment_deadline)}` : '';
         alert.innerHTML = `
             <div class="payment-alert-icon"><i class="fas fa-lock"></i></div>
             <div class="payment-alert-body">
                 <div class="payment-alert-title">⚠️ مطلوب دفع رسوم التدريب</div>
                 <div class="payment-alert-desc">
-                    لقد حضرت ${paymentLock.days_attended} أيام تدريب. لاستكمال التدريب، يجب دفع
-                    <strong style="color:var(--text)"> ${paymentLock.remaining_amount} ${paymentLock.currency}</strong>
-                    قبل ${formatDate(paymentLock.payment_deadline)}.
+                    لقد حضرت <strong>${parseInt(paymentLock.days_attended) || 3} أيام</strong> تدريب.
+                    ${_remText}${_dlText}.
                 </div>
             </div>
             <a href="student-payments.html" class="btn btn-warning">
                 <i class="fas fa-credit-card"></i> ادفع الآن
             </a>
         `;
+        lockReportSections();
+    }
+
+    function lockReportSections() {
+        const msg = `
+            <div class="empty-state">
+                <i class="fas fa-lock" style="color:var(--warning);opacity:0.9"></i>
+                <h3 style="color:var(--warning);margin-top:12px">مطلوب دفع رسوم التدريب</h3>
+                <p>أتمّ الدفع أولاً للوصول إلى هذا القسم</p>
+                <a href="student-payments.html" style="display:inline-flex;align-items:center;gap:8px;margin-top:16px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:10px 22px;border-radius:10px;font-weight:700;text-decoration:none;font-family:inherit">
+                    <i class="fas fa-credit-card"></i> ادفع الآن
+                </a>
+            </div>`;
+        ['trainingHistory', 'qrHistory', 'taskReportsList'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = msg;
+        });
     }
 
     // Expose for part 2
@@ -3250,6 +3270,36 @@
             State.allTaskReports = results[6].status === 'fulfilled' ? (results[6].value.data || []) : [];
             State.allAiEvals = results[7].status === 'fulfilled' ? (results[7].value.data || []) : [];
             State.allCareerRecs = results[8].status === 'fulfilled' ? (results[8].value.data || []) : [];
+
+            /* ── فحص بوابة الدفع: لو جدول payment_locks فاضي، احسب من attendance + payments ── */
+            if (!State.paymentLock) {
+                try {
+                    const acceptedApps = (State.allApplications || []).filter(
+                        a => ['accepted', 'training'].includes(a.status)
+                    );
+                    for (const app of acceptedApps) {
+                        const appLogs = (State.allAttendance || []).filter(
+                            l => l.application_id === app.id && l.attendance_type === 'daily_attendance'
+                        );
+                        const uniqueDays = new Set(appLogs.map(l => l.scanned_at.substring(0, 10)));
+                        if (uniqueDays.size >= 3) {
+                            const { data: payRecs } = await sb.from('payments')
+                                .select('id').eq('student_user_id', userId)
+                                .eq('application_id', app.id).eq('status', 'success').limit(1);
+                            if (!payRecs || payRecs.length === 0) {
+                                State.paymentLock = {
+                                    lock_status: 'locked',
+                                    days_attended: uniqueDays.size,
+                                    remaining_amount: null,
+                                    currency: 'EGP',
+                                    payment_deadline: null
+                                };
+                                break;
+                            }
+                        }
+                    }
+                } catch (_) {}
+            }
 
             if (!State.studentData) {
                 // محاولة أخيرة: اقرأ minimal data
