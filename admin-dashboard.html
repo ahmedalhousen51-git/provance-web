@@ -296,8 +296,9 @@ async function checkAdmin() {
         const { data: { session } } = await sb.auth.getSession();
         if (!session) { window.location.href = 'admin-login.html'; return null; }
         const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', session.user.id).maybeSingle();
-        applyAdminPermissions(admin);
         if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        if (!admin.is_active) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        applyAdminPermissions(admin);
         return admin;
     } catch (e) {
         window.location.href = 'admin-login.html';
@@ -318,6 +319,9 @@ async function loadStats() {
         const total = companies.length;
         const approved = companies.filter(c => c.status === 'approved').length;
         const pending = companies.filter(c => c.status === 'pending').length;
+
+        if (companiesRes.error) console.error('companies stats error:', companiesRes.error);
+        if (studentsRes.error) console.error('students stats error:', studentsRes.error);
 
         document.getElementById('totalCompanies').textContent = total;
         document.getElementById('approvedCompanies').textContent = approved;
