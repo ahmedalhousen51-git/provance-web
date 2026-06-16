@@ -97,6 +97,27 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 @keyframes spin { to { transform: rotate(360deg); } }
 .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; }
 .iframe-container { width: 100%; height: 600px; border: none; background: #fff; border-radius: 12px; }
+/* === نظام التقسيط === */
+.plan-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 4px; }
+.plan-card { border: 2px solid var(--border); border-radius: 12px; padding: 12px 10px; cursor: pointer; text-align: center; transition: all .2s; background: rgba(255,255,255,0.02); }
+.plan-card:hover { border-color: var(--primary); }
+.plan-card.selected-full { border-color: var(--success); background: rgba(16,185,129,0.08); }
+.plan-card.selected-inst { border-color: var(--warning); background: rgba(245,158,11,0.08); }
+.plan-card-icon { font-size: 1.3rem; margin-bottom: 5px; }
+.plan-card-title { font-weight: 800; font-size: 0.88rem; margin-bottom: 2px; }
+.plan-card-desc { font-size: 0.72rem; color: var(--text-muted); }
+.inst-preview { background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px; padding: 12px 14px; margin-top: 10px; display: none; }
+.inst-preview.visible { display: block; }
+.inst-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(245,158,11,0.12); font-size: 0.86rem; }
+.inst-row:last-child { border-bottom: none; padding-bottom: 0; }
+.inst-badge { font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 7px; }
+.inst-badge.now { background: var(--primary); color: #fff; }
+.inst-badge.later { background: rgba(245,158,11,0.25); color: var(--warning); }
+.pay-card.inst2 { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.04); }
+.due-note { font-size: 0.8rem; color: var(--warning); font-weight: 700; margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+.modal-plan-box { background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); border-radius: 10px; padding: 12px 14px; margin: 14px 0; }
+.modal-plan-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.88rem; border-bottom: 1px solid rgba(245,158,11,0.1); }
+.modal-plan-row:last-child { border-bottom: none; }
 @media (max-width: 1024px) { .sidebar { transform: translateX(100%); width: 280px; } .sidebar.open { transform: translateX(0); } .main { margin-right: 0; } .menu-toggle { display: flex; align-items: center; justify-content: center; } }
 </style>
 </head>
@@ -258,6 +279,13 @@ let allPayments = [];
 let pendingPayments = [];
 let selectedPaymentInfo = null;
 let selectedMethod = 'card';
+let cardPlans = {};   // application_id → 'full' | 'installment'
+let paymentPlans = {}; // application_id → training_payment_plans record
+
+const DURATION_DAYS = {
+  'أسبوعين': 14, '3 أسابيع': 21, 'شهر واحد': 30,
+  'شهر ونصف': 45, 'شهرين': 60, 'شهرين ونصف': 75
+};
 
 function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleString('ar-EG', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year: 'numeric' }); }
@@ -298,34 +326,70 @@ async function loadAll() {
         }
         studentData = student;
 
-        // اجلب: المدفوعات + الطلبات المقبولة (اللي محتاجة دفع)
+        // اجلب: المدفوعات + الطلبات المقبولة + خطط الدفع
         const results = await Promise.allSettled([
             sb.from('payments').select('*').eq('student_user_id', studentUserId).order('created_at', { ascending: false }),
             sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status').eq('student_user_id', studentUserId).eq('status', 'accepted'),
+            sb.from('training_payment_plans').select('*').eq('student_user_id', studentUserId),
         ]);
 
         allPayments = results[0].status === 'fulfilled' ? (results[0].value.data || []) : [];
         const acceptedApps = results[1].status === 'fulfilled' ? (results[1].value.data || []) : [];
 
-        // pending = طلبات مقبولة لسه ما دفعت لها
+        // بناء خريطة خطط الدفع
+        paymentPlans = {};
+        if (results[2].status === 'fulfilled') {
+            (results[2].value.data || []).forEach(p => { paymentPlans[p.application_id] = p; });
+        }
+
+        // pending = طلبات مقبولة لسه ما اكتمل دفعها
         pendingPayments = [];
         for (const app of acceptedApps) {
-            const hasPayment = allPayments.find(p => p.application_id === app.id && p.status === 'success');
-            if (!hasPayment) {
-                // اجلب سعر التدريب من الشركة
-                const { data: company } = await sb.from('companies')
-                    .select('training_price, training_currency, company_name')
-                    .eq('user_id', app.company_user_id).maybeSingle();
-                
-                if (company && company.training_price && company.training_price > 0) {
+            const appPayments = allPayments.filter(p => p.application_id === app.id && p.status === 'success');
+            const totalPaid   = appPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+            const plan        = paymentPlans[app.id];
+
+            // اجلب سعر التدريب من الشركة
+            const { data: company } = await sb.from('companies')
+                .select('training_price, training_currency, company_name')
+                .eq('user_id', app.company_user_id).maybeSingle();
+            if (!company || !company.training_price || company.training_price <= 0) continue;
+
+            const total    = parseFloat(company.training_price);
+            const currency = company.training_currency || 'EGP';
+
+            if (totalPaid < total - 0.5) {
+                // القسط الأول غير مدفوع (أو دفع كامل لم يتم بعد)
+                if (plan && plan.plan_type === 'installment' && totalPaid >= total / 2 - 0.5) {
+                    // القسط الأول تم — هنا نعرض القسط الثاني فقط
                     pendingPayments.push({
                         application_id: app.id,
-                        internship_id: app.internship_id,
+                        internship_id:  app.internship_id,
                         company_user_id: app.company_user_id,
-                        company_name: app.company_name || company.company_name || 'شركة',
+                        company_name:    app.company_name || company.company_name || 'شركة',
                         internship_title: app.internship_title || 'تدريب',
-                        amount: company.training_price,
-                        currency: company.training_currency || 'EGP'
+                        amount:   plan.installment_2_amount || total / 2,
+                        currency,
+                        isInst2:  true,
+                        due_date: plan.installment_2_due_date,
+                        duration_days: 0,
+                    });
+                } else {
+                    // لم يُدفع أي شيء بعد
+                    const { data: internship } = await sb.from('internships')
+                        .select('duration').eq('id', app.internship_id).maybeSingle();
+                    const durationDays = DURATION_DAYS[internship?.duration] || 30;
+
+                    pendingPayments.push({
+                        application_id: app.id,
+                        internship_id:  app.internship_id,
+                        company_user_id: app.company_user_id,
+                        company_name:    app.company_name || company.company_name || 'شركة',
+                        internship_title: app.internship_title || 'تدريب',
+                        amount:   total,
+                        currency,
+                        isInst2:  false,
+                        duration_days: durationDays,
                     });
                 }
             }
@@ -343,35 +407,138 @@ async function loadAll() {
 
 function renderPending() {
     const section = document.getElementById('pendingSection');
-    const grid = document.getElementById('pendingGrid');
-    
+    const grid    = document.getElementById('pendingGrid');
+
     if (pendingPayments.length === 0) {
         section.style.display = 'none';
         return;
     }
-    
+
     section.style.display = 'block';
-    grid.innerHTML = pendingPayments.map((p, i) => `
-        <div class="pay-card urgent">
+    grid.innerHTML = pendingPayments.map((p, i) => {
+        if (p.isInst2) {
+            // بطاقة القسط الثاني
+            const dueText = p.due_date
+                ? `يُسدَّد قبل ${new Date(p.due_date).toLocaleDateString('ar-EG', { day:'numeric', month:'long' })}`
+                : 'يُسدَّد قبل نهاية فترة التدريب';
+            return `
+            <div class="pay-card inst2">
+                <div class="pay-card-header">
+                    <div class="pay-card-icon" style="background:linear-gradient(135deg,#10b981,#059669)">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="pay-card-info">
+                        <div class="pay-card-title">${escapeHtml(p.internship_title)}</div>
+                        <div class="pay-card-subtitle"><i class="fas fa-building"></i> ${escapeHtml(p.company_name)}</div>
+                    </div>
+                </div>
+                <div class="due-note"><i class="fas fa-clock"></i>${dueText}</div>
+                <div class="pay-card-amount" style="border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.08)">
+                    <div class="amount-value" style="color:var(--success)">${formatAmount(p.amount,'').trim()}</div>
+                    <div class="amount-currency">${escapeHtml(p.currency)} — القسط الثاني</div>
+                </div>
+                <button class="pay-btn" style="background:linear-gradient(135deg,#10b981,#059669)" onclick="openPayModal(${i})">
+                    <i class="fas fa-credit-card"></i> ادفع القسط الثاني
+                </button>
+            </div>`;
+        }
+
+        // بطاقة الدفع الأولي (دفع كامل أو تقسيط)
+        const plan  = cardPlans[p.application_id] || 'full';
+        const half  = p.amount / 2;
+        // حساب تاريخ القسط الثاني: منتصف فترة التدريب من اليوم
+        const dueMs  = Date.now() + Math.floor(p.duration_days / 2) * 86400000;
+        const dueStr = new Date(dueMs).toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' });
+
+        return `
+        <div class="pay-card urgent" id="card_${escapeHtml(p.application_id)}">
             <div class="pay-card-header">
                 <div class="pay-card-icon"><i class="fas fa-graduation-cap"></i></div>
                 <div class="pay-card-info">
                     <div class="pay-card-title">${escapeHtml(p.internship_title)}</div>
-                    <div class="pay-card-subtitle">
-                        <i class="fas fa-building"></i> ${escapeHtml(p.company_name)}
-                    </div>
+                    <div class="pay-card-subtitle"><i class="fas fa-building"></i> ${escapeHtml(p.company_name)}</div>
                 </div>
             </div>
+
+            <!-- مُختار خطة الدفع -->
+            <div style="font-size:0.86rem;font-weight:700;margin-bottom:6px;color:var(--text-muted)">
+                <i class="fas fa-wallet"></i> اختر طريقة السداد:
+            </div>
+            <div class="plan-selector">
+                <div class="plan-card ${plan==='full'?'selected-full':''}"
+                     id="planFull_${i}" onclick="selectCardPlan(${i},'full')">
+                    <div class="plan-card-icon">💳</div>
+                    <div class="plan-card-title">دفع كامل</div>
+                    <div class="plan-card-desc">${formatAmount(p.amount,'').trim()} ${escapeHtml(p.currency)}</div>
+                </div>
+                <div class="plan-card ${plan==='installment'?'selected-inst':''}"
+                     id="planInst_${i}" onclick="selectCardPlan(${i},'installment')">
+                    <div class="plan-card-icon">📅</div>
+                    <div class="plan-card-title">تقسيط مرتين</div>
+                    <div class="plan-card-desc">${formatAmount(half,'').trim()} × 2</div>
+                </div>
+            </div>
+
+            <!-- تفاصيل الأقساط (تظهر لو اختار تقسيط) -->
+            <div class="inst-preview ${plan==='installment'?'visible':''}" id="instPreview_${i}">
+                <div class="inst-row">
+                    <span>القسط الأول — الآن</span>
+                    <span>
+                        <span class="inst-badge now">الآن</span>
+                        <strong style="margin-right:8px">${formatAmount(half, p.currency)}</strong>
+                    </span>
+                </div>
+                <div class="inst-row">
+                    <span>القسط الثاني</span>
+                    <span>
+                        <span class="inst-badge later">قبل ${dueStr}</span>
+                        <strong style="margin-right:8px">${formatAmount(half, p.currency)}</strong>
+                    </span>
+                </div>
+            </div>
+
             <div class="pay-card-amount">
-                <div class="amount-value">${formatAmount(p.amount, '').trim()}</div>
-                <div class="amount-currency">${p.currency}</div>
+                <div class="amount-value" id="cardAmt_${i}">
+                    ${plan==='installment' ? formatAmount(half,'').trim() : formatAmount(p.amount,'').trim()}
+                </div>
+                <div class="amount-currency" id="cardCurr_${i}">
+                    ${escapeHtml(p.currency)}${plan==='installment'?' — القسط الأول':''}
+                </div>
             </div>
             <button class="pay-btn" onclick="openPayModal(${i})">
-                <i class="fas fa-lock"></i> ادفع الآن
+                <i class="fas fa-lock"></i>
+                ${plan==='installment'?'ادفع القسط الأول':'ادفع الآن'}
             </button>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
+
+window.selectCardPlan = (index, plan) => {
+    const p = pendingPayments[index];
+    if (!p || p.isInst2) return;
+    cardPlans[p.application_id] = plan;
+
+    const half = p.amount / 2;
+    const dueMs  = Date.now() + Math.floor(p.duration_days / 2) * 86400000;
+    const dueStr = new Date(dueMs).toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' });
+
+    const fullEl    = document.getElementById(`planFull_${index}`);
+    const instEl    = document.getElementById(`planInst_${index}`);
+    const previewEl = document.getElementById(`instPreview_${index}`);
+    const amtEl     = document.getElementById(`cardAmt_${index}`);
+    const currEl    = document.getElementById(`cardCurr_${index}`);
+    const btnEl     = document.querySelector(`#card_${p.application_id} .pay-btn`);
+
+    if (fullEl) { fullEl.className = `plan-card ${plan==='full'?'selected-full':''}`; }
+    if (instEl) { instEl.className = `plan-card ${plan==='installment'?'selected-inst':''}`; }
+    if (previewEl) { previewEl.className = `inst-preview ${plan==='installment'?'visible':''}`; }
+
+    if (amtEl) amtEl.textContent  = plan==='installment'
+        ? formatAmount(half,'').trim()
+        : formatAmount(p.amount,'').trim();
+    if (currEl) currEl.textContent = p.currency + (plan==='installment'?' — القسط الأول':'');
+    if (btnEl)  btnEl.innerHTML    = `<i class="fas fa-lock"></i> ${plan==='installment'?'ادفع القسط الأول':'ادفع الآن'}`;
+};
 
 function renderHistory() {
     const list = document.getElementById('historyList');
@@ -403,11 +570,46 @@ function renderHistory() {
 window.openPayModal = (index) => {
     selectedPaymentInfo = pendingPayments[index];
     if (!selectedPaymentInfo) return;
-    
+
+    const plan      = selectedPaymentInfo.isInst2 ? 'installment2'
+                    : (cardPlans[selectedPaymentInfo.application_id] || 'full');
+    const isInst1   = (plan === 'installment');
+    const payAmount = isInst1 ? selectedPaymentInfo.amount / 2 : selectedPaymentInfo.amount;
+
     document.getElementById('modalInternship').textContent = selectedPaymentInfo.internship_title;
-    document.getElementById('modalCompany').textContent = selectedPaymentInfo.company_name;
-    document.getElementById('modalAmount').textContent = formatAmount(selectedPaymentInfo.amount, selectedPaymentInfo.currency);
-    
+    document.getElementById('modalCompany').textContent    = selectedPaymentInfo.company_name;
+    document.getElementById('modalAmount').textContent     = formatAmount(payAmount, selectedPaymentInfo.currency);
+
+    // إضافة أو إخفاء صندوق تفاصيل التقسيط في الـ modal
+    const existing = document.getElementById('modalPlanBox');
+    if (existing) existing.remove();
+    if (isInst1) {
+        const half    = selectedPaymentInfo.amount / 2;
+        const dueMs   = Date.now() + Math.floor(selectedPaymentInfo.duration_days / 2) * 86400000;
+        const dueStr  = new Date(dueMs).toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' });
+        const box = document.createElement('div');
+        box.id        = 'modalPlanBox';
+        box.className = 'modal-plan-box';
+        box.innerHTML = `
+            <div style="font-weight:800;font-size:0.9rem;margin-bottom:8px;color:var(--warning)">
+                <i class="fas fa-calendar-alt"></i> خطة التقسيط
+            </div>
+            <div class="modal-plan-row">
+                <span>القسط الأول (تدفعه الآن)</span>
+                <strong>${formatAmount(half, selectedPaymentInfo.currency)}</strong>
+            </div>
+            <div class="modal-plan-row">
+                <span>القسط الثاني (يُسدَّد قبل ${dueStr})</span>
+                <strong>${formatAmount(half, selectedPaymentInfo.currency)}</strong>
+            </div>`;
+        document.querySelector('.summary-row.total').after(box);
+    }
+
+    // نصّ زر الدفع
+    document.getElementById('payBtn').innerHTML = isInst1
+        ? '<i class="fas fa-lock"></i> ادفع القسط الأول الآن'
+        : '<i class="fas fa-lock"></i> ادفع الآن';
+
     selectMethod('card');
     document.getElementById('payModal').classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -437,11 +639,17 @@ window.selectMethod = (method) => {
 
 window.processPayment = async () => {
     if (!selectedPaymentInfo) return;
-    
+
+    const plan    = selectedPaymentInfo.isInst2 ? 'installment'
+                  : (cardPlans[selectedPaymentInfo.application_id] || 'full');
+    const isInst1 = (plan === 'installment' && !selectedPaymentInfo.isInst2);
+    const payAmt  = isInst1 ? selectedPaymentInfo.amount / 2 : selectedPaymentInfo.amount;
+    const instNum = selectedPaymentInfo.isInst2 ? 2 : (isInst1 ? 1 : null);
+
     const btn = document.getElementById('payBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحضير...';
-    
+
     try {
         let walletNumber = '';
         if (selectedMethod === 'wallet') {
@@ -449,12 +657,29 @@ window.processPayment = async () => {
             if (!walletNumber || !/^01\d{9}$/.test(walletNumber)) {
                 showToast('أدخل رقم محفظة صحيح (11 رقم)', 'error');
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-lock"></i> ادفع الآن';
+                btn.innerHTML = isInst1 ? '<i class="fas fa-lock"></i> ادفع القسط الأول الآن' : '<i class="fas fa-lock"></i> ادفع الآن';
                 return;
             }
         }
-        
-        // نادي على Edge Function
+
+        // لو خطة تقسيط: سجّل في training_payment_plans قبل الدفع
+        if (isInst1) {
+            const dueMs  = Date.now() + Math.floor(selectedPaymentInfo.duration_days / 2) * 86400000;
+            const dueDate = new Date(dueMs).toISOString().substring(0, 10);
+            await sb.from('training_payment_plans').upsert({
+                student_user_id:      studentUserId,
+                application_id:       selectedPaymentInfo.application_id,
+                plan_type:            'installment',
+                total_amount:         selectedPaymentInfo.amount,
+                currency:             selectedPaymentInfo.currency,
+                installment_2_amount: selectedPaymentInfo.amount / 2,
+                installment_2_due_date: dueDate,
+            }, { onConflict: 'student_user_id,application_id' });
+        }
+
+        const descPrefix = isInst1 ? 'القسط الأول — ' : (selectedPaymentInfo.isInst2 ? 'القسط الثاني — ' : '');
+
+        // نادي على Edge Function بالمبلغ الصحيح
         const response = await fetch(`${SUPABASE_URL}/functions/v1/paymob-create-payment`, {
             method: 'POST',
             headers: {
@@ -463,45 +688,43 @@ window.processPayment = async () => {
                 'apikey': SUPABASE_KEY
             },
             body: JSON.stringify({
-                amount: selectedPaymentInfo.amount,
-                currency: selectedPaymentInfo.currency,
+                amount:        payAmt,
+                currency:      selectedPaymentInfo.currency,
                 paymentMethod: selectedMethod,
-                internshipId: selectedPaymentInfo.internship_id,
+                internshipId:  selectedPaymentInfo.internship_id,
                 applicationId: selectedPaymentInfo.application_id,
-                description: `رسوم تدريب: ${selectedPaymentInfo.internship_title}`,
-                walletNumber: walletNumber
+                description:   `${descPrefix}رسوم تدريب: ${selectedPaymentInfo.internship_title}`,
+                walletNumber:  walletNumber,
+                installmentNumber: instNum,
+                paymentPlan:   plan,
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (!response.ok || !data.success) {
-            console.error('Payment error:', data);
             showToast('خطأ: ' + (data.error || 'فشل إنشاء الدفع'), 'error');
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-lock"></i> ادفع الآن';
+            btn.innerHTML = isInst1 ? '<i class="fas fa-lock"></i> ادفع القسط الأول الآن' : '<i class="fas fa-lock"></i> ادفع الآن';
             return;
         }
-        
-        // اقفل الـ modal الحالي وافتح الـ iframe
+
         closePayModal();
-        
+
         if (selectedMethod === 'card' && data.iframeUrl) {
             document.getElementById('paymobIframe').src = data.iframeUrl;
             document.getElementById('iframeModal').classList.add('active');
             document.body.style.overflow = 'hidden';
         } else if (selectedMethod === 'wallet' && data.walletRedirectUrl) {
-            // افتح redirect_url في نفس النافذة
             window.location.href = data.walletRedirectUrl;
         } else if (selectedMethod === 'wallet') {
             showToast('تم إرسال طلب الدفع - تحقق من تطبيق المحفظة', 'info');
             setTimeout(() => loadAll(), 3000);
         }
     } catch (err) {
-        console.error(err);
         showToast('خطأ: ' + err.message, 'error');
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-lock"></i> ادفع الآن';
+        btn.innerHTML = isInst1 ? '<i class="fas fa-lock"></i> ادفع القسط الأول الآن' : '<i class="fas fa-lock"></i> ادفع الآن';
     }
 };
 
