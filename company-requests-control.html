@@ -173,6 +173,12 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
 @keyframes spin { to { transform: rotate(360deg); } }
 .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
 .action-bar { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.price-config-card { background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.2); border-radius: 14px; padding: 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.price-config-label { font-size: 0.9rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 7px; flex: 1; min-width: 200px; }
+.price-config-inputs { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.price-input { padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.92rem; width: 130px; }
+.price-input:focus { outline: none; border-color: var(--primary); background: rgba(239,68,68,0.06); }
+.currency-select { padding: 9px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.88rem; cursor: pointer; }
 @media (max-width: 1024px) {
     .sidebar { transform: translateX(100%); width: 280px; }
     .sidebar.open { transform: translateX(0); }
@@ -247,6 +253,29 @@ input:checked + .toggle-slider:before { transform: translateX(-24px); }
                         <div class="stat-mini-num" id="statPendingApps">0</div>
                         <div class="stat-mini-label">طلبات قيد المراجعة</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Training Price Configuration -->
+            <div class="price-config-card">
+                <div class="price-config-label">
+                    <i class="fas fa-tag" style="color:var(--primary)"></i>
+                    سعر التدريب (المبلغ المطلوب من المتدرب):
+                </div>
+                <div class="price-config-inputs">
+                    <input type="number" id="trainingPriceInput" class="price-input" placeholder="0.00" min="0" step="0.01">
+                    <select id="trainingCurrencySelect" class="currency-select">
+                        <option value="EGP">EGP</option>
+                        <option value="USD">USD</option>
+                        <option value="SAR">SAR</option>
+                        <option value="AED">AED</option>
+                    </select>
+                    <button class="btn btn-primary btn-sm" onclick="saveTrainingPrice()">
+                        <i class="fas fa-save"></i> حفظ السعر
+                    </button>
+                </div>
+                <div id="priceStatusMsg" style="font-size:0.82rem;color:var(--success);display:none;align-items:center;gap:4px">
+                    <i class="fas fa-check-circle"></i> تم الحفظ
                 </div>
             </div>
 
@@ -456,6 +485,12 @@ async function loadAll() {
         }
         window._companyRetried = false; // reset للمرة الجاية
 
+        // تحميل سعر التدريب في الحقول
+        const _priceInput = document.getElementById('trainingPriceInput');
+        const _currSelect = document.getElementById('trainingCurrencySelect');
+        if (_priceInput && companyData.training_price != null) _priceInput.value = companyData.training_price;
+        if (_currSelect && companyData.training_currency) _currSelect.value = companyData.training_currency;
+
         // لو الشركة pending
         if (companyData.status === 'pending') {
             window.location.href = 'Company-pending.html';
@@ -528,6 +563,29 @@ function updateStats() {
     document.getElementById('allCount').textContent = depts.length;
     document.getElementById('activeCount').textContent = active;
     document.getElementById('closedCount').textContent = closed;
+}
+
+// ========== Training Price ==========
+async function saveTrainingPrice() {
+    const price = parseFloat(document.getElementById('trainingPriceInput').value);
+    const currency = document.getElementById('trainingCurrencySelect').value || 'EGP';
+    if (isNaN(price) || price < 0) {
+        showToast('أدخل سعراً صحيحاً', 'error');
+        return;
+    }
+    try {
+        const { error } = await sb.from('companies')
+            .update({ training_price: price, training_currency: currency })
+            .eq('user_id', companyUserId);
+        if (error) throw error;
+        companyData.training_price = price;
+        companyData.training_currency = currency;
+        const msg = document.getElementById('priceStatusMsg');
+        if (msg) { msg.style.display = 'flex'; setTimeout(() => { msg.style.display = 'none'; }, 3000); }
+        showToast('✅ تم حفظ سعر التدريب بنجاح', 'success');
+    } catch (err) {
+        showToast('خطأ في حفظ السعر: ' + err.message, 'error');
+    }
 }
 
 // ========== Render Departments ==========
