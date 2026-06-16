@@ -102,11 +102,8 @@ function initializeGoogleLogin() {
 }
 
 function handleGoogleResponse(response) {
-    console.log('Google ID Token:', response.credential);
-    
     // فك تشفير Token للحصول على بيانات المستخدم
     const userInfo = parseJwt(response.credential);
-    console.log('User Info:', userInfo);
     
     // إنشاء شركة من بيانات Google
     const company = {
@@ -153,12 +150,9 @@ function initializeFacebookLogin() {
 }
 
 function handleFacebookResponse(response) {
-    console.log('Facebook Response:', response);
-    
     if (response.status === 'connected') {
         // الحصول على معلومات المستخدم
         FB.api('/me', { fields: 'name,email,picture' }, function(userInfo) {
-            console.log('Facebook User Info:', userInfo);
             
             // إنشاء شركة من بيانات Facebook
             const company = {
@@ -311,7 +305,6 @@ function saveCompanySession(company) {
     
     localStorage.setItem('companies', JSON.stringify(companies));
     
-    console.log('✅ Company session saved:', company.companyName);
     return true;
 }
 
@@ -454,7 +447,6 @@ loginForm.addEventListener('submit', function(e) {
             }
 
             // الحساب معتمد - تسجيل دخول ناجح
-            console.log('✅ Login successful:', company.companyName);
             
             const sessionCompany = {
                 ...company,
@@ -478,8 +470,6 @@ loginForm.addEventListener('submit', function(e) {
             }, 1500);
             
         } else {
-            // Login failed
-            console.log('❌ Login failed: Invalid credentials');
             
             submitBtn.classList.remove('loading');
             submitBtn.disabled = false;
@@ -622,20 +612,3 @@ inputs.forEach(input => {
     });
 });
 
-// ============================================
-// Console Info
-// ============================================
-console.log('%c🚀 ProVance Login System', 'color: #00D9FF; font-size: 20px; font-weight: bold;');
-console.log('%c✅ Auto-login: ' + (CONFIG.DISABLE_AUTO_LOGIN ? 'DISABLED 🛑' : 'ENABLED ✅'), 'color: ' + (CONFIG.DISABLE_AUTO_LOGIN ? '#ff6b6b' : '#51cf66') + '; font-size: 14px;');
-console.log('%c🔧 Demo Mode: ' + (CONFIG.DEMO_MODE ? 'ON' : 'OFF'), 'color: #ffd700; font-size: 14px;');
-
-// Show registered companies count (for debugging)
-const companies = JSON.parse(localStorage.getItem('companies') || '[]');
-console.log(`%c📊 عدد الشركات المسجلة: ${companies.length}`, 'color: #339af0; font-size: 12px;');
-
-if (companies.length > 0) {
-    console.log('%c📋 الشركات المسجلة:', 'color: #51cf66; font-size: 12px;');
-    companies.forEach((c, i) => {
-        console.log(`   ${i + 1}. ${c.companyName} (${c.email}) - ${c.loginMethod || 'email'}`);
-    });
-}
