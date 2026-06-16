@@ -282,10 +282,22 @@ let selectedMethod = 'card';
 let cardPlans = {};   // application_id → 'full' | 'installment'
 let paymentPlans = {}; // application_id → training_payment_plans record
 
-const DURATION_DAYS = {
-  'أسبوعين': 14, '3 أسابيع': 21, 'شهر واحد': 30,
-  'شهر ونصف': 45, 'شهرين': 60, 'شهرين ونصف': 75
-};
+function parseDurationDays(d) {
+    if (!d) return 0;
+    const s = String(d).trim();
+    // كود إنجليزي (من إدارة الأقسام)
+    const codeMap = { '1-week':7,'2-weeks':14,'3-weeks':21,'4-weeks':28,'1-month':30,'1.5-months':45,'2-months':60,'2.5-months':75,'3-months':90,'4-months':120,'5-months':150,'6-months':180 };
+    if (codeMap[s] != null) return codeMap[s];
+    // نص عربي (من internships.duration بعد تحويل company-requests-control)
+    const arMap = { 'أسبوع':7,'اسبوع':7,'أسبوعين':14,'اسبوعين':14,'3 أسابيع':21,'شهر':30,'شهر واحد':30,'شهر ونصف':45,'شهر ونص':45,'شهرين':60,'شهرين ونصف':75,'شهرين ونص':75,'3 أشهر':90,'3 شهور':90,'4 أشهر':120,'5 أشهر':150,'6 أشهر':180 };
+    if (arMap[s] != null) return arMap[s];
+    const num = parseFloat((s.match(/[\d.]+/) || [])[0]);
+    if (!isNaN(num)) {
+        if (/أسبوع|week/i.test(s)) return Math.round(num * 7);
+        if (/شهر|month/i.test(s)) return Math.round(num * 30);
+    }
+    return 0;
+}
 
 function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleString('ar-EG', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year: 'numeric' }); }
@@ -329,7 +341,7 @@ async function loadAll() {
         // اجلب: المدفوعات + الطلبات المقبولة + خطط الدفع
         const results = await Promise.allSettled([
             sb.from('payments').select('*').eq('student_user_id', studentUserId).order('created_at', { ascending: false }),
-            sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status').eq('student_user_id', studentUserId).eq('status', 'accepted'),
+            sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, training_schedule').eq('student_user_id', studentUserId).eq('status', 'accepted'),
             sb.from('training_payment_plans').select('*').eq('student_user_id', studentUserId),
         ]);
 
@@ -375,10 +387,28 @@ async function loadAll() {
                         duration_days: 0,
                     });
                 } else {
-                    // لم يُدفع أي شيء بعد
-                    const { data: internship } = await sb.from('internships')
-                        .select('duration').eq('id', app.internship_id).maybeSingle();
-                    const durationDays = DURATION_DAYS[internship?.duration] || 30;
+                    // لم يُدفع أي شيء بعد — احسب مدة التدريب بالأولوية
+                    let durationDays = 30;
+                    let trainingStartDate = null;
+                    const ts = app.training_schedule;
+
+                    if (ts?.start_date && ts?.end_date) {
+                        // الأولوية 1: start_date + end_date (محسوبة تلقائياً في صفحة المقابلات)
+                        const ms = new Date(ts.end_date) - new Date(ts.start_date);
+                        const days = Math.round(ms / 86400000);
+                        if (days > 0) durationDays = days;
+                        trainingStartDate = ts.start_date;
+                    } else if (ts?.duration && parseDurationDays(ts.duration) > 0) {
+                        // الأولوية 2: duration المخزون في training_schedule مباشرة
+                        durationDays = parseDurationDays(ts.duration);
+                        trainingStartDate = ts?.start_date || null;
+                    } else {
+                        // الأولوية 3: اجلب مدة القسم من جدول internships
+                        const { data: internship } = await sb.from('internships')
+                            .select('duration').eq('id', app.internship_id).maybeSingle();
+                        durationDays = parseDurationDays(internship?.duration) || 30;
+                        trainingStartDate = ts?.start_date || null;
+                    }
 
                     pendingPayments.push({
                         application_id: app.id,
@@ -390,6 +420,7 @@ async function loadAll() {
                         currency,
                         isInst2:  false,
                         duration_days: durationDays,
+                        training_start_date: trainingStartDate,
                     });
                 }
             }
@@ -446,8 +477,9 @@ function renderPending() {
         // بطاقة الدفع الأولي (دفع كامل أو تقسيط)
         const plan  = cardPlans[p.application_id] || 'full';
         const half  = p.amount / 2;
-        // حساب تاريخ القسط الثاني: منتصف فترة التدريب من اليوم
-        const dueMs  = Date.now() + Math.floor(p.duration_days / 2) * 86400000;
+        // حساب تاريخ القسط الثاني: منتصف فترة التدريب من بداية التدريب (أو من اليوم لو مش محدد)
+        const _baseMs1 = p.training_start_date ? new Date(p.training_start_date).getTime() : Date.now();
+        const dueMs  = _baseMs1 + Math.floor(p.duration_days / 2) * 86400000;
         const dueStr = new Date(dueMs).toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' });
 
         return `
@@ -519,7 +551,8 @@ window.selectCardPlan = (index, plan) => {
     cardPlans[p.application_id] = plan;
 
     const half = p.amount / 2;
-    const dueMs  = Date.now() + Math.floor(p.duration_days / 2) * 86400000;
+    const _baseMs2 = p.training_start_date ? new Date(p.training_start_date).getTime() : Date.now();
+    const dueMs  = _baseMs2 + Math.floor(p.duration_days / 2) * 86400000;
     const dueStr = new Date(dueMs).toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' });
 
     const fullEl    = document.getElementById(`planFull_${index}`);
@@ -585,7 +618,8 @@ window.openPayModal = (index) => {
     if (existing) existing.remove();
     if (isInst1) {
         const half    = selectedPaymentInfo.amount / 2;
-        const dueMs   = Date.now() + Math.floor(selectedPaymentInfo.duration_days / 2) * 86400000;
+        const _baseMs3 = selectedPaymentInfo.training_start_date ? new Date(selectedPaymentInfo.training_start_date).getTime() : Date.now();
+        const dueMs   = _baseMs3 + Math.floor(selectedPaymentInfo.duration_days / 2) * 86400000;
         const dueStr  = new Date(dueMs).toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' });
         const box = document.createElement('div');
         box.id        = 'modalPlanBox';
@@ -664,7 +698,8 @@ window.processPayment = async () => {
 
         // لو خطة تقسيط: سجّل في training_payment_plans قبل الدفع
         if (isInst1) {
-            const dueMs  = Date.now() + Math.floor(selectedPaymentInfo.duration_days / 2) * 86400000;
+            const _baseMs4 = selectedPaymentInfo.training_start_date ? new Date(selectedPaymentInfo.training_start_date).getTime() : Date.now();
+            const dueMs  = _baseMs4 + Math.floor(selectedPaymentInfo.duration_days / 2) * 86400000;
             const dueDate = new Date(dueMs).toISOString().substring(0, 10);
             await sb.from('training_payment_plans').upsert({
                 student_user_id:      studentUserId,
