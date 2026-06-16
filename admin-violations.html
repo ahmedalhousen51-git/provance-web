@@ -245,42 +245,47 @@ const VIOLATION_TYPES = {
 const SEVERITY_LABELS = { minor: 'بسيطة', moderate: 'متوسطة', major: 'كبيرة', critical: 'حرجة' };
 const STATUS_LABELS = { pending: 'قيد الانتظار', reviewing: 'قيد المراجعة', resolved: 'تم حلها', dismissed: 'تم تجاهلها', escalated: 'تم تصعيدها' };
 
-async function loadAll() {
+function hideOverlay() {
+    const el = document.getElementById('loadingOverlay');
+    if (el) el.classList.add('hidden');
+}
+
+async function checkAdmin() {
     try {
         const { data: sessData } = await sb.auth.getSession();
-        if (!sessData || !sessData.session) { window.location.href = 'admin-login.html'; return; }
-        
+        if (!sessData || !sessData.session) { window.location.href = 'admin-login.html'; return false; }
         const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', sessData.session.user.id).maybeSingle();
-        if (!admin) { showToast('غير مصرح', 'error'); setTimeout(() => window.location.href = 'admin-login.html', 1500); return; }
-        if (!admin.is_active) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return; }
-        
+        if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return false; }
+        if (admin.is_active === false) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return false; }
+        return true;
+    } catch (e) { window.location.href = 'admin-login.html'; return false; }
+}
+
+async function loadAll() {
+    try {
         const { data, error } = await sb.from('violations').select('*').order('reported_at', { ascending: false });
-        
+
         if (error) {
             console.error('Load error:', error);
-            if (error.message && (error.message.includes('violations') || error.message.includes('relation'))) {
-                document.getElementById('violationsList').innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-exclamation-circle" style="color:#f59e0b"></i>
-                        <h3>⚠️ شغّل SQL Migration 45 الأول!</h3>
-                        <p>جدول violations غير موجود في DB</p>
-                    </div>
-                `;
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                return;
-            }
-            showToast('خطأ: ' + error.message, 'error');
+            document.getElementById('violationsList').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-circle" style="color:#f59e0b"></i>
+                    <h3>⚠️ جدول التجاوزات غير موجود</h3>
+                    <p>${escapeHtml(error.message)}</p>
+                </div>
+            `;
+            hideOverlay();
             return;
         }
-        
+
         allViolations = data || [];
         updateStats();
         renderViolations();
-        document.getElementById('loadingOverlay').classList.add('hidden');
     } catch (err) {
         console.error(err);
-        showToast('خطأ في التحميل', 'error');
-        document.getElementById('loadingOverlay').classList.add('hidden');
+        showToast('خطأ في تحميل البيانات', 'error');
+    } finally {
+        hideOverlay();
     }
 }
 
@@ -406,13 +411,13 @@ window.changeStatus = (id, newStatus) => {
 
 document.getElementById('confirmActionBtn').addEventListener('click', async () => {
     if (!pendingActionId || !pendingActionStatus) return;
-    
+
     const notes = document.getElementById('adminNotes').value.trim();
     const actionTaken = document.getElementById('actionTaken').value.trim();
-    
+
     try {
         const { data: sessData } = await sb.auth.getSession();
-        const adminId = sessData?.session?.user?.id;
+        const adminId = sessData?.session?.user?.id || null;
         
         const updates = {
             status: pendingActionStatus,
@@ -446,21 +451,18 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
 });
 
 // Init
-document.addEventListener('DOMContentLoaded', loadAll);
+document.addEventListener('DOMContentLoaded', async () => {
+    const ok = await checkAdmin();
+    if (!ok) return;
+    await loadAll();
 
-// Safety timeout
-setTimeout(() => {
-    const el = document.getElementById('loadingOverlay');
-    if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
-}, 10000);
+    // Safety: hide overlay after 10s no matter what
+    setTimeout(hideOverlay, 10000);
 
-// Auto-refresh كل 30 ثانية
-setInterval(() => {
-    if (document.visibilityState === 'visible') loadAll();
-}, 30000);
-
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) loadAll();
+    // Auto-refresh data only (no re-auth) كل 60 ثانية
+    setInterval(() => {
+        if (document.visibilityState === 'visible') loadAll();
+    }, 60000);
 });
 </script>
 </body>
