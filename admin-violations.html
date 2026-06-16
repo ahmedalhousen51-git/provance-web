@@ -252,6 +252,7 @@ async function loadAll() {
         
         const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', sessData.session.user.id).maybeSingle();
         if (!admin) { showToast('غير مصرح', 'error'); setTimeout(() => window.location.href = 'admin-login.html', 1500); return; }
+        if (!admin.is_active) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return; }
         
         const { data, error } = await sb.from('violations').select('*').order('reported_at', { ascending: false });
         
@@ -294,7 +295,8 @@ function updateStats() {
 window.setFilter = (filter, e) => {
     currentFilter = filter;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    if (e && e.target) e.target.classList.add('active');
+    const activeBtn = document.querySelector(`.filter-btn[data-filter="${filter}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
     renderViolations();
 };
 
