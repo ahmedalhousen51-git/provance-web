@@ -473,9 +473,10 @@ async function checkAdmin() {
     try {
         const { data: { session } } = await sb.auth.getSession();
         if (!session) { window.location.href = 'admin-login.html'; return null; }
-        const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', session.user.id).maybeSingle();
-        if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
-        if (!admin.is_active) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        const { data: admin, error: adminErr } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', session.user.id).maybeSingle();
+        if (adminErr) { console.error('admins query error:', adminErr); return null; }
+        if (!admin) { window.location.href = 'admin-login.html'; return null; }
+        if (admin.is_active === false) { window.location.href = 'admin-login.html'; return null; }
         applyAdminPermissions(admin);
         return admin;
     } catch (e) { window.location.href = 'admin-login.html'; return null; }
