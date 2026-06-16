@@ -617,10 +617,11 @@ window.saveViolation = async (userId) => {
 window.resolveViolation = async (id) => {
     if (!confirm('هل تريد إغلاق هذه المخالفة؟')) return;
     try {
-        await sb.from('penalties').update({ status: 'resolved', resolved_at: new Date().toISOString() }).eq('id', id);
+        const { error } = await sb.from('penalties').update({ status: 'resolved', resolved_at: new Date().toISOString() }).eq('id', id);
+        if (error) throw error;
         showToast('تم الحل', 'success');
         await loadAll();
-    } catch (err) { showToast('حدث خطأ', 'error'); }
+    } catch (err) { showToast('حدث خطأ: ' + err.message, 'error'); }
 };
 
 window.viewTraineeDetails = async (userId) => {
@@ -740,6 +741,7 @@ async function checkAdmin() {
         if (!session) { window.location.href = 'admin-login.html'; return null; }
         const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', session.user.id).maybeSingle();
         if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        if (!admin.is_active) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
         return admin;
     } catch (e) { window.location.href = 'admin-login.html'; return null; }
 }
