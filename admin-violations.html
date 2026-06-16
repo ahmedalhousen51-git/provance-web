@@ -254,11 +254,20 @@ async function checkAdmin() {
     try {
         const { data: sessData } = await sb.auth.getSession();
         if (!sessData || !sessData.session) { window.location.href = 'admin-login.html'; return false; }
-        const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', sessData.session.user.id).maybeSingle();
-        if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return false; }
-        if (admin.is_active === false) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return false; }
+        const { data: admin, error: adminErr } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', sessData.session.user.id).maybeSingle();
+        if (adminErr) {
+            console.error('admins query error:', adminErr);
+            showToast('خطأ في التحقق من الصلاحيات: ' + adminErr.message, 'error');
+            return false;
+        }
+        if (!admin) { window.location.href = 'admin-login.html'; return false; }
+        if (admin.is_active === false) { window.location.href = 'admin-login.html'; return false; }
         return true;
-    } catch (e) { window.location.href = 'admin-login.html'; return false; }
+    } catch (e) {
+        console.error('checkAdmin exception:', e);
+        window.location.href = 'admin-login.html';
+        return false;
+    }
 }
 
 async function loadAll() {
@@ -452,12 +461,12 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
 
 // Init
 document.addEventListener('DOMContentLoaded', async () => {
+    // Safety: always hide overlay after 10s regardless of what happens
+    setTimeout(hideOverlay, 10000);
+
     const ok = await checkAdmin();
     if (!ok) return;
     await loadAll();
-
-    // Safety: hide overlay after 10s no matter what
-    setTimeout(hideOverlay, 10000);
 
     // Auto-refresh data only (no re-auth) كل 60 ثانية
     setInterval(() => {
