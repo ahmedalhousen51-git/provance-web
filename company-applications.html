@@ -1247,12 +1247,71 @@ window.saveEditInterview = async (appId) => {
     } catch(e) { showToast('خطأ: ' + e.message, 'error'); }
 };
 
+// ── مساعدات مدة التدريب ───────────────────────────────────────
+function es_durationToDays(d) {
+    if (!d) return 0;
+    const s = String(d).trim();
+    const codeMap = { '1-week':7,'2-weeks':14,'3-weeks':21,'4-weeks':28,'1-month':30,'1.5-months':45,'2-months':60,'2.5-months':75,'3-months':90,'4-months':120,'5-months':150,'6-months':180 };
+    if (codeMap[s] != null) return codeMap[s];
+    const arMap = { 'أسبوع':7,'اسبوع':7,'أسبوعين':14,'اسبوعين':14,'3 أسابيع':21,'4 أسابيع':28,'شهر':30,'شهر ونصف':45,'شهر ونص':45,'شهرين':60,'شهرين ونصف':75,'شهرين ونص':75,'3 أشهر':90,'3 شهور':90,'4 أشهر':120,'5 أشهر':150,'6 أشهر':180,'6 شهور':180 };
+    if (arMap[s] != null) return arMap[s];
+    const num = parseFloat((s.match(/[\d.]+/) || [])[0]);
+    if (!isNaN(num)) {
+        if (/أسبوع|اسبوع|week/i.test(s)) return Math.round(num*7);
+        if (/شهر|شهور|month/i.test(s)) return Math.round(num*30);
+    }
+    return 0;
+}
+function es_getDurationText(d) {
+    if (!d) return 'غير محددة';
+    const s = String(d).trim();
+    const map = { '1-month':'شهر','1.5-months':'شهر ونصف','2-months':'شهرين','2.5-months':'شهرين ونصف','3-months':'3 أشهر','4-months':'4 أشهر','5-months':'5 أشهر','6-months':'6 أشهر','1-week':'أسبوع','2-weeks':'أسبوعين','3-weeks':'3 أسابيع','4-weeks':'4 أسابيع' };
+    return map[s] || s;
+}
+function es_computeEndDate(startStr, duration) {
+    const days = es_durationToDays(duration);
+    if (!startStr || !days) return '';
+    const end = new Date(startStr);
+    if (isNaN(end)) return '';
+    end.setDate(end.getDate() + days);
+    return end.toISOString().slice(0,10);
+}
+window._esInternshipDuration = null;
+function es_updateEndDate() {
+    const start = document.getElementById('esStartDate')?.value;
+    const dur = window._esInternshipDuration;
+    if (!start || !dur) return;
+    const endDate = es_computeEndDate(start, dur);
+    const endEl = document.getElementById('esEndDate');
+    if (endEl && endDate) { endEl.value = endDate; endEl.style.color = ''; }
+}
+
 // ── تعديل جدول التدريب ────────────────────────────────────────
-window.editTrainingSchedule = (appId) => {
+window.editTrainingSchedule = async (appId) => {
     const app = allApplications.find(a => a.id === appId);
     if (!app) return;
     const ts = app.training_schedule || {};
     const daysOfWeek = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+    // جيب مدة المجال من Supabase
+    let internshipDuration = ts.duration || null;
+    try {
+        const sb = await window.getSafeSupabase();
+        if (sb && app.internship_id) {
+            const { data: intData } = await sb.from('internships').select('duration').eq('id', app.internship_id).maybeSingle();
+            if (intData?.duration) internshipDuration = intData.duration;
+        }
+    } catch(e) { console.warn('fetch internship duration:', e); }
+    window._esInternshipDuration = internshipDuration;
+
+    const durTxt = es_getDurationText(internshipDuration);
+    const durInfo = internshipDuration
+        ? `<div style="background:rgba(79,172,254,0.08);border:1px solid rgba(79,172,254,0.2);border-radius:8px;padding:8px 12px;margin-bottom:4px;font-size:.82rem;color:#4facfe"><i class="fas fa-info-circle"></i> مدة المجال المحددة: <strong>${durTxt}</strong> — تاريخ النهاية يُحسب تلقائياً</div>`
+        : `<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:8px 12px;margin-bottom:4px;font-size:.82rem;color:#f59e0b"><i class="fas fa-exclamation-triangle"></i> مدة المجال غير محددة — أدخل تاريخ النهاية يدوياً</div>`;
+
+    // احسب end_date المناسب: لو في مدة محددة احسبها من البداية، وإلا استخدم المحفوظ
+    const computedEnd = internshipDuration && ts.start_date ? es_computeEndDate(ts.start_date, internshipDuration) : (ts.end_date || '');
+
     const html = `
     <div class="modal-overlay active" id="editScheduleModal" onclick="if(event.target===this)closeModal('editScheduleModal')">
         <div class="modal" style="max-width:540px">
@@ -1261,19 +1320,19 @@ window.editTrainingSchedule = (appId) => {
                 <button class="modal-close" onclick="closeModal('editScheduleModal')">&times;</button>
             </div>
             <div class="modal-body">
-                <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:10px;margin-bottom:16px;font-size:.88rem">
+                <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:10px;margin-bottom:8px;font-size:.88rem">
                     <strong>${esc(app.student_name)}</strong>
                     <span style="color:var(--text-muted);margin-right:8px">${esc(app.internship_title)}</span>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                ${durInfo}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
                     <div class="form-group">
                         <label><i class="fas fa-calendar-check" style="color:var(--success)"></i> تاريخ البداية</label>
-                        <input type="date" id="esStartDate" value="${ts.start_date||''}" min="${new Date().toISOString().slice(0,10)}">
+                        <input type="date" id="esStartDate" value="${ts.start_date||''}" min="${new Date().toISOString().slice(0,10)}" oninput="es_updateEndDate()">
                     </div>
                     <div class="form-group">
-                        <label><i class="fas fa-calendar-times" style="color:var(--text-muted)"></i> تاريخ النهاية</label>
-                        <input type="date" id="esEndDate" value="${ts.end_date||''}">
-                    </div>
+                        <label><i class="fas fa-calendar-times" style="color:var(--text-muted)"></i> تاريخ النهاية${internshipDuration ? ' <span style="font-size:.75rem;color:#4facfe">(تلقائي)</span>' : ''}</label>
+                        <input type="date" id="esEndDate" value="${computedEnd}" ${internshipDuration ? 'readonly style="background:rgba(79,172,254,0.05);border-color:rgba(79,172,254,0.3);cursor:default"' : ''}></div>
                     <div class="form-group">
                         <label><i class="fas fa-clock" style="color:var(--success)"></i> وقت الحضور اليومي</label>
                         <select id="esDailyTime" style="background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);padding:11px;border-radius:10px;width:100%;font-family:inherit">
@@ -1328,7 +1387,8 @@ window.saveTrainingSchedule = async (appId) => {
     try {
         const sb = await window.getSafeSupabase();
         if (!sb) { showToast('فشل الاتصال', 'error'); return; }
-        const schedule = { start_date: startDate, end_date: endDate||null, daily_time: dailyTime, days_per_week: parseInt(daysPerWeek), training_days: trainingDays, notes: notes||null };
+        const duration = window._esInternshipDuration || null;
+        const schedule = { start_date: startDate, end_date: endDate||null, duration: duration, daily_time: dailyTime, days_per_week: parseInt(daysPerWeek), training_days: trainingDays, notes: notes||null };
         await sb.from('applications').update({ training_schedule: schedule, updated_at: new Date().toISOString() }).eq('id', appId);
         const app = allApplications.find(a => a.id === appId);
         if (app && window.ProVance.sendNotification) {
