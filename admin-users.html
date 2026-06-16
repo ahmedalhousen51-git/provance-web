@@ -403,8 +403,9 @@ async function checkAdmin() {
         const { data: { session } } = await sb.auth.getSession();
         if (!session) { window.location.href = 'admin-login.html'; return null; }
         const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', session.user.id).maybeSingle();
-        applyAdminPermissions(admin);
         if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        if (!admin.is_active) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        applyAdminPermissions(admin);
         return admin;
     } catch (e) {
         window.location.href = 'admin-login.html';
@@ -419,7 +420,7 @@ function isSuperAdmin(admin) {
 // ============ Load Admins ============
 async function loadAdmins() {
     try {
-        const { data, error } = await sb.from('admins').select('user_id, full_name, email, role, is_active, permissions, created_at').order('created_at', { ascending: false });
+        const { data, error } = await sb.from('admins').select('user_id, full_name, email, role, is_active, permissions, created_at, last_login').order('created_at', { ascending: false });
         if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
         allAdmins = data || [];
         updateStats();
@@ -472,7 +473,7 @@ function render() {
 
 function createCard(a) {
     const isSuper = a.role === 'super_admin';
-    const isYou = a.user_id === currentAdmin.user_id;
+    const isYou = currentAdmin && a.user_id === currentAdmin.user_id;
     const isInactive = a.is_active === false;
     const permissions = a.permissions || {};
     
