@@ -295,12 +295,18 @@ async function checkAdmin() {
     try {
         const { data: { session } } = await sb.auth.getSession();
         if (!session) { window.location.href = 'admin-login.html'; return null; }
-        const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', session.user.id).maybeSingle();
-        if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
-        if (!admin.is_active) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        const { data: admin, error: adminErr } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', session.user.id).maybeSingle();
+        if (adminErr) {
+            console.error('admins query error:', adminErr);
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            return null;
+        }
+        if (!admin) { window.location.href = 'admin-login.html'; return null; }
+        if (admin.is_active === false) { window.location.href = 'admin-login.html'; return null; }
         applyAdminPermissions(admin);
         return admin;
     } catch (e) {
+        console.error('checkAdmin exception:', e);
         window.location.href = 'admin-login.html';
         return null;
     }
@@ -405,6 +411,12 @@ window.refreshData = async () => {
 };
 
 async function init() {
+    // Safety: always hide overlay after 12s regardless of what happens
+    setTimeout(() => {
+        const el = document.getElementById('loadingOverlay');
+        if (el) el.classList.add('hidden');
+    }, 12000);
+
     const admin = await checkAdmin();
     if (!admin) return;
     updateDate();
