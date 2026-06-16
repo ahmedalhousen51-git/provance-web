@@ -1,612 +1,467 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' https://jrwazyrdzmbcnddpxxrf.supabase.co wss://jrwazyrdzmbcnddpxxrf.supabase.co; img-src 'self' data: blob: https: ; object-src 'none'; base-uri 'self';">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>تسجيل دخول الأدمن - ProVance</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #ef4444; --secondary: #dc2626;
-            --gradient: linear-gradient(135deg, #ef4444, #dc2626);
-            --bg: #0a0e27; --bg-2: #1a1535;
-            --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06);
-            --border: rgba(255,255,255,0.08);
-            --text: #fff; --text-muted: #94a3b8; --text-dim: rgba(148,163,184,0.6);
-            --error: #ef4444; --success: #10b981; --warning: #f59e0b;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Cairo', sans-serif;
-            background: var(--bg); color: var(--text);
-            min-height: 100vh; -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
-        }
-        .bg-anim {
-            position: fixed; inset: 0; z-index: -1;
-            background:
-                radial-gradient(circle at 15% 20%, rgba(239,68,68,0.12), transparent 45%),
-                radial-gradient(circle at 85% 80%, rgba(220,38,38,0.1), transparent 45%),
-                var(--bg);
-        }
-        .bg-anim::before, .bg-anim::after {
-            content: ''; position: absolute;
-            border-radius: 50%; filter: blur(120px); opacity: 0.3;
-            animation: float 20s infinite ease-in-out;
-        }
-        .bg-anim::before { width: 500px; height: 500px; background: var(--primary); top: -200px; right: -200px; }
-        .bg-anim::after { width: 400px; height: 400px; background: var(--secondary); bottom: -150px; left: -150px; animation-delay: 10s; }
-        @keyframes float {
-            0%,100% { transform: translate(0,0) scale(1); }
-            33% { transform: translate(50px, 40px) scale(1.1); }
-            66% { transform: translate(-30px, 60px) scale(0.95); }
-        }
-        .container { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
-        @media (max-width: 968px) {
-            .container { grid-template-columns: 1fr; }
-            .container .left-panel { display: none; }
-        }
-        .left-panel {
-            display: flex; flex-direction: column;
-            padding: 40px 50px; position: relative; overflow: hidden;
-        }
-        .left-panel::before {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(220,38,38,0.04));
-            backdrop-filter: blur(10px); z-index: -1;
-        }
-        .brand {
-            display: flex; align-items: center; gap: 12px;
-            margin-bottom: auto;
-        }
-        .brand img { height: 42px; }
-        .brand-text {
-            font-size: 1.4rem; font-weight: 900;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero-content { margin: auto 0; }
-        .hero-badge {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 7px 16px;
-            background: rgba(239,68,68,0.12);
-            border: 1px solid rgba(239,68,68,0.3);
-            border-radius: 20px;
-            color: var(--primary);
-            font-size: 0.85rem; font-weight: 700;
-            margin-bottom: 22px;
-        }
-        .hero-title {
-            font-size: 2.4rem; font-weight: 900;
-            line-height: 1.25; margin-bottom: 16px;
-        }
-        .hero-title .highlight {
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero-desc {
-            color: var(--text-muted); font-size: 1rem;
-            line-height: 1.8; margin-bottom: 32px; max-width: 460px;
-        }
-        .features {
-            display: flex; flex-direction: column; gap: 14px; max-width: 460px;
-        }
-        .feature-row { display: flex; align-items: flex-start; gap: 12px; }
-        .feature-icon {
-            width: 38px; height: 38px;
-            background: rgba(239,68,68,0.12);
-            border: 1px solid rgba(239,68,68,0.3);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--primary); font-size: 0.95rem;
-            flex-shrink: 0;
-        }
-        .feature-text { display: flex; flex-direction: column; gap: 3px; }
-        .feature-text strong { font-size: 0.94rem; font-weight: 700; }
-        .feature-text small { color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; }
-        .stats-row {
-            display: flex; gap: 22px;
-            margin-top: auto; padding-top: 28px;
-            border-top: 1px solid var(--border);
-        }
-        .stat-item .num {
-            font-size: 1.6rem; font-weight: 900;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .stat-item .label { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
-        .right-panel {
-            display: flex; align-items: center; justify-content: center;
-            padding: 40px 30px; position: relative;
-        }
-        .form-wrap { width: 100%; max-width: 440px; }
-        .form-header { text-align: center; margin-bottom: 32px; }
-        .form-icon {
-            width: 64px; height: 64px;
-            margin: 0 auto 16px;
-            background: var(--gradient);
-            border-radius: 18px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.7rem; color: #fff;
-            box-shadow: 0 16px 40px rgba(239,68,68,0.4);
-        }
-        .form-title { font-size: 1.7rem; font-weight: 800; margin-bottom: 6px; }
-        .form-subtitle { color: var(--text-muted); font-size: 0.92rem; }
-        .mobile-brand { display: none; text-align: center; margin-bottom: 24px; }
-        .mobile-brand img { height: 38px; }
-        @media (max-width: 968px) { .mobile-brand { display: block; } }
-        .field { margin-bottom: 16px; }
-        .field-label {
-            display: flex; align-items: center; justify-content: space-between;
-            color: var(--text); font-size: 0.9rem; font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .field-label-text { display: flex; align-items: center; gap: 6px; }
-        .field-label i { color: var(--primary); font-size: 0.85rem; }
-        .field-label a {
-            color: var(--primary); text-decoration: none;
-            font-size: 0.82rem; font-weight: 600;
-        }
-        .field-label a:hover { text-decoration: underline; }
-        .input-wrap { position: relative; }
-        .field-input {
-            width: 100%; padding: 14px 16px;
-            background: rgba(255,255,255,0.03);
-            border: 2px solid var(--border);
-            border-radius: 12px; color: var(--text);
-            font-size: 0.95rem; font-family: inherit;
-            transition: all .2s;
-        }
-        .field-input:focus {
-            outline: none; border-color: var(--primary);
-            background: rgba(255,255,255,0.06);
-            box-shadow: 0 0 0 4px rgba(239,68,68,0.1);
-        }
-        .field-input::placeholder { color: var(--text-dim); }
-        .field-input[type="email"], .field-input[type="password"] {
-            direction: ltr; text-align: right; padding-left: 44px;
-        }
-        .toggle-pass {
-            position: absolute; left: 14px; top: 50%;
-            transform: translateY(-50%);
-            background: none; border: none;
-            color: var(--text-muted); cursor: pointer;
-            padding: 6px; font-size: 0.95rem;
-        }
-        .toggle-pass:hover { color: var(--text); }
-        .field-error {
-            display: block; color: var(--error);
-            font-size: 0.8rem; margin-top: 6px; min-height: 16px;
-        }
-        .remember-row {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 22px; font-size: 0.88rem;
-        }
-        .remember-checkbox {
-            display: flex; align-items: center; gap: 8px; cursor: pointer;
-        }
-        .remember-checkbox input {
-            width: 16px; height: 16px;
-            accent-color: var(--primary); cursor: pointer;
-        }
-        .remember-checkbox label {
-            color: var(--text-muted); cursor: pointer;
-        }
-        .btn-submit {
-            width: 100%; padding: 14px;
-            background: var(--gradient); color: #fff;
-            border: none; border-radius: 12px;
-            font-weight: 800; font-size: 1rem; font-family: inherit;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            transition: all .25s; margin-bottom: 16px;
-        }
-        .btn-submit:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 14px 35px rgba(239,68,68,0.45);
-        }
-        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-submit .spinner { display: none; }
-        .btn-submit.loading .spinner { display: inline-block; }
-        .btn-submit.loading .text, .btn-submit.loading .arrow { display: none; }
-        .divider {
-            display: flex; align-items: center; gap: 14px;
-            margin: 22px 0; color: var(--text-dim); font-size: 0.82rem;
-        }
-        .divider::before, .divider::after {
-            content: ''; flex: 1; height: 1px; background: var(--border);
-        }
-        .switch-types {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 10px; margin-bottom: 22px;
-        }
-        .switch-btn {
-            padding: 11px;
-            background: var(--card); border: 1px solid var(--border);
-            color: var(--text-muted);
-            border-radius: 10px;
-            font-size: 0.85rem; font-weight: 700; font-family: inherit;
-            cursor: pointer; text-decoration: none;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            transition: all .2s;
-        }
-        .switch-btn:hover {
-            background: var(--card-hover); color: var(--text);
-        }
-        .register-link {
-            text-align: center; color: var(--text-muted); font-size: 0.92rem;
-        }
-        .register-link a {
-            color: var(--primary); text-decoration: none; font-weight: 700;
-        }
-        .register-link a:hover { text-decoration: underline; }
-        .error-banner {
-            background: rgba(239,68,68,0.1);
-            border: 1.5px solid rgba(239,68,68,0.4);
-            border-radius: 12px;
-            padding: 14px 18px;
-            margin-bottom: 18px;
-            color: #fca5a5;
-            font-size: 0.92rem;
-            display: flex; align-items: flex-start; gap: 10px;
-            animation: slideIn .3s ease-out;
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .back-home {
-            position: absolute; top: 24px; right: 24px;
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 9px 14px;
-            background: var(--card); border: 1px solid var(--border);
-            color: var(--text-muted); text-decoration: none;
-            border-radius: 10px; font-size: 0.85rem; font-weight: 600;
-            transition: all .2s;
-            z-index: 10;
-        }
-        .back-home:hover { color: var(--text); background: var(--card-hover); }
-        @keyframes shake {
-            0%,100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        .shake { animation: shake .35s; }
-        @media (max-width: 968px) {
-            .right-panel { padding: 70px 20px 30px; }
-            .form-title { font-size: 1.5rem; }
-        }
-    </style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://jrwazyrdzmbcnddpxxrf.supabase.co" crossorigin>
+<title>التجاوزات - ProVance Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root { --primary: #ef4444; --secondary: #dc2626; --gradient: linear-gradient(135deg, #ef4444, #dc2626); --bg: #0a0e27; --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08); --text: #fff; --text-muted: #94a3b8; --error: #ef4444; --success: #10b981; --warning: #f59e0b; --info: #4facfe; }
+* { margin:0; padding:0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%), var(--bg); }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; background: rgba(20,18,40,0.7); backdrop-filter: blur(20px); border-left: 1px solid var(--border); padding: 24px 16px; position: fixed; inset: 0 0 0 auto; z-index: 100; transition: transform .3s; display: flex; flex-direction: column; }
+.sidebar-logo { padding: 8px 4px 18px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.logo-wrapper { display: flex; align-items: center; gap: 10px; padding: 4px; }
+.logo-icon { width: 42px; height: 42px; }
+.logo-icon svg { width: 100%; height: 100%; }
+.logo-text { display: flex; flex-direction: column; gap: 2px; }
+.logo-brand { font-size: 1.15rem; font-weight: 900; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.logo-tagline { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; }
+.admin-badge { background: var(--gradient); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; text-align: center; margin-bottom: 14px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--text-muted); text-decoration: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; transition: all .2s; }
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: var(--gradient); color: #fff; }
+.nav-item i { width: 18px; }
+.main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 14px; flex-wrap: wrap; }
+.menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; }
+.topbar-title { font-size: 1.5rem; font-weight: 800; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.stat-num { font-size: 1.8rem; font-weight: 800; margin-bottom: 4px; }
+.stat-label { color: var(--text-muted); font-size: 0.82rem; }
+
+.filters { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+.filter-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 14px; border-radius: 10px; font-family: inherit; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+.filter-btn.active { background: var(--gradient); color: #fff; border-color: var(--primary); }
+.search-input { flex: 1; min-width: 200px; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 0.92rem; }
+.search-input:focus { outline: none; border-color: var(--primary); }
+
+.violations-list { display: flex; flex-direction: column; gap: 12px; }
+.violation-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; transition: all .2s; }
+.violation-card:hover { background: var(--card-hover); }
+.violation-card.critical { border-color: rgba(239,68,68,0.4); }
+.violation-card.major { border-color: rgba(245,158,11,0.4); }
+.violation-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.violator-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px; }
+.violator-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1.1rem; flex-shrink: 0; }
+.violator-name { font-weight: 800; font-size: 1rem; }
+.violator-type { color: var(--text-muted); font-size: 0.78rem; margin-top: 2px; }
+.violation-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge { padding: 4px 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 700; }
+.badge-type { background: rgba(79,172,254,0.15); color: #4facfe; }
+.badge-severity-minor { background: rgba(148,163,184,0.15); color: #94a3b8; }
+.badge-severity-moderate { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.badge-severity-major { background: rgba(239,68,68,0.15); color: #ef4444; }
+.badge-severity-critical { background: rgba(239,68,68,0.25); color: #ef4444; }
+.badge-status-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.badge-status-reviewing { background: rgba(79,172,254,0.15); color: #4facfe; }
+.badge-status-resolved { background: rgba(16,185,129,0.15); color: #10b981; }
+.badge-status-dismissed { background: rgba(148,163,184,0.15); color: #94a3b8; }
+.badge-status-escalated { background: rgba(239,68,68,0.25); color: #ef4444; }
+
+.violation-title { font-weight: 700; margin-bottom: 6px; }
+.violation-desc { color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px; }
+.violation-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px; }
+.violation-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--border); }
+.btn { padding: 8px 14px; border-radius: 8px; font-weight: 700; font-family: inherit; font-size: 0.82rem; cursor: pointer; border: 1px solid; display: inline-flex; align-items: center; gap: 5px; }
+.btn-resolve { background: rgba(16,185,129,0.15); color: #10b981; border-color: rgba(16,185,129,0.3); }
+.btn-review { background: rgba(79,172,254,0.15); color: #4facfe; border-color: rgba(79,172,254,0.3); }
+.btn-dismiss { background: rgba(148,163,184,0.15); color: #94a3b8; border-color: rgba(148,163,184,0.3); }
+.btn-escalate { background: rgba(239,68,68,0.15); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+.btn-penalty { background: var(--gradient); color: #fff; border: none; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-state i { font-size: 4rem; margin-bottom: 14px; opacity: .4; }
+.empty-state h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+
+.loading-overlay { position: fixed; inset: 0; background: rgba(10,14,39,0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .3s; }
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; }
+
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal.active { display: flex; }
+.modal-content { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; padding: 24px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; }
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
+.form-input, .form-textarea, .form-select { width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.03); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 0.92rem; }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: var(--primary); }
+
+@media (max-width: 1024px) {
+.sidebar { transform: translateX(100%); width: 280px; }
+.sidebar.open { transform: translateX(0); }
+.main { margin-right: 0; }
+.menu-toggle { display: flex; align-items: center; justify-content: center; }
+}
+</style>
 </head>
 <body>
-    <div class="bg-anim"></div>
+<div class="bg-anim"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-logo">
+<div class="logo-wrapper">
+<div class="logo-icon">
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ef4444"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs>
+<path d="M16 2 L28 8 V20 Q28 26 16 30 Q4 26 4 20 V8 Z" fill="url(#logoGrad)" stroke="#fff" stroke-width="0.5" opacity="0.95"/>
+<text x="16" y="20" text-anchor="middle" font-family="Cairo, sans-serif" font-size="14" font-weight="900" fill="#fff">P</text>
+</svg>
+</div>
+<div class="logo-text">
+<div class="logo-brand">ProVance</div>
+<div class="logo-tagline">منصة التدريب</div>
+</div>
+</div>
+</div>
+<div class="admin-badge"><i class="fas fa-shield-alt"></i> ADMIN PANEL</div>
+<a href="admin-dashboard.html" class="nav-item"><i class="fas fa-th-large"></i> الرئيسية</a>
+<a href="admin-campany.html" class="nav-item"><i class="fas fa-building"></i> الشركات</a>
+<a href="admin-trainees.html" class="nav-item"><i class="fas fa-users"></i> المتدربين</a>
+<a href="admin-violations.html" class="nav-item active"><i class="fas fa-exclamation-triangle"></i> التجاوزات</a>
+<a href="admin-users.html" class="nav-item"><i class="fas fa-user-shield"></i> الأدمنز</a>
+<a href="admin-approvals.html" class="nav-item"><i class="fas fa-check-double"></i> الموافقات</a>
+<a href="admin-student-support.html" class="nav-item" id="navStudentSupport"><i class="fas fa-user-graduate"></i> دعم الطلاب</a>
+<a href="admin-company-support.html" class="nav-item" id="navCompanySupport"><i class="fas fa-headset"></i> دعم الشركات</a>
+<a href="admin-notification.html" class="nav-item"><i class="fas fa-bell"></i> الإشعارات</a>
+<a href="#" onclick="logoutAdmin(event)" class="nav-item" style="margin-top:auto; color:var(--error)"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a>
+</aside>
 
-    <a href="index.html" class="back-home">
-        <i class="fas fa-arrow-right"></i>
-        <span>الرئيسية</span>
-    </a>
+<main class="main">
+<div class="topbar">
+<button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+<h1 class="topbar-title"><i class="fas fa-exclamation-triangle" style="color:var(--warning)"></i> التجاوزات</h1>
+</div>
 
-    <div class="container">
-        <div class="left-panel">
-            <div class="brand">
-                <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
-                <span class="brand-text" style="display:none">ProVance</span>
-            </div>
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">إجمالي التجاوزات</div></div>
+<div class="stat-card"><div class="stat-num" style="color:#f59e0b" id="statPending">0</div><div class="stat-label">قيد الانتظار</div></div>
+<div class="stat-card"><div class="stat-num" style="color:#4facfe" id="statReviewing">0</div><div class="stat-label">قيد المراجعة</div></div>
+<div class="stat-card"><div class="stat-num" style="color:#10b981" id="statResolved">0</div><div class="stat-label">تم حلها</div></div>
+<div class="stat-card"><div class="stat-num" style="color:#ef4444" id="statCritical">0</div><div class="stat-label">حرجة</div></div>
+</div>
 
-            <div class="hero-content">
-                <span class="hero-badge">
-                    <i class="fas fa-graduation-cap"></i>
-                    لوحة الإدارة
-                </span>
-                <h1 class="hero-title">
-                    تحكم كامل في <span class="highlight">منصة ProVance</span>
-                </h1>
-                <p class="hero-desc">
-                    إدارة الشركات والطلاب، مراجعة الطلبات، إرسال الإشعارات، ومتابعة كل النشاطات على المنصة.
-                </p>
+<div class="filters">
+<button class="filter-btn active" data-filter="all" onclick="setFilter('all', event)">الكل</button>
+<button class="filter-btn" data-filter="pending" onclick="setFilter('pending', event)">قيد الانتظار</button>
+<button class="filter-btn" data-filter="reviewing" onclick="setFilter('reviewing', event)">قيد المراجعة</button>
+<button class="filter-btn" data-filter="resolved" onclick="setFilter('resolved', event)">تم حلها</button>
+<button class="filter-btn" data-filter="student" onclick="setFilter('student', event)">طلاب فقط</button>
+<button class="filter-btn" data-filter="company" onclick="setFilter('company', event)">شركات فقط</button>
+<input type="text" class="search-input" id="searchInput" placeholder="🔍 ابحث بالاسم أو نوع التجاوز...">
+</div>
 
-                <div class="features">
-                    <div class="feature-row">
-                        <div class="feature-icon"><i class="fas fa-bolt"></i></div>
-                        <div class="feature-text">
-                            <strong>إدارة الشركات</strong>
-                            <small>قبول/رفض/إيقاف الشركات بضغطة</small>
-                        </div>
-                    </div>
-                    <div class="feature-row">
-                        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-                        <div class="feature-text">
-                            <strong>إدارة الطلاب</strong>
-                            <small>متابعة كل الحسابات والنشاطات</small>
-                        </div>
-                    </div>
-                    <div class="feature-row">
-                        <div class="feature-icon"><i class="fas fa-certificate"></i></div>
-                        <div class="feature-text">
-                            <strong>إشعارات ذكية</strong>
-                            <small>إرسال إشعارات لكل المستخدمين</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="violations-list" id="violationsList">
+<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><h3>جاري التحميل...</h3></div>
+</div>
+</main>
+</div>
 
-            <div class="stats-row">
-                <div class="stat-item">
-                    <div class="num">+200</div>
-                    <div class="label">شركة</div>
-                </div>
-                <div class="stat-item">
-                    <div class="num">+1500</div>
-                    <div class="label">طالب</div>
-                </div>
-                <div class="stat-item">
-                    <div class="num">+500</div>
-                    <div class="label">فرصة</div>
-                </div>
-            </div>
-        </div>
+<!-- Action Modal -->
+<div class="modal" id="actionModal">
+<div class="modal-content">
+<div class="modal-header">
+<h3 id="actionTitle">معالجة التجاوز</h3>
+<button class="modal-close" onclick="closeModal('actionModal')">×</button>
+</div>
+<div class="form-group">
+<label class="form-label">ملاحظات الإدارة</label>
+<textarea class="form-textarea" id="adminNotes" placeholder="اكتب ملاحظاتك هنا..."></textarea>
+</div>
+<div class="form-group">
+<label class="form-label">الإجراء المتخذ (اختياري)</label>
+<input type="text" class="form-input" id="actionTaken" placeholder="مثال: تحذير شفهي، عقوبة مالية...">
+</div>
+<div style="display:flex;gap:10px">
+<button class="btn btn-dismiss" onclick="closeModal('actionModal')" style="flex:1;justify-content:center">إلغاء</button>
+<button class="btn" id="confirmActionBtn" style="flex:2;justify-content:center;background:var(--gradient);color:#fff;border:none"><i class="fas fa-check"></i> تأكيد</button>
+</div>
+</div>
+</div>
 
-        <div class="right-panel">
-            <div class="form-wrap">
-                <div class="mobile-brand">
-                    <img src="assets/logo.png" alt="ProVance" onerror="this.style.display='none'">
-                </div>
+<div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
 
-                <div class="form-header">
-                    <div class="form-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h2 class="form-title">لوحة تحكم الأدمن 🛡️</h2>
-                    <p class="form-subtitle">سجل دخولك للوصول لحسابك كمدير</p>
-                </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } });
 
-                <div id="errorBanner" style="display:none"></div>
+let allViolations = [];
+let currentFilter = 'all';
+let currentSearch = '';
+let pendingActionId = null;
+let pendingActionStatus = null;
 
-                <form id="loginForm" novalidate>
-                    <div class="field">
-                        <label class="field-label" for="email">
-                            <span class="field-label-text">
-                                <i class="fas fa-envelope"></i> البريد الإلكتروني
-                            </span>
-                        </label>
-                        <input type="email" id="email" class="field-input" placeholder="admin@example.com" autocomplete="email">
-                        <span class="field-error" id="emailErr"></span>
-                    </div>
+function escapeHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleString('ar-EG', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+function getInitial(name) { return (name || '?').charAt(0).toUpperCase(); }
 
-                    <div class="field">
-                        <label class="field-label" for="password">
-                            <span class="field-label-text">
-                                <i class="fas fa-lock"></i> كلمة المرور
-                            </span>
-                            <a href="forgot-password.html">نسيتها؟</a>
-                        </label>
-                        <div class="input-wrap">
-                            <input type="password" id="password" class="field-input" placeholder="كلمة المرور" autocomplete="current-password">
-                            <button type="button" class="toggle-pass" onclick="togglePass()">
-                                <i class="fas fa-eye" id="passIcon"></i>
-                            </button>
-                        </div>
-                        <span class="field-error" id="passwordErr"></span>
-                    </div>
+function showToast(msg, type='info') {
+    const t = document.createElement('div');
+    const c = { error:'#ef4444', success:'#10b981', warning:'#f59e0b', info:'#4facfe' };
+    t.className = 'toast'; t.style.background = c[type] || c.info; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+}
 
-                    <div class="remember-row">
-                        <div class="remember-checkbox">
-                            <input type="checkbox" id="rememberMe" checked>
-                            <label for="rememberMe">تذكرني</label>
-                        </div>
-                    </div>
+window.closeModal = (id) => {
+    document.getElementById(id).classList.remove('active');
+};
 
-                    <button type="submit" class="btn-submit" id="submitBtn">
-                        <span class="text">تسجيل الدخول</span>
-                        <i class="fas fa-arrow-left arrow"></i>
-                        <i class="fas fa-spinner fa-spin spinner"></i>
-                    </button>
-                </form>
+window.logoutAdmin = async (e) => {
+    if (e) e.preventDefault();
+    if (!confirm('هل تريد تسجيل الخروج؟')) return;
+    try { await sb.auth.signOut(); } catch {}
+    localStorage.clear();
+    window.location.href = 'admin-login.html';
+};
 
-                <div class="divider">أو سجل دخول كـ</div>
+const VIOLATION_TYPES = {
+    no_show: 'عدم حضور',
+    late_arrival: 'تأخير',
+    no_response: 'عدم رد',
+    cancellation: 'إلغاء',
+    unprofessional: 'سلوك غير مهني',
+    breach_contract: 'إخلال بالعقد',
+    late_payment: 'تأخر في الدفع',
+    no_evaluation: 'عدم تقييم',
+    other: 'أخرى'
+};
 
-                <div class="switch-types">
-                    <a href="student-login.html" class="switch-btn">
-                        <i class="fas fa-user-graduate"></i> طالب
-                    </a>
-                    <a href="company-login.html" class="switch-btn">
-                        <i class="fas fa-building"></i> شركة
-                    </a>
-                </div>
+const SEVERITY_LABELS = { minor: 'بسيطة', moderate: 'متوسطة', major: 'كبيرة', critical: 'حرجة' };
+const STATUS_LABELS = { pending: 'قيد الانتظار', reviewing: 'قيد المراجعة', resolved: 'تم حلها', dismissed: 'تم تجاهلها', escalated: 'تم تصعيدها' };
 
-                <p class="register-link" style="font-size:0.82rem">
-                    🛡️ منطقة محمية - الوصول للأدمن المعتمد فقط
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
-    <script>
-    (function() {
-        'use strict';
-
-        // انتظار تحميل supabase-config.js (يدعم الـ retry)
-        if (!window.ProVance) { window.ProVance = {}; console.warn('⏳ supabase-config.js لسه بيحمّل...'); }
-        if (typeof window.ProVance.isValidEmail !== 'function') {
-            window.ProVance.isValidEmail = function(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((e||'').trim()); };
-        }
-        if (typeof window.ProVance.showToast !== 'function') {
-            window.ProVance.showToast = function(msg, type) {
-                var t = document.createElement('div');
-                var c = { error: '#ef4444', success: '#10b981', warning: '#f59e0b', info: '#4facfe' };
-                t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:'+(c[type]||'#4facfe')+';color:#fff;padding:14px 24px;border-radius:12px;font-family:Cairo,sans-serif;font-weight:700;z-index:9999;';
-                t.textContent = msg; document.body.appendChild(t);
-                setTimeout(function(){ t.remove(); }, 4000);
-            };
-        }
-
+async function loadAll() {
+    try {
+        const { data: sessData } = await sb.auth.getSession();
+        if (!sessData || !sessData.session) { window.location.href = 'admin-login.html'; return; }
         
-                // Helper: استنى لحد ما supabase client يكون جاهز (20 ثانية انتظار)
-        async function waitForSupabase(maxWait = 20000) {
-            // أولاً جرب الـ helper المحسّن من supabase-config (يحاول يحمّل المكتبة لو ناقصة)
-            if (window.ProVance && typeof window.ProVance.waitForSupabaseClient === 'function') {
-                const sb = await window.ProVance.waitForSupabaseClient(maxWait);
-                if (sb && typeof sb.from === 'function') return sb;
-            }
-            // Fallback: polling
-            const start = Date.now();
-            while (Date.now() - start < maxWait) {
-                if (window.ProVance && window.ProVance.sb && typeof window.ProVance.sb.from === 'function') {
-                    return window.ProVance.sb;
-                }
-                // Fallback: لو ProVance مش موجود أصلاً، حاول تعمل client مباشر
-                if (typeof supabase !== 'undefined' && supabase.createClient) {
-                    try {
-                        if (!window._directSb) {
-                            window._directSb = supabase.createClient(
-                                'https://jrwazyrdzmbcnddpxxrf.supabase.co',
-                                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI'
-                            );
-                        }
-                        return window._directSb;
-                    } catch (e) {
-                        console.error('Failed to create direct client:', e);
-                    }
-                }
-                await new Promise(r => setTimeout(r, 200));
-            }
-            return null;
-        }
-console.log('✅ Login form initialized');
-
-        window.togglePass = function() {
-            const inp = document.getElementById('password');
-            const icon = document.getElementById('passIcon');
-            if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fas fa-eye-slash'; }
-            else { inp.type = 'password'; icon.className = 'fas fa-eye'; }
-        };
-
-        function showError(id, msg) {
-            const err = document.getElementById(id + 'Err');
-            const inp = document.getElementById(id);
-            if (err) err.textContent = msg;
-            if (inp) {
-                inp.style.borderColor = 'var(--error)';
-                inp.classList.add('shake');
-                setTimeout(() => inp.classList.remove('shake'), 400);
-            }
-        }
-        function clearError(id) {
-            const err = document.getElementById(id + 'Err');
-            const inp = document.getElementById(id);
-            if (err) err.textContent = '';
-            if (inp) inp.style.borderColor = '';
-        }
-        function showBanner(msg) {
-            const banner = document.getElementById('errorBanner');
-            banner.style.display = 'flex';
-            banner.className = 'error-banner';
-            const _em = String(msg||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-            banner.innerHTML = '<i class="fas fa-exclamation-circle" style="font-size:1.2rem;color:var(--error);flex-shrink:0;margin-top:2px;"></i><div style="flex:1"><strong style="color:var(--error);display:block;margin-bottom:4px;">حصل خطأ في تسجيل الدخول</strong><div>'+_em+'</div></div><button onclick="document.getElementById(\'errorBanner\').style.display=\'none\'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;"><i class="fas fa-times"></i></button>';
-        }
-        function hideBanner() { document.getElementById('errorBanner').style.display = 'none'; }
-
-        const savedEmail = localStorage.getItem('rememberAdminEmail');
-        if (savedEmail) document.getElementById('email').value = savedEmail;
-
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            hideBanner();
-            clearError('email'); clearError('password');
-
-            const email = document.getElementById('email').value.trim().toLowerCase();
-            const password = document.getElementById('password').value;
-            const remember = document.getElementById('rememberMe').checked;
-
-            let ok = true;
-            if (!email) { showError('email', 'البريد مطلوب'); ok = false; }
-            else if (!window.ProVance.isValidEmail(email)) { showError('email', 'صيغة البريد غير صحيحة'); ok = false; }
-            if (!password) { showError('password', 'كلمة المرور مطلوبة'); ok = false; }
-
-            if (!ok) {
-                window.ProVance.showToast('املأ البيانات بشكل صحيح', 'error');
+        const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', sessData.session.user.id).maybeSingle();
+        if (!admin) { showToast('غير مصرح', 'error'); setTimeout(() => window.location.href = 'admin-login.html', 1500); return; }
+        if (!admin.is_active) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return; }
+        
+        const { data, error } = await sb.from('violations').select('*').order('reported_at', { ascending: false });
+        
+        if (error) {
+            console.error('Load error:', error);
+            if (error.message && (error.message.includes('violations') || error.message.includes('relation'))) {
+                document.getElementById('violationsList').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle" style="color:#f59e0b"></i>
+                        <h3>⚠️ شغّل SQL Migration 45 الأول!</h3>
+                        <p>جدول violations غير موجود في DB</p>
+                    </div>
+                `;
+                document.getElementById('loadingOverlay').classList.add('hidden');
                 return;
             }
+            showToast('خطأ: ' + error.message, 'error');
+            return;
+        }
+        
+        allViolations = data || [];
+        updateStats();
+        renderViolations();
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    } catch (err) {
+        console.error(err);
+        showToast('خطأ في التحميل', 'error');
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+}
 
-            const btn = document.getElementById('submitBtn');
-            btn.classList.add('loading');
-            btn.disabled = true;
+function updateStats() {
+    document.getElementById('statTotal').textContent = allViolations.length;
+    document.getElementById('statPending').textContent = allViolations.filter(v => v.status === 'pending').length;
+    document.getElementById('statReviewing').textContent = allViolations.filter(v => v.status === 'reviewing').length;
+    document.getElementById('statResolved').textContent = allViolations.filter(v => v.status === 'resolved').length;
+    document.getElementById('statCritical').textContent = allViolations.filter(v => v.severity === 'critical').length;
+}
 
-            try {
-                const sb = await waitForSupabase();
-                if (!sb) {
-                    showBanner('⏳ جاري تحميل النظام، يرجى الانتظار قليلاً ثم المحاولة مرة أخرى');
-                    btn.classList.remove('loading');
-                    btn.disabled = false;
-                    return;
-                }
+window.setFilter = (filter, e) => {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.querySelector(`.filter-btn[data-filter="${filter}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+    renderViolations();
+};
 
-                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+function renderViolations() {
+    let list = allViolations.slice();
+    
+    // Filter
+    if (currentFilter === 'pending') list = list.filter(v => v.status === 'pending');
+    else if (currentFilter === 'reviewing') list = list.filter(v => v.status === 'reviewing');
+    else if (currentFilter === 'resolved') list = list.filter(v => v.status === 'resolved');
+    else if (currentFilter === 'student') list = list.filter(v => v.violator_type === 'student');
+    else if (currentFilter === 'company') list = list.filter(v => v.violator_type === 'company');
+    
+    // Search
+    if (currentSearch) {
+        const q = currentSearch.toLowerCase();
+        list = list.filter(v => 
+            (v.violator_name || '').toLowerCase().includes(q) ||
+            (v.title || '').toLowerCase().includes(q) ||
+            (v.description || '').toLowerCase().includes(q) ||
+            (VIOLATION_TYPES[v.violation_type] || '').includes(q)
+        );
+    }
+    
+    const container = document.getElementById('violationsList');
+    
+    if (list.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-shield-alt" style="color:#10b981"></i>
+                <h3>✅ لا توجد تجاوزات</h3>
+                <p>${currentFilter === 'all' ? 'سجل نظيف!' : 'لا توجد نتائج للفلتر المحدد'}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = list.map(v => {
+        const typeIcon = v.violator_type === 'student' ? 'fa-user-graduate' : 'fa-building';
+        const severityClass = `badge-severity-${v.severity}`;
+        const statusClass = `badge-status-${v.status}`;
+        const cardClass = v.severity === 'critical' || v.severity === 'major' ? v.severity : '';
+        
+        let actions = '';
+        if (v.status === 'pending') {
+            actions += `<button class="btn btn-review" onclick="changeStatus('${v.id}', 'reviewing')"><i class="fas fa-eye"></i> ابدأ المراجعة</button>`;
+        }
+        if (v.status === 'pending' || v.status === 'reviewing') {
+            actions += `<button class="btn btn-resolve" onclick="changeStatus('${v.id}', 'resolved')"><i class="fas fa-check"></i> حل</button>`;
+            actions += `<button class="btn btn-dismiss" onclick="changeStatus('${v.id}', 'dismissed')"><i class="fas fa-times"></i> تجاهل</button>`;
+            actions += `<button class="btn btn-escalate" onclick="changeStatus('${v.id}', 'escalated')"><i class="fas fa-exclamation"></i> تصعيد</button>`;
+        }
+        if (v.violator_type === 'company') {
+            actions += `<a href="admin-campany.html" class="btn btn-penalty" style="text-decoration:none"><i class="fas fa-gavel"></i> فتح صفحة الشركة</a>`;
+        } else {
+            actions += `<a href="admin-trainees.html" class="btn btn-penalty" style="text-decoration:none"><i class="fas fa-gavel"></i> فتح صفحة الطالب</a>`;
+        }
+        
+        return `
+            <div class="violation-card ${cardClass}">
+                <div class="violation-header">
+                    <div class="violator-info">
+                        <div class="violator-avatar">${escapeHtml(getInitial(v.violator_name))}</div>
+                        <div>
+                            <div class="violator-name">${escapeHtml(v.violator_name || '(غير معروف)')}</div>
+                            <div class="violator-type"><i class="fas ${typeIcon}"></i> ${v.violator_type === 'student' ? 'طالب' : 'شركة'}</div>
+                        </div>
+                    </div>
+                    <div class="violation-badges">
+                        <span class="badge badge-type">${VIOLATION_TYPES[v.violation_type] || v.violation_type}</span>
+                        <span class="badge ${severityClass}">${SEVERITY_LABELS[v.severity] || v.severity}</span>
+                        <span class="badge ${statusClass}">${STATUS_LABELS[v.status] || v.status}</span>
+                    </div>
+                </div>
+                <div class="violation-title">${escapeHtml(v.title)}</div>
+                ${v.description ? `<div class="violation-desc">${escapeHtml(v.description)}</div>` : ''}
+                ${v.affected_name ? `<div class="violation-desc">📌 المتأثر: <strong>${escapeHtml(v.affected_name)}</strong> (${v.affected_type === 'student' ? 'طالب' : 'شركة'})</div>` : ''}
+                ${v.admin_notes ? `<div class="violation-desc" style="background:rgba(79,172,254,0.05);padding:10px;border-radius:8px;border-right:3px solid #4facfe"><strong>📝 ملاحظة الإدارة:</strong> ${escapeHtml(v.admin_notes)}</div>` : ''}
+                ${v.action_taken ? `<div class="violation-desc" style="background:rgba(16,185,129,0.05);padding:10px;border-radius:8px;border-right:3px solid #10b981"><strong>✅ الإجراء:</strong> ${escapeHtml(v.action_taken)}</div>` : ''}
+                <div class="violation-meta">
+                    <span><i class="fas fa-clock"></i> حدث: ${formatDate(v.occurred_at)}</span>
+                    <span><i class="fas fa-bell"></i> تم الإبلاغ: ${formatDate(v.reported_at)}</span>
+                    ${v.resolved_at ? `<span><i class="fas fa-check-circle"></i> تم الحل: ${formatDate(v.resolved_at)}</span>` : ''}
+                </div>
+                <div class="violation-actions">${actions}</div>
+            </div>
+        `;
+    }).join('');
+}
 
-                if (error) {
-                    let msg = 'حدث خطأ، حاول تاني';
-                    const errMsg = (error.message || '').toLowerCase();
-                    if (errMsg.includes('invalid') || errMsg.includes('credentials')) msg = '⚠️ البريد أو كلمة المرور غير صحيحة';
-                    else if (errMsg.includes('email not confirmed')) msg = '⚠️ لازم تأكد البريد الإلكتروني أولاً';
-                    else if (errMsg.includes('rate limit')) msg = '⚠️ محاولات كتيرة، استنى دقيقتين';
-                    else if (errMsg.includes('network')) msg = '⚠️ مشكلة في الاتصال بالنت';
-                    else msg = error.message;
-                    showBanner(msg);
-                    window.ProVance.showToast(msg, 'error');
-                    btn.classList.remove('loading');
-                    btn.disabled = false;
-                    return;
-                }
+window.changeStatus = (id, newStatus) => {
+    pendingActionId = id;
+    pendingActionStatus = newStatus;
+    
+    const titleMap = {
+        reviewing: 'بدء مراجعة التجاوز',
+        resolved: 'حل التجاوز',
+        dismissed: 'تجاهل التجاوز',
+        escalated: 'تصعيد التجاوز'
+    };
+    
+    document.getElementById('actionTitle').textContent = titleMap[newStatus] || 'معالجة التجاوز';
+    document.getElementById('adminNotes').value = '';
+    document.getElementById('actionTaken').value = '';
+    document.getElementById('actionModal').classList.add('active');
+};
 
-                const { data: studentData, error: studentErr } = await sb.from('admins')
-                    .select('user_id, full_name, is_active')
-                    .eq('user_id', data.user.id)
-                    .maybeSingle();
+document.getElementById('confirmActionBtn').addEventListener('click', async () => {
+    if (!pendingActionId || !pendingActionStatus) return;
+    
+    const notes = document.getElementById('adminNotes').value.trim();
+    const actionTaken = document.getElementById('actionTaken').value.trim();
+    
+    try {
+        const { data: sessData } = await sb.auth.getSession();
+        const adminId = sessData?.session?.user?.id;
+        
+        const updates = {
+            status: pendingActionStatus,
+            updated_at: new Date().toISOString()
+        };
+        if (notes) updates.admin_notes = notes;
+        if (actionTaken) updates.action_taken = actionTaken;
+        if (pendingActionStatus === 'resolved' || pendingActionStatus === 'dismissed') {
+            updates.resolved_by = adminId;
+            updates.resolved_at = new Date().toISOString();
+        }
+        
+        const { error } = await sb.from('violations').update(updates).eq('id', pendingActionId);
+        if (error) {
+            showToast('خطأ: ' + error.message, 'error');
+            return;
+        }
+        
+        showToast('✅ تم تحديث الحالة', 'success');
+        closeModal('actionModal');
+        await loadAll();
+    } catch (err) {
+        showToast('خطأ: ' + err.message, 'error');
+    }
+});
 
-                if (studentErr || !studentData) {
-                    await sb.auth.signOut();
-                    showBanner('الحساب ده مش له صلاحية أدمن');
-                    btn.classList.remove('loading');
-                    btn.disabled = false;
-                    return;
-                }
+// Search
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    currentSearch = e.target.value;
+    renderViolations();
+});
 
-                if (!studentData.is_active) {
-                    await sb.auth.signOut();
-                    showBanner('حساب الأدمن غير نشط. تواصل مع المسؤول الرئيسي');
-                    btn.classList.remove('loading');
-                    btn.disabled = false;
-                    return;
-                }
+// Init
+document.addEventListener('DOMContentLoaded', loadAll);
 
-                if (remember) localStorage.setItem('rememberAdminEmail', email);
-                else localStorage.removeItem('rememberAdminEmail');
+// Safety timeout
+setTimeout(() => {
+    const el = document.getElementById('loadingOverlay');
+    if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
+}, 10000);
 
-                localStorage.setItem('userType', 'admin');
-                localStorage.setItem('adminName', studentData.full_name);
-                localStorage.setItem('userEmail', email);
+// Auto-refresh كل 30 ثانية
+setInterval(() => {
+    if (document.visibilityState === 'visible') loadAll();
+}, 30000);
 
-                window.ProVance.showToast('🎉 أهلاً بعودتك ' + (studentData.full_name?.split(' ')[0] || 'أدمن'), 'success');
-                setTimeout(() => window.location.href = 'admin-dashboard.html', 800);
-
-            } catch (err) {
-                console.error('Login error:', err);
-                showBanner('⚠️ مشكلة في الاتصال، تأكد من الإنترنت وحاول مرة أخرى');
-                btn.classList.remove('loading');
-                btn.disabled = false;
-            }
-        });
-    })();
-    </script>
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) loadAll();
+});
+</script>
 </body>
 </html>
