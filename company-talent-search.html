@@ -747,6 +747,15 @@
                             <option value="not_started">لم يبدأ بعد</option>
                         </select>
                     </div>
+                    <div>
+                        <label style="display:block;font-size:0.8rem;color:var(--text-muted);margin-bottom:4px">مستوى التدريب</label>
+                        <select id="filterLevel" onchange="applyFilters()" style="width:100%;padding:9px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.85rem">
+                            <option value="">كل المستويات</option>
+                            <option value="beginner">المستوى الأول</option>
+                            <option value="intermediate">المستوى الثاني</option>
+                            <option value="advanced">المستوى الثالث</option>
+                        </select>
+                    </div>
                 </div>
                 
                 <!-- Skills filter -->
@@ -1035,7 +1044,7 @@ async function loadAll() {
         
         // اجلب كل الطلاب (بدون phone/email/national_id للخصوصية)
         const { data, error } = await sb.from('student')
-            .select('user_id, full_name, photo, birth_date, gender, university, faculty, major, gpa, study_year, graduation_year, city, country, education_level, interested_fields, skills, languages, bio, linkedin, github, portfolio, cv_url, year_of_study, training_status, status, created_at')
+            .select('user_id, full_name, photo, birth_date, gender, university, faculty, major, gpa, study_year, graduation_year, city, country, education_level, interested_fields, skills, languages, bio, linkedin, github, portfolio, cv_url, year_of_study, training_status, status, level, created_at')
             .eq('status', 'active')
             .order('created_at', { ascending: false });
         
@@ -1156,6 +1165,7 @@ window.resetFilters = () => {
     document.getElementById('filterCity').value = '';
     document.getElementById('filterStudyYear').value = '';
     document.getElementById('filterTrainingStatus').value = '';
+    document.getElementById('filterLevel').value = '';
     document.getElementById('sortBy').value = 'newest';
     skillFilters = [];
     renderSkillTags();
@@ -1170,8 +1180,9 @@ window.applyFilters = () => {
     const city = document.getElementById('filterCity').value;
     const studyYear = document.getElementById('filterStudyYear').value;
     const trainingStatus = document.getElementById('filterTrainingStatus').value;
+    const levelFilter = document.getElementById('filterLevel').value;
     const sortBy = document.getElementById('sortBy').value;
-    
+
     filteredStudents = allStudents.filter(s => {
         // Text search
         if (query) {
@@ -1209,7 +1220,10 @@ window.applyFilters = () => {
         
         // Training status
         if (trainingStatus && s.training_status !== trainingStatus) return false;
-        
+
+        // Training level
+        if (levelFilter && (s.level || 'beginner') !== levelFilter) return false;
+
         // Skills (يحتوي على الأقل واحدة)
         if (skillFilters.length > 0) {
             const studentSkills = (Array.isArray(s.skills) ? s.skills : []).map(sk => 
@@ -1268,6 +1282,10 @@ function renderStudents() {
             'in_training': '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 8px;border-radius:12px;font-size:0.72rem;font-weight:700">🎓 يتدرب</span>',
             'completed': '<span style="background:rgba(79,172,254,0.15);color:#4facfe;padding:3px 8px;border-radius:12px;font-size:0.72rem;font-weight:700">✓ أكمل</span>'
         }[s.training_status] || '';
+
+        const LEVEL_DISPLAY = { beginner: { label: 'المستوى الأول', color: '#4facfe' }, intermediate: { label: 'المستوى الثاني', color: '#f59e0b' }, advanced: { label: 'المستوى الثالث', color: '#10b981' } };
+        const lvl = LEVEL_DISPLAY[s.level || 'beginner'];
+        const levelBadge = '<span style="background:rgba(255,255,255,0.06);color:' + lvl.color + ';padding:3px 8px;border-radius:12px;font-size:0.72rem;font-weight:700"><i class="fas fa-layer-group"></i> ' + lvl.label + '</span>';
         
         const interests = Array.isArray(s.interested_fields) ? s.interested_fields.slice(0, 3) : [];
         const skills = Array.isArray(s.skills) ? s.skills.slice(0, 3) : [];
@@ -1299,9 +1317,9 @@ function renderStudents() {
                 '</div>' +
             '</div>' +
             
-            (trainingBadge || s.gpa ? '<div style="display:flex;gap:6px;flex-wrap:wrap">' + trainingBadge + 
+            '<div style="display:flex;gap:6px;flex-wrap:wrap">' + levelBadge + trainingBadge +
                 (s.gpa ? '<span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:3px 8px;border-radius:12px;font-size:0.72rem;font-weight:700"><i class="fas fa-star"></i> GPA: ' + esc(s.gpa) + '</span>' : '') +
-            '</div>' : '') +
+            '</div>' +
             
             (interestsHtml ? '<div><div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:3px"><i class="fas fa-heart"></i> اهتمامات</div><div style="display:flex;gap:4px;flex-wrap:wrap">' + interestsHtml + '</div></div>' : '') +
             (skillsHtml ? '<div><div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:3px"><i class="fas fa-tools"></i> مهارات</div><div style="display:flex;gap:4px;flex-wrap:wrap">' + skillsHtml + '</div></div>' : '') +
@@ -1353,6 +1371,7 @@ window.viewStudent = (userId) => {
                         (s.training_status === 'looking' ? '<span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:4px 10px;border-radius:14px;font-size:0.78rem;font-weight:700">🔍 يبحث عن تدريب</span>' : '') +
                         (s.training_status === 'in_training' ? '<span style="background:rgba(16,185,129,0.15);color:#10b981;padding:4px 10px;border-radius:14px;font-size:0.78rem;font-weight:700">🎓 يتدرب حالياً</span>' : '') +
                         (s.training_status === 'completed' ? '<span style="background:rgba(79,172,254,0.15);color:#4facfe;padding:4px 10px;border-radius:14px;font-size:0.78rem;font-weight:700">✓ أكمل تدريب سابق</span>' : '') +
+                        ('<span style="background:rgba(255,255,255,0.06);color:' + ({beginner:'#4facfe',intermediate:'#f59e0b',advanced:'#10b981'}[s.level||'beginner']) + ';padding:4px 10px;border-radius:14px;font-size:0.78rem;font-weight:700"><i class="fas fa-layer-group"></i> ' + ({beginner:'المستوى الأول',intermediate:'المستوى الثاني',advanced:'المستوى الثالث'}[s.level||'beginner']) + '</span>') +
                     '</div>' +
                 '</div>' +
             '</div>' +
