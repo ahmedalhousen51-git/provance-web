@@ -1203,6 +1203,12 @@
         const genderLabel = { male: 'ذكر', female: 'أنثى', other: 'غير محدد' }[studentData.gender] || '-';
         const age = calculateAge(studentData.birth_date);
 
+        const TRAIN_LEVEL_LABELS = { beginner: 'المستوى الأول', intermediate: 'المستوى الثاني', advanced: 'المستوى الثالث' };
+        const TRAIN_LEVEL_COLORS = { beginner: '#4facfe', intermediate: '#f59e0b', advanced: '#10b981' };
+        const currentLevel = studentData.level || 'beginner';
+        const levelLabel = TRAIN_LEVEL_LABELS[currentLevel];
+        const levelColor = TRAIN_LEVEL_COLORS[currentLevel];
+
         personalGrid.innerHTML = `
             ${infoItem('user', 'الاسم الكامل', studentData.full_name)}
             ${infoItem('envelope', 'البريد الإلكتروني', studentData.email || studentEmail)}
@@ -1210,6 +1216,10 @@
             ${infoItem('birthday-cake', 'تاريخ الميلاد', studentData.birth_date ? formatDate(studentData.birth_date) + (age ? ` (${age} سنة)` : '') : null)}
             ${infoItem('venus-mars', 'النوع', studentData.gender ? genderLabel : null)}
             ${infoItem('map-marker-alt', 'العنوان', studentData.address)}
+            <div class="info-item">
+                <div class="info-label"><i class="fas fa-layer-group"></i> مستوى التدريب</div>
+                <div class="info-value" style="color:${levelColor};font-weight:800">${levelLabel}</div>
+            </div>
         `;
 
         // Education
@@ -3229,7 +3239,7 @@
 
             // استخدم Promise.allSettled عشان لو واحد فشل، الباقي يكمل
             const results = await Promise.allSettled([
-                sb.from('student').select('user_id, full_name, email, phone, birth_date, gender, national_id, university, faculty, major, gpa, graduation_year, city, address, country, linkedin, github, portfolio, cv_url, skills, languages, bio, education_level, interested_fields, specialization, study_year, year_of_study, photo, status, training_status, created_at, updated_at').eq('user_id', userId).maybeSingle(),
+                sb.from('student').select('user_id, full_name, email, phone, birth_date, gender, national_id, university, faculty, major, gpa, graduation_year, city, address, country, linkedin, github, portfolio, cv_url, skills, languages, bio, education_level, interested_fields, specialization, study_year, year_of_study, photo, status, training_status, level, created_at, updated_at').eq('user_id', userId).maybeSingle(),
                 sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at, updated_at, interview_date, training_schedule').eq('student_user_id', userId).order('created_at', { ascending: false }),
                 sb.from('performance_evaluations').select('*').eq('student_user_id', userId).eq('status', 'sent'),
                 sb.from('attendance_logs').select('*').eq('student_user_id', userId).order('scanned_at', { ascending: false }).limit(50),
