@@ -185,6 +185,24 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
     .modal-content { padding: 20px; max-height: 95vh; border-radius: 18px; }
     .topbar-title { font-size: 1.2rem; }
 }
+/* ── فلتر الأنظمة ── */
+.system-filter-row { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
+.system-filter-label { font-size:0.8rem; color:var(--text-muted); font-weight:700; flex-shrink:0; white-space:nowrap; }
+.system-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.03); color:var(--text-muted); font-family:inherit; font-size:0.83rem; font-weight:700; cursor:pointer; transition:all .2s; white-space:nowrap; }
+.system-btn:hover:not(.locked) { border-color:var(--primary); color:var(--text); }
+.system-btn.active { color:#fff; }
+.system-btn.s-all.active  { background:var(--gradient); border-color:transparent; }
+.system-btn.s-1.active  { background:linear-gradient(135deg,#4facfe,#00b4d8); border-color:transparent; }
+.system-btn.s-2.active  { background:linear-gradient(135deg,#f59e0b,#f97316); border-color:transparent; }
+.system-btn.s-3.active  { background:linear-gradient(135deg,#10b981,#059669); border-color:transparent; }
+.system-btn.locked { opacity:.45; cursor:not-allowed; }
+.system-btn .lock-icon { font-size:.7rem; opacity:.8; }
+/* ── باجات النظام على الكارت ── */
+.sys-badge { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:8px; font-size:.72rem; font-weight:700; }
+.sys-badge.s-1 { background:rgba(79,172,254,.12); color:#4facfe; border:1px solid rgba(79,172,254,.25); }
+.sys-badge.s-2 { background:rgba(245,158,11,.12); color:#f59e0b; border:1px solid rgba(245,158,11,.25); }
+.sys-badge.s-3 { background:rgba(16,185,129,.12); color:#10b981; border:1px solid rgba(16,185,129,.25); }
+.sys-badge.locked { background:rgba(148,163,184,.07); color:var(--text-dim); border:1px solid rgba(148,163,184,.15); }
     </style>
 </head>
 <body>
@@ -257,6 +275,22 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
                 </div>
             </div>
             <div class="filters-section">
+                <!-- فلتر الأنظمة المالية -->
+                <div class="system-filter-row">
+                    <span class="system-filter-label"><i class="fas fa-layer-group"></i> النظام:</span>
+                    <button class="system-btn s-all active" onclick="setSystemFilter('')">
+                        <i class="fas fa-th"></i> الكل
+                    </button>
+                    <button class="system-btn s-1" id="sysBtn1" data-system="first-time" onclick="setSystemFilter('first-time')">
+                        🌱 النظام الأول
+                    </button>
+                    <button class="system-btn s-2" id="sysBtn2" data-system="once-trained" onclick="setSystemFilter('once-trained')">
+                        ⭐ النظام الثاني
+                    </button>
+                    <button class="system-btn s-3" id="sysBtn3" data-system="twice-trained" onclick="setSystemFilter('twice-trained')">
+                        🏆 النظام الثالث
+                    </button>
+                </div>
                 <div class="filters-row">
                     <input type="text" id="searchInput" placeholder="🔍 ابحث باسم الشركة أو الفرصة...">
                     <select id="filterField">
@@ -380,32 +414,80 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         return ['pending', 'reviewing', 'interview_scheduled', 'interview_done', 'accepted'].includes(s);
     }
 
-    // ── مستوى الطالب = عدد التدريبات المكتملة ──────────────────
-    // 0 = أول مرة → يقدّم على النظام الأول (first-time)
-    // 1 = اتمرّن مرة → النظام الثاني (once-trained)
-    // 2+ = متمرس → النظام الثالث (twice-trained)
+    // ── أنظمة التدريب المالية للشركات ──────────────────────────
+    const SYSTEM_MAP = {
+        'first-time':    { num: 1, label: 'النظام الأول',  color: '#4facfe', icon: '🌱', cls: 's-1' },
+        'once-trained':  { num: 2, label: 'النظام الثاني', color: '#f59e0b', icon: '⭐', cls: 's-2' },
+        'twice-trained': { num: 3, label: 'النظام الثالث', color: '#10b981', icon: '🏆', cls: 's-3' }
+    };
+    // الأنظمة المتاحة لكل مستوى (تراكمية — الأعلى يستطيع التقديم في الأدنى أيضاً)
+    const LEVEL_ELIGIBLE = {
+        'beginner':     ['first-time'],
+        'intermediate': ['first-time', 'once-trained'],
+        'advanced':     ['first-time', 'once-trained', 'twice-trained']
+    };
+
+    // مستوى الطالب من قاعدة البيانات
+    function getStudentLevelKey() {
+        return studentData?.level || 'beginner';
+    }
+
+    // للتوافق مع الكود القديم (عدد التدريبات المكتملة)
     function getStudentLevel() {
         return myApplications.filter(a => a.status === 'completed').length;
     }
-
-    // النظام المطلوب لكل مستوى
     function systemForLevel(level) {
         if (level <= 0) return 'first-time';
         if (level === 1) return 'once-trained';
         return 'twice-trained';
     }
 
-    // هل الطالب مؤهّل يقدّم على فرصة بنظام معيّن؟
+    // هل الطالب مؤهّل يقدّم على فرصة بنظام معيّن؟ (يستخدم level من DB)
     function canApplyToSystem(traineeType) {
-        const level = getStudentLevel();
-        const required = systemForLevel(level);
-        // لو الفرصة مفيهاش نوع محدد، اسمح
         if (!traineeType || traineeType === 'all') return true;
-        return traineeType === required;
+        const eligible = LEVEL_ELIGIBLE[getStudentLevelKey()] || ['first-time'];
+        return eligible.includes(traineeType);
     }
 
     function systemLabel(t) {
-        return { 'first-time': 'متدرب لأول مرة', 'once-trained': 'متدرب ذو خبرة (تدريب واحد سابق)', 'twice-trained': 'متدرب متمرس (تدريبان أو أكثر)' }[t] || t;
+        return SYSTEM_MAP[t]?.label || t || '-';
+    }
+
+    // ── فلتر النظام النشط ──────────────────────────────────────
+    let activeSystemFilter = '';
+
+    window.setSystemFilter = (system) => {
+        activeSystemFilter = system;
+        document.querySelectorAll('.system-btn').forEach(b => b.classList.remove('active'));
+        const target = system === ''
+            ? document.querySelector('.system-btn.s-all')
+            : document.querySelector(`.system-btn[data-system="${system}"]`);
+        if (target) target.classList.add('active');
+        renderInternships();
+    };
+
+    // تحديث أزرار النظام: قفل الأنظمة فوق مستوى الطالب
+    function updateSystemBtns() {
+        const eligible = LEVEL_ELIGIBLE[getStudentLevelKey()] || ['first-time'];
+        [
+            { id: 'sysBtn1', sys: 'first-time' },
+            { id: 'sysBtn2', sys: 'once-trained' },
+            { id: 'sysBtn3', sys: 'twice-trained' }
+        ].forEach(({ id, sys }) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const isLocked = !eligible.includes(sys);
+            btn.classList.toggle('locked', isLocked);
+            btn.disabled = isLocked;
+            if (isLocked) {
+                if (!btn.querySelector('.lock-icon')) {
+                    btn.insertAdjacentHTML('beforeend', '<i class="fas fa-lock lock-icon"></i>');
+                }
+            } else {
+                const li = btn.querySelector('.lock-icon');
+                if (li) li.remove();
+            }
+        });
     }
 
     function getMyActiveCount() {
@@ -418,17 +500,19 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
         // تحويل duration code لـ text عربي
     function getDurationText(d) {
-        return { 
-            '2-weeks': 'أسبوعين', 
-            '3-weeks': '3 أسابيع', 
-            '1-month': 'شهر', 
-            '1.5-months': 'شهر ونصف', 
-            '2-months': 'شهرين', 
+        const map = {
+            '2-weeks': 'أسبوعين',
+            '3-weeks': '3 أسابيع',
+            '1-month': 'شهر',
+            '1.5-months': 'شهر ونصف',
+            '2-months': 'شهرين',
             '2.5-months': 'شهرين ونصف',
             '3-months': '3 شهور',
             '4-months': '4 شهور',
             '6-months': '6 شهور'
-        }[d] || d || '-';
+        };
+        const val = map[d] || d || '-';
+        return map[d] ? val : String(val).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
     
 function renderInternshipCard(i) {
@@ -536,6 +620,11 @@ function renderInternshipCard(i) {
         // المكان (من أول قسم)
         const location = internships[0].company_location || '';
 
+        // النظام المالي للشركة — نأخذه من أول قسم (الشركة عندها نظام واحد)
+        const sysType = internships[0]?.trainee_type || 'first-time';
+        const sysInfo = SYSTEM_MAP[sysType] || { label: 'النظام الأول', icon: '🌱', cls: 's-1' };
+        const studentCanApply = canApplyToSystem(sysType);
+
         const features = [];
         if (trainingPrice) {
             features.push(`<div class="feature-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="fas fa-credit-card"></i> رسوم: ${trainingPrice}</div>`);
@@ -551,12 +640,19 @@ function renderInternshipCard(i) {
         }
 
         return `
-            <div class="internship-card ${availableCount === 0 ? 'full' : ''}">
+            <div class="internship-card ${availableCount === 0 ? 'full' : ''}" style="${!studentCanApply ? 'opacity:.75;' : ''}">
                 <div class="internship-header">
                     <div class="company-logo">${logo}</div>
                     <div class="company-info">
                         <div class="internship-title">${esc(companyName)}</div>
                         ${location ? `<div class="company-name"><i class="fas fa-map-marker-alt"></i> ${esc(location)}</div>` : ''}
+                    </div>
+                    <!-- باج النظام المالي -->
+                    <div style="flex-shrink:0">
+                        <span class="sys-badge ${studentCanApply ? sysInfo.cls : 'locked'}" title="${studentCanApply ? 'يمكنك التقديم' : 'مستوى مرتفع عن مستواك الحالي'}">
+                            ${sysInfo.icon} ${sysInfo.label}
+                            ${!studentCanApply ? '<i class="fas fa-lock" style="font-size:.65rem;margin-right:2px"></i>' : ''}
+                        </span>
                     </div>
                 </div>
 
@@ -564,6 +660,7 @@ function renderInternshipCard(i) {
                     <span class="tag"><i class="fas fa-layer-group"></i> ${totalDepts} ${totalDepts === 1 ? 'قسم' : 'أقسام'}</span>
                     ${availableCount > 0 ? `<span class="tag success">${availableCount} متاح للتقديم</span>` : '<span class="tag warning">كل الأقسام ممتلئة</span>'}
                     ${appliedCount > 0 ? `<span class="tag success">✓ قدمت في ${appliedCount}</span>` : ''}
+                    ${!studentCanApply ? `<span class="tag" style="background:rgba(148,163,184,.08);color:var(--text-dim);border-color:rgba(148,163,184,.2)"><i class="fas fa-lock" style="font-size:.65rem"></i> يتطلب مستوى أعلى</span>` : ''}
                 </div>
 
                 ${company.company_bio ? `<div class="internship-description">${esc(company.company_bio.length > 130 ? company.company_bio.substring(0, 130) + '...' : company.company_bio)}</div>` : ''}
@@ -578,8 +675,10 @@ function renderInternshipCard(i) {
                 </div>
 
                 <div class="internship-actions">
-                    <button class="btn btn-primary btn-sm" onclick="viewCompanyDepts('${companyUserId}')" style="flex:1;justify-content:center">
-                        <i class="fas fa-hand-pointer"></i> اعرض الأقسام واختر
+                    <button class="btn ${studentCanApply ? 'btn-primary' : 'btn-secondary'} btn-sm" onclick="viewCompanyDepts('${companyUserId}')" style="flex:1;justify-content:center">
+                        ${studentCanApply
+                            ? '<i class="fas fa-hand-pointer"></i> اعرض الأقسام واختر'
+                            : '<i class="fas fa-eye"></i> عرض (غير متاح لمستواك)'}
                     </button>
                 </div>
             </div>
@@ -706,6 +805,11 @@ function renderInternshipCard(i) {
 
         if (fieldFilter) filtered = filtered.filter(i => i.field === fieldFilter);
 
+        // فلتر النظام المالي
+        if (activeSystemFilter) {
+            filtered = filtered.filter(i => (i.trainee_type || 'first-time') === activeSystemFilter);
+        }
+
         // فلتر بالسعر (training_price من companies)
         if (priceFilter) {
             filtered = filtered.filter(i => {
@@ -729,9 +833,10 @@ function renderInternshipCard(i) {
         document.getElementById('myActiveCount').textContent = getMyActiveCount();
         const lvlEl = document.getElementById('myLevelLabel');
         if (lvlEl) {
-            const lvl = getStudentLevel();
-            lvlEl.textContent = systemLabel(systemForLevel(lvl)) + ` (${lvl} مكتمل)`;
+            const LEVEL_LABELS = { beginner: 'المستوى الأول 🌱', intermediate: 'المستوى الثاني ⭐', advanced: 'المستوى الثالث 🏆' };
+            lvlEl.textContent = LEVEL_LABELS[getStudentLevelKey()] || getStudentLevelKey();
         }
+        updateSystemBtns();
 
         const grid = document.getElementById('internshipsGrid');
         if (filtered.length === 0) {
@@ -781,6 +886,10 @@ function renderInternshipCard(i) {
         document.getElementById('filterField').value = '';
         document.getElementById('filterPrice').value = '';
         document.getElementById('filterSort').value = 'newest';
+        activeSystemFilter = '';
+        document.querySelectorAll('.system-btn').forEach(b => b.classList.remove('active'));
+        const allBtn = document.querySelector('.system-btn.s-all');
+        if (allBtn) allBtn.classList.add('active');
         renderInternships();
     };
 
@@ -958,12 +1067,11 @@ function renderInternshipCard(i) {
             return;
         }
 
-        // Check level matching - مستوى الطالب لازم يطابق نظام التدريب
+        // Check level matching - مستوى الطالب لازم يكون مؤهل لنظام التدريب
         if (!canApplyToSystem(i.trainee_type)) {
-            const level = getStudentLevel();
-            const required = systemForLevel(level);
+            const LEVEL_AR = { beginner: 'المستوى الأول 🌱', intermediate: 'المستوى الثاني ⭐', advanced: 'المستوى الثالث 🏆' };
             window.ProVance.showToast(
-                `⚠️ الفرصة دي لـ "${systemLabel(i.trainee_type)}". مستواك الحالي: "${systemLabel(required)}" (${level} تدريب مكتمل). كمّل تدريبك الحالي عشان ترتقي للمستوى الأعلى.`,
+                `⚠️ الفرصة دي خاصة بـ "${systemLabel(i.trainee_type)}". مستواك الحالي: "${LEVEL_AR[getStudentLevelKey()] || getStudentLevelKey()}". أكمل تدريبات أكثر للارتقاء للمستوى الأعلى.`,
                 'warning'
             );
             return;
@@ -1204,7 +1312,7 @@ function renderInternshipCard(i) {
             studentUserId = userId;
 
             const results = await Promise.allSettled([
-                sb.from('student').select('user_id, full_name, email, phone, university, faculty, major, gpa, city, country, national_id, birth_date, gender, bio, education_level, cv_url, linkedin, github, portfolio, skills, languages, interested_fields, year_of_study, photo, status, training_status').eq('user_id', userId).maybeSingle(),
+                sb.from('student').select('user_id, full_name, email, phone, university, faculty, major, gpa, city, country, national_id, birth_date, gender, bio, education_level, cv_url, linkedin, github, portfolio, skills, languages, interested_fields, year_of_study, photo, status, training_status, level').eq('user_id', userId).maybeSingle(),
                 sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, duration, max_applicants, current_applicants, trainee_type, salary_min, salary_max, salary_currency, training_price, training_currency, status, created_at').eq('status', 'active').order('created_at', { ascending: false }),
                 sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at').eq('student_user_id', userId),
                 sb.from('companies').select('user_id, company_name, training_price, training_currency, provides_certificate, provides_meals, provides_transport')
