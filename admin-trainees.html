@@ -298,12 +298,18 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
             <div class="filters-bar">
                 <input type="text" id="searchTrainee" placeholder="🔍 ابحث باسم الطالب أو البريد...">
-                <select id="filterStrikes">
+                <select id="filterLevel">
                     <option value="">كل المستويات</option>
-                    <option value="0">0 (نظيف)</option>
-                    <option value="1">1 strike</option>
-                    <option value="2">2 strikes</option>
-                    <option value="3">3 strikes</option>
+                    <option value="beginner">المستوى الأول (أول تدريب)</option>
+                    <option value="intermediate">المستوى الثاني (درّب مرة)</option>
+                    <option value="advanced">المستوى الثالث (أكثر من مرة)</option>
+                </select>
+                <select id="filterStrikes">
+                    <option value="">كل التحذيرات</option>
+                    <option value="0">0 تحذيرات (نظيف)</option>
+                    <option value="1">1 تحذير</option>
+                    <option value="2">2 تحذيرات</option>
+                    <option value="3">3 تحذيرات (محظور)</option>
                 </select>
                 <select id="filterSort">
                     <option value="newest">الأحدث أولاً</option>
@@ -415,6 +421,7 @@ function renderTraineeCard(s) {
                 <span><i class="fas fa-envelope"></i> ${escapeHtml((s.email || '-').substring(0, 25))}${(s.email||'').length > 25 ? '...' : ''}</span>
                 ${s.phone ? `<span><i class="fas fa-phone"></i> ${escapeHtml(s.phone)}</span>` : ''}
                 <span><i class="fas fa-calendar"></i> ${formatDate(s.created_at)}</span>
+                <span style="color:${LEVEL_COLORS[s.level || 'beginner']};font-weight:700"><i class="fas fa-layer-group"></i> ${LEVEL_LABELS[s.level || 'beginner'] || s.level}</span>
             </div>
             <div class="trainee-actions">
                 <button class="btn btn-info btn-sm" onclick="viewTraineeDetails('${s.user_id}')">
@@ -428,9 +435,13 @@ function renderTraineeCard(s) {
     `;
 }
 
+const LEVEL_LABELS = { beginner: 'المستوى الأول', intermediate: 'المستوى الثاني', advanced: 'المستوى الثالث' };
+const LEVEL_COLORS = { beginner: 'var(--info)', intermediate: 'var(--warning)', advanced: 'var(--success)' };
+
 function renderTrainees() {
     const search = document.getElementById('searchTrainee').value.toLowerCase().trim();
     const strikesFilter = document.getElementById('filterStrikes').value;
+    const levelFilter = document.getElementById('filterLevel').value;
     const sort = document.getElementById('filterSort').value;
 
     let filtered = allStudents.slice();
@@ -440,6 +451,9 @@ function renderTrainees() {
             (s.email || '').toLowerCase().includes(search) ||
             (s.university || '').toLowerCase().includes(search)
         );
+    }
+    if (levelFilter) {
+        filtered = filtered.filter(s => (s.level || 'beginner') === levelFilter);
     }
     if (strikesFilter !== '') {
         const target = parseInt(strikesFilter);
@@ -625,6 +639,24 @@ window.resolveViolation = async (id) => {
     } catch (err) { showToast('حدث خطأ: ' + err.message, 'error'); }
 };
 
+window.changeStudentLevel = async (userId, newLevel) => {
+    const levelNames = { beginner: 'المستوى الأول', intermediate: 'المستوى الثاني', advanced: 'المستوى الثالث' };
+    if (!confirm(`هل تريد تغيير مستوى الطالب إلى "${levelNames[newLevel]}"؟`)) return;
+    try {
+        const { error } = await sb.from('student').update({ level: newLevel }).eq('user_id', userId);
+        if (error) throw error;
+        // تحديث الـ cache المحلي
+        const idx = allStudents.findIndex(s => s.user_id === userId);
+        if (idx >= 0) allStudents[idx].level = newLevel;
+        showToast(`✅ تم تغيير المستوى إلى ${levelNames[newLevel]}`, 'success');
+        closeModal('detailsModal');
+        renderTrainees();
+        updateStats();
+    } catch (err) {
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
 window.viewTraineeDetails = async (userId) => {
     let s = allStudents.find(x => x.user_id === userId);
     if (!s) {
@@ -712,6 +744,36 @@ window.viewTraineeDetails = async (userId) => {
                     </div>
                 </div>
                 <div class="modal-section">
+                    <div class="modal-section-title"><i class="fas fa-layer-group"></i> مستوى التدريب</div>
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                        <div style="flex:1;min-width:140px">
+                            <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:6px">المستوى الحالي</div>
+                            <div style="font-size:1.1rem;font-weight:800;color:${LEVEL_COLORS[s.level || 'beginner']}">
+                                ${LEVEL_LABELS[s.level || 'beginner']}
+                                <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400;display:block;margin-top:2px">
+                                    ${(s.level || 'beginner') === 'beginner' ? 'يقدر يقدم على تدريبات النظام الأول فقط' :
+                                      (s.level) === 'intermediate' ? 'يقدر يقدم على النظام الأول والثاني' :
+                                      'يقدر يقدم على كل الأنظمة'}
+                                </span>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap">
+                            ${(s.level || 'beginner') !== 'intermediate' && (s.level || 'beginner') !== 'advanced' ? `
+                            <button class="btn btn-info btn-sm" onclick="changeStudentLevel('${userId}', 'intermediate')">
+                                <i class="fas fa-arrow-up"></i> ترقية للمستوى الثاني
+                            </button>` : ''}
+                            ${(s.level || 'beginner') !== 'advanced' ? `
+                            <button class="btn btn-success btn-sm" onclick="changeStudentLevel('${userId}', 'advanced')">
+                                <i class="fas fa-arrow-up"></i> ترقية للمستوى الثالث
+                            </button>` : ''}
+                            ${(s.level || 'beginner') !== 'beginner' ? `
+                            <button class="btn btn-danger btn-sm" onclick="changeStudentLevel('${userId}', 'beginner')">
+                                <i class="fas fa-arrow-down"></i> تخفيض للمستوى الأول
+                            </button>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-section">
                     <div class="modal-section-title"><i class="fas fa-clipboard-list"></i> سجل المخالفات (${userViolations.length})</div>
                     ${userViolations.length === 0
                         ? '<div style="text-align:center;color:var(--success);padding:14px"><i class="fas fa-shield-alt"></i> سجل نظيف</div>'
@@ -752,7 +814,7 @@ async function checkAdmin() {
 async function loadAll() {
     try {
         const _results = await Promise.allSettled([
-            sb.from('student').select('user_id, full_name, email, phone, university, photo, created_at, status, training_status').order('created_at', { ascending: false }),
+            sb.from('student').select('user_id, full_name, email, phone, university, photo, created_at, status, training_status, level').order('created_at', { ascending: false }),
             sb.from('penalties').select('id, target_user_id, target_type, title, description, severity, status, created_at').eq('target_type', 'student').order('created_at', { ascending: false })
         ]);
             const studentsRes = _results[0].status === 'fulfilled' ? _results[0].value : { data: null, error: _results[0].reason };
@@ -811,6 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 10000);
     init();
     document.getElementById('searchTrainee').addEventListener('input', renderTrainees);
+    document.getElementById('filterLevel').addEventListener('change', renderTrainees);
     document.getElementById('filterStrikes').addEventListener('change', renderTrainees);
     document.getElementById('filterSort').addEventListener('change', renderTrainees);
     document.addEventListener('keydown', (e) => {
