@@ -3354,6 +3354,7 @@
             }
 
             State.renderProfile();
+            checkLevelUp(State.studentData, State.studentUserId);
         } catch (err) {
             console.error('═══════════════════════════════════════════');
             console.error('❌ LOAD ERROR في student-profile:');
@@ -3391,6 +3392,137 @@
                 </div>`;
             }
         }
+    }
+
+    // ============================================================
+    // 🎖️ فحص ترقية المستوى وعرض الاحتفال
+    // ============================================================
+    function checkLevelUp(studentData, userId) {
+        if (!studentData || !userId) return;
+        const currentLevel = studentData.level || 'beginner';
+        const storageKey = 'provance_last_level_' + userId;
+        const lastKnownLevel = localStorage.getItem(storageKey);
+
+        // أول مرة يفتح الصفحة — احفظ المستوى بس ما تعرضش popup
+        if (!lastKnownLevel) {
+            localStorage.setItem(storageKey, currentLevel);
+            return;
+        }
+
+        // لو المستوى اترقّى → احتفل!
+        if (lastKnownLevel !== currentLevel) {
+            localStorage.setItem(storageKey, currentLevel);
+            showLevelUpCelebration(lastKnownLevel, currentLevel);
+        }
+    }
+
+    function showLevelUpCelebration(oldLevel, newLevel) {
+        const LEVELS = {
+            beginner:     { label: 'المستوى الأول', color: '#4facfe', icon: '🌱' },
+            intermediate: { label: 'المستوى الثاني', color: '#f59e0b', icon: '⭐' },
+            advanced:     { label: 'المستوى الثالث', color: '#10b981', icon: '🏆' }
+        };
+        const PERKS = {
+            intermediate: 'يمكنك الآن التقدم لفرص التدريب في النظامين الأول والثاني!',
+            advanced:     'يمكنك الآن التقدم لجميع فرص التدريب في كل الأنظمة!'
+        };
+        const MOTIVATE = {
+            intermediate: [
+                'أثبتّ نفسك في أول خطوة — والأفضل لسه جاي!',
+                'تدريبك الأول كان البداية، والرحلة طويلة ومليانة فرص!',
+                'كل إنجاز هو حجر في بناء مستقبلك المهني.'
+            ],
+            advanced: [
+                'وصلت للقمة! مستوى متقدم يعني خبرة حقيقية وفرص أوسع.',
+                'أنت نموذج يُحتذى به — استمر في التميز!',
+                'المستوى الثالث مش نهاية، هو بداية مسار مهني احترافي!'
+            ]
+        };
+        const oldInfo = LEVELS[oldLevel] || LEVELS.beginner;
+        const newInfo = LEVELS[newLevel] || LEVELS.intermediate;
+        const msgs = MOTIVATE[newLevel] || MOTIVATE.intermediate;
+        const motivate = msgs[Math.floor(Date.now() / 1000) % msgs.length];
+        const perk = PERKS[newLevel] || '';
+
+        const el = document.createElement('div');
+        el.id = 'levelUpCelebration';
+        el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .3s';
+        el.innerHTML = `
+            <div style="background:linear-gradient(135deg,#0a0e27,#1a1535);border:2px solid ${newInfo.color};border-radius:28px;width:100%;max-width:460px;padding:36px 28px;text-align:center;position:relative;overflow:hidden;box-shadow:0 0 60px ${newInfo.color}44">
+                <!-- خلفية لامعة -->
+                <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,${newInfo.color}15,transparent 65%);pointer-events:none"></div>
+
+                <!-- نجوم متطايرة -->
+                <div id="lvlStars" style="position:absolute;inset:0;pointer-events:none;overflow:hidden"></div>
+
+                <!-- أيقونة التاج -->
+                <div style="font-size:5rem;margin-bottom:8px;animation:lvlBounce .6s ease-out">🎖️</div>
+
+                <!-- العنوان -->
+                <div style="font-size:1.6rem;font-weight:900;color:#fff;margin-bottom:6px">
+                    مبروك! اترقّيت 🎉
+                </div>
+                <div style="color:rgba(255,255,255,0.6);font-size:0.9rem;margin-bottom:24px">${motivate}</div>
+
+                <!-- شريط المستوى القديم → الجديد -->
+                <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+                    <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:10px 16px">
+                        <div style="font-size:1.3rem">${oldInfo.icon}</div>
+                        <div style="font-size:0.78rem;color:${oldInfo.color};font-weight:700;margin-top:4px">${oldInfo.label}</div>
+                    </div>
+                    <div style="font-size:1.8rem;color:${newInfo.color};animation:lvlArrow 1s ease-in-out infinite">→</div>
+                    <div style="background:${newInfo.color}22;border:2px solid ${newInfo.color};border-radius:14px;padding:10px 16px;box-shadow:0 0 20px ${newInfo.color}44">
+                        <div style="font-size:1.6rem">${newInfo.icon}</div>
+                        <div style="font-size:0.9rem;color:${newInfo.color};font-weight:800;margin-top:4px">${newInfo.label}</div>
+                        <div style="font-size:0.65rem;color:rgba(255,255,255,0.5);margin-top:2px">مستواك الجديد</div>
+                    </div>
+                </div>
+
+                <!-- المزايا الجديدة -->
+                ${perk ? `<div style="background:${newInfo.color}12;border:1px solid ${newInfo.color}33;border-radius:14px;padding:12px 16px;margin-bottom:20px;font-size:0.88rem;color:rgba(255,255,255,0.85);line-height:1.6"><i class="fas fa-unlock" style="color:${newInfo.color};margin-left:6px"></i>${perk}</div>` : ''}
+
+                <!-- أزرار -->
+                <div style="display:flex;gap:10px;justify-content:center">
+                    <a href="student-internship.html" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,${newInfo.color},${newInfo.color}cc);color:#fff;padding:11px 20px;border-radius:12px;font-weight:700;font-family:inherit;font-size:0.9rem;text-decoration:none;border:none;cursor:pointer">
+                        <i class="fas fa-search"></i> استكشف فرص جديدة
+                    </a>
+                    <button onclick="document.getElementById('levelUpCelebration').remove();document.body.style.overflow=''" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);padding:11px 18px;border-radius:12px;font-weight:700;font-family:inherit;font-size:0.9rem;cursor:pointer">
+                        لاحقاً
+                    </button>
+                </div>
+            </div>
+
+            <style>
+                @keyframes lvlBounce { 0%{transform:scale(0) rotate(-20deg)} 60%{transform:scale(1.2) rotate(5deg)} 100%{transform:scale(1) rotate(0)} }
+                @keyframes lvlArrow  { 0%,100%{transform:translateX(0)} 50%{transform:translateX(6px)} }
+                @keyframes lvlStar   { 0%{transform:translateY(0) scale(1);opacity:1} 100%{transform:translateY(-120px) scale(0);opacity:0} }
+            </style>
+        `;
+        document.body.appendChild(el);
+        document.body.style.overflow = 'hidden';
+
+        // نجوم متطايرة
+        const starsContainer = el.querySelector('#lvlStars');
+        const starColors = [newInfo.color, '#fff', '#fbbf24', '#f0abfc'];
+        for (let i = 0; i < 20; i++) {
+            const star = document.createElement('div');
+            const size = Math.random() * 8 + 4;
+            star.style.cssText = `
+                position:absolute;
+                left:${Math.random() * 100}%;
+                top:${50 + Math.random() * 50}%;
+                width:${size}px; height:${size}px;
+                border-radius:50%;
+                background:${starColors[Math.floor(Math.random() * starColors.length)]};
+                animation:lvlStar ${1 + Math.random() * 1.5}s ease-out ${Math.random() * 0.8}s forwards;
+            `;
+            starsContainer.appendChild(star);
+        }
+
+        // إغلاق بالضغط خارج الـ card
+        el.addEventListener('click', (e) => {
+            if (e.target === el) { el.remove(); document.body.style.overflow = ''; }
+        });
     }
 
     function init() {
