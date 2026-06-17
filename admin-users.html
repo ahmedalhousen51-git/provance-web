@@ -404,7 +404,7 @@ async function checkAdmin() {
         if (!session) { window.location.href = 'admin-login.html'; return null; }
         const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', session.user.id).maybeSingle();
         if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
-        if (!admin.is_active) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        if (admin.is_active === false) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
         applyAdminPermissions(admin);
         return admin;
     } catch (e) {
@@ -770,6 +770,9 @@ window.confirmAddAdmin = async () => {
     }
 
     try {
+        // احفظ الـ session الحالي للـ super admin قبل ما signUp يغيّره
+        const { data: { session: originalSession } } = await sb.auth.getSession();
+
         // 1. اعمل user جديد في auth
         const { data: signupData, error: signupError } = await sb.auth.signUp({
             email,
@@ -777,23 +780,51 @@ window.confirmAddAdmin = async () => {
             options: { data: { role: 'admin', full_name: name } }
         });
 
+        let newUserId = null;
+
         if (signupError) {
-            if (signupError.message.includes('already registered')) {
-                showToast('هذا البريد مستخدم بالفعل', 'error');
-            } else {
+            if (!signupError.message.includes('already registered')) {
                 showToast('خطأ: ' + signupError.message, 'error');
+                return;
             }
-            return;
+            // المستخدم موجود في auth لكن ممكن مش موجود في admins (يتيم من محاولة سابقة)
+            // جرب تعمل sign in بنفس البيانات عشان تاخد الـ user_id
+            const { data: signinData, error: signinErr } = await sb.auth.signInWithPassword({ email, password });
+            if (signinErr || !signinData?.user) {
+                showToast('البريد مستخدم بحساب آخر وكلمة المرور غلط', 'error');
+                // رجّع الـ session الأصلي
+                if (originalSession) await sb.auth.setSession({ access_token: originalSession.access_token, refresh_token: originalSession.refresh_token });
+                return;
+            }
+            newUserId = signinData.user.id;
+            // تحقق إنه مش موجود في admins أصلاً
+            const { data: existingAdmin } = await sb.from('admins').select('user_id').eq('user_id', newUserId).maybeSingle();
+            if (existingAdmin) {
+                showToast('هذا البريد مضاف كأدمن بالفعل', 'error');
+                if (originalSession) await sb.auth.setSession({ access_token: originalSession.access_token, refresh_token: originalSession.refresh_token });
+                return;
+            }
+            // موجود في auth لكن مش في admins — هنكمّل ونضيفه
+        } else {
+            if (!signupData.user) {
+                showToast('فشلت إضافة المستخدم', 'error');
+                return;
+            }
+            newUserId = signupData.user.id;
         }
 
-        if (!signupData.user) {
-            showToast('فشلت إضافة المستخدم', 'error');
-            return;
+        // 2. استرجع session الأدمن الأصلي قبل الـ insert
+        // (signUp/signIn بيغير الـ session للمستخدم الجديد تلقائياً)
+        if (originalSession) {
+            await sb.auth.setSession({
+                access_token: originalSession.access_token,
+                refresh_token: originalSession.refresh_token
+            });
         }
 
-        // 2. ضيفه في جدول admins
+        // 3. ضيفه في جدول admins (بـ session الـ super admin الأصلي)
         const { error: insertError } = await sb.from('admins').insert({
-            user_id: signupData.user.id,
+            user_id: newUserId,
             full_name: name,
             email: email,
             role: selectedRole,
