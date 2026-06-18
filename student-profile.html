@@ -1530,7 +1530,7 @@
                 <div style="flex:1;display:flex;flex-direction:column;gap:8px;min-width:140px">
                     <div style="display:flex;gap:8px">
                         <div style="flex:1;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:9px 10px;text-align:center">
-                            <div style="font-size:1.25rem;font-weight:800;color:#10b981">${presentDaysCount}</div>
+                            <div style="font-size:1.25rem;font-weight:800;color:#10b981">${expectedWorkDays > 0 ? presentOnWorkDays : presentDaysCount}</div>
                             <div style="font-size:.68rem;color:var(--text-muted,#94a3b8)">حضور</div>
                         </div>
                         <div style="flex:1;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:9px 10px;text-align:center">
@@ -1751,6 +1751,7 @@
         let absentDays = 0;
         let bonusDays = 0;
         let lateDays = 0;
+        let presentOnWorkDays = 0;
 
         if (startDate && workDayNums && workDayNums.length) {
             const start = parseLocalDate(startDate);
@@ -1765,6 +1766,7 @@
                     expectedWorkDays++;
                     workDayKeySet[dayKey] = true;
                     if (attendedDays[dayKey]) {
+                        presentOnWorkDays++;
                         if (attendedDays[dayKey] === 'late') lateDays++;
                     } else {
                         absentDays++;
@@ -1776,8 +1778,10 @@
             if (netAbsent < 0) netAbsent = 0;
             const presentForRate = expectedWorkDays - netAbsent;
             rate = expectedWorkDays > 0 ? Math.min(100, Math.round((presentForRate / expectedWorkDays) * 100)) : 0;
+        } else {
+            presentOnWorkDays = presentDaysCount;
         }
-        return { rate, presentDaysCount, absentDays, bonusDays, lateDays };
+        return { rate, presentDaysCount, presentOnWorkDays, absentDays, bonusDays, lateDays };
     }
 
     // ====== بناء كرت تدريب واحد ======
@@ -1822,7 +1826,7 @@
             </div>`;
 
         const attDetails = [
-            `<span style="color:#10b981"><i class="fas fa-check"></i> ${att.presentDaysCount} حضر</span>`,
+            `<span style="color:#10b981"><i class="fas fa-check"></i> ${att.presentOnWorkDays} حضر</span>`,
             att.absentDays > 0 ? `<span style="color:#ef4444"><i class="fas fa-times"></i> ${att.absentDays} غياب</span>` : '',
             att.bonusDays  > 0 ? `<span style="color:#a855f7">+${att.bonusDays} إضافي</span>` : '',
             att.lateDays   > 0 ? `<span style="color:#f59e0b"><i class="fas fa-clock"></i> ${att.lateDays} تأخر</span>` : ''
