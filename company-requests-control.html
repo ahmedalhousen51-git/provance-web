@@ -782,6 +782,35 @@ async function syncToInternship(field, details) {
     } else {
         internshipData.created_at = new Date().toISOString();
         await sb.from('internships').insert(internshipData);
+
+        // إشعار للطلاب المهتمين بهذا المجال
+        try {
+            const { data: interested } = await sb.from('student')
+                .select('user_id, interested_fields')
+                .not('interested_fields', 'is', null);
+            if (interested && interested.length > 0) {
+                const fieldLow = (field || '').toLowerCase();
+                const matched = interested.filter(s => {
+                    const fields = Array.isArray(s.interested_fields) ? s.interested_fields : [];
+                    return fields.some(f =>
+                        (f || '').toLowerCase().includes(fieldLow) ||
+                        fieldLow.includes((f || '').toLowerCase())
+                    );
+                });
+                const coName = companyData.company_name || 'شركة';
+                for (const stu of matched.slice(0, 100)) {
+                    await sb.from('notifications').insert({
+                        user_id: stu.user_id,
+                        user_type: 'student',
+                        title: `🎯 فرصة جديدة في مجالك: ${field}`,
+                        message: `شركة "${coName}" أضافت فرصة تدريب جديدة في مجال "${field}". قدّم الآن!`,
+                        type: 'info',
+                        is_read: false,
+                        link: 'student-internship.html'
+                    });
+                }
+            }
+        } catch(ne) { console.warn('interest notification failed:', ne); }
     }
 }
 
