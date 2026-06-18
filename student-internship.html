@@ -517,6 +517,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
     
 function renderInternshipCard(i) {
         const company = allCompanies[i.company_user_id] || {};
+        const isSuspended = company.suspended === true || company.status === 'suspended';
         const logo = company.logo
             ? `<img src="${company.logo}" alt="">`
             : `<span>${getInitial(i.company_name || company.company_name)}</span>`;
@@ -566,6 +567,7 @@ function renderInternshipCard(i) {
                     ${i.company_location ? `<span class="tag"><i class="fas fa-map-marker-alt"></i> ${esc(i.company_location)}</span>` : ''}
                     ${isApplied ? '<span class="tag success">✓ قدمت بالفعل</span>' : ''}
                     ${isFull ? '<span class="tag warning">امتلأت</span>' : ''}
+                    ${isSuspended ? '<span class="tag" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)"><i class="fas fa-pause-circle"></i> موقفة مؤقتاً</span>' : ''}
                 </div>
 
                 ${i.description ? `<div class="internship-description">${esc(i.description.length > 130 ? i.description.substring(0, 130) + '...' : i.description)}</div>` : ''}
@@ -586,6 +588,8 @@ function renderInternshipCard(i) {
                     </button>
                     ${isApplied
                         ? `<a href="student-applications.html" class="btn btn-success btn-sm" style="flex:1;justify-content:center"><i class="fas fa-check"></i> قدمت</a>`
+                        : isSuspended
+                        ? `<button class="btn btn-secondary btn-sm" disabled style="flex:1;justify-content:center;opacity:.6" title="الشركة موقفة مؤقتاً"><i class="fas fa-pause-circle"></i> مؤقتاً غير متاح</button>`
                         : isFull
                         ? `<button class="btn btn-secondary btn-sm" disabled style="flex:1;justify-content:center"><i class="fas fa-ban"></i> ممتلئة</button>`
                         : !canApplyToSystem(i.trainee_type)
@@ -793,7 +797,13 @@ function renderInternshipCard(i) {
         const priceFilter = document.getElementById('filterPrice').value;
         const sort = document.getElementById('filterSort').value;
 
-        let filtered = allInternships.filter(i => i.status === 'active');
+        let filtered = allInternships.filter(i => {
+            if (i.status !== 'active') return false;
+            const co = allCompanies[i.company_user_id];
+            if (!co) return true;
+            if (co.status === 'terminated') return false; // شركة محذوفة — لا تظهر نهائياً
+            return true;
+        });
 
         if (search) {
             filtered = filtered.filter(i =>
@@ -1061,6 +1071,13 @@ function renderInternshipCard(i) {
         const i = allInternships.find(x => x.id === id);
         if (!i) return;
 
+        // منع التقديم للشركات الموقفة
+        const co = allCompanies[i.company_user_id] || {};
+        if (co.suspended === true || co.status === 'terminated') {
+            window.ProVance.showToast('⚠️ هذه الشركة غير متاحة حالياً للتقديم', 'warning');
+            return;
+        }
+
         // Check quota
         if (getMyActiveCount() >= MAX_ACTIVE) {
             window.ProVance.showToast(`⚠️ وصلت لحد ${MAX_ACTIVE} طلبات نشطة - اسحب طلب قبل ما تقدم`, 'warning');
@@ -1315,7 +1332,7 @@ function renderInternshipCard(i) {
                 sb.from('student').select('user_id, full_name, email, phone, university, faculty, major, gpa, city, country, national_id, birth_date, gender, bio, education_level, cv_url, linkedin, github, portfolio, skills, languages, interested_fields, year_of_study, photo, status, training_status, level').eq('user_id', userId).maybeSingle(),
                 sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, duration, max_applicants, current_applicants, trainee_type, salary_min, salary_max, salary_currency, training_price, training_currency, status, created_at').eq('status', 'active').order('created_at', { ascending: false }),
                 sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at').eq('student_user_id', userId),
-                sb.from('companies').select('user_id, company_name, training_price, training_currency, provides_certificate, provides_meals, provides_transport')
+                sb.from('companies').select('user_id, company_name, training_price, training_currency, provides_certificate, provides_meals, provides_transport, status, suspended, suspended_until')
             ]);
 
             // التعامل مع الـ results حتى لو واحد فشل
