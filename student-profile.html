@@ -1364,12 +1364,21 @@
     function renderAttendanceSummary() {
         const box = document.getElementById('attendanceSummary');
         if (!box) return;
-        const daily = allAttendance.filter(a => a.attendance_type === 'daily_attendance');
 
         // هات جدول التدريب النشط (أيام العمل اللي الشركة حددتها)
         const activeTraining = allApplications.find(a =>
             ['in_training', 'accepted', 'hired'].includes(a.status) && a.training_schedule);
         const sched = activeTraining && activeTraining.training_schedule;
+
+        // فلتر الحضور: نعتمد على application_id للتدريب النشط — مش كل سجلات الطالب
+        const activeAppId = activeTraining && activeTraining.id;
+        const activeCompanyId = activeTraining && activeTraining.company_user_id;
+        const daily = allAttendance.filter(a => {
+            if (a.attendance_type !== 'daily_attendance') return false;
+            if (!activeTraining) return true;
+            if (a.application_id) return a.application_id === activeAppId;
+            return a.company_user_id === activeCompanyId;
+        });
         const workDayNames = (sched && Array.isArray(sched.training_days)) ? sched.training_days : null;
         const workDayNums = workDayNames ? workDayNames.map(d => AR_DAY_TO_NUM[d]).filter(n => n !== undefined) : null;
 
@@ -1710,10 +1719,21 @@
         const startDate = app.training_start_date || sched.start_date || null;
         const endDate = app.training_end_date || sched.end_date || null;
 
-        const daily = allAttendance.filter(a =>
-            a.attendance_type === 'daily_attendance' &&
-            a.application_id === app.id
-        );
+        const daily = allAttendance.filter(a => {
+            if (a.attendance_type !== 'daily_attendance') return false;
+            if (a.application_id) return a.application_id === app.id;
+            // fallback: لو مفيش application_id، طابق بالشركة ونطاق التاريخ
+            if (a.company_user_id !== app.company_user_id) return false;
+            if (!a.scanned_at) return false;
+            const sched2 = app.training_schedule || {};
+            const sStart = sched2.start_date || app.training_start_date;
+            if (!sStart) return true;
+            const logDate = parseLocalDate(localDayKey(a.scanned_at));
+            const startD  = parseLocalDate(sStart);
+            const sEnd    = sched2.end_date || app.training_end_date;
+            const endD    = sEnd ? parseLocalDate(sEnd) : null;
+            return logDate >= startD && (endD === null || logDate <= endD);
+        });
 
         const attendedDays = {};
         daily.forEach(a => {
