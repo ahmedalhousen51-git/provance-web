@@ -623,6 +623,21 @@ window.saveViolation = async (userId) => {
             status: 'active'
         });
         if (error) throw error;
+
+        // إشعار للطالب
+        try {
+            const sevAr = { minor: 'بسيطة', moderate: 'متوسطة', major: 'كبيرة', critical: 'حرجة' };
+            await sb.from('notifications').insert({
+                user_id: userId,
+                user_type: 'student',
+                title: '⚠️ تم تسجيل مخالفة بحقك',
+                message: `تم تسجيل مخالفة: "${title}". الخطورة: ${sevAr[selectedSeverity] || selectedSeverity}. للاستفسار تواصل مع الإدارة.`,
+                type: 'penalty',
+                is_read: false,
+                link: 'student-notifications.html'
+            });
+        } catch(ne) { console.warn('notification failed:', ne); }
+
         showToast('تم تسجيل المخالفة', 'success');
         closeModal('addViolationModal');
         await loadAll();
