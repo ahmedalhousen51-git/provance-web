@@ -241,6 +241,42 @@
         if (b) b.classList.remove('active');
     };
 
+    // ─── Session watchdog: reload data when tab regains focus after idle ─────
+    var _lastVisible = Date.now();
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState !== 'visible') return;
+        var away = Date.now() - _lastVisible;
+        // إذا الصفحة كانت مخفية أكتر من دقيقتين → تحقق من الـ session وأعد تحميل الداتا
+        if (away > 120000) {
+            getSB().then(function (sb) {
+                if (!sb) return;
+                sb.auth.getSession().then(function (res) {
+                    var sess = res && res.data && res.data.session;
+                    if (!sess) {
+                        location.href = 'company-login.html';
+                    } else if (typeof window.loadAll === 'function') {
+                        window.loadAll();
+                    } else {
+                        location.reload();
+                    }
+                }).catch(function () { location.reload(); });
+            });
+        }
+        _lastVisible = Date.now();
+    });
+
+    // ─── Auth state listener: redirect on sign-out, reload on token refresh ──
+    getSB().then(function (sb) {
+        if (!sb) return;
+        sb.auth.onAuthStateChange(function (event) {
+            if (event === 'SIGNED_OUT') {
+                location.href = 'company-login.html';
+            } else if (event === 'TOKEN_REFRESHED') {
+                loadBadge();
+            }
+        });
+    });
+
     // ─── Init ─────────────────────────────────────────────────────────────────
     function init() {
         initSidebar();
