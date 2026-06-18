@@ -1329,130 +1329,227 @@ function renderStudents() {
     }).join('');
 }
 
-async function loadStudentAISection(containerId, studentUserId, appId) {
+async function loadStudentAISection(containerId, studentUserId, currentAppId) {
     const el = document.getElementById(containerId);
     if (!el) return;
     try {
         const sb = await window.getSafeSupabase();
         if (!sb) { el.remove(); return; }
 
-        const [allEvalsRes, recRes, tasksRes, appsRes] = await Promise.all([
-            sb.from('ai_evaluations').select('*').eq('student_user_id', studentUserId).order('submitted_at',{ascending:false}),
-            sb.from('career_recommendations').select('recommendations,smart_summary,strength_areas').eq('student_user_id', studentUserId).eq('sent_to_student',true).order('created_at',{ascending:false}).limit(1).maybeSingle(),
-            sb.from('task_reports').select('quality_rating,completion_status').eq('student_user_id', studentUserId),
+        // نفس مصادر البيانات اللي بيستخدمها بروفايل الطالب
+        const [allEvalsRes, allRecsRes, tasksRes, appsRes] = await Promise.all([
+            sb.from('ai_evaluations').select('*').eq('student_user_id', studentUserId).order('submitted_at', {ascending: false}),
+            sb.from('career_recommendations').select('*').eq('student_user_id', studentUserId).eq('sent_to_student', true).order('created_at', {ascending: false}),
+            sb.from('task_reports').select('*').eq('student_user_id', studentUserId).order('task_date', {ascending: false}),
             sb.from('applications').select('id,company_name,internship_title,status').eq('student_user_id', studentUserId)
         ]);
 
         const allEvals = allEvalsRes.data || [];
-        const rec = recRes.data;
-        const tasks = tasksRes.data || [];
+        const allRecs = allRecsRes.data || [];
+        const allTasks = tasksRes.data || [];
         const apps = appsRes.data || [];
 
-        if (allEvals.length === 0 && !rec && tasks.length === 0) { el.remove(); return; }
+        if (allEvals.length === 0 && allRecs.length === 0 && allTasks.length === 0) { el.innerHTML = ''; return; }
 
         const escFn = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-        const catL = {technical:'المهارات التقنية',soft_skills:'مهارات التواصل',performance:'الأداء العام',growth:'التطور والتعلم',personality:'الشخصية'};
-        const catC = {technical:'#4facfe',soft_skills:'#10b981',performance:'#f093fb',growth:'#f59e0b',personality:'#a855f7'};
+        const catL = {technical:'المهارات التقنية', soft_skills:'مهارات التواصل', performance:'الأداء العام', growth:'التطور والتعلم', personality:'الشخصية'};
+        const catC = {technical:'#4facfe', soft_skills:'#10b981', performance:'#f093fb', growth:'#f59e0b', personality:'#a855f7'};
 
-        let h = '<div style="background:linear-gradient(135deg,rgba(124,108,255,0.07),rgba(168,85,247,0.03));border:1px solid rgba(124,108,255,0.25);border-radius:14px;padding:16px 18px;margin-bottom:14px">';
-        h += '<div style="font-weight:800;font-size:0.95rem;margin-bottom:12px;color:#a855f7;display:flex;align-items:center;gap:8px"><i class="fas fa-brain"></i> سجل التدريب والتحليل الذكي</div>';
+        // البيانات المرتبطة بالتدريب الحالي أو الأحدث
+        const ev = currentAppId ? (allEvals.find(e => e.application_id === currentAppId) || allEvals[0]) : allEvals[0];
+        const rec = currentAppId ? (allRecs.find(r => r.application_id === currentAppId) || allRecs[0]) : allRecs[0];
+        const appTasks = currentAppId ? allTasks.filter(t => t.application_id === currentAppId) : allTasks;
 
-        if (allEvals.length > 0) {
-            allEvals.forEach((ev, idx) => {
-                const isCurrentApp = ev.application_id === appId;
-                const app = apps.find(a => a.id === ev.application_id);
-                const companyName = app?.company_name || 'شركة';
-                const position = app?.internship_title || 'تدريب';
-                const score = Math.min(100, Math.round(Number(ev.overall_score)||0));
-                const sc = score>=75?'#10b981':score>=50?'#f59e0b':'#ef4444';
-                const scoreLabel = score>=85?'ممتاز':score>=70?'جيد جداً':score>=55?'جيد':score>=40?'مقبول':'يحتاج تطوير';
-                const cats = ev.category_scores || {};
-                const detailId = 'evD_'+containerId+'_'+idx;
-                const circ = +(2*Math.PI*38).toFixed(1);
-                const offset = +(circ*(1-score/100)).toFixed(1);
-                const borderColor = isCurrentApp?'rgba(124,108,255,0.35)':'rgba(255,255,255,0.07)';
+        // جيب أسئلة النموذج زي ما بيعمل بروفايل الطالب
+        let templateQuestions = [];
+        if (ev && ev.template_id) {
+            try {
+                const { data: tmpl } = await sb.from('ai_evaluation_templates').select('questions').eq('id', ev.template_id).maybeSingle();
+                if (tmpl && Array.isArray(tmpl.questions)) templateQuestions = tmpl.questions;
+            } catch(te) {}
+        }
 
-                h += '<div style="border:1px solid '+borderColor+';border-radius:12px;overflow:hidden;margin-bottom:8px">';
-                h += '<div style="padding:11px 14px;cursor:pointer;display:flex;align-items:center;gap:11px;background:'+(isCurrentApp?'rgba(124,108,255,0.05)':'transparent')+'" '+
-                     'onclick="(function(){var d=document.getElementById(\''+detailId+'\');if(!d)return;d.style.display=d.style.display!==\'none\'?\'none\':\'block\';})()">';
-                h += '<div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.95rem;flex-shrink:0">'+escFn(companyName.charAt(0))+'</div>';
-                h += '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:0.88rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+escFn(companyName);
-                if (isCurrentApp) h += '<span style="background:rgba(124,108,255,0.2);color:#a855f7;padding:1px 6px;border-radius:7px;font-size:0.67rem">حالي</span>';
-                h += '</div><div style="color:var(--text-muted);font-size:0.77rem;margin-top:1px">'+escFn(position)+'</div></div>';
-                h += '<div style="text-align:center;flex-shrink:0"><div style="font-size:1.05rem;font-weight:900;color:'+sc+'">'+score+'%</div><div style="font-size:0.62rem;color:var(--text-muted)">'+scoreLabel+'</div></div>';
-                h += '<i class="fas fa-chevron-down" style="color:var(--text-muted);font-size:0.78rem;flex-shrink:0;margin-right:2px"></i>';
-                h += '</div>';
+        const uid = 'sai' + (containerId || '').replace(/[^a-z0-9]/gi, '').slice(0, 8) + Math.random().toString(36).slice(2, 6);
 
-                h += '<div id="'+detailId+'" style="display:'+(isCurrentApp?'block':'none')+';padding:14px;border-top:1px solid rgba(255,255,255,0.05)">';
-                h += '<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px">';
-                h += '<div style="position:relative;width:88px;height:88px;flex-shrink:0">';
-                h += '<svg viewBox="0 0 88 88" style="width:88px;height:88px;transform:rotate(-90deg)">';
-                h += '<circle cx="44" cy="44" r="38" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9"/>';
-                h += '<circle cx="44" cy="44" r="38" fill="none" stroke="'+sc+'" stroke-width="9" stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'" stroke-linecap="round"/>';
-                h += '</svg>';
-                h += '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">';
-                h += '<span style="font-size:1.4rem;font-weight:900;color:'+sc+';line-height:1">'+score+'</span>';
-                h += '<span style="font-size:.6rem;color:var(--text-muted)">/ 100</span>';
-                h += '</div></div>';
-                h += '<div style="flex:1;min-width:150px">';
-                Object.entries(cats).slice(0,5).forEach(function(kv){
-                    var cat=kv[0], pct=Math.min(100,Math.round(Number(kv[1])||0)), c=catC[cat]||'#4facfe';
-                    h+='<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px">';
-                    h+='<span style="color:var(--text-muted)">'+escFn(catL[cat]||cat)+'</span>';
-                    h+='<span style="font-weight:700;color:'+c+'">'+pct+'%</span></div>';
-                    h+='<div style="height:7px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden">';
-                    h+='<div style="height:100%;width:'+pct+'%;background:'+c+';border-radius:4px"></div></div></div>';
+        // ===== تاب المهام - نفس student-profile =====
+        const statusMap = {
+            'completed': {icon:'fa-check-circle', color:'#10b981', label:'مكتملة'},
+            'partial':   {icon:'fa-minus-circle', color:'#f59e0b', label:'جزئية'},
+            'not_done':  {icon:'fa-times-circle', color:'#ef4444', label:'لم تُنجز'}
+        };
+        let tasksHtml = '<div style="color:var(--text-muted);text-align:center;padding:30px 10px"><i class="fas fa-clipboard-list" style="font-size:2rem;color:rgba(148,163,184,0.3);display:block;margin-bottom:10px"></i>لا توجد مهام مسجلة</div>';
+        if (appTasks.length > 0) {
+            tasksHtml = appTasks.map(function(task) {
+                var st = statusMap[task.completion_status] || {icon:'fa-circle', color:'#94a3b8', label: task.completion_status||'-'};
+                var stars = Array.from({length:5}, function(_, i) {
+                    return '<i class="fas fa-star" style="color:' + (i < (task.quality_rating||0) ? '#f59e0b' : 'rgba(148,163,184,0.3)') + ';font-size:0.78rem"></i>';
+                }).join('');
+                return '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">' +
+                    '<div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">' +
+                    '<div style="flex:1;min-width:0">' +
+                    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">' +
+                    '<i class="fas ' + st.icon + '" style="color:' + st.color + '"></i>' +
+                    '<span style="font-weight:700;font-size:0.9rem">' + st.label + '</span>' +
+                    (task.task_date ? '<span style="background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:8px;font-size:0.74rem;color:var(--text-muted)">' + new Date(task.task_date).toLocaleDateString('ar-EG') + '</span>' : '') +
+                    (task.time_spent_hours ? '<span style="background:rgba(79,172,254,0.1);color:#4facfe;padding:2px 8px;border-radius:8px;font-size:0.74rem">' + task.time_spent_hours + ' ساعة</span>' : '') +
+                    '</div>' +
+                    '<div style="display:flex;gap:2px;margin-bottom:8px">' + stars + '</div>' +
+                    (task.task_description ? '<div style="color:var(--text-muted);font-size:0.84rem;border-right:3px solid #4facfe;padding-right:10px;line-height:1.6">' + escFn(task.task_description) + '</div>' : '') +
+                    (task.notes ? '<div style="margin-top:8px;padding:8px;background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:8px;font-size:0.82rem;color:var(--text-muted)"><i class="fas fa-sticky-note" style="color:#f59e0b;margin-left:4px"></i>' + escFn(task.notes) + '</div>' : '') +
+                    '</div></div></div>';
+            }).join('');
+        }
+
+        // ===== تاب التقييم الذكي - نفس student-profile =====
+        var evalHtml = '<div style="color:var(--text-muted);text-align:center;padding:30px 10px"><i class="fas fa-brain" style="font-size:2rem;color:rgba(168,85,247,0.3);display:block;margin-bottom:10px"></i>لا يوجد تقييم ذكي بعد</div>';
+        if (ev) {
+            var evScore = Math.min(100, Math.round(Number(ev.overall_score)||0));
+            var evSc = evScore>=75?'#10b981':evScore>=50?'#f59e0b':'#ef4444';
+            var evCats = ev.category_scores || {};
+            var evCirc = +(2*Math.PI*38).toFixed(1);
+            var evOffset = +(evCirc*(1-evScore/100)).toFixed(1);
+
+            var barsHtml = Object.entries(evCats).map(function(kv) {
+                var cat = kv[0], pct = Math.min(100, Math.round(Number(kv[1])||0)), c = catC[cat]||'#4facfe';
+                return '<div style="margin-bottom:9px">' +
+                    '<div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px">' +
+                    '<span style="color:var(--text-muted)">' + escFn(catL[cat]||cat) + '</span>' +
+                    '<span style="font-weight:700;color:' + c + '">' + pct + '%</span></div>' +
+                    '<div style="height:7px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden">' +
+                    '<div style="height:100%;width:' + pct + '%;background:' + c + ';border-radius:4px"></div></div></div>';
+            }).join('');
+
+            var questionsHtml = '';
+            if (templateQuestions.length > 0 && ev.answers) {
+                var byCategory = {};
+                templateQuestions.forEach(function(q) {
+                    var cat = q.category || 'other';
+                    if (!byCategory[cat]) byCategory[cat] = [];
+                    byCategory[cat].push(q);
                 });
-                h += '</div></div>';
-                if (ev.summary_feedback) {
-                    h += '<div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:12px;padding:12px;font-size:0.86rem;line-height:1.7;color:var(--text-muted)"><i class="fas fa-comment" style="color:#4facfe;margin-left:6px"></i>'+escFn(String(ev.summary_feedback))+'</div>';
-                }
-                h += '</div></div>';
-            });
-        }
-
-        if (tasks.length > 0) {
-            const rated = tasks.filter(t => Number(t.quality_rating) > 0);
-            const avg = rated.length ? (rated.reduce((s,t) => s+Number(t.quality_rating),0)/rated.length).toFixed(1) : null;
-            const completed = tasks.filter(t => t.completion_status === 'completed').length;
-            h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
-            h += '<span style="background:rgba(79,172,254,0.1);color:#4facfe;padding:4px 10px;border-radius:10px;font-size:0.77rem;font-weight:700"><i class="fas fa-clipboard-list"></i> '+tasks.length+' مهمة سابقة</span>';
-            if (avg) h += '<span style="background:rgba(245,158,11,0.1);color:#f59e0b;padding:4px 10px;border-radius:10px;font-size:0.77rem;font-weight:700"><i class="fas fa-star"></i> متوسط الجودة '+avg+'/5</span>';
-            if (completed > 0) h += '<span style="background:rgba(16,185,129,0.1);color:#10b981;padding:4px 10px;border-radius:10px;font-size:0.77rem;font-weight:700"><i class="fas fa-check-circle"></i> '+completed+' مكتملة</span>';
-            h += '</div>';
-        }
-
-        if (rec) {
-            if (rec.smart_summary) {
-                h += '<div style="background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.2);border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:0.86rem;line-height:1.7;color:var(--text-muted)"><i class="fas fa-lightbulb" style="color:#a855f7;margin-left:6px"></i>'+escFn(String(rec.smart_summary))+'</div>';
-            }
-            if (Array.isArray(rec.strength_areas) && rec.strength_areas.length > 0) {
-                h += '<div style="margin-bottom:10px"><div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);margin-bottom:6px"><i class="fas fa-bolt" style="color:#f59e0b;margin-left:4px"></i> نقاط القوة:</div>';
-                h += '<div style="display:flex;gap:5px;flex-wrap:wrap">';
-                rec.strength_areas.forEach(sa => { h += '<span style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#f59e0b;padding:3px 10px;border-radius:20px;font-size:0.76rem;font-weight:700">'+escFn(String(sa))+'</span>'; });
-                h += '</div></div>';
-            }
-            if (Array.isArray(rec.recommendations)) {
-                const recs = rec.recommendations.filter(r => r && !r.__meta);
-                if (recs.length > 0) {
-                    h += '<div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);margin-bottom:7px"><i class="fas fa-bullseye" style="color:#a855f7;margin-left:4px"></i> الترشيحات الوظيفية:</div>';
-                    h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
-                    recs.forEach(r => {
-                        let m = Number(r.match||r.match_score||0); while(m>100)m=Math.round(m/10);
-                        const mc = m>=75?'#10b981':m>=55?'#f59e0b':'#94a3b8';
-                        const reason = r.reason || r.description || '';
-                        h += '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:8px 12px;font-size:0.78rem">';
-                        h += '<div style="font-weight:700;color:var(--text);margin-bottom:2px">'+escFn(String(r.field||r.job_title||r.title||''))+'</div>';
-                        if (reason) h += '<div style="color:var(--text-muted);font-size:0.73rem;margin-bottom:4px;line-height:1.5">'+escFn(String(reason))+'</div>';
-                        h += '<div style="color:'+mc+';font-weight:800">'+m+'% توافق</div></div>';
+                questionsHtml = '<div style="margin-top:16px"><div style="font-weight:700;font-size:0.9rem;margin-bottom:10px;color:var(--text)"><i class="fas fa-list-check" style="color:#a855f7;margin-left:6px"></i> تفاصيل التقييم</div>';
+                Object.entries(byCategory).forEach(function(kv) {
+                    var cat = kv[0], qs = kv[1], c = catC[cat]||'#4facfe';
+                    questionsHtml += '<div style="margin-bottom:14px">' +
+                        '<div style="font-size:0.8rem;font-weight:700;color:' + c + ';margin-bottom:8px;padding:4px 10px;background:rgba(255,255,255,0.03);border-radius:6px;border-right:3px solid ' + c + '">' + escFn(catL[cat]||cat) + '</div>';
+                    qs.forEach(function(q) {
+                        var rating = (ev.answers && ev.answers[q.id]) ? Number(ev.answers[q.id]) : 0;
+                        var qStars = Array.from({length:5}, function(_, i) {
+                            return '<i class="fas fa-star" style="color:' + (i<rating?'#f59e0b':'rgba(148,163,184,0.25)') + ';font-size:0.82rem"></i>';
+                        }).join('');
+                        questionsHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)">' +
+                            '<span style="font-size:0.84rem;color:var(--text-muted);flex:1;min-width:0;margin-left:10px">' + escFn(q.text||q.question||'') + '</span>' +
+                            '<div style="display:flex;gap:2px;flex-shrink:0">' + qStars + '</div></div>';
                     });
-                    h += '</div>';
-                }
+                    questionsHtml += '</div>';
+                });
+                questionsHtml += '</div>';
             }
+
+            evalHtml =
+                '<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px;margin-bottom:14px">' +
+                '<div style="position:relative;width:88px;height:88px;flex-shrink:0">' +
+                '<svg viewBox="0 0 88 88" style="width:88px;height:88px;transform:rotate(-90deg)">' +
+                '<circle cx="44" cy="44" r="38" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9"/>' +
+                '<circle cx="44" cy="44" r="38" fill="none" stroke="' + evSc + '" stroke-width="9" stroke-dasharray="' + evCirc + '" stroke-dashoffset="' + evOffset + '" stroke-linecap="round"/>' +
+                '</svg>' +
+                '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">' +
+                '<span style="font-size:1.4rem;font-weight:900;color:' + evSc + ';line-height:1">' + evScore + '</span>' +
+                '<span style="font-size:.6rem;color:var(--text-muted)">/ 100</span></div></div>' +
+                '<div style="flex:1;min-width:150px">' + barsHtml + '</div></div>' +
+                (ev.summary_feedback ? '<div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:12px;padding:12px;margin-bottom:14px;font-size:0.86rem;line-height:1.7;color:var(--text-muted)"><i class="fas fa-comment" style="color:#4facfe;margin-left:6px"></i>' + escFn(String(ev.summary_feedback)) + '</div>' : '') +
+                questionsHtml;
         }
 
-        h += '</div>';
-        el.innerHTML = h;
+        // ===== تاب التوصيات المهنية - نفس student-profile =====
+        var careerHtml = '<div style="color:var(--text-muted);text-align:center;padding:30px 10px"><i class="fas fa-briefcase" style="font-size:2rem;color:rgba(148,163,184,0.3);display:block;margin-bottom:10px"></i>لا توجد توصيات مهنية بعد</div>';
+        if (rec) {
+            var recsArr = Array.isArray(rec.recommendations) ? rec.recommendations.filter(function(r){return r&&!r.__meta;}) : [];
+            var summary = rec.smart_summary || '';
+            var assessment = rec.career_assessment || '';
+            var strengths = Array.isArray(rec.strength_areas) ? rec.strength_areas : [];
+            var improvements = Array.isArray(rec.improvement_areas) ? rec.improvement_areas : [];
+            var sp = rec.skill_profile || null;
+            var ch = '';
+            if (summary) ch += '<div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:0.86rem;line-height:1.7;color:var(--text-muted)"><i class="fas fa-lightbulb" style="color:#4facfe;margin-left:6px"></i>' + escFn(String(summary)) + '</div>';
+            if (assessment) ch += '<div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:0.86rem;line-height:1.7;color:var(--text-muted)"><i class="fas fa-chart-line" style="color:#10b981;margin-left:6px"></i>' + escFn(String(assessment)) + '</div>';
+            if (strengths.length > 0 || improvements.length > 0) {
+                ch += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">';
+                if (strengths.length > 0) {
+                    ch += '<div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:10px"><div style="font-size:0.8rem;font-weight:700;color:#10b981;margin-bottom:6px"><i class="fas fa-bolt"></i> نقاط القوة</div><div style="display:flex;flex-direction:column;gap:5px">';
+                    strengths.forEach(function(s){ ch += '<span style="font-size:0.78rem;color:var(--text-muted);display:flex;align-items:center;gap:5px"><i class="fas fa-check" style="color:#10b981;font-size:0.7rem;flex-shrink:0"></i>' + escFn(String(s)) + '</span>'; });
+                    ch += '</div></div>';
+                }
+                if (improvements.length > 0) {
+                    ch += '<div style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:10px;padding:10px"><div style="font-size:0.8rem;font-weight:700;color:#f59e0b;margin-bottom:6px"><i class="fas fa-arrow-up"></i> نقاط للتطوير</div><div style="display:flex;flex-direction:column;gap:5px">';
+                    improvements.forEach(function(im){ ch += '<span style="font-size:0.78rem;color:var(--text-muted);display:flex;align-items:center;gap:5px"><i class="fas fa-arrow-left" style="color:#f59e0b;font-size:0.7rem;flex-shrink:0"></i>' + escFn(String(im)) + '</span>'; });
+                    ch += '</div></div>';
+                }
+                ch += '</div>';
+            }
+            if (recsArr.length > 0) {
+                ch += '<div style="font-size:0.82rem;font-weight:700;color:var(--text-muted);margin-bottom:10px"><i class="fas fa-bullseye" style="color:#a855f7;margin-left:4px"></i> الترشيحات الوظيفية</div>';
+                recsArr.forEach(function(r, idx) {
+                    var m = Number(r.match||r.match_score||0); while(m>100) m=Math.round(m/10);
+                    var mc = m>=75?'#10b981':m>=55?'#f59e0b':'#94a3b8';
+                    var circ2 = +(2*Math.PI*22).toFixed(1), off2 = +(circ2*(1-m/100)).toFixed(1);
+                    var skills = Array.isArray(r.key_skills) ? r.key_skills : [];
+                    var isFirst = idx === 0;
+                    ch += '<div style="background:rgba(255,255,255,0.03);border:1px solid ' + (isFirst?'rgba(168,85,247,0.3)':'rgba(255,255,255,0.08)') + ';border-radius:12px;padding:12px 14px;margin-bottom:8px">' +
+                        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
+                        '<div style="position:relative;width:48px;height:48px;flex-shrink:0">' +
+                        '<svg viewBox="0 0 48 48" style="width:48px;height:48px;transform:rotate(-90deg)">' +
+                        '<circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="5"/>' +
+                        '<circle cx="24" cy="24" r="22" fill="none" stroke="' + mc + '" stroke-width="5" stroke-dasharray="' + circ2 + '" stroke-dashoffset="' + off2 + '" stroke-linecap="round"/>' +
+                        '</svg><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;color:' + mc + '">' + m + '%</div></div>' +
+                        '<div style="flex:1;min-width:0">' +
+                        '<div style="font-weight:800;font-size:0.9rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap">' + escFn(String(r.field||r.job_title||r.title||'')) + (isFirst?'<span style="background:rgba(168,85,247,0.2);color:#a855f7;padding:1px 7px;border-radius:8px;font-size:0.68rem">الأنسب</span>':'') + '</div>' +
+                        (r.level?'<div style="font-size:0.76rem;color:var(--text-muted)">'+escFn(String(r.level))+'</div>':'') +
+                        (r.salary_range_egp?'<div style="font-size:0.76rem;color:#10b981;font-weight:700">💰 '+escFn(String(r.salary_range_egp))+'</div>':'') +
+                        '</div></div>' +
+                        ((r.description||r.reason)?'<div style="font-size:0.82rem;color:var(--text-muted);line-height:1.6;margin-bottom:8px">'+escFn(String(r.description||r.reason))+'</div>':'') +
+                        (skills.length>0?'<div style="display:flex;gap:4px;flex-wrap:wrap">'+skills.map(function(sk){return '<span style="background:rgba(79,172,254,0.1);color:#4facfe;padding:2px 8px;border-radius:10px;font-size:0.73rem">'+escFn(String(sk))+'</span>';}).join('')+'</div>':'') +
+                        (r.growth_path?'<div style="margin-top:8px;font-size:0.78rem;color:var(--text-muted);padding:6px 10px;background:rgba(255,255,255,0.02);border-radius:8px"><i class="fas fa-road" style="color:#f59e0b;margin-left:4px"></i>'+escFn(String(r.growth_path))+'</div>':'') +
+                        '</div>';
+                });
+            }
+            if (sp) {
+                var spBars = [{key:'technical',label:'المهارات التقنية',color:'#4facfe'},{key:'soft_skills',label:'مهارات التواصل',color:'#10b981'},{key:'performance',label:'الأداء',color:'#f093fb'},{key:'growth',label:'التطور',color:'#f59e0b'}];
+                ch += '<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;margin-top:10px"><div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);margin-bottom:8px"><i class="fas fa-chart-bar" style="color:#4facfe;margin-left:4px"></i> ملف المهارات</div>';
+                spBars.forEach(function(b) {
+                    var val = Math.min(100, Math.round(Number(sp[b.key]||0)));
+                    ch += '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px"><span style="color:var(--text-muted)">'+b.label+'</span><span style="color:'+b.color+';font-weight:700">'+val+'%</span></div><div style="height:7px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+val+'%;background:'+b.color+';border-radius:4px"></div></div></div>';
+                });
+                ch += '</div>';
+            }
+            if (ch) careerHtml = ch;
+        }
+
+        // تاب سويتشر مشترك (نفس window.ftrTab في student-profile)
+        if (!window.saiTab) {
+            window.saiTab = function(uid, n) {
+                [1,2,3].forEach(function(i) {
+                    var btn = document.getElementById(uid+'tab'+i), pan = document.getElementById(uid+'panel'+i);
+                    if (btn) { btn.style.background = i===n?'var(--gradient)':'none'; btn.style.color = i===n?'#fff':'var(--text-muted)'; }
+                    if (pan) pan.style.display = i===n?'block':'none';
+                });
+            };
+        }
+
+        // الـ Container الرئيسي بنفس تصميم openFullTrainingReport في student-profile
+        el.innerHTML =
+            '<div style="background:linear-gradient(135deg,rgba(124,108,255,0.07),rgba(168,85,247,0.03));border:1px solid rgba(124,108,255,0.25);border-radius:14px;padding:16px 18px;margin-bottom:14px">' +
+            '<div style="font-weight:800;font-size:0.95rem;margin-bottom:14px;color:#a855f7;display:flex;align-items:center;gap:8px"><i class="fas fa-brain"></i> سجل التدريب والتحليل الذكي</div>' +
+            '<div style="display:flex;gap:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:16px;overflow-x:auto">' +
+            '<button id="' + uid + 'tab1" onclick="saiTab(\'' + uid + '\',1)" style="flex:1;padding:10px 8px;border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.85rem;white-space:nowrap;background:var(--gradient);color:#fff"><i class="fas fa-tasks"></i> المهام (' + appTasks.length + ')</button>' +
+            '<button id="' + uid + 'tab2" onclick="saiTab(\'' + uid + '\',2)" style="flex:1;padding:10px 8px;border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.85rem;white-space:nowrap;background:none;color:var(--text-muted)"><i class="fas fa-brain"></i> التقييم الذكي</button>' +
+            '<button id="' + uid + 'tab3" onclick="saiTab(\'' + uid + '\',3)" style="flex:1;padding:10px 8px;border:none;border-radius:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:0.85rem;white-space:nowrap;background:none;color:var(--text-muted)"><i class="fas fa-briefcase"></i> التوصيات المهنية</button>' +
+            '</div>' +
+            '<div id="' + uid + 'panel1">' + tasksHtml + '</div>' +
+            '<div id="' + uid + 'panel2" style="display:none">' + evalHtml + '</div>' +
+            '<div id="' + uid + 'panel3" style="display:none">' + careerHtml + '</div>' +
+            '</div>';
+
     } catch(e) {
         console.warn('loadStudentAISection:', e);
         const el2 = document.getElementById(containerId);
