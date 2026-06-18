@@ -277,18 +277,24 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
             } catch (e) { console.warn(e); }
         };
 
+        const SUPA_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+        const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+
         async function getSb() {
             if (window.ProVance?.waitForSupabaseClient) {
-                try { return await window.ProVance.waitForSupabaseClient(8000); } catch(e) {}
+                try { const c = await window.ProVance.waitForSupabaseClient(6000); if (c) return c; } catch(e) {}
             }
             if (window.ProVance?.sb) return window.ProVance.sb;
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                try { return supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { persistSession: true, storage: window.localStorage } }); } catch(e) {}
+            }
             return null;
         }
 
         async function loadAll() {
             const sb = await getSb();
             if (!sb) {
-                document.getElementById('notifsList').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--warning)"></i><h3>تعذر الاتصال</h3><p>أعد تحميل الصفحة</p></div>';
+                document.getElementById('notifsList').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--warning)"></i><h3>تعذر الاتصال</h3><p>أعد تحميل الصفحة</p><button onclick="location.reload()" style="margin-top:12px;background:linear-gradient(135deg,#4facfe,#00f2fe);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer"><i class="fas fa-sync-alt"></i> إعادة المحاولة</button></div>';
                 return;
             }
             try {
