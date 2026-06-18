@@ -1143,7 +1143,9 @@ function getAttendanceRate(t) {
     }
     // hasData: صحيح فقط لو في سجلات حضور فعلية (مش مجرد جدول بدون مسح)
     // hasScheduleOnly: في جدول لكن ما حدش سجّل بعد
-    return { rate, present: presentDaysCount, onTime, late, absent, total, bonusDays, companyHolidays,
+    // present = أيام العمل المفروضة اللي حضر فيها (مش كل أيام المسح)
+    const presentOnWorkDays = expectedWorkDays > 0 ? (onTime + late) : presentDaysCount;
+    return { rate, present: presentOnWorkDays, presentAll: presentDaysCount, onTime, late, absent, total, bonusDays, companyHolidays,
         hasData: daily.length > 0,
         hasScheduleOnly: daily.length === 0 && expectedWorkDays > 0
     };
