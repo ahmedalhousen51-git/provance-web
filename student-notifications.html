@@ -258,7 +258,8 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
         window.markRead = async (id) => {
             try {
-                const sb = window.ProVance.sb;
+                const sb = await getSb();
+                if (!sb) return;
                 await sb.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id);
                 const n = allNotifications.find(x => x.id === id);
                 if (n) n.is_read = true;
@@ -268,16 +269,28 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
         window.markAllRead = async () => {
             try {
-                const sb = window.ProVance.sb;
+                const sb = await getSb();
+                if (!sb) return;
                 await sb.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('user_id', userId).eq('is_read', false);
                 allNotifications.forEach(n => n.is_read = true);
                 renderNotifs();
             } catch (e) { console.warn(e); }
         };
 
+        async function getSb() {
+            if (window.ProVance?.waitForSupabaseClient) {
+                try { return await window.ProVance.waitForSupabaseClient(8000); } catch(e) {}
+            }
+            if (window.ProVance?.sb) return window.ProVance.sb;
+            return null;
+        }
+
         async function loadAll() {
-            const sb = window.ProVance && window.ProVance.sb;
-            if (!sb) { setTimeout(loadAll, 1000); return; }
+            const sb = await getSb();
+            if (!sb) {
+                document.getElementById('notifsList').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--warning)"></i><h3>تعذر الاتصال</h3><p>أعد تحميل الصفحة</p></div>';
+                return;
+            }
             try {
                 const { data: { session } } = await sb.auth.getSession();
                 if (!session) { window.location.href = 'student-login.html'; return; }
@@ -285,7 +298,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
                 const { data } = await sb.from('notifications').select('*')
                     .eq('user_id', userId).eq('user_type', 'student')
-                    .order('created_at', { ascending: false }).limit(200);
+                    .order('created_at', { ascending: false }).limit(50);
                 allNotifications = data || [];
                 renderNotifs();
 
