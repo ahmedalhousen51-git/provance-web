@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' https://jrwazyrdzmbcnddpxxrf.supabase.co wss://jrwazyrdzmbcnddpxxrf.supabase.co; img-src 'self' data: blob: https:; object-src 'none'; base-uri 'self';">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>العقوبات - ProVance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    --primary: #ef4444; --gradient: linear-gradient(135deg, #ef4444, #dc2626);
+    --bg: #0a0e27; --bg-2: #1a1535; --card: rgba(255,255,255,0.04);
+    --card-hover: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.08);
+    --text: #fff; --text-muted: #94a3b8;
+    --success: #10b981; --warning: #f59e0b; --error: #ef4444; --info: #4facfe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.bg-anim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 20% 20%, rgba(239,68,68,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(220,38,38,0.06), transparent 45%), var(--bg); }
+.layout { display: flex; min-height: 100vh; }
+.main { flex: 1; margin-right: 260px; padding: 24px; min-width: 0; }
+.topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+.menu-toggle { display: none; background: var(--card); border: 1px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 10px; cursor: pointer; align-items: center; justify-content: center; }
+.topbar-title { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 22px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 12px; }
+.stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #fff; flex-shrink: 0; }
+.stat-icon.red    { background: var(--gradient); }
+.stat-icon.warn   { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.stat-icon.success{ background: linear-gradient(135deg, #10b981, #059669); }
+.stat-icon.info   { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.stat-num   { font-size: 1.5rem; font-weight: 800; line-height: 1; }
+.stat-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+
+.penalties-list { display: flex; flex-direction: column; gap: 14px; }
+
+.pen-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; transition: all .2s; }
+.pen-card:hover { background: var(--card-hover); }
+.pen-card.warning-type   { border-color: rgba(245,158,11,0.4); }
+.pen-card.fine-type      { border-color: rgba(239,68,68,0.4); }
+.pen-card.fine-type.paid { border-color: rgba(16,185,129,0.4); }
+.pen-card.suspension-type{ border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.03); }
+.pen-card.termination-type{ border-color: #ef4444; background: rgba(239,68,68,0.05); }
+
+.pen-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+.pen-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+.pen-icon.warning-type    { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.pen-icon.fine-type       { background: rgba(239,68,68,0.15); color: #ef4444; }
+.pen-icon.suspension-type { background: rgba(239,68,68,0.15); color: #ef4444; }
+.pen-icon.termination-type{ background: rgba(185,28,28,0.2);  color: #b91c1c; }
+.pen-body { flex: 1; min-width: 0; }
+.pen-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 4px; }
+.pen-reason { color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; }
+.pen-meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px; font-size: 0.78rem; color: var(--text-muted); }
+.pen-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+.badge-warning  { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.badge-error    { background: rgba(239,68,68,0.15);  color: #ef4444; }
+.badge-success  { background: rgba(16,185,129,0.15); color: #10b981; }
+.badge-info     { background: rgba(79,172,254,0.15); color: #4facfe; }
+.badge-muted    { background: rgba(148,163,184,0.15);color: #94a3b8; }
+
+.fine-amount-box { margin-top: 14px; padding: 14px; background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.25); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.fine-amount-box.paid { background: rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.25); }
+.fine-label { font-size: 0.84rem; color: var(--text-muted); }
+.fine-value { font-size: 1.3rem; font-weight: 800; color: #ef4444; }
+.fine-value.paid { color: #10b981; }
+
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 11px 20px; border: none; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all .2s; text-decoration: none; white-space: nowrap; }
+.btn-pay   { background: var(--gradient); color: #fff; }
+.btn-pay:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(239,68,68,0.35); }
+.btn-paid  { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); cursor: default; }
+
+.empty-state { text-align: center; padding: 70px 20px; color: var(--text-muted); background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+.empty-state i { font-size: 4rem; color: rgba(148,163,184,0.3); margin-bottom: 16px; display: block; }
+.empty-state h3 { font-size: 1.2rem; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+
+/* Payment Modal */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal.active { display: flex; }
+.modal-content { background: var(--bg-2); border: 1px solid var(--border); border-radius: 22px; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; padding: 28px; animation: slideUp .3s; }
+@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 1.15rem; font-weight: 800; }
+.modal-close { background: var(--card); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+.method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+.method-btn { padding: 14px 10px; background: var(--card); border: 2px solid var(--border); border-radius: 12px; color: var(--text); font-family: inherit; font-weight: 700; font-size: 0.88rem; cursor: pointer; text-align: center; transition: all .2s; }
+.method-btn:hover { border-color: var(--primary); }
+.method-btn.selected { border-color: var(--primary); background: rgba(239,68,68,0.1); color: var(--primary); }
+.method-btn i { display: block; font-size: 1.4rem; margin-bottom: 6px; }
+
+.loading-overlay { position: fixed; inset: 0; background: rgba(10,14,39,0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity .3s; }
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-spinner { width: 60px; height: 60px; border: 4px solid var(--card); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 12px; color: #fff; font-weight: 700; z-index: 9999; animation: toastIn .3s; }
+@keyframes toastIn { from { opacity:0; top:0; } to { opacity:1; top:20px; } }
+.nav-badge { background: rgba(239,68,68,0.9); color:#fff; padding:2px 7px; border-radius:10px; font-size:0.7rem; font-weight:800; margin-right:auto; }
+
+@media (max-width: 1024px) {
+    .main { margin-right: 0; }
+    .menu-toggle { display: flex; }
+}
+@media (max-width: 600px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .method-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="bg-anim"></div>
+<div class="layout">
+    <!-- Sidebar injected by company-layout.js -->
+    <main class="main">
+        <div class="topbar">
+            <button class="menu-toggle" onclick="window.toggleSidebar && toggleSidebar()"><i class="fas fa-bars"></i></button>
+            <h1 class="topbar-title"><i class="fas fa-gavel" style="color:var(--primary)"></i> العقوبات والغرامات</h1>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon red"><i class="fas fa-gavel"></i></div>
+                <div><div class="stat-num" id="statTotal">0</div><div class="stat-label">إجمالي العقوبات</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon warn"><i class="fas fa-exclamation-triangle"></i></div>
+                <div><div class="stat-num" id="statActive">0</div><div class="stat-label">نشطة</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red"><i class="fas fa-money-bill-wave"></i></div>
+                <div><div class="stat-num" id="statUnpaid">0</div><div class="stat-label">غرامات غير مدفوعة</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon success"><i class="fas fa-check-circle"></i></div>
+                <div><div class="stat-num" id="statPaid">0</div><div class="stat-label">غرامات مدفوعة</div></div>
+            </div>
+        </div>
+
+        <div class="penalties-list" id="penaltiesList">
+            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><h3>جاري التحميل...</h3></div>
+        </div>
+    </main>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal" id="payModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fas fa-credit-card" style="color:var(--primary)"></i> دفع الغرامة</div>
+            <button class="modal-close" onclick="closePayModal()">×</button>
+        </div>
+        <div id="payModalBody"></div>
+    </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="company-layout.js"></script>
+<script>
+const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage }
+});
+
+let companyUserId = null;
+let companyData   = null;
+let penalties     = [];
+let selectedPenId = null;
+let selectedMethod = null;
+
+function esc(s) { return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmt(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('ar-EG'); }
+function showToast(msg, type='info') {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.style.background = {error:'#ef4444',success:'#10b981',warning:'#f59e0b',info:'#4facfe'}[type]||'#4facfe';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+}
+
+const TYPE_META = {
+    warning:     { label:'إنذار رسمي',      icon:'fa-exclamation-triangle', cls:'warning-type' },
+    fine:        { label:'غرامة مالية',      icon:'fa-money-bill-wave',      cls:'fine-type' },
+    suspension:  { label:'تعليق مؤقت',      icon:'fa-ban',                  cls:'suspension-type' },
+    termination: { label:'إنهاء التعاقد',   icon:'fa-times-circle',         cls:'termination-type' }
+};
+const STATUS_META = {
+    active:   { label:'نشطة',        badge:'badge-error' },
+    paid:     { label:'مدفوعة',      badge:'badge-success' },
+    expired:  { label:'منتهية',      badge:'badge-muted' },
+    cancelled:{ label:'ملغية',       badge:'badge-muted' }
+};
+
+function renderPenalties() {
+    const list = document.getElementById('penaltiesList');
+
+    document.getElementById('statTotal').textContent  = penalties.length;
+    document.getElementById('statActive').textContent = penalties.filter(p => p.status === 'active').length;
+    const unpaid = penalties.filter(p => p.type === 'fine' && p.status === 'active');
+    const paid   = penalties.filter(p => p.type === 'fine' && p.status === 'paid');
+    document.getElementById('statUnpaid').textContent = unpaid.length;
+    document.getElementById('statPaid').textContent   = paid.length;
+
+    if (penalties.length === 0) {
+        list.innerHTML = `<div class="empty-state"><i class="fas fa-shield-alt" style="color:#10b981"></i><h3>🎉 لا توجد عقوبات</h3><p>سجل شركتك نظيف</p></div>`;
+        return;
+    }
+
+    list.innerHTML = penalties.map(p => {
+        const meta    = TYPE_META[p.type]   || { label: p.type, icon:'fa-gavel', cls:'' };
+        const stMeta  = STATUS_META[p.status] || { label: p.status, badge:'badge-muted' };
+        const isPaid  = p.status === 'paid';
+
+        let fineBox = '';
+        if (p.type === 'fine') {
+            fineBox = `
+                <div class="fine-amount-box ${isPaid ? 'paid' : ''}">
+                    <div>
+                        <div class="fine-label">قيمة الغرامة</div>
+                        <div class="fine-value ${isPaid ? 'paid' : ''}">${Number(p.amount||0).toLocaleString()} ${esc(p.currency||'EGP')}</div>
+                        ${isPaid && p.paid_at ? `<div style="font-size:0.76rem;color:var(--text-muted);margin-top:4px">تم الدفع: ${fmt(p.paid_at)}</div>` : ''}
+                    </div>
+                    ${!isPaid
+                        ? `<button class="btn btn-pay" onclick="openPayModal('${esc(p.id)}')"><i class="fas fa-credit-card"></i> ادفع الآن</button>`
+                        : `<button class="btn btn-paid" disabled><i class="fas fa-check-circle"></i> تم الدفع</button>`
+                    }
+                </div>`;
+        }
+
+        let extraInfo = '';
+        if (p.type === 'suspension' && p.endDate) {
+            extraInfo = `<span><i class="fas fa-calendar-times"></i> ينتهي: ${fmt(p.endDate)}</span>`;
+        }
+
+        return `
+            <div class="pen-card ${meta.cls} ${isPaid ? 'paid' : ''}">
+                <div class="pen-header">
+                    <div class="pen-icon ${meta.cls}"><i class="fas ${meta.icon}"></i></div>
+                    <div class="pen-body">
+                        <div class="pen-title">${meta.label}</div>
+                        <div class="pen-reason">${esc(p.reason)}</div>
+                        <div class="pen-badges">
+                            <span class="badge ${stMeta.badge}">${stMeta.label}</span>
+                        </div>
+                        <div class="pen-meta">
+                            <span><i class="fas fa-calendar"></i> تاريخ العقوبة: ${fmt(p.date)}</span>
+                            ${extraInfo}
+                        </div>
+                    </div>
+                </div>
+                ${fineBox}
+            </div>`;
+    }).join('');
+}
+
+window.openPayModal = (penId) => {
+    selectedPenId  = penId;
+    selectedMethod = null;
+    const pen = penalties.find(p => p.id === penId);
+    if (!pen) return;
+
+    document.getElementById('payModalBody').innerHTML = `
+        <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:16px;margin-bottom:18px">
+            <div style="font-size:0.84rem;color:var(--text-muted)">قيمة الغرامة المستحقة</div>
+            <div style="font-size:1.8rem;font-weight:800;color:#ef4444;margin-top:4px">${Number(pen.amount||0).toLocaleString()} ${esc(pen.currency||'EGP')}</div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px">${esc(pen.reason)}</div>
+        </div>
+        <div style="font-weight:700;margin-bottom:10px">اختر طريقة الدفع</div>
+        <div class="method-grid">
+            <button class="method-btn" onclick="selectMethod(this,'card')"><i class="fas fa-credit-card"></i>بطاقة بنكية</button>
+            <button class="method-btn" onclick="selectMethod(this,'vodafone')"><i class="fas fa-mobile-alt"></i>فودافون كاش</button>
+            <button class="method-btn" onclick="selectMethod(this,'instapay')"><i class="fas fa-bolt"></i>انستاباي</button>
+            <button class="method-btn" onclick="selectMethod(this,'bank')"><i class="fas fa-university"></i>تحويل بنكي</button>
+        </div>
+        <div id="methodDetails" style="margin:14px 0"></div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn" style="flex:1;justify-content:center;background:var(--card);border:1px solid var(--border);color:var(--text)" onclick="closePayModal()">إلغاء</button>
+            <button class="btn btn-pay" style="flex:1;justify-content:center" onclick="confirmPayment()"><i class="fas fa-check"></i> تأكيد الدفع</button>
+        </div>`;
+
+    document.getElementById('payModal').classList.add('active');
+};
+
+window.selectMethod = (el, method) => {
+    document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedMethod = method;
+
+    const details = {
+        card: `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:0.86rem;color:var(--text-muted)"><i class="fas fa-info-circle" style="color:var(--info)"></i> سيتم الانتقال إلى بوابة الدفع الإلكتروني لإتمام عملية الدفع بالبطاقة.</div>`,
+        vodafone: `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:0.86rem;color:var(--text-muted)"><i class="fas fa-mobile-alt" style="color:#e4002b"></i> أرسل المبلغ على رقم <strong>010XXXXXXXX</strong> ثم أرسل لنا الإيصال عبر <a href="company-support.html" style="color:var(--info)">صفحة الدعم</a>.</div>`,
+        instapay: `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:0.86rem;color:var(--text-muted)"><i class="fas fa-bolt" style="color:#6c63ff"></i> حوّل المبلغ على حساب انستاباي <strong>provance@instapay</strong> ثم أرسل الإيصال عبر <a href="company-support.html" style="color:var(--info)">صفحة الدعم</a>.</div>`,
+        bank: `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:0.86rem;color:var(--text-muted)"><i class="fas fa-university" style="color:var(--info)"></i> اسم البنك: <strong>بنك مصر</strong> | رقم الحساب: <strong>XXXXXXXXXXXXXX</strong><br>بعد التحويل أرسل الإيصال عبر <a href="company-support.html" style="color:var(--info)">صفحة الدعم</a>.</div>`
+    };
+    document.getElementById('methodDetails').innerHTML = details[method] || '';
+};
+
+window.closePayModal = () => {
+    document.getElementById('payModal').classList.remove('active');
+    selectedPenId  = null;
+    selectedMethod = null;
+};
+
+window.confirmPayment = async () => {
+    if (!selectedMethod) { showToast('اختار طريقة الدفع أولاً', 'warning'); return; }
+    if (!confirm('هل تأكد الدفع؟ سيتم تحديث حالة الغرامة إلى "مدفوعة".')) return;
+
+    try {
+        const newPenalties = penalties.map(p => {
+            if (p.id === selectedPenId) {
+                return { ...p, status: 'paid', paid_at: new Date().toISOString(), pay_method: selectedMethod };
+            }
+            return p;
+        });
+
+        const { error } = await sb.from('companies').update({
+            penalties: newPenalties,
+            updated_at: new Date().toISOString()
+        }).eq('user_id', companyUserId);
+
+        if (error) { showToast('خطأ: ' + error.message, 'error'); return; }
+
+        // إشعار للإدارة (اختياري)
+        await sb.from('notifications').insert({
+            user_id: companyUserId,
+            user_type: 'company',
+            title: '✅ تم دفع الغرامة',
+            message: `تم الدفع بطريقة: ${selectedMethod}`,
+            type: 'info',
+            is_read: false
+        }).then(() => {});
+
+        showToast('✅ تم تسجيل الدفع بنجاح', 'success');
+        closePayModal();
+        await loadAll();
+    } catch (err) {
+        showToast('خطأ: ' + err.message, 'error');
+    }
+};
+
+async function loadAll() {
+    try {
+        const { data: sess } = await sb.auth.getSession();
+        if (!sess || !sess.session) { window.location.href = 'company-login.html'; return; }
+        companyUserId = sess.session.user.id;
+
+        const { data: co, error } = await sb.from('companies')
+            .select('company_name, penalties, status')
+            .eq('user_id', companyUserId)
+            .maybeSingle();
+
+        if (error || !co) { window.location.href = 'company-login.html'; return; }
+        companyData = co;
+
+        const raw = co.penalties;
+        if (typeof raw === 'string') {
+            try { penalties = JSON.parse(raw); } catch { penalties = []; }
+        } else {
+            penalties = Array.isArray(raw) ? raw : [];
+        }
+
+        // أحدث من الأحدث للأقدم
+        penalties.sort((a, b) => new Date(b.date) - new Date(a.date));
+        renderPenalties();
+    } catch (err) {
+        showToast('خطأ في تحميل البيانات', 'error');
+    } finally {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const el = document.getElementById('loadingOverlay');
+        if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
+    }, 10000);
+    loadAll();
+});
+</script>
+</body>
+</html>
