@@ -765,6 +765,7 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="attendance-utils.js"></script>
     <script src="supabase-config.js"></script>
     <script src="company-layout.js"></script>
 <script>
@@ -1024,25 +1025,32 @@ async function loadStudentAISection(containerId, studentUserId, currentAppId) {
         function initLocal(name) { return (name||'?').trim().charAt(0).toUpperCase(); }
 
         function calcAttLocal(app) {
-            const sched = app.training_schedule || {};
-            const startDate = sched.start_date || app.training_start_date || null;
-            const endDate   = sched.end_date   || app.training_end_date   || null;
-            const appLogs = attLogs.filter(function(a) {
+            var logs = attLogs.filter(function(a) {
                 if (a.application_id) return a.application_id === app.id;
                 return a.company_user_id === app.company_user_id;
-            }).filter(function(a) {
+            });
+            if (window.ProVance && window.ProVance.Att && window.ProVance.Att.calc) {
+                var r = window.ProVance.Att.calc(app, logs);
+                return { rate: r.rate, present: r.present, presentAll: r.presentAll,
+                         absent: r.absent, late: r.late, bonusDays: r.bonusDays || 0, hasData: r.hasData };
+            }
+            // بدون ProVance.Att — حساب مبسط
+            var sched = app.training_schedule || {};
+            var startDate = sched.start_date || app.training_start_date || null;
+            var endDate   = sched.end_date   || app.training_end_date   || null;
+            var filtered = logs.filter(function(a) {
                 if (!startDate || !a.scanned_at) return true;
-                const d = new Date(a.scanned_at.slice(0,10));
-                const start = new Date(startDate);
-                const end = endDate ? new Date(endDate) : null;
+                var d = new Date(a.scanned_at.slice(0,10));
+                var start = new Date(startDate);
+                var end = endDate ? new Date(endDate) : null;
                 return d >= start && (end === null || d <= end);
             });
-            const presentSet = new Set(appLogs.filter(function(a){return a.status!=='absent';}).map(function(a){return a.scanned_at?a.scanned_at.slice(0,10):null;}).filter(Boolean));
-            const absentSet  = new Set(appLogs.filter(function(a){return a.status==='absent';}).map(function(a){return a.scanned_at?a.scanned_at.slice(0,10):null;}).filter(Boolean));
-            const lateCount  = appLogs.filter(function(a){return a.status==='late';}).length;
-            const presentDays = presentSet.size, absentDays = absentSet.size;
-            const rate = (presentDays+absentDays)>0 ? Math.min(100,Math.round(presentDays/(presentDays+absentDays)*100)) : 0;
-            return { rate, presentDays, absentDays, lateCount };
+            var presentSet = new Set(filtered.filter(function(a){return a.status!=='absent';}).map(function(a){return a.scanned_at?a.scanned_at.slice(0,10):null;}).filter(Boolean));
+            var absentSet  = new Set(filtered.filter(function(a){return a.status==='absent';}).map(function(a){return a.scanned_at?a.scanned_at.slice(0,10):null;}).filter(Boolean));
+            var lateCount  = filtered.filter(function(a){return a.status==='late';}).length;
+            var pDays = presentSet.size, aDays = absentSet.size;
+            var rate = (pDays+aDays)>0 ? Math.min(100,Math.round(pDays/(pDays+aDays)*100)) : (pDays>0?100:0);
+            return { rate, present: pDays, presentAll: pDays, absent: aDays, late: lateCount, bonusDays: 0, hasData: filtered.length>0 };
         }
 
         const cardsHtml = apps.map(function(app) {
@@ -1078,9 +1086,10 @@ async function loadStudentAISection(containerId, studentUserId, currentAppId) {
                 '</svg><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.74rem;font-weight:900;color:' + rateColor + '">' + att.rate + '%</div></div>';
 
             const attDetails = [
-                '<span style="color:#10b981"><i class="fas fa-check"></i> ' + att.presentDays + ' حضر</span>',
-                att.absentDays>0 ? '<span style="color:#ef4444"><i class="fas fa-times"></i> ' + att.absentDays + ' غياب</span>' : '',
-                att.lateCount>0  ? '<span style="color:#f59e0b"><i class="fas fa-clock"></i> ' + att.lateCount + ' تأخر</span>'  : ''
+                '<span style="color:#10b981"><i class="fas fa-check"></i> ' + (att.present||att.presentAll||0) + ' حضر</span>',
+                (att.absent||0)>0       ? '<span style="color:#ef4444"><i class="fas fa-times"></i> ' + att.absent + ' غياب</span>' : '',
+                (att.bonusDays||0)>0    ? '<span style="color:#a855f7">+' + att.bonusDays + ' إضافي</span>' : '',
+                (att.late||0)>0         ? '<span style="color:#f59e0b"><i class="fas fa-clock"></i> ' + att.late + ' تأخر</span>'  : ''
             ].filter(Boolean).join('<span style="opacity:0.3"> • </span>');
 
             const isCurrent = app.id === currentAppId;
@@ -1233,10 +1242,13 @@ window.openSAIReport = async function(appId, studentUserId) {
         var careerHtml='<div style="color:#94a3b8;text-align:center;padding:30px 10px"><i class="fas fa-briefcase" style="font-size:2rem;color:rgba(148,163,184,0.3);display:block;margin-bottom:10px"></i>لا توجد توصيات مهنية بعد</div>';
         if (rec) {
             var recsArr=Array.isArray(rec.recommendations)?rec.recommendations.filter(function(r){return r&&!r.__meta;}):[],ch='';
-            if (rec.smart_summary) ch+='<div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:0.86rem;line-height:1.7;color:#94a3b8"><i class="fas fa-lightbulb" style="color:#4facfe;margin-left:6px"></i>'+escL(String(rec.smart_summary))+'</div>';
-            if (rec.career_assessment) ch+='<div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:0.86rem;line-height:1.7;color:#94a3b8"><i class="fas fa-chart-line" style="color:#10b981;margin-left:6px"></i>'+escL(String(rec.career_assessment))+'</div>';
-            var strengths=Array.isArray(rec.strength_areas)?rec.strength_areas:[];
-            var improvements=Array.isArray(rec.improvement_areas)?rec.improvement_areas:[];
+            var metaRec=(Array.isArray(rec.recommendations)?rec.recommendations.find(function(r){return r&&r.__meta;}):null)||{};
+            var summary=rec.smart_summary||metaRec.smart_summary||'';
+            var assessment=rec.career_assessment||metaRec.career_assessment||'';
+            if (summary) ch+='<div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:0.86rem;line-height:1.7;color:#94a3b8"><i class="fas fa-lightbulb" style="color:#4facfe;margin-left:6px"></i>'+escL(String(summary))+'</div>';
+            if (assessment) ch+='<div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:0.86rem;line-height:1.7;color:#94a3b8"><i class="fas fa-chart-line" style="color:#10b981;margin-left:6px"></i>'+escL(String(assessment))+'</div>';
+            var strengths=(Array.isArray(rec.strength_areas)&&rec.strength_areas.length)?rec.strength_areas:(Array.isArray(metaRec.strength_areas)?metaRec.strength_areas:[]);
+            var improvements=(Array.isArray(rec.improvement_areas)&&rec.improvement_areas.length)?rec.improvement_areas:(Array.isArray(metaRec.improvement_areas)?metaRec.improvement_areas:[]);
             if (strengths.length>0||improvements.length>0) {
                 ch+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">';
                 if (strengths.length>0) {
@@ -1273,8 +1285,8 @@ window.openSAIReport = async function(appId, studentUserId) {
                         '</div>';
                 });
             }
-            var sp=rec.skill_profile;
-            if (sp) {
+            var sp=(rec.skill_profile&&typeof rec.skill_profile==='object'&&Object.keys(rec.skill_profile).length)?rec.skill_profile:(metaRec.skill_profile||null);
+            if (sp&&(sp.technical||sp.soft_skills||sp.performance||sp.growth)) {
                 var spBars=[{key:'technical',label:'المهارات التقنية',color:'#4facfe'},{key:'soft_skills',label:'مهارات التواصل',color:'#10b981'},{key:'performance',label:'الأداء',color:'#f093fb'},{key:'growth',label:'التطور',color:'#f59e0b'}];
                 ch+='<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;margin-top:10px"><div style="font-size:0.8rem;font-weight:700;color:#94a3b8;margin-bottom:8px"><i class="fas fa-chart-bar" style="color:#4facfe;margin-left:4px"></i> ملف المهارات</div>';
                 spBars.forEach(function(b){
