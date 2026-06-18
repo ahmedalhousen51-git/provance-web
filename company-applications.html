@@ -871,6 +871,26 @@ async function loadAll() {
         
         allApplications = data || [];
         console.log('✓ تم تحميل', allApplications.length, 'طلب');
+
+        // auto-complete: أي تدريب انتهت مدته بدون ضغط زرار "إنهاء التدريب"
+        const today = new Date(); today.setHours(0,0,0,0);
+        const overdueApps = allApplications.filter(a =>
+            a.status === 'in_training' &&
+            a.training_schedule?.end_date &&
+            new Date(a.training_schedule.end_date) < today
+        );
+        for (const a of overdueApps) {
+            try {
+                await sb.from('applications').update({ status: 'completed', updated_at: new Date().toISOString() }).eq('id', a.id);
+                const { data: stu } = await sb.from('student').select('level').eq('user_id', a.student_user_id).maybeSingle();
+                const levelUp = { beginner: 'intermediate', intermediate: 'advanced' };
+                const newLvl = levelUp[stu?.level || 'beginner'];
+                if (newLvl) await sb.from('student').update({ level: newLvl }).eq('user_id', a.student_user_id);
+                a.status = 'completed';
+                console.log('auto-completed:', a.id, '→ level:', newLvl);
+            } catch(e) { console.warn('auto-complete failed:', a.id, e.message); }
+        }
+
         updateStats();
         renderApps();
     } catch(err) {
@@ -971,6 +991,96 @@ function renderApps() {
     }).join('');
 }
 
+async function loadStudentAISection(containerId, studentUserId, appId) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    try {
+        const sb = await window.getSafeSupabase();
+        if (!sb) { el.remove(); return; }
+
+        const [evalRes, recRes, tasksRes] = await Promise.all([
+            appId
+                ? sb.from('ai_evaluations').select('overall_score,category_scores,summary_feedback').eq('application_id', appId).order('submitted_at',{ascending:false}).limit(1).maybeSingle()
+                : sb.from('ai_evaluations').select('overall_score,category_scores,summary_feedback').eq('student_user_id', studentUserId).order('submitted_at',{ascending:false}).limit(1).maybeSingle(),
+            sb.from('career_recommendations').select('recommendations,smart_summary,strength_areas').eq('student_user_id', studentUserId).eq('sent_to_student',true).order('created_at',{ascending:false}).limit(1).maybeSingle(),
+            sb.from('task_reports').select('quality_rating,completion_status').eq('student_user_id', studentUserId)
+        ]);
+
+        const ev = evalRes.data;
+        const rec = recRes.data;
+        const tasks = tasksRes.data || [];
+
+        if (!ev && !rec && tasks.length === 0) { el.remove(); return; }
+
+        const escFn = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        let h = '<div style="background:linear-gradient(135deg,rgba(124,108,255,0.07),rgba(168,85,247,0.03));border:1px solid rgba(124,108,255,0.25);border-radius:14px;padding:16px 18px;margin-top:16px">';
+        h += '<div style="font-weight:800;font-size:0.95rem;margin-bottom:14px;color:#a855f7;display:flex;align-items:center;gap:8px"><i class="fas fa-brain"></i> سجل التدريب والتحليل الذكي</div>';
+
+        if (ev) {
+            const score = Math.min(100, Math.round(Number(ev.overall_score) || 0));
+            const sc = score >= 75 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
+            const cs = ev.category_scores || {};
+            const catL = {technical:'تقني',soft_skills:'تواصل',performance:'أداء',growth:'تطور'};
+            const catC = {technical:'#7c6cff',soft_skills:'#10b981',performance:'#ef4444',growth:'#f59e0b'};
+
+            h += '<div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px">';
+            h += '<div style="text-align:center;background:rgba(0,0,0,0.25);border-radius:12px;padding:12px 18px;flex-shrink:0">';
+            h += '<div style="font-size:2rem;font-weight:900;color:'+sc+';line-height:1">'+score+'</div>';
+            h += '<div style="font-size:0.68rem;color:var(--text-muted)">/ 100</div>';
+            h += '<div style="font-size:0.74rem;font-weight:700;color:'+sc+';margin-top:4px">تقييم AI</div>';
+            h += '</div>';
+            if (Object.keys(cs).length > 0) {
+                h += '<div style="flex:1;min-width:150px">';
+                Object.entries(cs).slice(0,4).forEach(([cat,val]) => {
+                    const pct = Math.min(100, Math.round(Number(val)||0));
+                    const c = catC[cat]||'#4facfe';
+                    h += '<div style="margin-bottom:7px"><div style="display:flex;justify-content:space-between;font-size:0.74rem;margin-bottom:3px"><span style="color:var(--text-muted)">'+(catL[cat]||cat)+'</span><span style="font-weight:700;color:'+c+'">'+pct+'%</span></div>';
+                    h += '<div style="height:5px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+c+';border-radius:4px"></div></div></div>';
+                });
+                h += '</div>';
+            }
+            h += '</div>';
+            if (ev.summary_feedback) {
+                const sf = String(ev.summary_feedback);
+                h += '<div style="background:rgba(255,255,255,0.02);border-right:3px solid #a855f7;padding:8px 12px;border-radius:0 8px 8px 0;margin-bottom:12px;font-size:0.81rem;color:var(--text-muted);line-height:1.65">'+escFn(sf.length>180?sf.substring(0,180)+'…':sf)+'</div>';
+            }
+        }
+
+        if (tasks.length > 0) {
+            const rated = tasks.filter(t => Number(t.quality_rating) > 0);
+            const avg = rated.length ? (rated.reduce((s,t) => s+Number(t.quality_rating),0)/rated.length).toFixed(1) : null;
+            h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+            h += '<span style="background:rgba(79,172,254,0.1);color:#4facfe;padding:4px 10px;border-radius:10px;font-size:0.77rem;font-weight:700"><i class="fas fa-clipboard-list"></i> '+tasks.length+' مهمة سابقة</span>';
+            if (avg) h += '<span style="background:rgba(245,158,11,0.1);color:#f59e0b;padding:4px 10px;border-radius:10px;font-size:0.77rem;font-weight:700"><i class="fas fa-star"></i> متوسط الجودة '+avg+'/5</span>';
+            h += '</div>';
+        }
+
+        if (rec && Array.isArray(rec.recommendations)) {
+            const recs = rec.recommendations.filter(r => r && !r.__meta).slice(0,3);
+            if (recs.length > 0) {
+                h += '<div style="font-size:0.8rem;font-weight:700;color:var(--text-muted);margin-bottom:7px"><i class="fas fa-bullseye" style="color:#a855f7;margin-left:4px"></i> الترشيحات الوظيفية الموصى بها:</div>';
+                h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+                recs.forEach(r => {
+                    let m = Number(r.match||r.match_score||0); while(m>100)m=Math.round(m/10);
+                    const mc = m>=75?'#10b981':m>=55?'#f59e0b':'#94a3b8';
+                    h += '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:7px 11px;font-size:0.78rem">';
+                    h += '<div style="font-weight:700;color:var(--text);margin-bottom:2px">'+escFn(String(r.field||r.job_title||r.title||''))+'</div>';
+                    h += '<div style="color:'+mc+';font-weight:800">'+m+'% توافق</div></div>';
+                });
+                h += '</div>';
+            }
+        }
+
+        h += '</div>';
+        el.innerHTML = h;
+    } catch(e) {
+        console.warn('loadStudentAISection:', e);
+        const el2 = document.getElementById(containerId);
+        if (el2) el2.innerHTML = '';
+    }
+}
+
 window.viewDetails = async (appId) => {
     const app = allApplications.find(a => a.id === appId);
     if (!app) return;
@@ -1027,9 +1137,10 @@ window.viewDetails = async (appId) => {
                 (s.portfolio ? '<a href="' + esc(s.portfolio) + '" target="_blank" style="color:var(--primary)"><i class="fas fa-globe"></i> Portfolio</a>' : '') +
                 ((s.cv_url || app.student_cv_url) ? '<a href="' + esc(s.cv_url || app.student_cv_url) + '" target="_blank" style="color:var(--primary)"><i class="fas fa-file-pdf"></i> CV</a>' : '') +
             '</div>' : '') +
-            '<div style="display:flex;gap:10px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)">' +
+            '<div id="appAISection" style=""><div style="text-align:center;padding:16px;color:var(--text-muted);font-size:0.84rem"><i class="fas fa-spinner fa-spin" style="color:#a855f7"></i> جاري تحميل سجل التدريب...</div></div>' +
+            '<div style="display:flex;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">' +
                 '<button onclick="closeModal(\'detailsModal\')" style="flex:1;background:var(--bg-card);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إغلاق</button>' +
-                (app.status === 'pending' ? 
+                (app.status === 'pending' ?
                     '<button onclick="closeModal(\'detailsModal\');acceptApp(\''+app.id+'\')" style="flex:1;background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);padding:10px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-check"></i> قبول</button>' +
                     '<button onclick="closeModal(\'detailsModal\');rejectApp(\''+app.id+'\')" style="flex:1;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:10px;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-times"></i> رفض</button>'
                 : '') +
@@ -1037,6 +1148,7 @@ window.viewDetails = async (appId) => {
         '</div>' +
     '</div>';
     document.body.insertAdjacentHTML('beforeend', html);
+    loadStudentAISection('appAISection', app.student_user_id, appId);
 };
 
 window.acceptApp = (appId) => {
@@ -1438,7 +1550,7 @@ window.completeTraining = async (appId) => {
             .select('level')
             .eq('user_id', app.student_user_id)
             .maybeSingle();
-        if (stuErr) throw stuErr;
+        if (stuErr) console.warn('level fetch failed:', stuErr.message);
 
         // 3. حساب المستوى الجديد
         const levelUp = { beginner: 'intermediate', intermediate: 'advanced' };
