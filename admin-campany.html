@@ -1417,6 +1417,27 @@ window.confirmPenalty = async () => {
         }
         showToast('✅ تم إضافة العقوبة', 'warning');
         const companyId = c.id;
+
+        // إرسال إشعار للشركة
+        const penTitleMap = { warning:'⚠️ إنذار رسمي من الإدارة', fine:'💰 غرامة مالية', suspension:'🚫 تعليق مؤقت', termination:'❌ إنهاء التعاقد' };
+        const penMsgMap = {
+            warning: `تم توجيه إنذار رسمي لشركتك. السبب: ${reason}`,
+            fine: `تم فرض غرامة مالية بقيمة ${amount} ${currency} على شركتك. السبب: ${reason}. يرجى الدفع من خلال صفحة العقوبات.`,
+            suspension: `تم تعليق شركتك مؤقتاً لمدة ${duration} يوم. السبب: ${reason}`,
+            termination: `تم إنهاء تعاقد شركتك مع المنصة. السبب: ${reason}`
+        };
+        try {
+            await sb.from('notifications').insert({
+                user_id: c.id,
+                user_type: 'company',
+                title: penTitleMap[type] || 'إجراء إداري',
+                message: penMsgMap[type] || reason,
+                type: 'penalty',
+                is_read: false,
+                link: 'company-penalties.html'
+            });
+        } catch (notifErr) { console.warn('Notification failed:', notifErr); }
+
         closeModal('penaltyModal');
         closeModal('detailsModal');
         await loadCompanies();
