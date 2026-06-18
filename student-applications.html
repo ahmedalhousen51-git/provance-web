@@ -514,6 +514,7 @@ function renderApps() {
                     ? `<button class="btn btn-sm" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b" onclick="viewMyRating('${a.id}')"><i class="fas fa-star"></i> تقييمي</button>`
                     : `<button class="btn btn-sm" style="background:rgba(79,172,254,0.12);border:1px solid rgba(79,172,254,0.3);color:#4facfe" onclick="openRatingModal('${a.id}','${esc(a.company_name||'')}','${a.company_user_id}')"><i class="fas fa-star-half-alt"></i> قيّم الشركة</button>`
                 ) : ''}
+                ${['in_training','hired','completed'].includes(a.status) ? `<button class="btn btn-sm" style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.25);color:#f87171" onclick="openStudentComplaint('${a.id}','${esc(a.company_name||'')}','${a.company_user_id||''}')" title="تقديم شكوى على الشركة"><i class="fas fa-flag"></i> شكوى</button>` : ''}
             </div>
         </div>`;
     }).join('');
@@ -659,6 +660,99 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 document.addEventListener('DOMContentLoaded', loadAll);
+
+// ─── شكوى الطالب على الشركة ────────────────────────────────────────────────
+let _sComplaintAppId = null, _sComplaintCompanyId = null;
+
+window.openStudentComplaint = (appId, companyName, companyUserId) => {
+    _sComplaintAppId = appId;
+    _sComplaintCompanyId = companyUserId;
+    document.getElementById('sComplaintCompanyName').textContent = companyName || 'الشركة';
+    document.getElementById('sComplaintSubject').value = '';
+    document.getElementById('sComplaintDetails').value = '';
+    document.getElementById('studentComplaintModal').style.display = 'flex';
+};
+
+window.closeStudentComplaint = () => {
+    document.getElementById('studentComplaintModal').style.display = 'none';
+};
+
+window.saveStudentComplaint = async () => {
+    const subject = document.getElementById('sComplaintSubject').value.trim();
+    const details = document.getElementById('sComplaintDetails').value.trim();
+    if (!subject) { window.ProVance?.showToast('اختر موضوع الشكوى', 'warning'); return; }
+    if (!details) { window.ProVance?.showToast('اكتب تفاصيل الشكوى', 'warning'); return; }
+
+    const sb = window.ProVance?.sb || (window.ProVance?.waitForSupabaseClient ? await window.ProVance.waitForSupabaseClient(5000).catch(()=>null) : null);
+    if (!sb) { window.ProVance?.showToast('فشل الاتصال', 'error'); return; }
+
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) return;
+        const fullMsg = `[شكوى على شركة]\nالموضوع: ${subject}\n\n${details}`;
+        const { error } = await sb.from('support_messages').insert({
+            sender_id: session.user.id,
+            sender_type: 'student',
+            recipient_type: 'admin',
+            message: fullMsg,
+            is_read: false,
+            created_at: new Date().toISOString()
+        });
+        if (error) throw error;
+
+        // إشعار للأدمن
+        try {
+            const { data: admins } = await sb.from('admins').select('user_id');
+            if (admins && admins.length > 0) {
+                await sb.from('notifications').insert(admins.map(a => ({
+                    user_id: a.user_id,
+                    user_type: 'admin',
+                    type: 'support_message',
+                    title: '🚩 شكوى من طالب على شركة',
+                    message: `${document.getElementById('sComplaintCompanyName').textContent}: ${subject}`,
+                    link: 'admin-student-support.html'
+                })));
+            }
+        } catch(e) {}
+
+        window.ProVance?.showToast('✅ تم إرسال الشكوى للإدارة', 'success');
+        closeStudentComplaint();
+    } catch(e) {
+        window.ProVance?.showToast('خطأ في إرسال الشكوى', 'error');
+        console.error(e);
+    }
+};
 </script>
+
+<!-- موديل شكوى الطالب على الشركة -->
+<div id="studentComplaintModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:16px">
+    <div style="background:#1a1535;border:1px solid rgba(239,68,68,0.3);border-radius:20px;width:100%;max-width:480px;padding:26px;position:relative">
+        <button onclick="closeStudentComplaint()" style="position:absolute;top:14px;left:14px;background:rgba(148,163,184,0.15);border:none;color:#94a3b8;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem">×</button>
+        <div style="font-size:1.1rem;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:10px">
+            <i class="fas fa-flag" style="color:#ef4444"></i> تقديم شكوى للإدارة
+        </div>
+        <div style="color:#94a3b8;font-size:0.85rem;margin-bottom:20px">شكوى على: <strong id="sComplaintCompanyName" style="color:#fff"></strong></div>
+        <div style="margin-bottom:14px">
+            <label style="display:block;font-size:0.88rem;font-weight:700;margin-bottom:7px;color:#94a3b8">موضوع الشكوى <span style="color:#ef4444">*</span></label>
+            <select id="sComplaintSubject" style="width:100%;padding:11px 13px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:inherit;font-size:0.92rem">
+                <option value="">-- اختر الموضوع --</option>
+                <option value="معاملة سيئة أو غير محترمة">معاملة سيئة أو غير محترمة</option>
+                <option value="عدم التزام الشركة بجدول التدريب">عدم التزام الشركة بجدول التدريب</option>
+                <option value="مهام خارج نطاق التدريب">مهام خارج نطاق التدريب</option>
+                <option value="عدم توفير بيئة تدريب مناسبة">عدم توفير بيئة تدريب مناسبة</option>
+                <option value="تهديد أو ضغط غير مشروع">تهديد أو ضغط غير مشروع</option>
+                <option value="أخرى">أخرى</option>
+            </select>
+        </div>
+        <div style="margin-bottom:20px">
+            <label style="display:block;font-size:0.88rem;font-weight:700;margin-bottom:7px;color:#94a3b8">تفاصيل الشكوى <span style="color:#ef4444">*</span></label>
+            <textarea id="sComplaintDetails" rows="4" placeholder="اكتب تفاصيل الشكوى بوضوح..." style="width:100%;padding:11px 13px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-family:inherit;font-size:0.9rem;resize:vertical;line-height:1.6"></textarea>
+        </div>
+        <div style="display:flex;gap:10px">
+            <button onclick="closeStudentComplaint()" style="flex:1;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer">إلغاء</button>
+            <button onclick="saveStudentComplaint()" style="flex:2;padding:12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:10px;font-weight:700;font-family:inherit;cursor:pointer"><i class="fas fa-paper-plane"></i> إرسال الشكوى</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
