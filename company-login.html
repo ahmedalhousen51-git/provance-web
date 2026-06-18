@@ -510,7 +510,8 @@ console.log('✅ Login form initialized');
             const banner = document.getElementById('errorBanner');
             banner.style.display = 'flex';
             banner.className = 'error-banner';
-            banner.innerHTML = '<i class="fas fa-exclamation-circle" style="font-size:1.2rem;color:var(--error);flex-shrink:0;margin-top:2px;"></i><div style="flex:1"><strong style="color:var(--error);display:block;margin-bottom:4px;">حصل خطأ في تسجيل الدخول</strong><div>'+msg+'</div></div><button onclick="document.getElementById(\'errorBanner\').style.display=\'none\'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;"><i class="fas fa-times"></i></button>';
+            const _em = String(msg||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            banner.innerHTML = '<i class="fas fa-exclamation-circle" style="font-size:1.2rem;color:var(--error);flex-shrink:0;margin-top:2px;"></i><div style="flex:1"><strong style="color:var(--error);display:block;margin-bottom:4px;">حصل خطأ في تسجيل الدخول</strong><div>'+_em+'</div></div><button onclick="document.getElementById(\'errorBanner\').style.display=\'none\'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;"><i class="fas fa-times"></i></button>';
         }
         function hideBanner() { document.getElementById('errorBanner').style.display = 'none'; }
 
@@ -567,7 +568,7 @@ console.log('✅ Login form initialized');
                 }
 
                 const { data: studentData, error: studentErr } = await sb.from('companies')
-                    .select('user_id, company_name, status')
+                    .select('user_id, company_name, status, suspended, suspended_until, penalties')
                     .eq('user_id', data.user.id)
                     .maybeSingle();
 
@@ -579,9 +580,23 @@ console.log('✅ Login form initialized');
                     return;
                 }
 
-                if (studentData.status === 'suspended') {
+                if (studentData.status === 'terminated') {
                     await sb.auth.signOut();
-                    showBanner('حساب شركتك متوقف. تواصل مع الإدارة على support@provance.com');
+                    const pens = Array.isArray(studentData.penalties) ? studentData.penalties : [];
+                    const termPen = pens.slice().reverse().find(p => p.type === 'termination');
+                    const reason = termPen ? termPen.reason : 'مخالفة شروط الاستخدام';
+                    showBanner('🚫 تم حذف وحظر حساب شركتك نهائياً من المنصة. السبب: ' + reason + '. للتظلم تواصل مع الإدارة على support@provance.com');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    return;
+                }
+                if (studentData.status === 'suspended' || studentData.suspended) {
+                    await sb.auth.signOut();
+                    const pens = Array.isArray(studentData.penalties) ? studentData.penalties : [];
+                    const susPen = pens.slice().reverse().find(p => p.type === 'suspension' && p.status === 'active');
+                    const reason = susPen ? susPen.reason : 'مخالفة الشروط';
+                    const until  = studentData.suspended_until ? ' حتى ' + new Date(studentData.suspended_until).toLocaleDateString('ar-EG') : '';
+                    showBanner('⚠️ حساب شركتك موقف مؤقتاً' + until + '. السبب: ' + reason + '. تواصل مع الإدارة على support@provance.com');
                     btn.classList.remove('loading');
                     btn.disabled = false;
                     return;
