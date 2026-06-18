@@ -403,8 +403,8 @@ function renderStrikesDisplay(count) {
 }
 
 function renderTraineeCard(s) {
-    const safePhoto = s.photo && (s.photo.startsWith('https://') || s.photo.startsWith('http://')) ? s.photo : null;
-    const photo = safePhoto ? `<img src="${escapeHtml(safePhoto)}" alt="">` : `<span>${getInitial(s.full_name || s.email || '?')}</span>`;
+    const safePhoto = s.photo && (s.photo.startsWith('https://') || s.photo.startsWith('http://') || s.photo.startsWith('data:')) ? s.photo : null;
+    const photo = safePhoto ? `<img src="${safePhoto.startsWith('data:') ? safePhoto : escapeHtml(safePhoto)}" alt="">` : `<span>${getInitial(s.full_name || s.email || '?')}</span>`;
     const strikes = getStrikes(s.user_id);
     const banned = isBanned(s.user_id);
     return `
@@ -556,13 +556,16 @@ window.openAddViolation = (userId) => {
                     <label><i class="fas fa-tag"></i> نوع المخالفة <span class="req">*</span></label>
                     <select id="violation_type">
                         <option value="">-- اختر --</option>
-                        <option value="absence">غياب متكرر</option>
-                        <option value="late">تأخر متكرر</option>
-                        <option value="misbehavior">سوء سلوك</option>
-                        <option value="cheating">غش / انتحال</option>
-                        <option value="harassment">تحرش / تنمر</option>
+                        <option value="missed_attendance">غياب متكرر</option>
+                        <option value="late_attendance">تأخر متكرر</option>
+                        <option value="missed_interview">فوّت مقابلة</option>
+                        <option value="late_interview">تأخر في مقابلة</option>
+                        <option value="missed_report">فوّت تقرير</option>
+                        <option value="late_report">تأخر في تقرير</option>
+                        <option value="inappropriate_behavior">سوء سلوك / تحرش / غش</option>
+                        <option value="fake_profile">بيانات مزيفة</option>
                         <option value="bypass_attempt">محاولة الـ bypass</option>
-                        <option value="fake_data">بيانات مزيفة</option>
+                        <option value="payment_issue">مشكلة دفع</option>
                         <option value="other">أخرى</option>
                     </select>
                 </div>
@@ -679,8 +682,8 @@ window.viewTraineeDetails = async (userId) => {
     } catch (err) {
         console.error('❌ viewTraineeDetails error:', err);
     }
-    const safePhotoDetail = s.photo && (s.photo.startsWith('https://') || s.photo.startsWith('http://')) ? s.photo : null;
-    const photo = safePhotoDetail ? `<img src="${escapeHtml(safePhotoDetail)}" alt="">` : `<span>${getInitial(s.full_name)}</span>`;
+    const safePhotoDetail = s.photo && (s.photo.startsWith('https://') || s.photo.startsWith('http://') || s.photo.startsWith('data:')) ? s.photo : null;
+    const photo = safePhotoDetail ? `<img src="${safePhotoDetail.startsWith('data:') ? safePhotoDetail : escapeHtml(safePhotoDetail)}" alt="">` : `<span>${getInitial(s.full_name)}</span>`;
     const userViolations = allViolations.filter(v => v.target_user_id === userId);
     const strikes = getStrikes(userId);
     const banned = isBanned(userId);
