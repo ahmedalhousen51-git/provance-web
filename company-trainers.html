@@ -1240,17 +1240,39 @@ async function loadAll() {
         let attByApp = {};
         if (appIds.length > 0) {
             try {
-                // بناء خريطة من student_user_id إلى application_id
-                // لأن student-scan.html بيحفظ الحضور بـ company_user_id+student_user_id بدون application_id
-                const studentToApp = {};
-                (apps || []).forEach(a => { if (a.student_user_id) studentToApp[a.student_user_id] = a.id; });
+                // خريطة طالب → قائمة تطبيقاته (طالب ممكن يكون له أكتر من تطبيق عند نفس الشركة)
+                const studentToApps = {};
+                (apps || []).forEach(a => {
+                    if (!a.student_user_id) return;
+                    if (!studentToApps[a.student_user_id]) studentToApps[a.student_user_id] = [];
+                    studentToApps[a.student_user_id].push(a);
+                });
 
                 const { data: attLogs } = await sb.from('attendance_logs')
                     .select('application_id, student_user_id, scanned_at, status, attendance_type')
                     .eq('company_user_id', companyUserId);
                 (attLogs || []).forEach(l => {
                     if (l.attendance_type && l.attendance_type !== 'daily_attendance') return;
-                    const appId = l.application_id || studentToApp[l.student_user_id];
+                    let appId = l.application_id;
+
+                    // لو مفيش application_id، حاول تطابق بالتاريخ
+                    if (!appId && l.student_user_id) {
+                        const sApps = studentToApps[l.student_user_id] || [];
+                        if (sApps.length === 1) {
+                            appId = sApps[0].id;
+                        } else if (sApps.length > 1 && l.scanned_at) {
+                            const logDate = parseLocalDate(localDayKey(l.scanned_at));
+                            const matched = sApps.find(a => {
+                                const sc = a.training_schedule || {};
+                                if (!sc.start_date) return false;
+                                const s = parseLocalDate(sc.start_date);
+                                const e = sc.end_date ? parseLocalDate(sc.end_date) : null;
+                                return logDate >= s && (e === null || logDate <= e);
+                            });
+                            appId = matched ? matched.id : sApps[0].id;
+                        }
+                    }
+
                     if (!appId) return;
                     if (!attByApp[appId]) attByApp[appId] = [];
                     attByApp[appId].push(l);
