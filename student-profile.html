@@ -1716,8 +1716,9 @@
     // ====== بناء نسبة الحضور لتدريب محدد ======
     function calcAttendanceForApp(app) {
         const sched = app.training_schedule || {};
-        const startDate = app.training_start_date || sched.start_date || null;
-        const endDate = app.training_end_date || sched.end_date || null;
+        // الأولوية لـ sched.start_date (نفس ما تستخدمه شاشة الشركة) — training_start_date fallback بس
+        const startDate = sched.start_date || app.training_start_date || null;
+        const endDate = sched.end_date || app.training_end_date || null;
 
         const daily = allAttendance.filter(a => {
             if (a.attendance_type !== 'daily_attendance') return false;
@@ -1787,12 +1788,14 @@
     // ====== بناء كرت تدريب واحد ======
     function buildTrainingReportCard(app) {
         const sched = app.training_schedule || {};
-        const startDate = app.training_start_date || sched.start_date || null;
-        const endDate   = app.training_end_date   || sched.end_date   || null;
+        // الأولوية لـ sched.start_date (نفس ما تستخدمه شاشة الشركة)
+        const startDate = sched.start_date || app.training_start_date || null;
+        const endDate   = sched.end_date   || app.training_end_date   || null;
 
         let durationText = '-';
         if (startDate && endDate) {
-            const days = Math.ceil((parseLocalDate(endDate) - parseLocalDate(startDate)) / 86400000);
+            // +1 عشان يحسب اليومين (البداية والنهاية) بشكل شامل
+            const days = Math.ceil((parseLocalDate(endDate) - parseLocalDate(startDate)) / 86400000) + 1;
             durationText = days >= 30 ? Math.round(days / 30) + ' شهر' : days + ' يوم';
         } else if (sched.duration) {
             durationText = esc(String(sched.duration));
