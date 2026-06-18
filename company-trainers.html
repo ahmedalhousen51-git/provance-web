@@ -1609,8 +1609,14 @@ function buildTrainingInfoCard(t) {
 
     const startTxt = dates.start ? fmtDate(dates.start) : '<span style="color:var(--text-muted)">غير محدد</span>';
     const endTxt = dates.end ? fmtDate(dates.end) : '<span style="color:var(--text-muted)">غير محدد</span>';
-    // الأولوية: مدة الجدول المحفوظ (متوافقة مع end_date) ثم مدة المجال
-    const durTxt = getDurationText(sched.duration || t.duration);
+    // احسب المدة من التواريخ الفعلية لو متوفرين — مش من الحقل النصي (اللي قد يكون قديم)
+    let durTxt;
+    if (dates.start && dates.end) {
+        const calDays = Math.ceil((dates.end - dates.start) / 86400000) + 1;
+        durTxt = calDays >= 30 ? Math.round(calDays / 30) + ' شهر' : calDays + ' يوم';
+    } else {
+        durTxt = getDurationText(sched.duration || t.duration);
+    }
 
     // حالة الوقت المتبقي
     let leftHtml = '';
