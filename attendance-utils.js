@@ -96,7 +96,8 @@
         if (sched.end_date) {
             end = att_parseDate(sched.end_date);
         } else {
-            const days = att_durationDays(t.duration);
+            // الأولوية: مدة الجدول (sched.duration) ثم مدة الطلب (t.duration)
+            const days = att_durationDays(sched.duration || t.duration);
             if (days > 0) { end = new Date(start); end.setDate(end.getDate() + days); }
             else end = null;
         }
@@ -127,7 +128,18 @@
     function att_calcAttendance(app, logs) {
         const sched      = (app && app.training_schedule) || {};
         const startDate  = sched.start_date || (app && app.training_start_date) || null;
-        const endDate    = sched.end_date   || (app && app.training_end_date)   || null;
+        let   endDate    = sched.end_date   || (app && app.training_end_date)   || null;
+
+        // لو مفيش end_date صريح ولكن في مدة محددة → احسب النهاية من البداية + المدة
+        if (!endDate && startDate) {
+            const _dur = att_durationDays(sched.duration || (app && app.duration));
+            if (_dur > 0) {
+                const _s = att_parseDate(startDate);
+                const _e = new Date(_s);
+                _e.setDate(_e.getDate() + _dur);
+                endDate = att_localDayKey(_e);
+            }
+        }
 
         const workDayNames = Array.isArray(sched.training_days) ? sched.training_days : null;
         const workDayNums  = workDayNames
