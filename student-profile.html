@@ -900,6 +900,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
+    <script src="attendance-utils.js"></script>
     <script>
 
     // ============================================================
@@ -1339,27 +1340,10 @@
         }).join('');
     }
 
-    // تحويل اسم اليوم العربي لرقم JS (الأحد=0)
-    const AR_DAY_TO_NUM = { 'الأحد': 0, 'الإثنين': 1, 'الاثنين': 1, 'الثلاثاء': 2, 'الأربعاء': 3, 'الخميس': 4, 'الجمعة': 5, 'السبت': 6 };
-
-    // مفتاح اليوم بالتوقيت المحلي (مش UTC) — يمنع انزلاق اليوم عند منتصف الليل في القاهرة
-    function localDayKey(d) {
-        const dt = (d instanceof Date) ? d : new Date(d);
-        const y = dt.getFullYear();
-        const m = String(dt.getMonth() + 1).padStart(2, '0');
-        const day = String(dt.getDate()).padStart(2, '0');
-        return `${y}-${m}-${day}`;
-    }
-
-    // يفسّر "YYYY-MM-DD" كمنتصف ليل محلي (مش UTC) عشان مايزحفش يوم
-    function parseLocalDate(s) {
-        if (s instanceof Date) { const d = new Date(s); d.setHours(0,0,0,0); return d; }
-        if (typeof s === 'string') {
-            const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-            if (m) return new Date(+m[1], +m[2] - 1, +m[3], 0, 0, 0, 0);
-        }
-        const d = new Date(s); d.setHours(0,0,0,0); return d;
-    }
+    // — دوال التواريخ والحضور تعتمد على ProVance.Att (attendance-utils.js) —
+    const AR_DAY_TO_NUM = ProVance.Att._dayMap;
+    function localDayKey(d)    { return ProVance.Att.localDayKey(d); }
+    function parseLocalDate(s) { return ProVance.Att.parseDate(s); }
 
     function renderAttendanceSummary() {
         const box = document.getElementById('attendanceSummary');
@@ -1379,15 +1363,12 @@
             if (a.application_id) return a.application_id === activeAppId;
             return a.company_user_id === activeCompanyId;
         });
-        const workDayNames = (sched && Array.isArray(sched.training_days)) ? sched.training_days : null;
-        const workDayNums = workDayNames ? workDayNames.map(d => AR_DAY_TO_NUM[d]).filter(n => n !== undefined) : null;
-
         if (daily.length === 0 && !sched) {
             box.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><p>لا توجد بيانات حضور بعد</p></div>';
             return;
         }
 
-        // فلتر: نعتبر فقط السجلات داخل فترة التدريب — سجلات ما قبل البداية تشوّه النسبة
+        // فلتر: نعتبر فقط السجلات داخل فترة التدريب (للرسم البياني)
         let dailyFiltered = daily;
         if (sched && sched.start_date) {
             const _fStart = parseLocalDate(sched.start_date);
@@ -1399,90 +1380,17 @@
             });
         }
 
-        // أيام الحضور الفعلية (مجمّعة) — بمفتاح محلي
-        const attendedDays = {};
-        dailyFiltered.forEach(a => {
-            if (!a.scanned_at) return;
-            const d = localDayKey(a.scanned_at);
-            if (!attendedDays[d]) attendedDays[d] = a.status;
-        });
-
-        const presentDaysCount = Object.keys(attendedDays).length;
-
-        // ── الحساب الذكي للغياب: نعدّ أيام العمل المفروضة فقط (نتجاهل إجازات الشركة) ──
-        let expectedWorkDays = 0;
-        let realAbsent = 0;
-        let companyHolidays = 0;
-        let presentOnWorkDays = 0;
-        const workDayKeySet = {};   // مفاتيح أيام العمل المفروضة
-
-        if (sched && sched.start_date && workDayNums && workDayNums.length) {
-            const start = parseLocalDate(sched.start_date);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const end = sched.end_date ? parseLocalDate(sched.end_date) : today;
-            const lastDay = end < today ? end : today;
-
-            for (let dt = new Date(start); dt <= lastDay; dt.setDate(dt.getDate() + 1)) {
-                const dayKey = localDayKey(dt);
-                const dayNum = dt.getDay();
-                if (workDayNums.includes(dayNum)) {
-                    // يوم عمل مفروض
-                    expectedWorkDays++;
-                    workDayKeySet[dayKey] = true;
-                    if (attendedDays[dayKey]) {
-                        presentOnWorkDays++;           // حضر في يوم عمل مفروض
-                    } else {
-                        realAbsent++;                  // مفروض يحضر ومحضرش = غياب حقيقي
-                    }
-                } else {
-                    // يوم إجازة شركة (مش مفروض يحضر) — مايتحسبش غياب
-                    companyHolidays++;
-                }
-            }
-        }
-
-        // onTime/late: نحسبهم على أيام العمل المحددة فقط عشان يتساووا مع total/absent
-        let onTime, late;
-        if (expectedWorkDays > 0) {
-            onTime = 0; late = 0;
-            Object.keys(attendedDays).forEach(k => {
-                if (workDayKeySet[k]) {
-                    if (attendedDays[k] === 'on_time') onTime++;
-                    else if (attendedDays[k] === 'late') late++;
-                }
-            });
-        } else {
-            const dayStatuses = Object.values(attendedDays);
-            onTime = dayStatuses.filter(s => s === 'on_time').length;
-            late = dayStatuses.filter(s => s === 'late').length;
-        }
-
-        // أيام حضور إضافية: سكان في يوم مش ضمن أيام العمل (إجازة/قبل البداية)
-        // بتزوّد النسبة بس عمرها ما بتزوّد الغياب — مكافأة مش عقوبة
-        let bonusDays = 0;
-        if (expectedWorkDays > 0) {
-            Object.keys(attendedDays).forEach(k => { if (!workDayKeySet[k]) bonusDays++; });
-        }
-
-        // النسبة العادلة: على أساس أيام العمل المفروضة، والحضور الإضافي يعوّض الغياب
-        // absent = realAbsent (الغياب الفعلي قبل التعويض) عشان onTime+late+absent = total دايماً
-        let rate, total, absent;
-        if (expectedWorkDays > 0) {
-            total = expectedWorkDays;
-            absent = realAbsent;   // الغياب الفعلي — الـ bonus compensation ظاهر في النسبة والبانر
-            let netAbsent = realAbsent - bonusDays;
-            if (netAbsent < 0) netAbsent = 0;
-            const presentForRate = expectedWorkDays - netAbsent;
-            rate = Math.round((presentForRate / expectedWorkDays) * 100);
-            if (rate > 100) rate = 100;
-            if (rate < 0) rate = 0;
-        } else {
-            // مفيش جدول — احسب بالطريقة البسيطة
-            absent = 0;
-            total = presentDaysCount;
-            rate = presentDaysCount > 0 ? 100 : 0;
-        }
+        // الحساب المشترك عبر ProVance.Att
+        const _att = ProVance.Att.calc(activeTraining || {}, daily);
+        const presentOnWorkDays = _att.present;
+        const presentDaysCount  = _att.presentAll;
+        const absent            = _att.absent;
+        const expectedWorkDays  = _att.total;
+        const bonusDays         = _att.bonusDays;
+        const companyHolidays   = _att.companyHolidays;
+        const onTime            = _att.onTime;
+        const late              = _att.late;
+        const rate              = _att.rate;
 
         // آخر 14 يوم للأعمدة
         const byDay = {};
@@ -1716,73 +1624,28 @@
     // ====== بناء نسبة الحضور لتدريب محدد ======
     function calcAttendanceForApp(app) {
         const sched = app.training_schedule || {};
-        // الأولوية لـ sched.start_date (نفس ما تستخدمه شاشة الشركة) — training_start_date fallback بس
-        const startDate = sched.start_date || app.training_start_date || null;
-        const endDate = sched.end_date || app.training_end_date || null;
-
-        const daily = allAttendance.filter(a => {
+        const appLogs = allAttendance.filter(a => {
             if (a.attendance_type !== 'daily_attendance') return false;
             if (a.application_id) return a.application_id === app.id;
-            // fallback: لو مفيش application_id، طابق بالشركة ونطاق التاريخ
             if (a.company_user_id !== app.company_user_id) return false;
             if (!a.scanned_at) return false;
-            const sched2 = app.training_schedule || {};
-            const sStart = sched2.start_date || app.training_start_date;
+            const sStart = sched.start_date || app.training_start_date;
             if (!sStart) return true;
             const logDate = parseLocalDate(localDayKey(a.scanned_at));
             const startD  = parseLocalDate(sStart);
-            const sEnd    = sched2.end_date || app.training_end_date;
+            const sEnd    = sched.end_date || app.training_end_date;
             const endD    = sEnd ? parseLocalDate(sEnd) : null;
             return logDate >= startD && (endD === null || logDate <= endD);
         });
-
-        const attendedDays = {};
-        daily.forEach(a => {
-            if (!a.scanned_at) return;
-            const d = localDayKey(a.scanned_at);
-            if (!attendedDays[d]) attendedDays[d] = a.status;
-        });
-        const presentDaysCount = Object.keys(attendedDays).length;
-
-        const AR_DAY_TO_NUM2 = { 'الأحد':0,'الإثنين':1,'الاثنين':1,'الثلاثاء':2,'الأربعاء':3,'الخميس':4,'الجمعة':5,'السبت':6 };
-        const workDayNames = sched.training_days;
-        const workDayNums = workDayNames ? workDayNames.map(d => AR_DAY_TO_NUM2[d]).filter(n => n !== undefined) : null;
-
-        let rate = presentDaysCount > 0 ? 100 : 0;
-        let absentDays = 0;
-        let bonusDays = 0;
-        let lateDays = 0;
-        let presentOnWorkDays = 0;
-
-        if (startDate && workDayNums && workDayNums.length) {
-            const start = parseLocalDate(startDate);
-            const today = new Date(); today.setHours(0,0,0,0);
-            const end = endDate ? parseLocalDate(endDate) : today;
-            const lastDay = end < today ? end : today;
-            let expectedWorkDays = 0;
-            const workDayKeySet = {};
-            for (let dt = new Date(start); dt <= lastDay; dt.setDate(dt.getDate() + 1)) {
-                const dayKey = localDayKey(dt);
-                if (workDayNums.includes(dt.getDay())) {
-                    expectedWorkDays++;
-                    workDayKeySet[dayKey] = true;
-                    if (attendedDays[dayKey]) {
-                        presentOnWorkDays++;
-                        if (attendedDays[dayKey] === 'late') lateDays++;
-                    } else {
-                        absentDays++;
-                    }
-                }
-            }
-            Object.keys(attendedDays).forEach(k => { if (!workDayKeySet[k]) bonusDays++; });
-            let netAbsent = absentDays - bonusDays;
-            if (netAbsent < 0) netAbsent = 0;
-            const presentForRate = expectedWorkDays - netAbsent;
-            rate = expectedWorkDays > 0 ? Math.min(100, Math.round((presentForRate / expectedWorkDays) * 100)) : 0;
-        } else {
-            presentOnWorkDays = presentDaysCount;
-        }
-        return { rate, presentDaysCount, presentOnWorkDays, absentDays, bonusDays, lateDays };
+        const r = ProVance.Att.calc(app, appLogs);
+        return {
+            rate: r.rate,
+            presentDaysCount: r.presentAll,
+            presentOnWorkDays: r.present,
+            absentDays: r.absent,
+            bonusDays: r.bonusDays,
+            lateDays: r.late
+        };
     }
 
     // ====== بناء كرت تدريب واحد ======
