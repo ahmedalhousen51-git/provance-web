@@ -848,6 +848,18 @@
                 </div>
             </section>
 
+            <!-- Company Ratings for Student -->
+            <section class="section" id="companyRatingsSection" style="display:none">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-star" style="color:#fbbf24"></i> تقييم الشركات لك
+                    </h2>
+                </div>
+                <div id="companyRatingsList">
+                    <div class="empty-state"><i class="fas fa-spinner fa-spin"></i></div>
+                </div>
+            </section>
+
             <section class="section">
                 <div class="section-header">
                     <h2 class="section-title">
@@ -973,6 +985,7 @@
     let allTaskReports = [];
     let allAiEvals = [];
     let allCareerRecs = [];
+    let companyRatings = [];
     let editHistory = [];
     let paymentLock = null;
     let qrStream = null;
@@ -1271,6 +1284,7 @@
         `;
 
         renderTrainingHistory();
+        renderCompanyRatings();
         renderQRHistory();
         renderTaskReports();
         renderViolations();
@@ -1334,6 +1348,37 @@
                             ${eval_ ? `<span><i class="fas fa-star" style="color:var(--warning)"></i> ${Number(eval_.overall_score).toFixed(1)}/10</span>` : ''}
                             <span><i class="fas fa-calendar"></i> ${formatDate(t.created_at)}</span>
                         </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderCompanyRatings() {
+        const section = document.getElementById('companyRatingsSection');
+        const list = document.getElementById('companyRatingsList');
+        const ratings = companyRatings || [];
+        if (ratings.length === 0) { section.style.display = 'none'; return; }
+        section.style.display = '';
+
+        list.innerHTML = ratings.map(r => {
+            const avg = ((r.treatment_score + r.benefit_score + r.honesty_score) / 3).toFixed(1);
+            const stars = [1,2,3,4,5].map(n =>
+                `<span style="color:${n <= Math.round(avg) ? '#fbbf24' : 'rgba(148,163,184,0.3)'}">★</span>`
+            ).join('');
+            const app = allApplications.find(a => a.id === r.application_id);
+            const compName = app ? (app.company_name || '-') : '-';
+            return `
+                <div class="training-card" style="gap:16px">
+                    <div style="flex:1">
+                        <div class="training-company">${esc(compName)}</div>
+                        <div style="font-size:1.3rem;margin:6px 0">${stars} <span style="font-size:0.85rem;color:var(--text-muted);font-weight:700">${avg}/5</span></div>
+                        <div style="display:flex;gap:14px;font-size:0.78rem;color:var(--text-muted);flex-wrap:wrap">
+                            <span><i class="fas fa-briefcase" style="color:var(--primary)"></i> الأداء: ${r.treatment_score}/5</span>
+                            <span><i class="fas fa-clock" style="color:var(--primary)"></i> الالتزام: ${r.benefit_score}/5</span>
+                            <span><i class="fas fa-handshake" style="color:var(--primary)"></i> السلوك: ${r.honesty_score}/5</span>
+                        </div>
+                        ${r.comment ? `<div style="margin-top:8px;font-size:0.82rem;color:var(--text-muted);font-style:italic">"${esc(r.comment)}"</div>` : ''}
                     </div>
                 </div>
             `;
@@ -2130,9 +2175,16 @@
                 .map(a => localDayKey(a.scanned_at))
         ).size;
         const evaluations = allEvaluations.filter(e => e.overall_score > 0);
-        const avgRating = evaluations.length
-            ? (evaluations.reduce((s, e) => s + Number(e.overall_score), 0) / evaluations.length).toFixed(1)
-            : '0';
+        const _compRatings = companyRatings || [];
+        let avgRating;
+        if (_compRatings.length > 0) {
+            const sum = _compRatings.reduce((s, r) => s + (r.treatment_score + r.benefit_score + r.honesty_score) / 3, 0);
+            avgRating = (sum / _compRatings.length).toFixed(1);
+        } else if (evaluations.length > 0) {
+            avgRating = (evaluations.reduce((s, e) => s + Number(e.overall_score), 0) / evaluations.length).toFixed(1);
+        } else {
+            avgRating = '0';
+        }
         const violationsCount = allViolations.filter(v => v.status === 'active').length;
 
         document.getElementById('statTrainings').textContent = completed;
@@ -2210,6 +2262,8 @@
         set allAiEvals(v) { allAiEvals = v; },
         get allCareerRecs() { return allCareerRecs; },
         set allCareerRecs(v) { allCareerRecs = v; },
+        get companyRatings() { return companyRatings; },
+        set companyRatings(v) { companyRatings = v; },
         get paymentLock() { return paymentLock; },
         set paymentLock(v) { paymentLock = v; },
         get qrStream() { return qrStream; },
@@ -3170,6 +3224,15 @@
             State.allTaskReports = results[6].status === 'fulfilled' ? (results[6].value.data || []) : [];
             State.allAiEvals = results[7].status === 'fulfilled' ? (results[7].value.data || []) : [];
             State.allCareerRecs = results[8].status === 'fulfilled' ? (results[8].value.data || []) : [];
+
+            // تقييمات الشركات للطالب
+            try {
+                const { data: compRatings } = await sb.from('ratings')
+                    .select('application_id, company_user_id, treatment_score, benefit_score, honesty_score, comment, created_at')
+                    .eq('student_user_id', userId)
+                    .eq('rated_by', 'company');
+                State.companyRatings = compRatings || [];
+            } catch(re) { State.companyRatings = []; }
 
             /* ── فحص بوابة الدفع: لو جدول payment_locks فاضي، احسب من attendance + payments ── */
             if (!State.paymentLock) {
