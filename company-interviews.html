@@ -2084,17 +2084,43 @@
                     h += '</svg>';
                     h += '<div style="font-size:0.72rem;font-weight:700;color:#a855f7;margin-top:2px">تقييم AI</div>';
                     h += '</div>';
+                    h += '<div style="flex:1;min-width:120px">';
+                    const scoreLabel = score>=85?'ممتاز':score>=70?'جيد جداً':score>=55?'جيد':score>=40?'مقبول':'يحتاج تطوير';
+                    h += '<div style="font-size:1rem;font-weight:800;color:'+sc+'">'+scoreLabel+'</div>';
+                    h += '<div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px">التقييم الكلي '+score+' / 100</div>';
+                    h += '</div>';
+                    h += '</div>';
                     if (Object.keys(cs).length > 0) {
-                        h += '<div style="flex:1;min-width:150px">';
+                        if (!window._pvShowCat) {
+                            window._pvShowCat = function(bid, c, icon, label, pct, desc) {
+                                const box = document.getElementById(bid);
+                                if (!box) return;
+                                box.innerHTML = '<div style="background:'+c+'15;border:1px solid '+c+'35;border-radius:10px;padding:10px 14px;display:flex;align-items:flex-start;gap:10px"><i class="'+icon+'" style="color:'+c+';font-size:1.1rem;flex-shrink:0;margin-top:2px"></i><div><div style="font-weight:700;color:'+c+';font-size:0.86rem;margin-bottom:3px">'+label+' — '+pct+'%</div><div style="color:var(--text-muted);font-size:0.81rem;line-height:1.6">'+desc+'</div></div></div>';
+                            };
+                        }
+                        const catIcons = {technical:'fas fa-code',soft_skills:'fas fa-comments',performance:'fas fa-chart-bar',growth:'fas fa-seedling',personality:'fas fa-user-check'};
+                        const catDesc = {technical:'مستوى المهارات التقنية والبرمجية',soft_skills:'مهارات التواصل والعمل الجماعي',performance:'مستوى الأداء العام في العمل',growth:'القدرة على التطور والتعلم المستمر',personality:'الشخصية والسلوك المهني'};
+                        const boxId = 'catDB_' + containerId;
+                        h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(95px,1fr));gap:8px;margin-bottom:8px">';
                         Object.entries(cs).slice(0,5).forEach(([cat,val]) => {
                             const pct = Math.min(100, Math.round(Number(val)||0));
                             const c = catC[cat]||'#4facfe';
-                            h += '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px"><span style="color:var(--text-muted)">'+(catL[cat]||cat)+'</span><span style="font-weight:700;color:'+c+'">'+pct+'%</span></div>';
-                            h += '<div style="height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+c+';border-radius:4px"></div></div></div>';
+                            const label = escFn(catL[cat]||cat);
+                            const icon = catIcons[cat]||'fas fa-star';
+                            const desc = escFn(catDesc[cat]||'');
+                            h += '<div style="background:rgba(0,0,0,0.25);border:1px solid '+c+'30;border-radius:12px;padding:11px 8px;text-align:center;cursor:pointer" '+
+                                 'onmouseover="this.style.borderColor=\''+c+'\';this.style.background=\''+c+'18\'" '+
+                                 'onmouseout="this.style.borderColor=\''+c+'30\';this.style.background=\'rgba(0,0,0,0.25)\'" '+
+                                 'onclick="window._pvShowCat(\''+boxId+'\',\''+c+'\',\''+icon+'\',\''+label+'\','+pct+',\''+desc+'\')">';
+                            h += '<i class="'+icon+'" style="color:'+c+';font-size:1rem;margin-bottom:5px;display:block"></i>';
+                            h += '<div style="font-size:1.2rem;font-weight:900;color:'+c+';line-height:1;margin-bottom:5px">'+pct+'%</div>';
+                            h += '<div style="height:3px;background:rgba(255,255,255,0.06);border-radius:3px;margin:0 4px 6px"><div style="height:100%;width:'+pct+'%;background:'+c+';border-radius:3px"></div></div>';
+                            h += '<div style="font-size:0.66rem;color:var(--text-muted);line-height:1.3">'+label+'</div>';
+                            h += '</div>';
                         });
                         h += '</div>';
+                        h += '<div id="'+boxId+'" style="margin-bottom:10px"></div>';
                     }
-                    h += '</div>';
                     if (ev.summary_feedback) {
                         h += '<div style="background:rgba(79,172,254,0.05);border:1px solid rgba(79,172,254,0.15);border-radius:12px;padding:14px;font-size:0.88rem;line-height:1.7;color:var(--text-muted);margin-bottom:12px"><i class="fas fa-comment" style="color:#4facfe;margin-left:6px"></i>'+escFn(String(ev.summary_feedback))+'</div>';
                     }
