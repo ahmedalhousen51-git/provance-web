@@ -385,6 +385,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
     let studentData = null;
     let allInternships = [];
     let allCompanies = {};  // map company_user_id => {name, logo, ...}
+    let companyAvgRatings = {}; // map company_user_id => avg star rating
     let myApplications = [];
     let appCountsByInternship = {};
 
@@ -665,6 +666,12 @@ function renderInternshipCard(i) {
                     ${availableCount > 0 ? `<span class="tag success">${availableCount} متاح للتقديم</span>` : '<span class="tag warning">كل الأقسام ممتلئة</span>'}
                     ${appliedCount > 0 ? `<span class="tag success">✓ قدمت في ${appliedCount}</span>` : ''}
                     ${!studentCanApply ? `<span class="tag" style="background:rgba(148,163,184,.08);color:var(--text-dim);border-color:rgba(148,163,184,.2)"><i class="fas fa-lock" style="font-size:.65rem"></i> يتطلب مستوى أعلى</span>` : ''}
+                    ${(function() {
+                        const avg = companyAvgRatings[companyUserId];
+                        if (!avg) return '';
+                        const stars = [1,2,3,4,5].map(n => `<span style="color:${n <= Math.round(avg) ? '#fbbf24' : 'rgba(148,163,184,0.4)'}">★</span>`).join('');
+                        return `<span class="tag" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.25);color:#f59e0b">${stars} ${avg.toFixed(1)}</span>`;
+                    })()}
                 </div>
 
                 ${company.company_bio ? `<div class="internship-description">${esc(company.company_bio.length > 130 ? company.company_bio.substring(0, 130) + '...' : company.company_bio)}</div>` : ''}
@@ -1390,7 +1397,24 @@ function renderInternshipCard(i) {
             
             // املأ filter options من البيانات
             populateFieldOptions();
-            
+
+            // جلب تقييمات الطلاب للشركات لعرضها في الكروت
+            try {
+                const { data: ratingsData } = await sb.from('ratings')
+                    .select('company_user_id, treatment_score, benefit_score, honesty_score')
+                    .eq('rated_by', 'student');
+                companyAvgRatings = {};
+                const ratingsByCompany = {};
+                (ratingsData || []).forEach(r => {
+                    if (!ratingsByCompany[r.company_user_id]) ratingsByCompany[r.company_user_id] = [];
+                    ratingsByCompany[r.company_user_id].push((r.treatment_score + r.benefit_score + r.honesty_score) / 3);
+                });
+                Object.keys(ratingsByCompany).forEach(cid => {
+                    const arr = ratingsByCompany[cid];
+                    companyAvgRatings[cid] = arr.reduce((s, v) => s + v, 0) / arr.length;
+                });
+            } catch(re) { companyAvgRatings = {}; }
+
             renderInternships();
 
             if (!isInitialized) {
