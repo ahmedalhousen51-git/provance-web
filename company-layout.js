@@ -13,7 +13,8 @@
         { href: 'company-QR_Code.html',          icon: 'fa-qrcode',         label: 'الحضور (QR)' },
         { href: 'company-profile.html',          icon: 'fa-building',       label: 'ملف الشركة' },
         { href: 'company-support.html',          icon: 'fa-headset',        label: 'التواصل مع الإدارة' },
-        { href: 'company-notifications.html',    icon: 'fa-bell',           label: 'الإشعارات' }
+        { href: 'company-notifications.html',    icon: 'fa-bell',           label: 'الإشعارات' },
+        { href: 'company-penalties.html',        icon: 'fa-gavel',          label: 'العقوبات', badge: 'penaltiesBadge' }
     ];
 
     // Extra nav items injected for specific pages only
@@ -149,22 +150,36 @@
         } catch (e) { /* silent */ }
     }
 
-    // ─── Load pending-applications badge ──────────────────────────────────────
+    // ─── Load badges ──────────────────────────────────────────────────────────
     async function loadBadge() {
-        var badge = document.getElementById('appsBadge');
-        if (!badge) return;
+        var appsBadge = document.getElementById('appsBadge');
+        var penBadge  = document.getElementById('penaltiesBadge');
         try {
             var sb = await getSB();
             if (!sb) return;
             var sess = (await sb.auth.getSession()).data.session;
             if (!sess) return;
-            var result = await sb.from('applications')
-                .select('id', { count: 'exact', head: true })
-                .eq('company_user_id', sess.user.id)
-                .in('status', ['pending', 'reviewing', 'interview_scheduled']);
-            var count = result.count || 0;
-            badge.textContent = count > 0 ? count : '';
-            badge.style.display = count > 0 ? 'inline-block' : 'none';
+            var uid = sess.user.id;
+
+            if (appsBadge) {
+                var result = await sb.from('applications')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('company_user_id', uid)
+                    .in('status', ['pending', 'reviewing', 'interview_scheduled']);
+                var count = result.count || 0;
+                appsBadge.textContent = count > 0 ? count : '';
+                appsBadge.style.display = count > 0 ? 'inline-block' : 'none';
+            }
+
+            if (penBadge) {
+                var co = (await sb.from('companies').select('penalties').eq('user_id', uid).maybeSingle()).data;
+                var penalties = (co && co.penalties) || [];
+                var unpaid = penalties.filter(function(p) {
+                    return p.type === 'fine' && p.status === 'active';
+                }).length;
+                penBadge.textContent = unpaid > 0 ? unpaid : '';
+                penBadge.style.display = unpaid > 0 ? 'inline-block' : 'none';
+            }
         } catch (e) { /* silent */ }
     }
 
