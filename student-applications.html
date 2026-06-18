@@ -269,11 +269,29 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="reminders-check.js"></script>
-<style>@keyframes shimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }</style>
+<style>
+@keyframes shimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }
+/* ── نظام التقييم بالنجوم ── */
+.star-row { display:flex; gap:4px; align-items:center; }
+.star-btn { background:none; border:none; cursor:pointer; font-size:1.5rem; color:rgba(255,255,255,0.15); transition:color .15s, transform .1s; padding:2px; line-height:1; }
+.star-btn:hover, .star-btn.lit { color:#f59e0b; }
+.star-btn:active { transform:scale(1.3); }
+.rating-row { display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; }
+.rating-label { font-size:.9rem; font-weight:700; flex-shrink:0; }
+.stars-display { display:flex; gap:2px; }
+.stars-display span { font-size:1rem; }
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); backdrop-filter:blur(6px); z-index:300; display:flex; align-items:center; justify-content:center; padding:20px; }
+.rating-modal { background:var(--bg-2); border:1px solid var(--border); border-radius:22px; width:100%; max-width:520px; padding:26px; animation:slideUp .3s ease-out; }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.rating-modal h3 { font-size:1.15rem; font-weight:800; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+.rating-modal h3 i { color:var(--warning); }
+</style>
 <script>
 
 let studentUserId = null;
 let allApps = [], activeFilter = 'all';
+let myRatings = {};  // application_id → rating object
+let _sb = null;
 
 function esc(s) {
     return String(s||'').replace(/[&<>"']/g,
@@ -320,6 +338,18 @@ async function loadAll() {
     }
 
     allApps = data || [];
+    _sb = sb;
+
+    // تحميل التقييمات السابقة للطالب
+    try {
+        const { data: ratingsData } = await sb.from('ratings')
+            .select('application_id, treatment_score, benefit_score, honesty_score, comment')
+            .eq('student_user_id', studentUserId)
+            .eq('rated_by', 'student');
+        myRatings = {};
+        (ratingsData || []).forEach(r => { myRatings[r.application_id] = r; });
+    } catch(re) { console.warn('ratings load failed:', re); }
+
     updateStats();
     renderApps();
 
@@ -480,10 +510,141 @@ function renderApps() {
             <div class="internship-actions">
                 <a href="student-internship.html" class="btn btn-secondary btn-sm"><i class="fas fa-search"></i> فرص أخرى</a>
                 ${isActiveStatus(a.status) && a.status !== 'accepted' ? `<button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171" onclick="doWithdraw('${a.id}','${esc(a.internship_title||'الفرصة')}')"><i class="fas fa-times"></i> سحب الطلب</button>` : ''}
+                ${a.status === 'completed' ? (myRatings[a.id]
+                    ? `<button class="btn btn-sm" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b" onclick="viewMyRating('${a.id}')"><i class="fas fa-star"></i> تقييمي</button>`
+                    : `<button class="btn btn-sm" style="background:rgba(79,172,254,0.12);border:1px solid rgba(79,172,254,0.3);color:#4facfe" onclick="openRatingModal('${a.id}','${esc(a.company_name||'')}','${a.company_user_id}')"><i class="fas fa-star-half-alt"></i> قيّم الشركة</button>`
+                ) : ''}
             </div>
         </div>`;
     }).join('');
 }
+
+// ─── نظام التقييم ────────────────────────────────────────────────────────────
+let _ratingScores = { treatment: 0, benefit: 0, honesty: 0 };
+let _ratingAppId = null, _ratingCompanyId = null;
+
+function starsHtml(key, current) {
+    return [1,2,3,4,5].map(n =>
+        `<button class="star-btn${n <= current ? ' lit' : ''}" data-key="${key}" data-val="${n}" onclick="setRatingStar('${key}',${n})">★</button>`
+    ).join('');
+}
+
+window.openRatingModal = (appId, companyName, companyUserId) => {
+    _ratingAppId = appId;
+    _ratingCompanyId = companyUserId;
+    _ratingScores = { treatment: 0, benefit: 0, honesty: 0 };
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'ratingOverlay';
+    overlay.innerHTML = `
+        <div class="rating-modal">
+            <h3><i class="fas fa-star"></i> قيّم تجربتك مع "${esc(companyName)}"</h3>
+            <p style="color:var(--text-muted);font-size:.86rem;margin-bottom:18px">تقييمك يساعد الطلاب الآخرين في اتخاذ قراراتهم</p>
+
+            <div class="rating-row">
+                <span class="rating-label">🤝 المعاملة في التدريب</span>
+                <div class="star-row" id="stars_treatment">${starsHtml('treatment', 0)}</div>
+            </div>
+            <div class="rating-row">
+                <span class="rating-label">📚 الاستفادة والتعلم</span>
+                <div class="star-row" id="stars_benefit">${starsHtml('benefit', 0)}</div>
+            </div>
+            <div class="rating-row">
+                <span class="rating-label">✅ صدق الشركة</span>
+                <div class="star-row" id="stars_honesty">${starsHtml('honesty', 0)}</div>
+            </div>
+
+            <div style="margin-top:14px">
+                <label style="font-size:.88rem;font-weight:700;margin-bottom:7px;display:block;color:var(--text-muted)">تعليق (اختياري)</label>
+                <textarea id="ratingComment" rows="3" style="width:100%;padding:10px 12px;background:rgba(255,255,255,.03);border:2px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:.9rem;resize:vertical" placeholder="شاركنا تجربتك..."></textarea>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:16px">
+                <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="document.getElementById('ratingOverlay').remove()">إلغاء</button>
+                <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveRating()">
+                    <i class="fas fa-paper-plane"></i> إرسال التقييم
+                </button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+};
+
+window.setRatingStar = (key, val) => {
+    _ratingScores[key] = val;
+    const container = document.getElementById(`stars_${key}`);
+    if (!container) return;
+    container.querySelectorAll('.star-btn').forEach(btn => {
+        btn.classList.toggle('lit', parseInt(btn.dataset.val) <= val);
+    });
+};
+
+window.saveRating = async () => {
+    const { treatment, benefit, honesty } = _ratingScores;
+    if (!treatment || !benefit || !honesty) {
+        window.ProVance?.showToast('⚠️ قيّم الأسئلة الثلاثة أولاً', 'warning');
+        return;
+    }
+    const comment = document.getElementById('ratingComment')?.value.trim() || null;
+    const btn = document.querySelector('#ratingOverlay .btn-primary');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...'; }
+
+    try {
+        const { error } = await _sb.from('ratings').insert({
+            application_id: _ratingAppId,
+            student_user_id: studentUserId,
+            company_user_id: _ratingCompanyId,
+            rated_by: 'student',
+            treatment_score: treatment,
+            benefit_score: benefit,
+            honesty_score: honesty,
+            comment
+        });
+        if (error) throw error;
+        document.getElementById('ratingOverlay')?.remove();
+        window.ProVance?.showToast('🌟 شكراً! تم إرسال تقييمك', 'success');
+        await loadAll();
+    } catch(err) {
+        window.ProVance?.showToast('خطأ: ' + err.message, 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال التقييم'; }
+    }
+};
+
+window.viewMyRating = (appId) => {
+    const r = myRatings[appId];
+    if (!r) return;
+    const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+    const avg = ((r.treatment_score + r.benefit_score + r.honesty_score) / 3).toFixed(1);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'viewRatingOverlay';
+    overlay.innerHTML = `
+        <div class="rating-modal">
+            <h3><i class="fas fa-star"></i> تقييمك للشركة</h3>
+            <p style="color:var(--text-muted);font-size:.84rem;margin-bottom:16px">متوسط تقييمك: <strong style="color:#f59e0b;font-size:1.1rem">${avg}/5</strong></p>
+
+            <div class="rating-row">
+                <span class="rating-label">🤝 المعاملة</span>
+                <div class="stars-display" style="font-size:1.2rem;color:#f59e0b">${stars(r.treatment_score)}</div>
+                <strong>${r.treatment_score}/5</strong>
+            </div>
+            <div class="rating-row">
+                <span class="rating-label">📚 الاستفادة</span>
+                <div class="stars-display" style="font-size:1.2rem;color:#f59e0b">${stars(r.benefit_score)}</div>
+                <strong>${r.benefit_score}/5</strong>
+            </div>
+            <div class="rating-row">
+                <span class="rating-label">✅ الصدق</span>
+                <div class="stars-display" style="font-size:1.2rem;color:#f59e0b">${stars(r.honesty_score)}</div>
+                <strong>${r.honesty_score}/5</strong>
+            </div>
+            ${r.comment ? `<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:10px;font-size:.88rem;color:var(--text-muted);line-height:1.6">"${esc(r.comment)}"</div>` : ''}
+
+            <button class="btn btn-secondary" style="width:100%;justify-content:center;margin-top:16px" onclick="document.getElementById('viewRatingOverlay').remove()">إغلاق</button>
+        </div>`;
+    document.body.appendChild(overlay);
+};
 
 // Filter buttons
 document.querySelectorAll('.filter-btn').forEach(btn => {
