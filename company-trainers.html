@@ -943,6 +943,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script src="company-layout.js"></script>
+    <script src="attendance-utils.js"></script>
 <style>
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
@@ -972,183 +973,17 @@ window.getSafeSupabase = async function() {
 
 const esc = (s) => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-// ===== دوال مساعدة لمدة التدريب والتواريخ والحضور =====
-const AR_DAY_TO_NUM = { 'الأحد':0, 'الاثنين':1, 'الإثنين':1, 'الثلاثاء':2, 'الأربعاء':3, 'الخميس':4, 'الجمعة':5, 'السبت':6 };
+// ===== دوال الحضور — تعتمد على ProVance.Att (attendance-utils.js) =====
+const AR_DAY_TO_NUM = ProVance.Att._dayMap;
 
-// نص المدة بالعربي (يقبل الكود أو النص العربي)
-function getDurationText(d) {
-    if (!d) return 'غير محدد';
-    const s = String(d).trim();
-    const map = {
-        '1-month': 'شهر', '1.5-months': 'شهر ونصف', '2-months': 'شهرين', '2.5-months': 'شهرين ونصف',
-        '3-months': '3 أشهر', '4-months': '4 أشهر', '5-months': '5 أشهر', '6-months': '6 أشهر',
-        '1-week': 'أسبوع', '2-weeks': 'أسبوعين', '3-weeks': '3 أسابيع', '4-weeks': '4 أسابيع'
-    };
-    // لو كود معروف رجّع العربي، وإلا رجّعه زي ما هو (يبقى متخزّن عربي أصلاً)
-    return map[s] || s;
-}
-
-// عدد أيام المدة (يقبل الكود أو النص العربي)
-function durationToDays(d) {
-    if (!d) return 0;
-    const s = String(d).trim();
-    // الأكواد
-    const codeMap = {
-        '1-week': 7, '2-weeks': 14, '3-weeks': 21, '4-weeks': 28,
-        '1-month': 30, '1.5-months': 45, '2-months': 60, '2.5-months': 75,
-        '3-months': 90, '4-months': 120, '5-months': 150, '6-months': 180
-    };
-    if (codeMap[s] != null) return codeMap[s];
-    // النص العربي
-    const arMap = {
-        'أسبوع': 7, 'اسبوع': 7, 'أسبوعين': 14, 'اسبوعين': 14,
-        '3 أسابيع': 21, '4 أسابيع': 28,
-        'شهر': 30, 'شهر ونصف': 45, 'شهر ونص': 45,
-        'شهرين': 60, 'شهرين ونصف': 75, 'شهرين ونص': 75,
-        '3 أشهر': 90, '3 شهور': 90, '4 أشهر': 120, '5 أشهر': 150, '6 أشهر': 180, '6 شهور': 180
-    };
-    if (arMap[s] != null) return arMap[s];
-    // محاولة استخراج رقم + وحدة من نص حر (مثل "شهرين" أو "3 weeks")
-    const num = parseFloat((s.match(/[\d.]+/) || [])[0]);
-    if (!isNaN(num)) {
-        if (/أسبوع|اسبوع|week/i.test(s)) return Math.round(num * 7);
-        if (/شهر|شهور|month/i.test(s)) return Math.round(num * 30);
-    }
-    return 0;
-}
-
-// احسب تاريخ بداية التدريب ونهايته
-function getTrainingDates(t) {
-    const sched = t.training_schedule || {};
-    // البداية: من جدول التدريب، أو من تاريخ المقابلة، أو تاريخ القبول
-    let start = sched.start_date ? new Date(sched.start_date)
-              : (t.interview_date ? new Date(t.interview_date)
-              : (t.updated_at ? new Date(t.updated_at) : null));
-    if (!start || isNaN(start)) return { start: null, end: null, daysLeft: null, progress: null };
-
-    // النهاية: من الجدول إن وُجدت، وإلا احسبها من المدة
-    let end;
-    if (sched.end_date) {
-        end = new Date(sched.end_date);
-    } else {
-        const days = durationToDays(t.duration);
-        if (days > 0) { end = new Date(start); end.setDate(end.getDate() + days); }
-        else end = null;
-    }
-
-    let daysLeft = null, progress = null;
-    if (end && !isNaN(end)) {
-        const today = new Date(); today.setHours(0,0,0,0);
-        const s = new Date(start); s.setHours(0,0,0,0);
-        const e = new Date(end); e.setHours(0,0,0,0);
-        daysLeft = Math.round((e - today) / 86400000);
-        const totalDays = Math.round((e - s) / 86400000);
-        const passedDays = Math.round((today - s) / 86400000);
-        progress = totalDays > 0 ? Math.max(0, Math.min(100, Math.round((passedDays / totalDays) * 100))) : null;
-    }
-    return { start, end, daysLeft, progress };
-}
-
-// مفتاح اليوم بالتوقيت المحلي (يمنع انزلاق اليوم عند منتصف الليل)
-function localDayKey(d) {
-    const dt = (d instanceof Date) ? d : new Date(d);
-    return dt.getFullYear() + '-' +
-           String(dt.getMonth()+1).padStart(2,'0') + '-' +
-           String(dt.getDate()).padStart(2,'0');
-}
-
-// يفسّر "YYYY-MM-DD" كمنتصف ليل محلي (مش UTC)
-function parseLocalDate(s) {
-    if (s instanceof Date) { const d = new Date(s); d.setHours(0,0,0,0); return d; }
-    const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (m) return new Date(+m[1], +m[2]-1, +m[3], 0,0,0,0);
-    const d = new Date(s); d.setHours(0,0,0,0); return d;
-}
-
-// احسب نسبة الحضور للمتدرب — نفس خوارزمية student-profile
+function getDurationText(d)   { return ProVance.Att.durationText(d); }
+function durationToDays(d)    { return ProVance.Att.durationDays(d); }
+function getTrainingDates(t)  { return ProVance.Att.getTrainingDates(t); }
+function localDayKey(d)       { return ProVance.Att.localDayKey(d); }
+function parseLocalDate(s)    { return ProVance.Att.parseDate(s); }
 function getAttendanceRate(t) {
-    let daily = (t.attendance || []).filter(a => !a.attendance_type || a.attendance_type === 'daily_attendance');
-    const sched = t.training_schedule || {};
-    // فلتر: اعتبر فقط السجلات داخل فترة التدريب الرسمية (start → end)
-    // سجلات ما قبل البداية تتحوّل "بونص وهمي" وتشوّه الغياب والنسبة
-    if (sched.start_date) {
-        const _ps = parseLocalDate(sched.start_date);
-        const _pe = sched.end_date ? parseLocalDate(sched.end_date) : null;
-        daily = daily.filter(a => {
-            if (!a.scanned_at) return false;
-            const _d = parseLocalDate(localDayKey(a.scanned_at));
-            return _d >= _ps && (_pe === null || _d <= _pe);
-        });
-    }
-    const workDayNames = Array.isArray(sched.training_days) ? sched.training_days : null;
-    const workDayNums  = workDayNames ? workDayNames.map(d => AR_DAY_TO_NUM[d]).filter(n => n !== undefined) : null;
-
-    // أيام الحضور الفعلية مجمّعة بمفتاح محلي
-    const attendedDays = {};
-    daily.forEach(a => {
-        if (!a.scanned_at) return;
-        const k = localDayKey(a.scanned_at);
-        if (!attendedDays[k]) attendedDays[k] = a.status || 'on_time';
-    });
-    const presentDaysCount = Object.keys(attendedDays).length;
-
-    let expectedWorkDays = 0, realAbsent = 0, bonusDays = 0, companyHolidays = 0;
-    let onTime = 0, late = 0;
-    const workDayKeySet = {};
-
-    if (sched.start_date && workDayNums && workDayNums.length) {
-        const start   = parseLocalDate(sched.start_date);
-        const today   = new Date(); today.setHours(0,0,0,0);
-        const endDate = sched.end_date ? parseLocalDate(sched.end_date) : today;
-        const lastDay = endDate < today ? endDate : today;
-
-        for (let dt = new Date(start); dt <= lastDay; dt.setDate(dt.getDate()+1)) {
-            const k = localDayKey(dt);
-            if (workDayNums.includes(dt.getDay())) {
-                expectedWorkDays++;
-                workDayKeySet[k] = true;
-                if (attendedDays[k]) {
-                    // حضر في يوم عمل مفروض
-                    if (attendedDays[k] === 'on_time') onTime++;
-                    else if (attendedDays[k] === 'late') late++;
-                } else {
-                    realAbsent++;
-                }
-            } else {
-                companyHolidays++;
-            }
-        }
-        // أيام حضور إضافية: حضر في يوم مش ضمن جدول العمل
-        Object.keys(attendedDays).forEach(k => { if (!workDayKeySet[k]) bonusDays++; });
-    } else {
-        // بدون جدول: onTime/late من كل السجلات
-        Object.values(attendedDays).forEach(s => {
-            if (s === 'on_time') onTime++;
-            else if (s === 'late') late++;
-        });
-    }
-
-    let rate, total, absent;
-    if (expectedWorkDays > 0) {
-        total  = expectedWorkDays;
-        absent = realAbsent;
-        // الأيام الإضافية تعوّض الغياب في النسبة
-        const netAbsent = Math.max(0, realAbsent - bonusDays);
-        rate = Math.min(100, Math.max(0, Math.round(((expectedWorkDays - netAbsent) / expectedWorkDays) * 100)));
-    } else {
-        const absCount = daily.filter(a => a.status === 'absent').length;
-        absent = absCount;
-        total  = presentDaysCount + absent;
-        rate   = total > 0 ? Math.round((presentDaysCount / total) * 100) : (presentDaysCount > 0 ? 100 : 0);
-    }
-    // hasData: صحيح فقط لو في سجلات حضور فعلية (مش مجرد جدول بدون مسح)
-    // hasScheduleOnly: في جدول لكن ما حدش سجّل بعد
-    // present = أيام العمل المفروضة اللي حضر فيها (مش كل أيام المسح)
-    const presentOnWorkDays = expectedWorkDays > 0 ? (onTime + late) : presentDaysCount;
-    return { rate, present: presentOnWorkDays, presentAll: presentDaysCount, onTime, late, absent, total, bonusDays, companyHolidays,
-        hasData: daily.length > 0,
-        hasScheduleOnly: daily.length === 0 && expectedWorkDays > 0
-    };
+    const logs = (t.attendance || []).filter(a => !a.attendance_type || a.attendance_type === 'daily_attendance');
+    return ProVance.Att.calc(t, logs);
 }
 
 // تنسيق التاريخ بالعربي
