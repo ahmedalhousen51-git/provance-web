@@ -605,7 +605,7 @@ function renderInternshipCard(i) {
     // ====== كارت الشركة (يجمّع كل أقسامها) ======
     function renderCompanyCard(companyUserId, internships) {
         const company = allCompanies[companyUserId] || {};
-        const companyName = internships[0].company_name || company.company_name || '-';
+        const companyName = company.company_name || internships[0].company_name || '-';
         const logo = company.logo
             ? `<img src="${company.logo}" alt="">`
             : `<span>${getInitial(companyName)}</span>`;
@@ -702,7 +702,7 @@ function renderInternshipCard(i) {
         const internships = allInternships.filter(i => i.status === 'active' && i.company_user_id === companyUserId);
         if (internships.length === 0) return;
 
-        const companyName = internships[0].company_name || company.company_name || '-';
+        const companyName = company.company_name || internships[0].company_name || '-';
         const logo = company.logo
             ? `<img src="${company.logo}" alt="">`
             : `<span>${getInitial(companyName)}</span>`;
@@ -813,11 +813,12 @@ function renderInternshipCard(i) {
         });
 
         if (search) {
-            filtered = filtered.filter(i =>
-                (i.title || '').toLowerCase().includes(search) ||
-                (i.company_name || '').toLowerCase().includes(search) ||
-                (i.field || '').toLowerCase().includes(search)
-            );
+            filtered = filtered.filter(i => {
+                const liveName = allCompanies[i.company_user_id]?.company_name || i.company_name || '';
+                return (i.title || '').toLowerCase().includes(search) ||
+                    liveName.toLowerCase().includes(search) ||
+                    (i.field || '').toLowerCase().includes(search);
+            });
         }
 
         if (fieldFilter) filtered = filtered.filter(i => i.field === fieldFilter);
@@ -937,7 +938,7 @@ function renderInternshipCard(i) {
         const company = allCompanies[i.company_user_id] || {};
         const logo = company.logo
             ? `<img src="${company.logo}" alt="">`
-            : `<span>${getInitial(i.company_name || company.company_name)}</span>`;
+            : `<span>${getInitial(company.company_name || i.company_name)}</span>`;
 
         const applicants = appCountsByInternship[i.id] || 0;
         const max = i.max_applicants || 10;
@@ -959,7 +960,7 @@ function renderInternshipCard(i) {
                         <div class="company-logo" style="width:60px;height:60px">${logo}</div>
                         <div style="flex:1">
                             <h3 style="font-size:1.15rem;font-weight:800">${esc(i.title)}</h3>
-                            <div style="color:var(--primary);font-size:0.92rem;margin-top:3px;font-weight:700">${esc(i.company_name || company.company_name || '-')}</div>
+                            <div style="color:var(--primary);font-size:0.92rem;margin-top:3px;font-weight:700">${esc(company.company_name || i.company_name || '-')}</div>
                         </div>
                     </div>
                     
