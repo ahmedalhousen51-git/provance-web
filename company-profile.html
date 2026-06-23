@@ -976,11 +976,11 @@
                 const session = await window.ProVance.getSession();
                 if (!session) throw new Error('انتهت الجلسة - سجل دخول تاني');
                 
-                console.log('💾 Saving company profile...', updates);
+                console.log('💾 Saving company profile...', { userId: session.user.id, updates });
                 const { data, error } = await sb.from('companies')
                     .update(updates)
                     .eq('user_id', session.user.id)
-                    .select();
+                    .select('user_id, company_name');
 
                 if (error) {
                     console.error('═══════════════════════════════════════════');
@@ -994,8 +994,27 @@
                 }
                 
                 console.log('✅ Saved successfully:', data);
+
+                // لو الـ update ما أثّرش على أي صف، هناك مشكلة في المطابقة
+                if (Array.isArray(data) && data.length === 0) {
+                    console.warn('⚠️ Update returned 0 rows — user_id mismatch?', session.user.id);
+                    throw new Error('لم يتم العثور على بيانات الشركة — تأكد من تسجيل الدخول بالحساب الصحيح');
+                }
+
                 Object.assign(companyData, updates);
+
+                // حدّث الـ cache عشان الاسم الجديد يظهر فوراً عند إعادة التحميل
+                setCachedData('data', companyData);
+
+                // حدّث عناصر الـ UI
                 loadCompanyData(companyData);
+
+                // حدّث اسم الشركة في الهيدر العلوي (company-layout.js بيعرضه هناك)
+                const newName = updates.company_name || companyData.company_name || '';
+                const headerNameEl = document.getElementById('headerName');
+                if (headerNameEl && newName) headerNameEl.textContent = newName;
+                const avatarInitialEl = document.getElementById('avatarInitial');
+                if (avatarInitialEl && newName) avatarInitialEl.textContent = newName.charAt(0).toUpperCase();
 
                 window.ProVance.showToast('تم حفظ التعديلات بنجاح ✓', 'success');
                 closeEditModal();
