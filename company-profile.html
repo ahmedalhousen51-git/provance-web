@@ -960,20 +960,20 @@
                 company_field: document.getElementById('editField').value.trim(),
                 company_location: document.getElementById('editLocation').value.trim(),
                 primary_phone: document.getElementById('editPhone').value.trim(),
-                secondary_phone: document.getElementById('editSecondaryPhone').value.trim() || null,
-                whatsapp: document.getElementById('editWhatsapp').value.trim() || null,
-                website: document.getElementById('editWebsite').value.trim() || null,
-                linkedin: document.getElementById('editLinkedin').value.trim() || null,
-                facebook: document.getElementById('editFacebook').value.trim() || null,
-                training_price: document.getElementById('editPrice').value.trim() || null,
+                secondary_phone: document.getElementById('editSecondaryPhone')?.value?.trim() || null,
+                whatsapp: document.getElementById('editWhatsapp')?.value?.trim() || null,
+                website: document.getElementById('editWebsite')?.value?.trim() || null,
+                linkedin: document.getElementById('editLinkedin')?.value?.trim() || null,
+                facebook: document.getElementById('editFacebook')?.value?.trim() || null,
                 training_fields: trainingFieldsArr
             };
 
             try {
-                const sb = await (window.ProVance?.waitForSupabaseClient?.(8000) || Promise.resolve(window.ProVance?.sb || null));
+                // استخدم الـ client الموجود مباشرة بدل ما ننتظر 8 ثواني
+                const sb = window.ProVance?.sb || await window.getSafeSupabase();
                 if (!sb) throw new Error('فشل الاتصال بـ Supabase');
-                
-                const session = await window.ProVance.getSession();
+
+                const { data: { session } } = await sb.auth.getSession();
                 if (!session) throw new Error('انتهت الجلسة - سجل دخول تاني');
                 
                 console.log('💾 Saving company profile...', { userId: session.user.id, updates });
