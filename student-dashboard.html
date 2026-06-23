@@ -379,7 +379,7 @@ async function loadDashboard() {
         const results = await Promise.allSettled([
             sb.from('applications').select('id, status').eq('student_user_id', studentUserId),
             sb.from('internships').select('id').eq('status', 'active'),
-            sb.from('applications').select('id, status, internship_id, created_at, company_name').eq('student_user_id', studentUserId).order('created_at', { ascending: false }).limit(5),
+            sb.from('applications').select('id, status, internship_id, created_at, company_name, company_user_id').eq('student_user_id', studentUserId).order('created_at', { ascending: false }).limit(5),
             sb.from('notifications').select('id').eq('user_id', studentUserId).eq('is_read', false)
         ]);
 
@@ -409,6 +409,19 @@ async function loadDashboard() {
             notifBadge.textContent = notifs.length;
             notifBadge.style.display = 'inline-block';
         }
+
+        // حدّث أسماء الشركات بالأسماء الحالية
+        try {
+            const cids = [...new Set(recentApps.map(a => a.company_user_id).filter(Boolean))];
+            if (cids.length > 0) {
+                const { data: liveNames } = await sb.from('companies').select('user_id, company_name').in('user_id', cids);
+                if (liveNames && liveNames.length > 0) {
+                    const nm = {};
+                    liveNames.forEach(c => { nm[c.user_id] = c.company_name; });
+                    recentApps.forEach(a => { if (nm[a.company_user_id]) a.company_name = nm[a.company_user_id]; });
+                }
+            }
+        } catch(e) {}
 
         // Recent Apps
         renderRecentApps(recentApps);
