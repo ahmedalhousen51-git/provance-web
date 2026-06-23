@@ -340,6 +340,19 @@ async function loadAll() {
     allApps = data || [];
     _sb = sb;
 
+    // حدّث أسماء الشركات بالأسماء الحالية من جدول companies
+    try {
+        const cids = [...new Set(allApps.map(a => a.company_user_id).filter(Boolean))];
+        if (cids.length > 0) {
+            const { data: liveNames } = await sb.from('companies').select('user_id, company_name').in('user_id', cids);
+            if (liveNames && liveNames.length > 0) {
+                const nm = {};
+                liveNames.forEach(c => { nm[c.user_id] = c.company_name; });
+                allApps = allApps.map(a => ({ ...a, company_name: nm[a.company_user_id] || a.company_name }));
+            }
+        }
+    } catch(e) { /* فضل الاسم المخزّن */ }
+
     // تحميل التقييمات السابقة للطالب
     try {
         const { data: ratingsData } = await sb.from('ratings')
