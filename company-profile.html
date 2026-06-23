@@ -707,6 +707,7 @@
         'use strict';
 
         let companyData = null;
+        let _sb = null; // الـ client المحفوظ من loadProfile — مش محتاج ننتظره تاني
 
         // Parse JSON بشكل آمن (training_fields, branch_locations, training_details)
         function safeParse(value, fallback) {
@@ -860,6 +861,7 @@
                     window.location.href = 'company-login.html';
                     return;
                 }
+                _sb = sb; // خزّن مرة واحدة — الـ save handler هيستخدمه مباشرة
 
                 // 2. اجلب الـ session
                 const { data: sessionData } = await sb.auth.getSession();
@@ -969,9 +971,9 @@
             };
 
             try {
-                // استخدم الـ client الموجود مباشرة بدل ما ننتظر 8 ثواني
-                const sb = window.ProVance?.sb || await window.getSafeSupabase();
-                if (!sb) throw new Error('فشل الاتصال بـ Supabase');
+                // _sb محفوظ من loadProfile — صفر انتظار
+                const sb = _sb || window.ProVance?.sb;
+                if (!sb) throw new Error('أعد تحميل الصفحة وحاول مرة ثانية');
 
                 const { data: { session } } = await sb.auth.getSession();
                 if (!session) throw new Error('انتهت الجلسة - سجل دخول تاني');
