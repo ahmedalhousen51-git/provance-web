@@ -1358,8 +1358,29 @@
         const section = document.getElementById('companyRatingsSection');
         const list = document.getElementById('companyRatingsList');
         const ratings = companyRatings || [];
-        if (ratings.length === 0) { section.style.display = 'none'; return; }
+
+        // اعرض القسم دايماً لو الطالب عنده تدريب مكتمل
+        const hasCompleted = allApplications.some(a => a.status === 'completed');
+        if (!hasCompleted && ratings.length === 0) { section.style.display = 'none'; return; }
         section.style.display = '';
+
+        if (ratings.length === 0) {
+            list.innerHTML = `
+                <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.3);border-radius:14px;padding:18px 20px;display:flex;align-items:flex-start;gap:14px">
+                    <i class="fas fa-star" style="color:#f59e0b;font-size:1.5rem;margin-top:2px;flex-shrink:0"></i>
+                    <div>
+                        <div style="font-weight:800;font-size:0.97rem;margin-bottom:6px;color:#f59e0b">قيّم الشركة عشان تشوف تقييمها ليك</div>
+                        <div style="color:var(--text-muted);font-size:0.87rem;line-height:1.6;margin-bottom:14px">
+                            لما تقيّم الشركة اللي اتدربت فيها، ده بيحفّزها إنها ترسلك تقييمها ليك هنا في ملفك الشخصي. التقييم بيتحسب في نتيجتك.
+                        </div>
+                        <a href="student-applications.html" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:10px 20px;border-radius:10px;font-weight:700;text-decoration:none;font-family:inherit;font-size:0.88rem">
+                            <i class="fas fa-star-half-alt"></i> اذهب لطلباتي وقيّم الشركة
+                        </a>
+                    </div>
+                </div>
+            `;
+            return;
+        }
 
         list.innerHTML = ratings.map(r => {
             const avg = ((r.treatment_score + r.benefit_score + r.honesty_score) / 3).toFixed(1);
@@ -1519,8 +1540,8 @@
 
         const score = Math.round(Number(ev.overall_score) || 0);
         const cats = ev.category_scores || {};
-        const catLabels = { technical: 'التقني', soft_skills: 'التواصل', growth: 'التطور', performance: 'الأداء' };
-        const catColors = { technical: '#4facfe', soft_skills: '#10b981', growth: '#f59e0b', performance: '#f093fb' };
+        const catLabels = { technical: 'المهارات التقنية', soft_skills: 'مهارات التواصل', growth: 'التطور والتعلم', performance: 'الأداء العام', personality: 'الشخصية' };
+        const catColors = { technical: '#7c6cff', soft_skills: '#10b981', growth: '#f59e0b', performance: '#ef4444', personality: '#a855f7' };
         const scoreColor = score >= 75 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
         const circ = 2 * Math.PI * 38;
 
@@ -3217,6 +3238,25 @@
             }
             State.studentData = studentData;
             State.allApplications = results[1].status === 'fulfilled' ? (results[1].value.data || []) : [];
+
+            // حدّث أسماء الشركات بالأسماء الحالية من جدول companies (مش الاسم المخزّن وقت التقديم)
+            try {
+                const companyIds = [...new Set(State.allApplications.map(a => a.company_user_id).filter(Boolean))];
+                if (companyIds.length > 0) {
+                    const { data: liveCompanies } = await sb.from('companies')
+                        .select('user_id, company_name')
+                        .in('user_id', companyIds);
+                    if (liveCompanies && liveCompanies.length > 0) {
+                        const nameMap = {};
+                        liveCompanies.forEach(c => { nameMap[c.user_id] = c.company_name; });
+                        State.allApplications = State.allApplications.map(a => ({
+                            ...a,
+                            company_name: nameMap[a.company_user_id] || a.company_name
+                        }));
+                    }
+                }
+            } catch(e) { /* فضل الاسم القديم */ }
+
             State.allEvaluations = results[2].status === 'fulfilled' ? (results[2].value.data || []) : [];
             State.allAttendance = results[3].status === 'fulfilled' ? (results[3].value.data || []) : [];
             State.paymentLock = results[4].status === 'fulfilled' ? results[4].value.data : null;
