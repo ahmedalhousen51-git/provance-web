@@ -1359,6 +1359,18 @@ function renderInternshipCard(i) {
                 allCompanies[c.user_id] = c;  // No phone, no exact address
             });
 
+            // targeted fetch للأسماء الحية — يضمن الاسم الصح حتى لو الـ bulk query رجع ناقص
+            try {
+                const cids = [...new Set(allInternships.map(i => i.company_user_id).filter(Boolean))];
+                if (cids.length > 0) {
+                    const { data: liveNames } = await sb.from('companies').select('user_id, company_name').in('user_id', cids);
+                    (liveNames || []).forEach(c => {
+                        if (!allCompanies[c.user_id]) allCompanies[c.user_id] = {};
+                        allCompanies[c.user_id].company_name = c.company_name;
+                    });
+                }
+            } catch(e) {}
+
             // استخدم current_applicants من جدول internships (موجود بالفعل)
             appCountsByInternship = {};
             allInternships.forEach(int => {
