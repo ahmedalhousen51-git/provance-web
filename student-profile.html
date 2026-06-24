@@ -3249,11 +3249,15 @@
                     if (liveCompanies && liveCompanies.length > 0) {
                         const compMap = {};
                         liveCompanies.forEach(c => { compMap[c.user_id] = c; });
-                        State.allApplications = State.allApplications.map(a => ({
-                            ...a,
-                            company_name: compMap[a.company_user_id]?.company_name || a.company_name,
-                            company_logo: compMap[a.company_user_id]?.logo || a.company_logo
-                        }));
+                        State.allApplications = State.allApplications.map(a => {
+                            const liveLogo = compMap[a.company_user_id]?.logo;
+                            const isUrlLogo = liveLogo && /^https?:\/\//i.test(liveLogo);
+                            return {
+                                ...a,
+                                company_name: compMap[a.company_user_id]?.company_name || a.company_name,
+                                company_logo: isUrlLogo ? liveLogo : a.company_logo
+                            };
+                        });
                     }
                 }
             } catch(e) { /* فضل الاسم القديم */ }
