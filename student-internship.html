@@ -1363,10 +1363,11 @@ function renderInternshipCard(i) {
             try {
                 const cids = [...new Set(allInternships.map(i => i.company_user_id).filter(Boolean))];
                 if (cids.length > 0) {
-                    const { data: liveNames } = await sb.from('companies').select('user_id, company_name').in('user_id', cids);
+                    const { data: liveNames } = await sb.from('companies').select('user_id, company_name, logo').in('user_id', cids);
                     (liveNames || []).forEach(c => {
                         if (!allCompanies[c.user_id]) allCompanies[c.user_id] = {};
                         allCompanies[c.user_id].company_name = c.company_name;
+                        if (c.logo) allCompanies[c.user_id].logo = c.logo;
                     });
                 }
             } catch(e) {}
