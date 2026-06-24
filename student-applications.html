@@ -348,11 +348,15 @@ async function loadAll() {
             if (liveNames && liveNames.length > 0) {
                 const nm = {};
                 liveNames.forEach(c => { nm[c.user_id] = c; });
-                allApps = allApps.map(a => ({
-                    ...a,
-                    company_name: nm[a.company_user_id]?.company_name || a.company_name,
-                    company_logo: nm[a.company_user_id]?.logo || a.company_logo
-                }));
+                allApps = allApps.map(a => {
+                    const liveLogo = nm[a.company_user_id]?.logo;
+                    const isUrlLogo = liveLogo && /^https?:\/\//i.test(liveLogo);
+                    return {
+                        ...a,
+                        company_name: nm[a.company_user_id]?.company_name || a.company_name,
+                        company_logo: isUrlLogo ? liveLogo : a.company_logo
+                    };
+                });
             }
         }
     } catch(e) { /* فضل الاسم المخزّن */ }
