@@ -344,11 +344,15 @@ async function loadAll() {
     try {
         const cids = [...new Set(allApps.map(a => a.company_user_id).filter(Boolean))];
         if (cids.length > 0) {
-            const { data: liveNames } = await sb.from('companies').select('user_id, company_name').in('user_id', cids);
+            const { data: liveNames } = await sb.from('companies').select('user_id, company_name, logo').in('user_id', cids);
             if (liveNames && liveNames.length > 0) {
                 const nm = {};
-                liveNames.forEach(c => { nm[c.user_id] = c.company_name; });
-                allApps = allApps.map(a => ({ ...a, company_name: nm[a.company_user_id] || a.company_name }));
+                liveNames.forEach(c => { nm[c.user_id] = c; });
+                allApps = allApps.map(a => ({
+                    ...a,
+                    company_name: nm[a.company_user_id]?.company_name || a.company_name,
+                    company_logo: nm[a.company_user_id]?.logo || a.company_logo
+                }));
             }
         }
     } catch(e) { /* فضل الاسم المخزّن */ }
