@@ -3244,14 +3244,15 @@
                 const companyIds = [...new Set(State.allApplications.map(a => a.company_user_id).filter(Boolean))];
                 if (companyIds.length > 0) {
                     const { data: liveCompanies } = await sb.from('companies')
-                        .select('user_id, company_name')
+                        .select('user_id, company_name, logo')
                         .in('user_id', companyIds);
                     if (liveCompanies && liveCompanies.length > 0) {
-                        const nameMap = {};
-                        liveCompanies.forEach(c => { nameMap[c.user_id] = c.company_name; });
+                        const compMap = {};
+                        liveCompanies.forEach(c => { compMap[c.user_id] = c; });
                         State.allApplications = State.allApplications.map(a => ({
                             ...a,
-                            company_name: nameMap[a.company_user_id] || a.company_name
+                            company_name: compMap[a.company_user_id]?.company_name || a.company_name,
+                            company_logo: compMap[a.company_user_id]?.logo || a.company_logo
                         }));
                     }
                 }
