@@ -677,6 +677,22 @@ window.toggleDept = async (field) => {
 
 // ========== Delete Department ==========
 window.deleteDept = async (field) => {
+    try {
+        // منع الحذف لو في طلبات نشطة مرتبطة بالقسم
+        const dept = getDepartments().find(d => d.field === field);
+        if (dept && dept.internship) {
+            const { data: activeApps } = await sb.from('applications')
+                .select('id')
+                .eq('internship_id', dept.internship.id)
+                .not('status', 'in', '("rejected","withdrawn","cancelled","completed")')
+                .limit(1);
+            if (activeApps && activeApps.length > 0) {
+                showToast('⛔ لا يمكن حذف هذا القسم — يوجد طلاب نشطون مرتبطون به', 'error');
+                return;
+            }
+        }
+    } catch(e) { /* تابع لو فشل الفحص */ }
+
     if (!confirm(`هل تريد حذف القسم "${field}"؟\n⚠️ ده هيمسحه من المنصة و الطلاب مش هيشوفوه.`)) return;
 
     try {
