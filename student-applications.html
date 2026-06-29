@@ -340,26 +340,22 @@ async function loadAll() {
     allApps = data || [];
     _sb = sb;
 
-    // حدّث أسماء الشركات بالأسماء الحالية من جدول companies
+    // حدّث أسماء الشركات واللوجو بالبيانات الحالية من جدول companies
     try {
         const cids = [...new Set(allApps.map(a => a.company_user_id).filter(Boolean))];
         if (cids.length > 0) {
-            const { data: liveNames } = await sb.from('companies').select('user_id, company_name, logo').in('user_id', cids);
-            if (liveNames && liveNames.length > 0) {
+            const { data: liveData } = await sb.from('companies').select('user_id, company_name, logo').in('user_id', cids);
+            if (liveData && liveData.length > 0) {
                 const nm = {};
-                liveNames.forEach(c => { nm[c.user_id] = c; });
-                allApps = allApps.map(a => {
-                    const liveLogo = nm[a.company_user_id]?.logo;
-                    const isUrlLogo = liveLogo && /^https?:\/\//i.test(liveLogo);
-                    return {
-                        ...a,
-                        company_name: nm[a.company_user_id]?.company_name || a.company_name,
-                        company_logo: isUrlLogo ? liveLogo : a.company_logo
-                    };
-                });
+                liveData.forEach(c => { nm[c.user_id] = c; });
+                allApps = allApps.map(a => ({
+                    ...a,
+                    company_name: nm[a.company_user_id]?.company_name || a.company_name,
+                    company_logo: nm[a.company_user_id]?.logo || a.company_logo
+                }));
             }
         }
-    } catch(e) { /* فضل الاسم المخزّن */ }
+    } catch(e) { /* فضل البيانات المخزّنة */ }
 
     // تحميل التقييمات السابقة للطالب
     try {
