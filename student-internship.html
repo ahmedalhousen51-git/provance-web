@@ -945,8 +945,9 @@ function renderInternshipCard(i) {
         const isFull = applicants >= max;
         const isApplied = hasApplied(i.id);
 
-        const requirements = Array.isArray(i.requirements) ? i.requirements : [];
-        // benefits come as text from knowledge_benefits and financial_benefits
+        const requirementsArr = Array.isArray(i.requirements) ? i.requirements : [];
+        const requirementsText = typeof i.requirements === 'string' ? i.requirements.trim() : '';
+        const hasRequirements = requirementsArr.length > 0 || requirementsText.length > 0;
 
         const html = `
             <div class="modal active" id="detailsModal">
@@ -1028,7 +1029,7 @@ function renderInternshipCard(i) {
 
                     <div class="modal-section">
                         <div class="modal-section-title"><i class="fas fa-user-check"></i> مواصفات المتدرب المطلوبة</div>
-                        <div class="info-grid" style="margin-bottom:${requirements.length > 0 ? '12px' : '0'}">
+                        <div class="info-grid" style="margin-bottom:${hasRequirements ? '12px' : '0'}">
                             <div class="info-item">
                                 <div class="info-label"><i class="fas fa-layer-group"></i> المستوى المطلوب</div>
                                 <div class="info-value">${i.trainee_type === 'first-time' ? '🌱 النظام الأول — أول تدريب' : i.trainee_type === 'once-trained' ? '⭐ النظام الثاني — تدريب سابق' : i.trainee_type === 'twice-trained' ? '🏆 النظام الثالث — تدريبان سابقان' : 'مفتوح للجميع'}</div>
@@ -1038,13 +1039,17 @@ function renderInternshipCard(i) {
                                 <div class="info-value" style="color:${canApplyToSystem(i.trainee_type) ? '#10b981' : '#ef4444'}">${canApplyToSystem(i.trainee_type) ? '✓ نعم، مستواك مناسب' : '✗ يتطلب مستوى أعلى'}</div>
                             </div>
                         </div>
-                        ${requirements.length > 0 ? `
+                        ${requirementsText ? `
+                        <div style="background:rgba(79,172,254,0.04);border:1px solid rgba(79,172,254,0.15);border-radius:10px;padding:12px">
+                            <div style="color:var(--text-muted);font-size:0.78rem;font-weight:700;margin-bottom:6px"><i class="fas fa-clipboard-list"></i> المواصفات المطلوبة في المتدرب:</div>
+                            <div style="color:var(--text);font-size:0.9rem;line-height:1.7;white-space:pre-line">${esc(requirementsText)}</div>
+                        </div>` : requirementsArr.length > 0 ? `
                         <div>
-                            <div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:8px;font-weight:700"><i class="fas fa-list-check"></i> متطلبات تفصيلية:</div>
+                            <div style="color:var(--text-muted);font-size:0.78rem;margin-bottom:8px;font-weight:700"><i class="fas fa-list-check"></i> المواصفات المطلوبة في المتدرب:</div>
                             <ul class="req-list">
-                                ${requirements.map(r => `<li><i class="fas fa-check"></i> ${esc(r)}</li>`).join('')}
+                                ${requirementsArr.map(r => `<li><i class="fas fa-check"></i> ${esc(r)}</li>`).join('')}
                             </ul>
-                        </div>` : ''}
+                        </div>` : '<div style="color:var(--text-muted);font-size:0.84rem">لم تحدد الشركة مواصفات تفصيلية</div>'}
                     </div>
 
                     ${i.knowledge_benefits || i.financial_benefits ? `
