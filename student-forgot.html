@@ -299,14 +299,32 @@
                 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
                 const sb = (window.ProVance && window.ProVance.sb) ||
                     window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, storage: window.localStorage } });
-                const base = window.location.href.replace(/[?#].*$/, '');
-                const redirectTo = base.replace(/[^/]*$/, 'student-reset-password.html');
 
-                const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+                // بناء redirectTo من الـ origin الحالي — يضمن تطابق domain المسجّل في Supabase
+                const redirectTo = window.location.origin + '/student-reset-password.html';
 
-                if (error) {
-                    console.error(error);
-                    showErr('حدث خطأ، حاول مرة أخرى');
+                let result = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+
+                // لو فشل بسبب redirect URL غير مسموح → جرّب بدون redirectTo
+                if (result.error) {
+                    const errMsg = (result.error.message || '').toLowerCase();
+                    if (errMsg.includes('redirect') || errMsg.includes('url') || errMsg.includes('not allowed') || errMsg.includes('allowlist')) {
+                        result = await sb.auth.resetPasswordForEmail(email);
+                    }
+                }
+
+                if (result.error) {
+                    console.error('reset password error:', result.error);
+                    const errMsg = (result.error.message || '').toLowerCase();
+                    let displayMsg = 'حدث خطأ، حاول مرة أخرى';
+                    if (errMsg.includes('60 seconds') || errMsg.includes('rate') || errMsg.includes('security purposes')) {
+                        displayMsg = 'انتظر دقيقة واحدة ثم حاول مرة أخرى';
+                    } else if (errMsg.includes('redirect') || errMsg.includes('url') || errMsg.includes('allowlist')) {
+                        displayMsg = 'خطأ في إعدادات النظام، تواصل مع الإدارة';
+                    } else if (errMsg.includes('invalid') || errMsg.includes('not found')) {
+                        displayMsg = 'البريد الإلكتروني غير موجود في النظام';
+                    }
+                    showErr(displayMsg);
                     submitBtn.classList.remove('loading');
                     submitBtn.disabled = false;
                     return;
@@ -317,7 +335,7 @@
                 document.getElementById('sentEmail').textContent = email;
 
             } catch (err) {
-                console.error(err);
+                console.error('reset password exception:', err);
                 showErr('خطأ في الاتصال، حاول مرة أخرى');
                 submitBtn.classList.remove('loading');
                 submitBtn.disabled = false;
