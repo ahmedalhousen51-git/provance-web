@@ -315,14 +315,15 @@
 
                 if (result.error) {
                     console.error('reset password error:', result.error);
-                    const errMsg = (result.error.message || '').toLowerCase();
-                    let displayMsg = 'حدث خطأ، حاول مرة أخرى';
-                    if (errMsg.includes('60 seconds') || errMsg.includes('rate') || errMsg.includes('security purposes')) {
-                        displayMsg = 'انتظر دقيقة واحدة ثم حاول مرة أخرى';
-                    } else if (errMsg.includes('redirect') || errMsg.includes('url') || errMsg.includes('allowlist')) {
-                        displayMsg = 'خطأ في إعدادات النظام، تواصل مع الإدارة';
-                    } else if (errMsg.includes('invalid') || errMsg.includes('not found')) {
-                        displayMsg = 'البريد الإلكتروني غير موجود في النظام';
+                    const rawMsg = result.error.message || '';
+                    const errMsg = rawMsg.toLowerCase();
+                    let displayMsg = 'حدث خطأ: ' + rawMsg;
+                    if (errMsg.includes('60 seconds') || errMsg.includes('rate') || errMsg.includes('security purposes') || errMsg.includes('email rate limit')) {
+                        displayMsg = 'انتظر دقيقة واحدة ثم حاول مرة أخرى (rate limit)';
+                    } else if (errMsg.includes('redirect') || errMsg.includes('allowlist') || errMsg.includes('not allowed')) {
+                        displayMsg = 'خطأ Redirect URL — تواصل مع الإدارة';
+                    } else if (errMsg.includes('smtp') || errMsg.includes('email') || errMsg.includes('send')) {
+                        displayMsg = 'خطأ في إرسال الإيميل — ' + rawMsg;
                     }
                     showErr(displayMsg);
                     submitBtn.classList.remove('loading');
