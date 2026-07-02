@@ -2178,7 +2178,7 @@ function validateStep4(silent = false) {
         );
     }
     
-    if (!equipmentYes && !equipmentNo) {
+    if (!(equipmentYes && equipmentYes.checked) && !(equipmentNo && equipmentNo.checked)) {
         return showError(
             'يجب تحديد توفر المعدات',
             'حدد ما إذا كنتم ستوفرون الأجهزة والمعدات للمتدربين أم سيحتاجون لإحضارها',
@@ -4180,37 +4180,33 @@ async function handleFormSubmit(event) {
             training_details_sample: formData.trainingInfo.details
         });
 
-        // 2. حفظ بيانات الشركة في جدول companies (كل الحقول الكاملة)
-        const insertData = {
-            user_id:           userId,
-            company_name:      formData.companyInfo.name,
-            email:             email,
-            company_bio:       formData.companyInfo.bio || '',
-            company_field:     formData.companyInfo.field || '',
-            company_location:  formData.companyInfo.location || '',
-            employees_count:   formData.companyInfo.employeesCount || '',
-            logo:              state.companyLogoData || formData.companyInfo.logo || '',
-            website:           formData.companyInfo.website || '',
-            primary_phone:     formData.contactInfo.primaryPhone || '',
-            secondary_phone:   formData.contactInfo.secondaryPhone || '',
-            whatsapp:          formData.contactInfo.whatsappNumber || '',
-            inquiry_email:     formData.contactInfo.inquiryEmail || '',
-            linkedin:          formData.contactInfo.linkedinUrl || '',
-            facebook:          formData.contactInfo.facebookUrl || '',
-            training_fields:   formData.trainingInfo.fields || [],
-            training_details:  formData.trainingInfo.details || {},
-            branch_locations:  formData.companyInfo.branchLocations || [],
-            training_notes:    formData.trainingDetails.requiredItems || '',
-            is_startup:        formData.trainingDetails.isStartup || false,
-            max_response_days: parseInt(formData.trainingDetails.maxResponseDays) || 7,
-            max_response_after_interview: parseInt(formData.trainingDetails.maxResponseAfterInterview) || 3,
-            status:            'pending',
-            agreed_at:         new Date().toISOString()
-        };
-        
-        console.log('📦 Inserting company data:', insertData);
-        
-        const { data: companyInserted, error: dbError } = await sb.from('companies').insert(insertData).select();
+        // 2. حفظ بيانات الشركة عبر SECURITY DEFINER function
+        const { data: companyInserted, error: dbError } = await sb.rpc('register_company', {
+            p_user_id:                      userId,
+            p_company_name:                 formData.companyInfo.name,
+            p_email:                        email,
+            p_company_bio:                  formData.companyInfo.bio || '',
+            p_company_field:                formData.companyInfo.field || '',
+            p_company_location:             formData.companyInfo.location || '',
+            p_employees_count:              formData.companyInfo.employeesCount || '',
+            p_logo:                         state.companyLogoData || formData.companyInfo.logo || '',
+            p_website:                      formData.companyInfo.website || '',
+            p_primary_phone:                formData.contactInfo.primaryPhone || '',
+            p_secondary_phone:              formData.contactInfo.secondaryPhone || '',
+            p_whatsapp:                     formData.contactInfo.whatsappNumber || '',
+            p_inquiry_email:                formData.contactInfo.inquiryEmail || '',
+            p_linkedin:                     formData.contactInfo.linkedinUrl || '',
+            p_facebook:                     formData.contactInfo.facebookUrl || '',
+            p_training_fields:              formData.trainingInfo.fields || [],
+            p_training_details:             formData.trainingInfo.details || {},
+            p_branch_locations:             formData.companyInfo.branchLocations || [],
+            p_training_notes:               formData.trainingDetails.requiredItems || '',
+            p_is_startup:                   formData.trainingDetails.isStartup || false,
+            p_max_response_days:            parseInt(formData.trainingDetails.maxResponseDays) || 7,
+            p_max_response_after_interview: parseInt(formData.trainingDetails.maxResponseAfterInterview) || 3,
+            p_provides_equipment:           formData.trainingDetails.equipment === 'yes' ? true :
+                                            formData.trainingDetails.equipment === 'no' ? false : null
+        });
         
         if (dbError) {
             console.error('🔴 Company insert error:', dbError);
