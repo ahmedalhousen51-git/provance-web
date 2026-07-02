@@ -1052,6 +1052,29 @@ function renderInternshipCard(i) {
                         </div>` : '<div style="color:var(--text-muted);font-size:0.84rem">لم تحدد الشركة مواصفات تفصيلية</div>'}
                     </div>
 
+                    ${company.provides_equipment === true ? `
+                        <div class="modal-section">
+                            <div class="modal-section-title"><i class="fas fa-laptop"></i> الأجهزة والمعدات</div>
+                            <div style="display:flex;align-items:center;gap:10px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:12px">
+                                <i class="fas fa-check-circle" style="color:#10b981;font-size:1.1rem"></i>
+                                <div style="color:var(--text);font-size:0.92rem;font-weight:700">الشركة توفر جميع الأجهزة والمعدات — مش محتاج تجيب حاجة معاك</div>
+                            </div>
+                        </div>
+                    ` : company.provides_equipment === false ? `
+                        <div class="modal-section">
+                            <div class="modal-section-title"><i class="fas fa-laptop"></i> الأجهزة والمعدات</div>
+                            <div style="display:flex;align-items:center;gap:10px;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:12px;margin-bottom:${(company.training_notes || '').trim() ? '10px' : '0'}">
+                                <i class="fas fa-exclamation-circle" style="color:#f59e0b;font-size:1.1rem"></i>
+                                <div style="color:var(--text);font-size:0.92rem;font-weight:700">الشركة لا توفر المعدات — المتدرب يحضر معداته بنفسه</div>
+                            </div>
+                            ${(company.training_notes || '').trim() ? `
+                            <div style="background:rgba(79,172,254,0.04);border:1px solid rgba(79,172,254,0.15);border-radius:10px;padding:12px">
+                                <div style="color:var(--text-muted);font-size:0.78rem;font-weight:700;margin-bottom:6px"><i class="fas fa-clipboard-list"></i> المعدات المطلوب إحضارها:</div>
+                                <div style="color:var(--text);font-size:0.9rem;line-height:1.7;white-space:pre-line">${esc(company.training_notes)}</div>
+                            </div>` : ''}
+                        </div>
+                    ` : ''}
+
                     ${i.knowledge_benefits || i.financial_benefits ? `
                         <div class="modal-section">
                             <div class="modal-section-title"><i class="fas fa-gift"></i> المزايا</div>
@@ -1341,7 +1364,7 @@ function renderInternshipCard(i) {
                 sb.from('student').select('user_id, full_name, email, phone, university, faculty, major, gpa, city, country, national_id, birth_date, gender, bio, education_level, cv_url, linkedin, github, portfolio, skills, languages, interested_fields, year_of_study, photo, status, training_status, level').eq('user_id', userId).maybeSingle(),
                 sb.from('internships').select('id, company_user_id, company_name, company_location, title, field, duration, max_applicants, current_applicants, trainee_type, salary_min, salary_max, salary_currency, training_price, training_currency, status, created_at').eq('status', 'active').order('created_at', { ascending: false }),
                 sb.from('applications').select('id, internship_id, company_user_id, company_name, internship_title, status, created_at').eq('student_user_id', userId),
-                sb.from('companies').select('user_id, company_name, logo, company_bio, company_field, employees_count, training_price, training_currency, status, suspended, suspended_until')
+                sb.from('companies').select('user_id, company_name, logo, company_bio, company_field, employees_count, training_price, training_currency, status, suspended, suspended_until, provides_equipment, training_notes')
             ]);
 
             // التعامل مع الـ results حتى لو واحد فشل
