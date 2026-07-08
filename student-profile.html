@@ -975,6 +975,14 @@
 
     const esc = window.ProVance.escapeHtml;
 
+    // اللوجو الحي يُستخدم لو URL أو base64 معقول الحجم (نتجاهل الضخم فقط عشان الأداء)
+    function usableLogo(logo) {
+        if (!logo) return null;
+        if (/^https?:\/\//i.test(logo)) return logo;
+        if (/^data:image\//i.test(logo) && logo.length < 200000) return logo;
+        return null;
+    }
+
     // ============ STATE ============
     let studentUserId = null;
     let studentEmail = null;
@@ -3203,19 +3211,29 @@
             State.studentData = studentData;
             State.allApplications = results[1].status === 'fulfilled' ? (results[1].value.data || []) : [];
 
-            // حدّث أسماء الشركات بالأسماء الحالية من جدول companies (مش الاسم المخزّن وقت التقديم)
+            // حدّث أسماء الشركات واللوجو بالبيانات الحالية من جدول companies (مش المخزّن وقت التقديم)
             try {
                 const companyIds = [...new Set(State.allApplications.map(a => a.company_user_id).filter(Boolean))];
                 if (companyIds.length > 0) {
-                    const { data: liveCompanies } = await sb.from('companies')
-                        .select('user_id, company_name')
-                        .in('user_id', companyIds);
-                    if (liveCompanies && liveCompanies.length > 0) {
-                        const compMap = {};
-                        liveCompanies.forEach(c => { compMap[c.user_id] = c; });
+                    const compMap = {};
+                    try {
+                        const { data: liveCompanies } = await sb.from('companies')
+                            .select('user_id, company_name, logo')
+                            .in('user_id', companyIds);
+                        (liveCompanies || []).forEach(c => { compMap[c.user_id] = c; });
+                    } catch(e) {}
+                    // لو الـ bulk query رجع ناقص — جيب الشركات الناقصة واحدة واحدة
+                    for (const cid of companyIds.filter(id => !compMap[id])) {
+                        try {
+                            const { data: one } = await sb.from('companies').select('user_id, company_name, logo').eq('user_id', cid).maybeSingle();
+                            if (one) compMap[one.user_id] = one;
+                        } catch(e) {}
+                    }
+                    if (Object.keys(compMap).length > 0) {
                         State.allApplications = State.allApplications.map(a => ({
                             ...a,
-                            company_name: compMap[a.company_user_id]?.company_name || a.company_name
+                            company_name: compMap[a.company_user_id]?.company_name || a.company_name,
+                            company_logo: usableLogo(compMap[a.company_user_id]?.logo) || a.company_logo
                         }));
                     }
                 }
