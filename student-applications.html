@@ -299,6 +299,14 @@ function esc(s) {
         c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":'&#39;'}[c]));
 }
 
+// اللوجو الحي يُستخدم لو URL أو base64 معقول الحجم (نتجاهل الضخم فقط عشان الأداء)
+function usableLogo(logo) {
+    if (!logo) return null;
+    if (/^https?:\/\//i.test(logo)) return logo;
+    if (/^data:image\//i.test(logo) && logo.length < 200000) return logo;
+    return null;
+}
+
 async function loadAll() {
     let sb = null;
     if (window.ProVance?.waitForSupabaseClient) {
@@ -345,14 +353,23 @@ async function loadAll() {
     try {
         const cids = [...new Set(allApps.map(a => a.company_user_id).filter(Boolean))];
         if (cids.length > 0) {
-            const { data: liveData } = await sb.from('companies').select('user_id, company_name, logo').in('user_id', cids);
-            if (liveData && liveData.length > 0) {
-                const nm = {};
-                liveData.forEach(c => { nm[c.user_id] = c; });
+            const nm = {};
+            try {
+                const { data: liveData } = await sb.from('companies').select('user_id, company_name, logo').in('user_id', cids);
+                (liveData || []).forEach(c => { nm[c.user_id] = c; });
+            } catch(e) {}
+            // لو الـ bulk query رجع ناقص — جيب الشركات الناقصة واحدة واحدة (نفس fix أسماء الشركات)
+            for (const cid of cids.filter(id => !nm[id])) {
+                try {
+                    const { data: one } = await sb.from('companies').select('user_id, company_name, logo').eq('user_id', cid).maybeSingle();
+                    if (one) nm[one.user_id] = one;
+                } catch(e) {}
+            }
+            if (Object.keys(nm).length > 0) {
                 allApps = allApps.map(a => ({
                     ...a,
                     company_name: nm[a.company_user_id]?.company_name || a.company_name,
-                    company_logo: nm[a.company_user_id]?.logo || a.company_logo
+                    company_logo: usableLogo(nm[a.company_user_id]?.logo) || a.company_logo
                 }));
             }
         }
