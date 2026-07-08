@@ -366,6 +366,18 @@ async function loadAll() {
                 } catch(e) {}
             }
             if (Object.keys(nm).length > 0) {
+                // علاج الـ snapshot القديم في قاعدة البيانات (fire-and-forget — لو الـ RLS منع مفيش مشكلة)
+                allApps.forEach(a => {
+                    const live = nm[a.company_user_id];
+                    const liveLogo = usableLogo(live?.logo);
+                    const liveName = live?.company_name;
+                    const patch = {};
+                    if (liveLogo && a.company_logo !== liveLogo) patch.company_logo = liveLogo;
+                    if (liveName && a.company_name !== liveName) patch.company_name = liveName;
+                    if (Object.keys(patch).length > 0) {
+                        sb.from('applications').update(patch).eq('id', a.id).then(() => {}, () => {});
+                    }
+                });
                 allApps = allApps.map(a => ({
                     ...a,
                     company_name: nm[a.company_user_id]?.company_name || a.company_name,
