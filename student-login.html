@@ -513,7 +513,8 @@ console.log('✅ Login form initialized');
             const banner = document.getElementById('errorBanner');
             banner.style.display = 'flex';
             banner.className = 'error-banner';
-            banner.innerHTML = '<i class="fas fa-exclamation-circle" style="font-size:1.2rem;color:var(--error);flex-shrink:0;margin-top:2px;"></i><div style="flex:1"><strong style="color:var(--error);display:block;margin-bottom:4px;">حصل خطأ في تسجيل الدخول</strong><div>'+msg+'</div></div><button onclick="document.getElementById(\'errorBanner\').style.display=\'none\'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;"><i class="fas fa-times"></i></button>';
+            const _em = String(msg||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            banner.innerHTML = '<i class="fas fa-exclamation-circle" style="font-size:1.2rem;color:var(--error);flex-shrink:0;margin-top:2px;"></i><div style="flex:1"><strong style="color:var(--error);display:block;margin-bottom:4px;">حصل خطأ في تسجيل الدخول</strong><div>'+_em+'</div></div><button onclick="document.getElementById(\'errorBanner\').style.display=\'none\'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;"><i class="fas fa-times"></i></button>';
         }
         function hideBanner() { document.getElementById('errorBanner').style.display = 'none'; }
 
@@ -604,21 +605,32 @@ console.log('✅ Login form initialized');
                         return;
                     }
                     
-                    // لو مش شركة ولا أدمن، يبقى الـ trigger ما اشتغلش
-                    // نحاول نعمل الـ row بـ RPC
-                    try {
-                        await sb.rpc('register_student', {
-                            p_user_id: data.user.id,
-                            p_full_name: email.split('@')[0],
-                            p_email: email
-                        });
-                        
-                        const { data: newData } = await sb.from('student')
-                            .select('user_id, full_name, status')
-                            .eq('user_id', data.user.id)
-                            .maybeSingle();
-                        if (newData) finalStudentData = newData;
-                    } catch(e) { console.warn('Auto-create failed:', e); }
+                    // لو مش شركة ولا أدمن: ننشئ صف الطالب فقط لو الحساب اتسجل فعلاً
+                    // من صفحة تسجيل الطلاب (user_type محفوظة في metadata وقت التسجيل).
+                    // من غير الشرط ده أي حساب تاني (أدمن/شركة/اختباري) كان بيتسجل
+                    // كطالب باسم مقتطع من الإيميل — زي ما حصل قبل كده.
+                    const metaType = data.user?.user_metadata?.user_type;
+                    if (metaType === 'student') {
+                        try {
+                            await sb.rpc('register_student', {
+                                p_user_id: data.user.id,
+                                p_full_name: data.user?.user_metadata?.full_name || email.split('@')[0],
+                                p_email: email
+                            });
+
+                            const { data: newData } = await sb.from('student')
+                                .select('user_id, full_name, status')
+                                .eq('user_id', data.user.id)
+                                .maybeSingle();
+                            if (newData) finalStudentData = newData;
+                        } catch(e) { console.warn('Auto-create failed:', e); }
+                    } else {
+                        await sb.auth.signOut();
+                        showBanner('الحساب ده مش مسجل كطالب. لو انت شركة استخدم <a href="company-login.html" style="color:#fde68a;text-decoration:underline;font-weight:800">صفحة دخول الشركات</a>، أو تواصل مع الإدارة');
+                        btn.classList.remove('loading');
+                        btn.disabled = false;
+                        return;
+                    }
                     
                     if (!finalStudentData) {
                         await sb.auth.signOut();
