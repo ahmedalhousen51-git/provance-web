@@ -166,7 +166,11 @@
         .cta-box .btn-white:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(0,0,0,0.3); }
 
         .site-footer { background: var(--bg-2); border-top: 1px solid var(--border); padding: 50px 0 30px; margin-top: 40px; }
-        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        .footer-col .social-link i { width: 22px; text-align: center; margin-left: 6px; font-size: 1.05rem; vertical-align: middle; }
+        .footer-col .social-link:hover .fa-instagram { color: #e1306c; }
+        .footer-col .social-link:hover .fa-facebook { color: #1877f2; }
+        .footer-col .social-link:hover .fa-tiktok { color: #fff; }
         .footer-brand h3 { font-size: 1.5rem; font-weight: 900; margin-bottom: 10px; }
         .footer-brand p { color: var(--text-muted); font-size: 0.9rem; max-width: 320px; }
         .footer-col h4 { font-size: 1rem; font-weight: 800; margin-bottom: 14px; }
@@ -355,6 +359,12 @@
                         <a href="company-register.html">تسجيل شركة</a>
                         <a href="student-login.html">تسجيل الدخول</a>
                     </div>
+                    <div class="footer-col">
+                        <h4>تواصل معنا</h4>
+                        <a class="social-link" href="https://www.instagram.com/pro.vance1?igsh=MW1oeWJ3ajZvMGhvZg==" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-instagram"></i> إنستجرام</a>
+                        <a class="social-link" href="https://www.facebook.com/share/1MFBTkGFvb/" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook"></i> فيسبوك</a>
+                        <a class="social-link" href="https://vt.tiktok.com/ZSCKMrYhA/" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-tiktok"></i> تيك توك</a>
+                    </div>
                 </div>
                 <div class="footer-bottom">
                     © 2026 ProVance — منصة التدريب المهني. جميع الحقوق محفوظة.
@@ -413,9 +423,14 @@
 // إعادة توجيه روابط إعادة تعيين كلمة المرور من Supabase
 (function() {
     const hash = window.location.hash;
-    if (hash && hash.includes('type=recovery')) {
+    if (!hash) return;
+    if (hash.includes('type=recovery')) {
         window.location.replace('student-reset-password.html' + hash);
         return;
+    }
+    // رابط استعادة منتهي/مستخدم — Supabase بيرجع للرئيسية بخطأ في الـ hash
+    if (hash.includes('error_code=otp_expired') || hash.includes('error=access_denied')) {
+        window.location.replace('student-forgot.html#expired');
     }
 })();
 (function() {
