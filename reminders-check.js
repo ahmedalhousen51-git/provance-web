@@ -16,7 +16,7 @@
 
     async function sendNotif(sb, opts) {
         try {
-            await sb.from('notifications').insert({
+            await sb.rpc('send_notification_row', { p_row: {
                 user_id: opts.userId,
                 user_type: opts.userType,
                 title: opts.title,
@@ -24,7 +24,7 @@
                 type: opts.type || 'info',
                 link: opts.link || null,
                 is_read: false
-            });
+            } });
         } catch (e) { console.warn('notif insert failed:', e.message); }
     }
 
