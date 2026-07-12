@@ -362,13 +362,13 @@
         .training-card:hover { border-color: var(--primary); }
         .training-logo {
             width: 50px; height: 50px;
-            border-radius: 50%;
+            border-radius: 14px;
             background: var(--gradient);
             display: flex; align-items: center; justify-content: center;
             color: #fff; font-weight: 800; font-size: 1.2rem;
             flex-shrink: 0; overflow: hidden;
         }
-        .training-logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; padding: 7px; box-sizing: border-box; border-radius: 50%; }
+        .training-logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; padding: 5px; box-sizing: border-box; }
         .training-body { flex: 1; min-width: 0; }
         .training-company { font-weight: 800; font-size: 1rem; }
         .training-position { color: var(--text-muted); font-size: 0.86rem; margin-top: 2px; }
@@ -974,6 +974,25 @@
     console.log('✅ Student profile initialized');
 
     const esc = window.ProVance.escapeHtml;
+
+    // مزامنة بيانات الطالب المحدثة مع النسخ المخزنة في طلبات التقديم
+    // (الاسم/الصورة/الجامعة... اللي بتظهر في صفحات الشركات) — fire and forget
+    async function syncApplicationSnapshots(sb) {
+        try {
+            const { data: s } = await sb.from('student')
+                .select('full_name, email, phone, photo, university, cv_url')
+                .eq('user_id', State.studentUserId).maybeSingle();
+            if (!s) return;
+            await sb.from('applications').update({
+                student_name: s.full_name,
+                student_email: s.email,
+                student_phone: s.phone,
+                student_photo: s.photo,
+                student_university: s.university,
+                student_cv_url: s.cv_url
+            }).eq('student_user_id', State.studentUserId);
+        } catch(e) { console.warn('sync snapshots:', e); }
+    }
 
     // اللوجو الحي يُستخدم لو URL أو base64 معقول الحجم (نتجاهل الضخم فقط عشان الأداء)
     function usableLogo(logo) {
@@ -1729,7 +1748,7 @@
         const hasReport  = !!sentRec;
 
         const logo = app.company_logo
-            ? `<img src="${esc(app.company_logo)}" alt="" style="width:100%;height:100%;object-fit:contain;background:#fff;padding:7px;box-sizing:border-box;border-radius:50%">`
+            ? `<img src="${esc(app.company_logo)}" alt="" style="width:100%;height:100%;object-fit:contain;background:#fff;padding:5px;box-sizing:border-box">`
             : `<span style="font-size:1.3rem;font-weight:800">${getInitial(app.company_name)}</span>`;
 
         const attDetails = [
@@ -1763,7 +1782,7 @@
             <div style="padding:18px">
                 <!-- هيدر الشركة -->
                 <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-                    <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,rgba(79,172,254,0.15),rgba(0,242,254,0.08));border:1px solid rgba(79,172,254,0.2);display:flex;align-items:center;justify-content:center;color:var(--primary);overflow:hidden;flex-shrink:0">${logo}</div>
+                    <div style="width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,rgba(79,172,254,0.15),rgba(0,242,254,0.08));border:1px solid rgba(79,172,254,0.2);display:flex;align-items:center;justify-content:center;color:var(--primary);overflow:hidden;flex-shrink:0">${logo}</div>
                     <div style="flex:1;min-width:0">
                         <div style="font-weight:800;font-size:1rem;margin-bottom:2px">${esc(app.company_name || '-')}</div>
                         <div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:6px">${esc(app.internship_title || '')}</div>
@@ -2373,6 +2392,7 @@
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
                 const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
                 if (error) throw error;
+                syncApplicationSnapshots(sb);
                 addEditHistory('تعديل البيانات الشخصية', 'تم تحديث الاسم/الهاتف/التاريخ/النوع/العنوان');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
                 closeModal('editPersonalModal');
@@ -2458,6 +2478,7 @@
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
                 const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
                 if (error) throw error;
+                syncApplicationSnapshots(sb);
                 addEditHistory('تعديل التعليم', 'تم تحديث بيانات التعليم');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
                 closeModal('editEducationModal');
@@ -2504,6 +2525,7 @@
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
                 const { error } = await sb.from('student').update({ bio }).eq('user_id', State.studentUserId);
                 if (error) throw error;
+                syncApplicationSnapshots(sb);
                 addEditHistory('تعديل النبذة', bio ? 'تم تحديث النبذة' : 'تم مسح النبذة');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
                 closeModal('editBioModal');
@@ -2566,6 +2588,7 @@
                     skills, interested_fields: interests
                 }).eq('user_id', State.studentUserId);
                 if (error) throw error;
+                syncApplicationSnapshots(sb);
                 addEditHistory('تعديل المهارات', `${skills.length} مهارة، ${interests.length} مجال`);
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
                 closeModal('editSkillsModal');
@@ -2631,6 +2654,7 @@
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
                 const { error } = await sb.from('student').update(data).eq('user_id', State.studentUserId);
                 if (error) throw error;
+                syncApplicationSnapshots(sb);
                 addEditHistory('تعديل الروابط', 'تم تحديث LinkedIn/GitHub/Portfolio/CV');
                 window.ProVance.showToast('تم الحفظ ✓', 'success');
                 closeModal('editSocialModal');
@@ -2729,6 +2753,7 @@
                 if (!sb) { window.ProVance?.showToast?.('فشل الاتصال - حاول مرة أخرى', 'error'); return; }
                 const { error } = await sb.from('student').update({ photo: url || null }).eq('user_id', State.studentUserId);
                 if (error) throw error;
+                syncApplicationSnapshots(sb);
                 addEditHistory('تغيير الصورة', 'تم تغيير الصورة الشخصية');
                 window.ProVance.showToast('تم تغيير الصورة ✓', 'success');
                 closeModal('editAvatarModal');
