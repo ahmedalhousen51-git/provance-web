@@ -3723,7 +3723,7 @@ async function saveTraineeRating() {
         });
         companyRatingsDone[_tratingAppId] = true;
         try {
-            await sb.from('notifications').insert({
+            await sb.rpc('send_notification_row', { p_row: {
                 user_id: _tratingStudentId,
                 user_type: 'student',
                 title: '⭐ تم تقييمك من الشركة!',
@@ -3731,7 +3731,7 @@ async function saveTraineeRating() {
                 type: 'info',
                 is_read: false,
                 link: 'student-profile.html'
-            });
+            } });
         } catch(ne) { console.warn('notify failed:', ne); }
         showToast('تم حفظ التقييم ✅', 'success');
         closeTraineeRating();
@@ -3783,14 +3783,14 @@ async function saveTraineeComplaint() {
         try {
             const { data: admins } = await sb.from('admins').select('user_id');
             if (admins && admins.length > 0) {
-                await sb.from('notifications').insert(admins.map(a => ({
+                await sb.rpc('send_notification_row', { p_row: admins.map(a => ({
                     user_id: a.user_id,
                     user_type: 'admin',
                     type: 'support_message',
                     title: '🚩 شكوى من شركة على طالب',
                     message: `شركة: ${subject}`,
                     link: 'admin-company-support.html'
-                })));
+                })) });
             }
         } catch(e) {}
 
