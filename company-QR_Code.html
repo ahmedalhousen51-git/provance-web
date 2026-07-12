@@ -2138,9 +2138,17 @@
         await loadAll();
         loadTodayInterviews();
 
+        // تحديث مجمّع: مهما وصلت أحداث realtime متتالية (مسحات كتير ورا بعض)
+        // بنعمل تحميل واحد بس كل 3 ثواني بدل تحميل كامل مع كل مسح — ده اللي كان بيهنّج الصفحة
+        let _refreshTimer = null;
+        function scheduleRefresh() {
+            if (_refreshTimer) return;
+            _refreshTimer = setTimeout(() => { _refreshTimer = null; loadAll(); }, 3000);
+        }
+
         sb.channel('qr-' + userId)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'qr_codes', filter: `company_user_id=eq.${userId}` }, () => loadAll())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs', filter: `company_user_id=eq.${userId}` }, () => loadAll())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'qr_codes', filter: `company_user_id=eq.${userId}` }, () => scheduleRefresh())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs', filter: `company_user_id=eq.${userId}` }, () => scheduleRefresh())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'applications', filter: `company_user_id=eq.${userId}` }, () => loadTodayInterviews())
             .subscribe();
 
@@ -2157,8 +2165,9 @@
             }
         }, 30000);
 
-        // Polling احتياطي: يجيب الحضور الجديد كل 8 ثواني حتى لو الـ realtime مش شغّال
-        setInterval(() => { loadAll(); }, 8000);
+        // Polling احتياطي: كل 45 ثانية ولو التاب ظاهر بس — الـ realtime هو المصدر الفوري،
+        // والتحميل الكامل كل 8 ثواني كان بيخنق الصفحة وقاعدة البيانات
+        setInterval(() => { if (!document.hidden) scheduleRefresh(); }, 45000);
 
         document.getElementById('searchAttendance').addEventListener('input', renderTodayAttendance);
         document.getElementById('filterStatus').addEventListener('change', renderTodayAttendance);
