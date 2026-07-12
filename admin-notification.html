@@ -389,7 +389,7 @@ async function checkAdmin() {
         if (!session) { window.location.href = 'admin-login.html'; return null; }
         const { data: admin } = await sb.from('admins').select('user_id, role, permissions, is_active').eq('user_id', session.user.id).maybeSingle();
         if (!admin) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
-        if (!admin.is_active) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
+        if (admin.is_active === false) { await sb.auth.signOut(); window.location.href = 'admin-login.html'; return null; }
         applyAdminPermissions(admin);
         return admin;
     } catch (e) { window.location.href = 'admin-login.html'; return null; }
@@ -614,7 +614,7 @@ window.confirmSend = async () => {
             is_read: false
         }));
 
-        const { error: insertErr } = await sb.from('notifications').insert(notifs);
+        const { error: insertErr } = await sb.rpc('send_notification_row', { p_row: notifs });
         if (insertErr) { showToast('خطأ: ' + insertErr.message, 'error'); return; }
 
         showToast(`✅ تم إرسال ${notifs.length} إشعار`, 'success');
