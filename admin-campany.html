@@ -853,14 +853,14 @@ window.approveDeptRequest = async (reqId, companyUserId, fieldName) => {
 
         // 7. إشعار للشركة
         try {
-            await sb.from('notifications').insert({
+            await sb.rpc('send_notification_row', { p_row: {
                 user_id: companyUserId,
                 user_type: 'company',
                 type: 'dept_approved',
                 title: 'تمت الموافقة على قسمك',
                 message: `تمت الموافقة على إضافة قسم "${fieldName}" — سيظهر في صفحة فرص التدريب الآن`,
                 link: 'company-requests-control.html'
-            });
+            } });
         } catch(e) { /* ignore */ }
 
         showToast('✅ تمت الموافقة وإضافة القسم بنجاح', 'success');
@@ -886,14 +886,14 @@ window.rejectDeptRequest = async (reqId) => {
         // إشعار للشركة
         if (req) {
             try {
-                await sb.from('notifications').insert({
+                await sb.rpc('send_notification_row', { p_row: {
                     user_id: req.company_user_id,
                     user_type: 'company',
                     type: 'dept_rejected',
                     title: 'تم رفض طلب القسم',
                     message: `تم رفض طلب إضافة قسم "${req.item_name}"${reason ? '. السبب: ' + reason : ''}`,
                     link: 'company-requests-control.html'
-                });
+                } });
             } catch(e) { /* ignore */ }
         }
 
@@ -1428,7 +1428,7 @@ window.confirmPenalty = async () => {
             termination: `تم إنهاء تعاقد شركتك مع المنصة. السبب: ${reason}`
         };
         try {
-            await sb.from('notifications').insert({
+            await sb.rpc('send_notification_row', { p_row: {
                 user_id: c.id,
                 user_type: 'company',
                 title: penTitleMap[type] || 'إجراء إداري',
@@ -1436,7 +1436,7 @@ window.confirmPenalty = async () => {
                 type: 'penalty',
                 is_read: false,
                 link: 'company-penalties.html'
-            });
+            } });
         } catch (notifErr) { console.warn('Notification failed:', notifErr); }
 
         closeModal('penaltyModal');
@@ -1500,14 +1500,14 @@ window.unsuspendCompany = async (companyId) => {
         
         // إشعار للشركة
         try {
-            await sb.from('notifications').insert({
+            await sb.rpc('send_notification_row', { p_row: {
                 user_id: companyId,
                 user_type: 'company',
                 type: 'unsuspended',
                 title: '✅ تم فك التعليق',
                 message: 'تم رفع التعليق عن حسابك ورجعت التدريبات نشطة. مرحباً بعودتك!',
                 link: 'company-dashboard.html'
-            });
+            } });
         } catch(e) {}
         
         closeModal('detailsModal');
