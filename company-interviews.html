@@ -2671,7 +2671,7 @@ window.openSAIReport = async function(appId, studentUserId) {
 
             const results = await Promise.allSettled([
                 sb.from('companies').select('company_name').eq('user_id', userId).maybeSingle(),
-                sb.from('applications').select('id, student_user_id, student_name, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date, interview_location, interview_notes')
+                sb.from('applications').select('id, student_user_id, student_name, student_photo, student_university, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date, interview_location, interview_notes')
                     .eq('company_user_id', userId)
                     .order('created_at', { ascending: false }),
                 sb.from('qr_codes').select('*').eq('company_user_id', userId)
@@ -2687,6 +2687,25 @@ window.openSAIReport = async function(appId, studentUserId) {
             Object.defineProperty(State, 'companyName', { get: () => companyName, configurable: true });
 
             const interviews = appsRes.data || [];
+
+            // حدّث بيانات الطلاب بالنسخة الحية من جدول student (مش الـ snapshot المخزن وقت التقديم)
+            try {
+                const sids = [...new Set(interviews.map(a => a.student_user_id).filter(Boolean))];
+                if (sids.length > 0) {
+                    const { data: liveStudents } = await sb.from('student')
+                        .select('user_id, full_name, photo, university')
+                        .in('user_id', sids);
+                    const sm = {};
+                    (liveStudents || []).forEach(s => { sm[s.user_id] = s; });
+                    interviews.forEach(a => {
+                        const live = sm[a.student_user_id];
+                        if (!live) return;
+                        a.student_name = live.full_name || a.student_name;
+                        a.student_photo = live.photo || a.student_photo;
+                        a.student_university = live.university || a.student_university;
+                    });
+                }
+            } catch(e) { /* فضل الـ snapshot */ }
             console.log('🎯 كل الطلبات اللي رجعت:', interviews.length);
             if (appsRes.error) console.error('❌ خطأ في جلب الطلبات:', appsRes.error);
 
