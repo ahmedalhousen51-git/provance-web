@@ -627,7 +627,7 @@ window.saveViolation = async (userId) => {
         // إشعار للطالب
         try {
             const sevAr = { minor: 'بسيطة', moderate: 'متوسطة', major: 'كبيرة', critical: 'حرجة' };
-            await sb.from('notifications').insert({
+            await sb.rpc('send_notification_row', { p_row: {
                 user_id: userId,
                 user_type: 'student',
                 title: '⚠️ تم تسجيل مخالفة بحقك',
@@ -635,7 +635,7 @@ window.saveViolation = async (userId) => {
                 type: 'penalty',
                 is_read: false,
                 link: 'student-notifications.html'
-            });
+            } });
         } catch(ne) { console.warn('notification failed:', ne); }
 
         showToast('تم تسجيل المخالفة', 'success');
