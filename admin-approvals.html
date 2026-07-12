@@ -254,7 +254,7 @@ async function loadApprovals() {
             setTimeout(() => window.location.href = 'admin-login.html', 1500);
             return;
         }
-        if (!adminCheck.is_active) {
+        if (adminCheck.is_active === false) {
             await sb.auth.signOut();
             window.location.href = 'admin-login.html';
             return;
@@ -524,14 +524,14 @@ window.approveItem = async (id) => {
 
         // 3. ابعت notification للشركة
         try {
-            await sb.from('notifications').insert({
+            await sb.rpc('send_notification_row', { p_row: {
                 user_id: appr.company_user_id,
                 user_type: 'company',
                 type: 'approval_accepted',
                 title: '✅ تمت الموافقة',
                 message: `تمت الموافقة على ${isDept ? 'القسم' : 'الفرع'}: ${appr.item_name}`,
                 link: 'company-requests-control.html'
-            });
+            } });
         } catch(e) {}
 
         showToast('✅ تمت الموافقة بنجاح', 'success');
@@ -591,14 +591,14 @@ window.rejectItem = async (id) => {
 
         // ابعت notification للشركة
         try {
-            await sb.from('notifications').insert({
+            await sb.rpc('send_notification_row', { p_row: {
                 user_id: appr.company_user_id,
                 user_type: 'company',
                 type: 'approval_rejected',
                 title: '❌ تم الرفض',
                 message: `تم رفض ${appr.type === 'department' ? 'القسم' : 'الفرع'}: ${appr.item_name}. السبب: ${reason}`,
                 link: 'company-requests-control.html'
-            });
+            } });
         } catch(e) {}
 
         showToast('تم الرفض', 'success');
