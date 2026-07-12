@@ -1734,12 +1734,12 @@
                     const { data: admins } = await state.sb.from('admins').select('user_id');
                     if (admins) {
                         for (const a of admins) {
-                            await state.sb.from('notifications').insert({
+                            await state.sb.rpc('send_notification_row', { p_row: {
                                 user_id: a.user_id, user_type: 'admin',
                                 title: '🔴 شركة أغلقت عملياتها',
                                 message: `${state.company?.company_name || 'شركة'} أغلقت عملياتها. السبب: ${reason.trim()}`,
                                 type: 'error', link: 'admin-users.html', is_read: false
-                            });
+                            } });
                         }
                     }
                 } catch(er) {}
