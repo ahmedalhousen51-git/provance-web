@@ -751,14 +751,14 @@ window.saveStudentComplaint = async () => {
         try {
             const { data: admins } = await sb.from('admins').select('user_id');
             if (admins && admins.length > 0) {
-                await sb.from('notifications').insert(admins.map(a => ({
+                await sb.rpc('send_notification_row', { p_row: admins.map(a => ({
                     user_id: a.user_id,
                     user_type: 'admin',
                     type: 'support_message',
                     title: '🚩 شكوى من طالب على شركة',
                     message: `${document.getElementById('sComplaintCompanyName').textContent}: ${subject}`,
                     link: 'admin-student-support.html'
-                })));
+                })) });
             }
         } catch(e) {}
 
