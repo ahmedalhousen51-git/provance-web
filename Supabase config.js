@@ -310,20 +310,26 @@
         });
 
         let ok = false;
-        // 1) جرّب بالأعمدة الكاملة
-        let { error } = await sb.from('notifications').insert(fullRow);
-        if (!error) {
-            ok = true;
-        } else {
-            // 2) فشل؟ غالباً عمود ناقص → جرّب بالأساسية بس
-            console.warn('sendNotification (full) فشل:', error.message, '— إعادة المحاولة بالأعمدة الأساسية');
-            const retry = await sb.from('notifications').insert(baseRow);
-            if (!retry.error) {
+        // 1) المسار الآمن: دالة send_notification_row — بتتحقق من هوية المرسل والمحتوى وبتمنع الروابط الخارجية
+        try {
+            const { error: rpcErr } = await sb.rpc('send_notification_row', { p_row: baseRow });
+            if (!rpcErr) ok = true;
+            else console.warn('sendNotification (RPC) فشل:', rpcErr.message, '— محاولة الإدخال المباشر');
+        } catch (e) { console.warn('sendNotification (RPC) استثناء:', e); }
+
+        // 2) فولباك مؤقت: إدخال مباشر (يشتغل طالما سياسة INSERT موجودة — هيتشال بعد استقرار الدالة)
+        if (!ok) {
+            let { error } = await sb.from('notifications').insert(fullRow);
+            if (!error) {
                 ok = true;
             } else {
-                // 3) لسه فاشل → اطبع الخطأ الحقيقي (RLS أو غيره)
-                console.error('❌ sendNotification فشل نهائياً:', retry.error.message, retry.error);
-                return false;
+                const retry = await sb.from('notifications').insert(baseRow);
+                if (!retry.error) {
+                    ok = true;
+                } else {
+                    console.error('❌ sendNotification فشل نهائياً:', retry.error.message, retry.error);
+                    return false;
+                }
             }
         }
 
