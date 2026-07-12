@@ -219,7 +219,7 @@ async function loadAll() {
             setTimeout(() => window.location.href = 'admin-login.html', 1500);
             return;
         }
-        if (!adminCheck.is_active) {
+        if (adminCheck.is_active === false) {
             await sb.auth.signOut();
             window.location.href = 'admin-login.html';
             return;
@@ -397,14 +397,14 @@ window.sendReply = async (e) => {
             return;
         }
         try {
-            await sb.from('notifications').insert({
+            await sb.rpc('send_notification_row', { p_row: {
                 user_id: activeCompanyId,
                 user_type: 'company',
                 type: 'support_reply',
                 title: '💬 رد من إدارة ProVance',
                 message: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
                 link: 'company-support.html'
-            });
+            } });
         } catch(e) {}
         input.value = '';
         showToast('✅ تم الإرسال', 'success');
