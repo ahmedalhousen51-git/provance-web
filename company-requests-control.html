@@ -812,7 +812,7 @@ async function syncToInternship(field, details) {
                 });
                 const coName = companyData.company_name || 'شركة';
                 for (const stu of matched.slice(0, 100)) {
-                    await sb.from('notifications').insert({
+                    await sb.rpc('send_notification_row', { p_row: {
                         user_id: stu.user_id,
                         user_type: 'student',
                         title: `🎯 فرصة جديدة في مجالك: ${field}`,
@@ -820,7 +820,7 @@ async function syncToInternship(field, details) {
                         type: 'info',
                         is_read: false,
                         link: 'student-internship.html'
-                    });
+                    } });
                 }
             }
         } catch(ne) { console.warn('interest notification failed:', ne); }
@@ -1136,14 +1136,14 @@ window.saveDept = async () => {
             
             // ابعت notification للأدمن
             try {
-                await sb.from('notifications').insert({
+                await sb.rpc('send_notification_row', { p_row: {
                     user_id: companyUserId,  // مؤقت - الأدمن يشوفها من query على pending_approvals
                     user_type: 'admin',
                     type: 'new_approval',
                     title: 'طلب موافقة جديد',
                     message: `الشركة "${companyData.company_name}" طلبت إضافة قسم: ${field}`,
                     link: 'admin-approvals.html'
-                });
+                } });
             } catch(e) { /* notifications table may not exist */ }
             
             showToast('⏳ تم إرسال القسم للأدمن للمراجعة والموافقة', 'success');
@@ -1352,14 +1352,14 @@ window.saveBranch = async (existingId) => {
             
             // ابعت notification للأدمن
             try {
-                await sb.from('notifications').insert({
+                await sb.rpc('send_notification_row', { p_row: {
                     user_id: companyUserId,
                     user_type: 'admin',
                     type: 'new_approval',
                     title: 'طلب فرع جديد',
                     message: `الشركة "${companyData.company_name}" طلبت إضافة فرع: ${name}`,
                     link: 'admin-approvals.html'
-                });
+                } });
             } catch(e) { /* notifications table may not exist */ }
             
             showToast('⏳ تم إرسال الفرع للأدمن للموافقة', 'success');
