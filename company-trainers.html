@@ -1089,6 +1089,26 @@ async function loadAll() {
             showToast('خطأ: ' + error.message, 'error');
             return;
         }
+
+        // حدّث بيانات الطلاب بالنسخة الحية من جدول student (مش الـ snapshot المخزن وقت التقديم)
+        try {
+            const sids = [...new Set((apps || []).map(a => a.student_user_id).filter(Boolean))];
+            if (sids.length > 0) {
+                const { data: liveStudents } = await sb.from('student')
+                    .select('user_id, full_name, email, photo, university')
+                    .in('user_id', sids);
+                const sm = {};
+                (liveStudents || []).forEach(s => { sm[s.user_id] = s; });
+                (apps || []).forEach(a => {
+                    const live = sm[a.student_user_id];
+                    if (!live) return;
+                    a.student_name = live.full_name || a.student_name;
+                    a.student_email = live.email || a.student_email;
+                    a.student_photo = live.photo || a.student_photo;
+                    a.student_university = live.university || a.student_university;
+                });
+            }
+        } catch(e) { /* فضل الـ snapshot */ }
         
         const intIds = [...new Set((apps || []).map(a => a.internship_id).filter(Boolean))];
         let internships = {};
