@@ -1045,7 +1045,7 @@
             try {
                 const { data, error } = await state.sb
                     .from('applications')
-                    .select('id, student_user_id, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date')
+                    .select('id, student_user_id, student_name, student_photo, student_university, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date')
                     .eq('company_user_id', state.session.user.id)
                     .order('created_at', { ascending: false });
 
@@ -1056,6 +1056,26 @@
                 }
 
                 state.applications = data || [];
+                // حدّث بيانات الطلاب بالنسخة الحية من جدول student (مش الـ snapshot المخزن وقت التقديم)
+                try {
+                    const _sids = [...new Set(state.applications.map(a => a.student_user_id).filter(Boolean))];
+                    if (_sids.length > 0) {
+                        const { data: _liveStudents } = await state.sb.from('student')
+                            .select('user_id, full_name, email, photo, university')
+                            .in('user_id', _sids);
+                        const _sm = {};
+                        (_liveStudents || []).forEach(s => { _sm[s.user_id] = s; });
+                        state.applications.forEach(a => {
+                            const live = _sm[a.student_user_id];
+                            if (!live) return;
+                            a.student_name = live.full_name || a.student_name;
+                            a.student_email = live.email || a.student_email;
+                            a.student_photo = live.photo || a.student_photo;
+                            a.student_university = live.university || a.student_university;
+                        });
+                    }
+                } catch(e) { /* فضل الـ snapshot */ }
+
                 state.filteredApps = [...state.applications];
                 setCachedData('applications', state.applications);
 
