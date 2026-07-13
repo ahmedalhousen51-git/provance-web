@@ -1053,6 +1053,16 @@
 
             if (!apps || apps.length === 0) { card.style.display = 'none'; return; }
 
+            // حدّث أسماء الطلاب بالنسخة الحية (الاسم ممكن يتعدل بعد التقديم)
+            try {
+                const _sids = [...new Set(apps.map(a => a.student_user_id).filter(Boolean))];
+                if (_sids.length > 0) {
+                    const { data: _ls } = await sb.from('student').select('user_id, full_name').in('user_id', _sids);
+                    const _sm = {}; (_ls || []).forEach(s => { _sm[s.user_id] = s.full_name; });
+                    apps.forEach(a => { if (_sm[a.student_user_id]) a.student_name = _sm[a.student_user_id]; });
+                }
+            } catch(e) {}
+
             card.style.display = 'block';
             list.innerHTML = apps.map(a => {
                 const t = a.interview_date ? new Date(a.interview_date).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '';
