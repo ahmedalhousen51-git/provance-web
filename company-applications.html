@@ -871,6 +871,26 @@ async function loadAll() {
         }
         
         allApplications = data || [];
+        // حدّث بيانات الطلاب بالنسخة الحية من جدول student (مش الـ snapshot المخزن وقت التقديم)
+        try {
+            const _sids = [...new Set(allApplications.map(a => a.student_user_id).filter(Boolean))];
+            if (_sids.length > 0) {
+                const { data: _liveStudents } = await sb.from('student')
+                    .select('user_id, full_name, email, photo, university')
+                    .in('user_id', _sids);
+                const _sm = {};
+                (_liveStudents || []).forEach(s => { _sm[s.user_id] = s; });
+                allApplications.forEach(a => {
+                    const live = _sm[a.student_user_id];
+                    if (!live) return;
+                    a.student_name = live.full_name || a.student_name;
+                    a.student_email = live.email || a.student_email;
+                    a.student_photo = live.photo || a.student_photo;
+                    a.student_university = live.university || a.student_university;
+                });
+            }
+        } catch(e) { /* فضل الـ snapshot */ }
+
         console.log('✓ تم تحميل', allApplications.length, 'طلب');
 
         // auto-complete: أي تدريب انتهت مدته بدون ضغط زرار "إنهاء التدريب"
