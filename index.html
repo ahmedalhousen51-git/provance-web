@@ -211,6 +211,17 @@
             .shape { display: none; }
         }
     </style>
+    <style>
+        /* ===== Promo video section ===== */
+        .promo-video { padding: 80px 0 10px; width: 100%; }
+        .video-frame { position: relative; max-width: 900px; margin: 0 auto; border-radius: 18px; overflow: hidden; cursor: pointer; border: 1px solid var(--border); background: var(--card); box-shadow: 0 30px 80px rgba(0,0,0,.45), 0 0 60px rgba(102,126,234,.15); aspect-ratio: 16/9; }
+        .video-frame img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s; }
+        .video-frame:hover img { transform: scale(1.03); }
+        .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+        .video-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 84px; height: 84px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.7rem; padding-left: 4px; box-shadow: 0 15px 45px rgba(102,126,234,.55); transition: transform .2s; }
+        .video-frame:hover .video-play { transform: translate(-50%, -50%) scale(1.1); }
+        @media (max-width: 640px) { .promo-video { padding: 50px 0 0; } .video-play { width: 64px; height: 64px; font-size: 1.3rem; } }
+    </style>
 </head>
 <body>
     <div class="bg-animation" aria-hidden="true">
@@ -234,6 +245,18 @@
                         <button class="btn-primary" id="mainStartBtn"><i class="fas fa-rocket"></i><span>ابدأ الآن مجاناً</span></button>
                         <button class="btn-secondary" id="discoverBtn"><i class="fas fa-arrow-down"></i><span>اكتشف المزيد</span></button>
                     </div>
+                </div>
+            </div>
+        </section>
+        <section class="promo-video" id="videoSection">
+            <div class="container">
+                <div class="section-header">
+                    <h2>شاهد <span class="gradient-text">ProVance</span> في دقيقتين 🎬</h2>
+                    <p>جولة سريعة توريك كل حاجة — من التقديم بضغطة واحدة لحد التقييم بالذكاء الاصطناعي</p>
+                </div>
+                <div class="video-frame" id="pvVideoFrame" role="button" tabindex="0" aria-label="تشغيل الفيديو التعريفي">
+                    <img src="https://i.ytimg.com/vi/Sa3MpDFKHjA/maxresdefault.jpg" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/Sa3MpDFKHjA/hqdefault.jpg'" alt="فيديو تعريفي عن منصة بروفانس للتدريب المهني" loading="lazy">
+                    <span class="video-play"><i class="fas fa-play"></i></span>
                 </div>
             </div>
         </section>
@@ -497,5 +520,23 @@
     });
 })();
     </script>
+<script>
+(function () {
+    var f = document.getElementById('pvVideoFrame');
+    if (!f) return;
+    function play() {
+        if (f.querySelector('iframe')) return;
+        var ifr = document.createElement('iframe');
+        ifr.src = 'https://www.youtube-nocookie.com/embed/Sa3MpDFKHjA?autoplay=1&rel=0';
+        ifr.title = 'فيديو بروفانس التعريفي';
+        ifr.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        ifr.allowFullscreen = true;
+        f.innerHTML = '';
+        f.appendChild(ifr);
+    }
+    f.addEventListener('click', play);
+    f.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(); } });
+})();
+</script>
 </body>
 </html>
