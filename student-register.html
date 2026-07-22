@@ -600,24 +600,11 @@
                     </div>
 
                     <div class="field">
-                        <label class="field-label">
-                            <i class="fas fa-user-circle"></i> الاسم بالكامل (ثلاثي) <span class="required">*</span>
+                        <label class="field-label" for="fullName">
+                            <i class="fas fa-user-circle"></i> الاسم بالكامل <span class="required">*</span>
                         </label>
-                        <div class="form-row three">
-                            <div>
-                                <input type="text" id="firstName" class="field-input" placeholder="الاسم الأول" oninput="syncFullName()">
-                                <span class="field-error" id="firstNameErr"></span>
-                            </div>
-                            <div>
-                                <input type="text" id="secondName" class="field-input" placeholder="اسم الأب" oninput="syncFullName()">
-                                <span class="field-error" id="secondNameErr"></span>
-                            </div>
-                            <div>
-                                <input type="text" id="thirdName" class="field-input" placeholder="اسم الجد" oninput="syncFullName()">
-                                <span class="field-error" id="thirdNameErr"></span>
-                            </div>
-                        </div>
-                        <input type="hidden" id="fullName">
+                        <input type="text" id="fullName" class="field-input" placeholder="الاسم الثلاثي على الأقل">
+                        <span class="field-error" id="fullNameErr"></span>
                     </div>
 
                     <div class="form-row">
@@ -1066,15 +1053,6 @@ console.log('✅ Form initialized successfully');
         }
         let stepErrors = [];
 
-        function syncFullName() {
-            const parts = ['firstName', 'secondName', 'thirdName']
-                .map(id => (document.getElementById(id)?.value || '').trim())
-                .filter(Boolean);
-            const fn = document.getElementById('fullName');
-            if (fn) fn.value = parts.join(' ');
-        }
-        window.syncFullName = syncFullName;
-
         function showErr(id, msg) {
             stepErrors.push({ id, msg });
             const errEl = document.getElementById(id + 'Err');
@@ -1207,11 +1185,7 @@ console.log('✅ Form initialized successfully');
             clearErrorBanner();
             let ok = true;
             if (n === 1) {
-                ['firstName','secondName','thirdName','fullName','email','phone','birthDate','city','password','confirmPassword'].forEach(clearErr);
-                syncFullName();
-                const first  = document.getElementById('firstName').value.trim();
-                const second = document.getElementById('secondName').value.trim();
-                const third  = document.getElementById('thirdName').value.trim();
+                ['fullName','email','phone','birthDate','city','password','confirmPassword'].forEach(clearErr);
                 const name = document.getElementById('fullName').value.trim();
                 const email = document.getElementById('email').value.trim().toLowerCase();
                 const phone = document.getElementById('phone').value.trim();
@@ -1220,9 +1194,8 @@ console.log('✅ Form initialized successfully');
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
 
-                if (!first)  { showErr('firstName', 'الاسم الأول مطلوب'); ok = false; }
-                if (!second) { showErr('secondName', 'اسم الأب مطلوب'); ok = false; }
-                if (!third)  { showErr('thirdName', 'اسم الجد مطلوب'); ok = false; }
+                if (!name) { showErr('fullName', 'الاسم مطلوب'); ok = false; }
+                else if (name.split(' ').filter(Boolean).length < 2) { showErr('fullName', 'اكتب اسمك الثلاثي على الأقل (مثلاً: أحمد محمد علي)'); ok = false; }
 
                 if (!email) { showErr('email', 'البريد الإلكتروني مطلوب'); ok = false; }
                 else if (!window.ProVance.isValidEmail(email)) { showErr('email', 'صيغة البريد غير صحيحة (مثال: name@gmail.com)'); ok = false; }
