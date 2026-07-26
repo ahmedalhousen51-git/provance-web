@@ -1006,22 +1006,9 @@ async function processQR(qrData) {
       console.warn('duplicate check skipped:', e.message);
     }
 
-    /* ── 5. فحص الدفع — بعد أيام الحضور المجانية اللي الشركة حددتها وقت قبول الطالب (بعد الإنترفيو) يُوقف التسجيل لحد ما يدفع ── */
+    /* ── 5. فحص الدفع — بعد 3 أيام حضور يُوقف التسجيل لحد ما يدفع ── */
     if (attendanceType === 'daily_attendance' && applicationId) {
       try {
-        // حد التدريب ده تحديداً (الافتراضي 3) — العدّ بأيام حضور فريدة مش متتالية،
-        // فالتدريبات اللي أيامها متقطعة (مثلاً 3 أيام في الأسبوع) محسوبة صح
-        let trialDays = 3;
-        const appRes = await sb
-          .from('applications')
-          .select('training_schedule')
-          .eq('id', applicationId)
-          .maybeSingle();
-        if (!appRes.error && appRes.data && appRes.data.training_schedule) {
-          const v = parseInt(appRes.data.training_schedule.free_trial_days);
-          if (v && v >= 1) trialDays = v;
-        }
-
         const { data: prevLogs } = await sb
           .from('attendance_logs')
           .select('scanned_at')
@@ -1033,7 +1020,7 @@ async function processQR(qrData) {
           (prevLogs || []).map(l => l.scanned_at.substring(0, 10))
         );
 
-        if (uniqueDays.size >= trialDays) {
+        if (uniqueDays.size >= 3) {
           const { data: payRecs } = await sb
             .from('payments')
             .select('id, status')
@@ -1043,7 +1030,7 @@ async function processQR(qrData) {
 
           if (!payRecs || payRecs.length === 0) {
             showResult('warning', '💳 الدفع مطلوب للاستمرار',
-              `حضرت <strong>${uniqueDays.size} أيام</strong> من التدريب — والمسموح قبل الدفع في الشركة دي <strong>${trialDays} أيام</strong>.<br>
+              `حضرت <strong>${uniqueDays.size} أيام</strong> من التدريب.<br>
                يجب دفع رسوم التدريب حتى تتمكن من تسجيل الحضور.<br><br>
                <a href="student-payments.html"
                   style="display:inline-block;background:linear-gradient(135deg,#4facfe,#00f2fe);
