@@ -1006,19 +1006,19 @@ async function processQR(qrData) {
       console.warn('duplicate check skipped:', e.message);
     }
 
-    /* ── 5. فحص الدفع — بعد أيام الحضور المجانية اللي حددتها الشركة يُوقف التسجيل لحد ما يدفع ── */
+    /* ── 5. فحص الدفع — بعد أيام الحضور المجانية اللي الشركة حددتها وقت قبول الطالب (بعد الإنترفيو) يُوقف التسجيل لحد ما يدفع ── */
     if (attendanceType === 'daily_attendance' && applicationId) {
       try {
-        // حد الشركة (الافتراضي 3) — العدّ بأيام حضور فريدة مش متتالية،
-        // فالشركات اللي بتمرن أيام متقطعة (مثلاً 3 أيام في الأسبوع) محسوبة صح
+        // حد التدريب ده تحديداً (الافتراضي 3) — العدّ بأيام حضور فريدة مش متتالية،
+        // فالتدريبات اللي أيامها متقطعة (مثلاً 3 أيام في الأسبوع) محسوبة صح
         let trialDays = 3;
-        const compRes = await sb
-          .from('companies')
-          .select('free_trial_days')
-          .eq('user_id', qr.company_user_id)
+        const appRes = await sb
+          .from('applications')
+          .select('training_schedule')
+          .eq('id', applicationId)
           .maybeSingle();
-        if (!compRes.error && compRes.data) {
-          const v = parseInt(compRes.data.free_trial_days);
+        if (!appRes.error && appRes.data && appRes.data.training_schedule) {
+          const v = parseInt(appRes.data.training_schedule.free_trial_days);
           if (v && v >= 1) trialDays = v;
         }
 
