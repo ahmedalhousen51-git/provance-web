@@ -4230,6 +4230,14 @@ async function handleFormSubmit(event) {
         
         console.log('✅ Company inserted successfully:', companyInserted);
 
+        // حفظ أيام الحضور المجانية قبل الدفع (عمود اختياري — يتجاهل بصمت لو مش موجود)
+        try {
+            const ftd = parseInt(formData.trainingDetails.freeTrialDays);
+            if (ftd && ftd >= 1) {
+                await sb.from('companies').update({ free_trial_days: ftd }).eq('user_id', userId);
+            }
+        } catch (ftdErr) { /* non-critical */ }
+
         // إشعار للأدمن بشركة جديدة (داخلي + إيميل) — non-critical
         try {
             if (window.ProVance && typeof window.ProVance.notifyAdmins === 'function') {
@@ -4418,6 +4426,7 @@ function collectFormData() {
             trainingDetails: {
                 maxResponseDays: getValue('maxResponseDays'),
                 maxResponseAfterInterview: getValue('maxResponseAfterInterview'), // الحقل الجديد
+                freeTrialDays: getValue('freeTrialDays'), // أيام الحضور المجانية قبل الدفع
                 equipment: document.querySelector('input[name="equipment"]:checked')?.value,
                 requiredItems: getValue('requiredItems'),
                 isStartup: document.getElementById('startupCheck')?.checked || false
