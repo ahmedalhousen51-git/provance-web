@@ -4229,6 +4229,22 @@ async function handleFormSubmit(event) {
         }
         
         console.log('✅ Company inserted successfully:', companyInserted);
+
+        // إشعار للأدمن بشركة جديدة (داخلي + إيميل) — non-critical
+        try {
+            if (window.ProVance && typeof window.ProVance.notifyAdmins === 'function') {
+                await window.ProVance.notifyAdmins({
+                    title:       '🏢 شركة جديدة سجلت',
+                    message:     `شركة "${formData.companyInfo.name}" انضمت للمنصة ومستنية الموافقة.`,
+                    type:        'info',
+                    relatedType: 'company_registration',
+                    relatedId:   userId,
+                    actionUrl:   'admin-campany.html'
+                });
+            }
+        } catch (notifErr) {
+            console.warn('فشل إشعار الأدمن بالشركة الجديدة (non-critical):', notifErr);
+        }
         if (typeof showValidationDebug === 'function') {
             showValidationDebug('5️⃣ جاري حفظ التدريبات...', 'info');
         }
