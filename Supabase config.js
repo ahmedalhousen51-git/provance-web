@@ -346,6 +346,34 @@
             }).catch(() => {});
         } catch (e) { /* تجاهل — لا يوقف باقي الكود */ }
 
+        // إيميل — لكل الإشعارات إلا لو الإشعار طلب إيقافه بـ email: false
+        if (opts.email !== false) {
+            try {
+                sb.functions.invoke('send-email', {
+                    body: {
+                        user_id: opts.userId,
+                        title:   opts.title,
+                        message: opts.message,
+                        url:     opts.link || opts.actionUrl || ''
+                    }
+                }).catch(() => {});
+            } catch (e) { /* تجاهل */ }
+        }
+
+        // واتساب — للإشعارات المهمة فقط (اللي بتطلبه صراحةً بـ whatsapp: true)
+        if (opts.whatsapp === true) {
+            try {
+                sb.functions.invoke('send-whatsapp', {
+                    body: {
+                        user_id:   opts.userId,
+                        user_type: opts.userType || null,
+                        title:     opts.title,
+                        message:   opts.message
+                    }
+                }).catch(() => {});
+            } catch (e) { /* تجاهل */ }
+        }
+
         return ok;
     }
 
