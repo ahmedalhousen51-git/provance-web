@@ -1006,6 +1006,58 @@ async function processQR(qrData) {
       console.warn('duplicate check skipped:', e.message);
     }
 
+    /* ── 5. فحص الدفع — بعد أيام الحضور المجانية اللي حددتها الشركة يُوقف التسجيل لحد ما يدفع ── */
+    if (attendanceType === 'daily_attendance' && applicationId) {
+      try {
+        // حد الشركة (الافتراضي 3) — العدّ بأيام حضور فريدة مش متتالية،
+        // فالشركات اللي بتمرن أيام متقطعة (مثلاً 3 أيام في الأسبوع) محسوبة صح
+        let trialDays = 3;
+        const compRes = await sb
+          .from('companies')
+          .select('free_trial_days')
+          .eq('user_id', qr.company_user_id)
+          .maybeSingle();
+        if (!compRes.error && compRes.data) {
+          const v = parseInt(compRes.data.free_trial_days);
+          if (v && v >= 1) trialDays = v;
+        }
+
+        const { data: prevLogs } = await sb
+          .from('attendance_logs')
+          .select('scanned_at')
+          .eq('student_user_id', studentUserId)
+          .eq('application_id', applicationId)
+          .eq('attendance_type', 'daily_attendance');
+
+        const uniqueDays = new Set(
+          (prevLogs || []).map(l => l.scanned_at.substring(0, 10))
+        );
+
+        if (uniqueDays.size >= trialDays) {
+          const { data: payRecs } = await sb
+            .from('payments')
+            .select('id, status')
+            .eq('student_user_id', studentUserId)
+            .eq('application_id', applicationId)
+            .eq('status', 'success');
+
+          if (!payRecs || payRecs.length === 0) {
+            showResult('warning', '💳 الدفع مطلوب للاستمرار',
+              `حضرت <strong>${uniqueDays.size} أيام</strong> من التدريب — والمسموح قبل الدفع في الشركة دي <strong>${trialDays} أيام</strong>.<br>
+               يجب دفع رسوم التدريب حتى تتمكن من تسجيل الحضور.<br><br>
+               <a href="student-payments.html"
+                  style="display:inline-block;background:linear-gradient(135deg,#4facfe,#00f2fe);
+                         color:#fff;padding:10px 20px;border-radius:10px;
+                         font-weight:800;text-decoration:none">
+                 💳 ادفع الآن
+               </a>`
+            );
+            return;
+          }
+        }
+      } catch (_) { /* لا توقف التسجيل لو في خطأ في فحص الدفع */ }
+    }
+
     /* ── 6. حساب التأخير (15 دقيقة = حضور في الوقت) ── */
     const validFrom    = qr.valid_from ? new Date(qr.valid_from) : now;
     const delayMinutes = Math.max(0, Math.round((now - validFrom) / 60000));
