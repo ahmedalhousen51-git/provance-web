@@ -15,6 +15,20 @@
     const VIOLATION_THRESHOLD = 3;  // 3 مرات → تحويل للأدمن
 
     async function sendNotif(sb, opts) {
+        // المسار الموحد لو متاح — بيبعت إيميل + web push مع الإشعار الداخلي
+        if (window.ProVance && typeof window.ProVance.sendNotification === 'function') {
+            try {
+                const ok = await window.ProVance.sendNotification({
+                    userId: opts.userId,
+                    userType: opts.userType,
+                    title: opts.title,
+                    message: opts.message,
+                    type: opts.type || 'info',
+                    link: opts.link || null
+                });
+                if (ok) return;
+            } catch (e) { /* فولباك على الإدخال المباشر تحت */ }
+        }
         try {
             await sb.rpc('send_notification_row', { p_row: {
                 user_id: opts.userId,
@@ -151,6 +165,14 @@
                             title: '⚠️ متدرب لم يحضر المقابلة',
                             message: `${app.student_name || 'متدرب'} لم يحضر ولم يمسح الـ QR.`,
                             type: 'warning', link: 'company-interviews.html'
+                        });
+
+                        // إبلاغ الأدمن بكل مخالفة جديدة (بالإيميل كمان عبر sendNotif)
+                        await notifyAdmins(sb, {
+                            title: '⚠️ مخالفة جديدة: غياب عن مقابلة',
+                            message: `الطالب ${app.student_name || 'غير معروف'} لم يحضر مقابلة شركة ${app.company_name || 'غير معروفة'} ولم يمسح الـ QR.`,
+                            type: 'warning',
+                            link: 'admin-violations.html'
                         });
 
                         // افحص حد المخالفات
