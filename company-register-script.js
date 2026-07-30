@@ -1836,7 +1836,6 @@ function validateStep1(silent = false) {
     const hasMultipleBranches = document.querySelector('input[name="hasMultipleBranches"]:checked');
     const branchesCount = getValue('branchesCount');
     const companyLocation = getValue('companyLocation');
-    const employeesCount = getValue('employeesCount');
     const email = getValue('email');
     const password = getValue('password');
     const confirmPassword = getValue('confirmPassword');
@@ -1886,10 +1885,6 @@ function validateStep1(silent = false) {
     
     if (!companyLocation) {
         return showError('موقع الشركة مطلوب', 'يجب تحديد موقع الشركة الرئيسي', silent);
-    }
-    
-    if (!employeesCount) {
-        return showError('عدد الموظفين مطلوب', 'يجب تحديد فئة عدد الموظفين في الشركة', silent);
     }
     
     if (!email) {
