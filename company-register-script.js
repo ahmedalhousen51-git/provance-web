@@ -1637,7 +1637,7 @@ function updateBioCounter() {
     const currentLength = bio.value.length;
     counter.textContent = currentLength;
     
-    if (currentLength < CONFIG.minBioLength) {
+    if (currentLength === 0) {
         counter.style.color = 'var(--error)';
     } else if (currentLength < CONFIG.maxBioLength) {
         counter.style.color = 'var(--success)';
@@ -1849,15 +1849,7 @@ function validateStep1(silent = false) {
     if (!companyBio) {
         return showError('نبذة الشركة مطلوبة', 'يجب كتابة نبذة عن نشاط الشركة ورؤيتها', silent);
     }
-    
-    if (companyBio.length < CONFIG.minBioLength) {
-        return showError(
-            'نبذة الشركة قصيرة جداً',
-            `النبذة يجب أن تكون ${CONFIG.minBioLength} حرف على الأقل. أنت كتبت ${companyBio.length} حرف فقط`,
-            silent
-        );
-    }
-    
+
     if (!hasMultipleBranches) {
         return showError('يجب اختيار عدد الفروع', 'حدد إذا كان لديكم فرع واحد أو أكثر من فرع', silent);
     }
@@ -1987,213 +1979,37 @@ function validateStep2(silent = false) {
 }
 
 function validateStep3(silent = false) {
+    // 🔧 مبسّط: التسجيل يتطلب بس اختيار القطاعات التدريبية.
+    // تفاصيل كل قطاع (المدة، العدد، المشرف، الراتب، الميزات، نوع المتدربين...)
+    // بقت اختيارية هنا — بتتحدد لاحقاً من لوحة تحكم الشركة أو في مرحلة المقابلات.
     if (state.trainingFields.length === 0) {
-        if (!silent) showValidationDebug('❌ مفيش مجال تدريبي مضاف. ضيف مجال واحد على الأقل', 'error');
+        if (!silent) showValidationDebug('❌ مفيش قطاع تدريبي مضاف. ضيف قطاع واحد على الأقل', 'error');
         return showError(
-            'المجالات التدريبية مطلوبة',
-            'يجب إضافة مجال تدريبي واحد على الأقل',
+            'القطاعات التدريبية مطلوبة',
+            'يجب إضافة قطاع تدريبي واحد على الأقل',
             silent
         );
     }
-    
-    // 🔍 Debug: شوف بالظبط إيه الناقص
-    const fieldsDebugInfo = state.trainingFields.map(field => {
-        const details = state.trainingDetails[field];
-        return {
-            field: field,
-            exists: !!details,
-            duration: details?.duration || '(فارغ)',
-            count: details?.count || '(فارغ)',
-            minSalary: details?.minSalary || '(فارغ)',
-            maxSalary: details?.maxSalary || '(فارغ)',
-            supervisor: details?.supervisor || '(فارغ)',
-            knowledgeBenefits: details?.knowledgeBenefits ? '✓ (' + details.knowledgeBenefits.length + ' chars)' : '✗ فارغ',
-            trainingRequirements: details?.trainingRequirements ? '✓ (' + details.trainingRequirements.length + ' chars)' : '✗ فارغ'
-        };
-    });
-    console.log('📋 validateStep3 - State Details:', fieldsDebugInfo);
-    
-    const incompleteFields = state.trainingFields.filter(field => {
-        const details = state.trainingDetails[field];
-        const hasSalaryInfo = details && details.minSalary && details.maxSalary;
-        const hasKnowledgeBenefits = details && details.knowledgeBenefits && details.knowledgeBenefits.trim() !== '';
-        const hasTrainingRequirements = details && details.trainingRequirements && details.trainingRequirements.trim() !== '';
-        const hasBasicInfo = details && details.duration && details.count && details.supervisor;
-        
-        const missing = [];
-        if (!details) missing.push('لا توجد تفاصيل');
-        else {
-            if (!details.duration) missing.push('المدة');
-            if (!details.count) missing.push('عدد المتدربين');
-            if (!details.supervisor) missing.push('المشرف');
-            if (!details.minSalary) missing.push('الحد الأدنى للراتب');
-            if (!details.maxSalary) missing.push('الحد الأقصى للراتب');
-            if (!details.knowledgeBenefits || !details.knowledgeBenefits.trim()) missing.push('الميزة المعرفية');
-            if (!details.trainingRequirements || !details.trainingRequirements.trim()) missing.push('متطلبات التدريب');
-        }
-        
-        if (missing.length > 0) {
-            console.warn(`🔴 Field "${field}" - الناقص:`, missing.join(', '));
-        }
-        
-        return !hasBasicInfo || !hasSalaryInfo || !hasKnowledgeBenefits || !hasTrainingRequirements;
-    });
-    
-    if (incompleteFields.length > 0) {
-        // 🔥 نلاقي بالظبط إيه الناقص في كل field
-        const detailedMsg = incompleteFields.map(field => {
-            const details = state.trainingDetails[field] || {};
-            const missing = [];
-            if (!details.duration) missing.push('المدة');
-            if (!details.count) missing.push('عدد المتدربين');
-            if (!details.supervisor) missing.push('المشرف');
-            if (!details.minSalary) missing.push('الحد الأدنى للراتب');
-            if (!details.maxSalary) missing.push('الحد الأقصى للراتب');
-            if (!details.knowledgeBenefits || !details.knowledgeBenefits.trim()) missing.push('الميزة المعرفية');
-            if (!details.trainingRequirements || !details.trainingRequirements.trim()) missing.push('متطلبات التدريب');
-            return `${field}: ${missing.join('، ')}`;
-        }).join(' | ');
-        
-        // 🎨 Visual debug على الموبايل
-        if (!silent) showValidationDebug('❌ ' + detailedMsg, 'error');
-        
-        return showError(
-            'تفاصيل التدريب غير مكتملة',
-            `الناقص: ${detailedMsg}`,
-            silent
-        );
-    }
-    
-    const invalidCountFields = state.trainingFields.filter(field => {
-        const details = state.trainingDetails[field];
-        return details && (isNaN(details.count) || parseInt(details.count) < 1);
-    });
-    
-    if (invalidCountFields.length > 0) {
-        const msg = `❌ عدد المتدربين غير صحيح في: ${invalidCountFields.join('، ')}`;
-        if (!silent) showValidationDebug(msg, 'error');
-        return showError(
-            'عدد المتدربين غير صحيح',
-            msg,
-            silent
-        );
-    }
-    
-    // ✅ Fallback: لو state فاضي، حاول تلاقي الـ selected card من الـ DOM
+
+    // لو الشركة اختارت نوع متدربين، خليه محفوظ في الـ state (اختياري، مش شرط)
     if (!state.selectedTraineeType) {
         const selectedCard = document.querySelector('.trainee-card.selected');
         if (selectedCard) {
             const onclick = selectedCard.getAttribute('onclick') || '';
             const match = onclick.match(/selectTraineeType\('([^']+)'/);
             if (match && match[1]) {
-                console.log('🔧 Validation: recovered selectedTraineeType from DOM:', match[1]);
                 state.selectedTraineeType = match[1];
                 saveStateToStorage();
             }
         }
     }
-    
-    if (!state.selectedTraineeType) {
-        if (!silent) {
-            // Debug message عشان نعرف الـ state بالظبط
-            const debugInfo = {
-                stateExists: typeof state !== 'undefined',
-                value: state?.selectedTraineeType,
-                cards: document.querySelectorAll('.trainee-card').length,
-                selectedCards: document.querySelectorAll('.trainee-card.selected').length
-            };
-            console.error('🔴 Validation failed - traineeType debug:', debugInfo);
-            showValidationDebug('❌ لازم تختار نوع المتدربين. Debug: ' + JSON.stringify(debugInfo), 'error');
-        }
-        return showError(
-            'نوع المتدربين غير محدد',
-            'يجب اختيار نوع المتدربين',
-            silent
-        );
-    }
-    
-    if (state.selectedTraineeType === 'once-trained' || state.selectedTraineeType === 'twice-trained') {
-        const fieldsWithoutFinancialBenefits = state.trainingFields.filter(field => {
-            const details = state.trainingDetails[field];
-            return !details || !details.financialBenefits || details.financialBenefits.trim() === '';
-        });
-        
-        if (fieldsWithoutFinancialBenefits.length > 0) {
-            const msg = `❌ الميزة المادية ناقصة في: ${fieldsWithoutFinancialBenefits.join('، ')}`;
-            if (!silent) showValidationDebug(msg, 'error');
-            return showError(
-                'الميزة المادية مطلوبة',
-                `النظام المختار يتطلب تحديد الميزة المادية لكل مجال. الناقص: ${fieldsWithoutFinancialBenefits.join('، ')}`,
-                silent
-            );
-        }
-    }
-    
-    if (state.selectedTraineeType === 'twice-trained') {
-        const fieldsWithInvalidDuration = state.trainingFields.filter(field => {
-            const details = state.trainingDetails[field];
-            return details && (
-                details.duration === '1-month' || 
-                details.duration === '1.5-months' || 
-                details.duration === '2-months' || 
-                details.duration === '2.5-months'
-            );
-        });
-        
-        if (fieldsWithInvalidDuration.length > 0) {
-            const msg = `❌ مدة التدريب طويلة (لازم 3 أسابيع كحد أقصى) في: ${fieldsWithInvalidDuration.join('، ')}`;
-            if (!silent) showValidationDebug(msg, 'error');
-            return showError(
-                'مدة التدريب غير صحيحة',
-                msg,
-                silent
-            );
-        }
-    }
-    
+
     return true;
 }
 
 function validateStep4(silent = false) {
-    const maxResponseDays = getValue('maxResponseDays');
-    const maxResponseAfterInterview = getValue('maxResponseAfterInterview'); // الحقل الجديد
-    const equipmentYes = document.getElementById('equipmentYes');
-    const equipmentNo = document.getElementById('equipmentNo');
-    const requiredItems = getValue('requiredItems');
-    
-    if (!maxResponseDays) {
-        return showError(
-            'الحد الأقصى للرد غير محدد',
-            'يجب تحديد الحد الأقصى للوقت الذي ستستغرقه الشركة للرد على طلبات المراجعة',
-            silent
-        );
-    }
-
-    // التحقق من الحقل الجديد: الحد الأقصى للرد على المتدرب بعد المقابلة الشخصية
-    if (!maxResponseAfterInterview) {
-        return showError(
-            'الحد الأقصى للرد بعد المقابلة غير محدد',
-            'يجب تحديد الحد الأقصى للوقت الذي ستستغرقه الشركة للرد على المتدرب بعد المقابلة الشخصية',
-            silent
-        );
-    }
-    
-    if (!(equipmentYes && equipmentYes.checked) && !(equipmentNo && equipmentNo.checked)) {
-        return showError(
-            'يجب تحديد توفر المعدات',
-            'حدد ما إذا كنتم ستوفرون الأجهزة والمعدات للمتدربين أم سيحتاجون لإحضارها',
-            silent
-        );
-    }
-    
-    if (equipmentNo && equipmentNo.checked && !requiredItems) {
-        return showError(
-            'متطلبات المتدرب غير محددة',
-            'بما أنكم لن توفروا المعدات، يجب تحديد ما الذي سيحتاج المتدرب لإحضاره',
-            silent
-        );
-    }
-    
+    // 🔧 مبسّط: مدة الرد ونوع المعدات بقت اختيارية.
+    // لو الشركة سابتها فاضية، الافتراضي: 7 أيام للرد، 3 أيام بعد المقابلة (متطابق مع default الداتابيز).
     return true;
 }
 
@@ -2672,10 +2488,6 @@ function createTrainingDetailItem(field, details) {
     const item = document.createElement('div');
     item.className = 'training-detail-item';
     
-    const isFinancialBenefitsRequired = state.selectedTraineeType === 'once-trained' || state.selectedTraineeType === 'twice-trained';
-    const requiredAttribute = isFinancialBenefitsRequired ? 'required' : '';
-    const requiredStar = isFinancialBenefitsRequired ? '<span style="color: var(--error); margin-right: 4px;">*</span>' : '';
-    
     const durationOptions = getDurationOptionsBasedOnType(details.duration);
     
     item.innerHTML = `
@@ -2742,14 +2554,14 @@ function createTrainingDetailItem(field, details) {
         </div>
         <div class="detail-controls" style="margin-top: 15px;">
             <div class="detail-control">
-                <label class="detail-label required">
+                <label class="detail-label">
                     <i class="fas fa-money-bill-wave"></i>
-                    الراتب بعد التعيين
+                    الراتب بعد التعيين (اختياري)
                 </label>
                 <div class="salary-inputs">
                     <div class="salary-input">
                         <div class="input-wrapper">
-                            <input type="number" class="form-input" placeholder="الحد الأدنى" min="0" onchange="updateMinSalary('${AdvancedValidator.sanitizeHTML(field)}', this.value)" value="${details.minSalary || ''}" required aria-label="الحد الأدنى للراتب لـ ${AdvancedValidator.sanitizeHTML(field)}">
+                            <input type="number" class="form-input" placeholder="الحد الأدنى" min="0" onchange="updateMinSalary('${AdvancedValidator.sanitizeHTML(field)}', this.value)" value="${details.minSalary || ''}" aria-label="الحد الأدنى للراتب لـ ${AdvancedValidator.sanitizeHTML(field)}">
                             <div class="input-border"></div>
                         </div>
                         <div class="salary-icon">
@@ -2758,7 +2570,7 @@ function createTrainingDetailItem(field, details) {
                     </div>
                     <div class="salary-input">
                         <div class="input-wrapper">
-                            <input type="number" class="form-input" placeholder="الحد الأقصى" min="0" onchange="updateMaxSalary('${AdvancedValidator.sanitizeHTML(field)}', this.value)" value="${details.maxSalary || ''}" required aria-label="الحد الأقصى للراتب لـ ${AdvancedValidator.sanitizeHTML(field)}">
+                            <input type="number" class="form-input" placeholder="الحد الأقصى" min="0" onchange="updateMaxSalary('${AdvancedValidator.sanitizeHTML(field)}', this.value)" value="${details.maxSalary || ''}" aria-label="الحد الأقصى للراتب لـ ${AdvancedValidator.sanitizeHTML(field)}">
                             <div class="input-border"></div>
                         </div>
                         <div class="salary-icon">
@@ -2788,7 +2600,7 @@ function createTrainingDetailItem(field, details) {
                 <div class="form-tips" style="margin-top: 10px;">
                     <div class="tip-item">
                         <i class="fas fa-info-circle"></i>
-                        <span><strong>هذا الحقل إلزامي في جميع الأنظمة:</strong> يجب تحديد نطاق الراتب المحتمل في حال قررت الشركة تعيين المتدرب بعد انتهاء فترة التدريب. التعيين نفسه <strong>ليس إلزامياً</strong>، لكن تحديد نطاق الراتب يساعد المتدربين على اتخاذ قرار التقديم.</span>
+                        <span>يمكنك تحديد نطاق الراتب المحتمل لاحقاً من لوحة تحكم الشركة، أو دلوقتي لو حابب. تحديده يساعد المتدربين على اتخاذ قرار التقديم.</span>
                     </div>
                     <div class="tip-item">
                         <i class="fas fa-check-circle"></i>
@@ -2801,9 +2613,9 @@ function createTrainingDetailItem(field, details) {
         <!-- قسم الميزة المعرفية -->
         <div class="detail-controls" style="margin-top: 15px;">
             <div class="detail-control full-width" style="grid-column: 1 / -1;">
-                <label class="detail-label required">
+                <label class="detail-label">
                     <i class="fas fa-brain"></i>
-                    الميزة المعرفية المكتسبة من التدريب
+                    الميزة المعرفية المكتسبة من التدريب (اختياري)
                 </label>
                 <div class="features-input-group">
                     <div class="input-wrapper" style="flex: 1;">
@@ -2842,10 +2654,9 @@ function createTrainingDetailItem(field, details) {
         <!-- قسم الميزة المادية -->
         <div class="detail-controls" style="margin-top: 15px;">
             <div class="detail-control full-width" style="grid-column: 1 / -1;">
-                <label class="detail-label ${isFinancialBenefitsRequired ? 'required' : ''}">
-                    ${requiredStar}
+                <label class="detail-label">
                     <i class="fas fa-money-bill-wave"></i>
-                    الميزة المادية ${isFinancialBenefitsRequired ? '' : '(اختياري)'}
+                    الميزة المادية (اختياري)
                 </label>
                 <div class="features-input-group">
                     <div class="input-wrapper" style="flex: 1;">
@@ -2863,23 +2674,15 @@ function createTrainingDetailItem(field, details) {
                         <p>لم تتم إضافة أي ميزة مادية بعد</p>
                     </div>
                 </div>
-                ${isFinancialBenefitsRequired ? `
-                <div class="form-tips">
-                    <div class="tip-item">
-                        <i class="fas fa-info-circle"></i>
-                        <span>هذا الحقل <strong>إلزامي</strong> للنظام المختار. يجب تحديد الميزة المادية التي تقدمها الشركة للمتدربين.</span>
-                    </div>
-                </div>
-                ` : ''}
             </div>
         </div>
-        
+
         <!-- قسم  مواصفات المتدرب -->
         <div class="detail-controls" style="margin-top: 15px;">
             <div class="detail-control full-width" style="grid-column: 1 / -1;">
-                <label class="detail-label required">
+                <label class="detail-label">
                     <i class="fas fa-user-check"></i>
-                    مواصفات المتدرب
+                    مواصفات المتدرب (اختياري)
                 </label>
                 <div class="features-input-group">
                     <div class="input-wrapper" style="flex: 1;">
@@ -4239,7 +4042,8 @@ async function handleFormSubmit(event) {
                     type:        'info',
                     relatedType: 'company_registration',
                     relatedId:   userId,
-                    actionUrl:   'admin-campany.html'
+                    actionUrl:   'admin-campany.html',
+                    whatsapp:    true
                 });
             }
         } catch (notifErr) {
