@@ -150,6 +150,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 </div>
 <div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script>
 const SUPABASE_URL = 'https://jrwazyrdzmbcnddpxxrf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impyd2F6eXJkem1iY25kZHB4eHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzUyMzksImV4cCI6MjA5MjExMTIzOX0.KaZt3Xb-9zjjwlSYnCvQQVxzDgbcOxdmnpg9wsUsqQI';
@@ -397,14 +398,16 @@ window.sendReply = async (e) => {
             return;
         }
         try {
-            await sb.rpc('send_notification_row', { p_row: {
-                user_id: activeCompanyId,
-                user_type: 'company',
-                type: 'support_reply',
-                title: '💬 رد من إدارة ProVance',
-                message: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
-                link: 'company-support.html'
-            } });
+            if (window.ProVance && typeof window.ProVance.sendNotification === 'function') {
+                await window.ProVance.sendNotification({
+                    userId:   activeCompanyId,
+                    userType: 'company',
+                    type:     'support_reply',
+                    title:    '💬 رد من إدارة ProVance',
+                    message:  message.substring(0, 100) + (message.length > 100 ? '...' : ''),
+                    link:     'company-support.html'
+                });
+            }
         } catch(e) {}
         input.value = '';
         showToast('✅ تم الإرسال', 'success');
