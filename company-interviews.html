@@ -1128,6 +1128,8 @@
             return d >= today && d < tomorrow;
         });
         const past = filtered.filter(i => i.interview_date && new Date(i.interview_date).getTime() <= now);
+        // المقابلات السابقة دايماً بترتيب الأحدث فوق (بغض النظر عن ترتيب القادمة)
+        past.sort((a, b) => new Date(b.interview_date || 0) - new Date(a.interview_date || 0));
 
         document.getElementById('upcomingGrid').innerHTML = upcoming.length === 0
             ? '<div class="empty-state"><i class="fas fa-calendar-plus"></i><h3>لا توجد مقابلات قادمة</h3><p>اضغط "جدولة مقابلة جديدة" لإضافة مقابلة</p></div>'
@@ -1385,7 +1387,8 @@
                         title: '📅 موعد مقابلة جديد',
                         message: `تم تحديد موعد مقابلتك مع ${app.company_name} يوم ${interviewDate.toLocaleString('ar-EG')}`,
                         type: 'info',
-                        link: 'student-applications.html'
+                        link: 'student-applications.html',
+                        whatsapp: true
                     });
                 }
 
@@ -1499,7 +1502,8 @@
                         userType: 'student',
                         title: '📅 تم تعديل موعد المقابلة',
                         message: `الموعد الجديد: ${newDate.toLocaleString('ar-EG')}${reason ? '. السبب: ' + reason : ''}`,
-                        type: 'info'
+                        type: 'info',
+                        whatsapp: true
                     });
                 }
 
@@ -1772,7 +1776,8 @@
                         title:    '🎉 مبروك! تم قبولك في التدريب',
                         message:  `تم قبولك في "${esc(interview.internship_title)}". يبدأ التدريب ${fmtDateAr(startDate)}${endStr} — أيام التدريب: ${daysStr} — وقت الحضور: ${dailyTime}${notes ? ' — ' + notes : ''}`,
                         type:     'success',
-                        link:     'student-applications.html'
+                        link:     'student-applications.html',
+                        whatsapp: true
                     });
                 }
 
@@ -1833,7 +1838,8 @@
                         title: '⚠️ تم تسجيل غيابك',
                         message: `الشركة سجلت أنك غبت عن مقابلة ${interview.internship_title}. يرجى إبلاغ سبب الغياب`,
                         type: 'warning',
-                        link: 'student-applications.html'
+                        link: 'student-applications.html',
+                        whatsapp: true
                     });
                 }
 
@@ -1859,7 +1865,8 @@
                         userType: 'student',
                         title: '🎉 مبروك! تم قبولك',
                         message: `الشركة قبلتك في تدريب ${interview.internship_title}`,
-                        type: 'success'
+                        type: 'success',
+                        whatsapp: true
                     });
                 }
 
@@ -1888,7 +1895,8 @@
                         userType: 'student',
                         title: 'تحديث على طلبك',
                         message: `للأسف لم يتم قبولك في ${interview.internship_title}. السبب: ${reason}`,
-                        type: 'warning'
+                        type: 'warning',
+                        whatsapp: true
                     });
                 }
 
@@ -2671,7 +2679,7 @@ window.openSAIReport = async function(appId, studentUserId) {
 
             const results = await Promise.allSettled([
                 sb.from('companies').select('company_name').eq('user_id', userId).maybeSingle(),
-                sb.from('applications').select('id, student_user_id, student_name, student_photo, student_university, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date, interview_location, interview_notes')
+                sb.from('applications').select('id, student_user_id, student_name, student_photo, student_university, internship_id, company_name, internship_title, status, created_at, updated_at, interview_date, interview_location, interview_notes, interview_link')
                     .eq('company_user_id', userId)
                     .order('created_at', { ascending: false }),
                 sb.from('qr_codes').select('*').eq('company_user_id', userId)
