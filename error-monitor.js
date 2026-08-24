@@ -83,7 +83,7 @@
         window.fetch = function () {
             var args = arguments;
             var url = (args[0] && args[0].url) ? args[0].url : args[0];
-            return origFetch.apply(this, args).then(function (res) {
+            return origFetch.apply(window, args).then(function (res) {
                 try {
                     if (typeof url === 'string' && url.indexOf('supabase.co/rest/v1') !== -1 && !res.ok) {
                         res.clone().json().then(function (data) {
